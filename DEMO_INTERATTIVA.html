@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMPRA - Demo Interattiva</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f9fafb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6b7280;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stats {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #1f2937;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #4b5563;
+            color: white;
+        }
+
+        .demo-box {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .demo-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #92400e;
+        }
+
+        .demo-text {
+            color: #78350f;
+            font-size: 0.875rem;
+        }
+
+        .commissione-preview {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+
+        .commissione-header {
+            text-align: center;
+            border-bottom: 2px solid black;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .commissione-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .cliente-box {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .totale-box {
+            border-top: 2px solid black;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .totale-box .label {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .totale-box .amount {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+
+        .info-text {
+            font-size: 0.875rem;
+            color: #1e40af;
+            text-align: center;
+        }
+
+        .icon {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OMPRA</h1>
+            <p class="subtitle">Demo Interattiva - Gestionale Magazzino</p>
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-title">🎯 Questa è una DEMO INTERATTIVA</div>
+            <div class="demo-text">
+                Questa pagina mostra l'interfaccia dell'app. Per testare tutte le funzionalità,
+                segui la <strong>GUIDA_TEST.md</strong> per installare l'app completa.
+            </div>
+        </div>
+
+        <!-- Statistiche -->
+        <div class="card">
+            <div class="stats">
+                <div>
+                    <div class="stat-label">Giacenze Attuali</div>
+                    <div class="stat-number" id="giacenze">0</div>
+                </div>
+                <div>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pulsanti Principali -->
+        <button class="btn btn-success" onclick="demoCarico()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <div>
+                <div>CARICO MERCE</div>
+                <div style="font-size: 0.875rem; opacity: 0.9;">Ingresso veloce stock</div>
+            </div>
+        </button>
+
+        <button class="btn btn-primary" onclick="demoVendita()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <div>
+                <div>NUOVA VENDITA</div>
+                <div style="font-size: 0.875rem; opacity: 0.9;">Scarico e commissione</div>
+            </div>
+        </button>
+
+        <button class="btn btn-secondary" onclick="demoGiacenze()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <div>
+                <div>GIACENZE</div>
+                <div style="font-size: 0.875rem; opacity: 0.9;">Consulta magazzino</div>
+            </div>
+        </button>
+
+        <!-- Preview Commissione (nascosta inizialmente) -->
+        <div id="commissionePreview" style="display: none;">
+            <h3 style="margin-bottom: 1rem; color: #1f2937;">📱 Anteprima Commissione</h3>
+            
+            <div class="commissione-preview">
+                <div class="commissione-header">
+                    <h2>OMPRA</h2>
+                    <p style="font-size: 0.875rem; color: #6b7280;">Commissione di Vendita</p>
+                    <p style="font-size: 0.75rem; color: #9ca3af;" id="dateTime"></p>
+                </div>
+
+                <div class="cliente-box">
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">CLIENTE</p>
+                    <p style="font-size: 1.5rem; font-weight: bold;">Mario Rossi</p>
+                </div>
+
+                <div>
+                    <h3 style="font-size: 1.125rem; font-weight: bold; margin-bottom: 1rem; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem;">Articoli</h3>
+                    
+                    <div style="background: #fef3c7; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <div>
+                                <p style="font-size: 1.125rem; font-weight: bold;">Stihl MS 170</p>
+                                <p style="font-family: 'Courier New', monospace; font-size: 0.875rem; color: #374151; margin-top: 0.25rem;">SN: 123456789</p>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: bold;">€ 249.00</div>
+                        </div>
+                    </div>
+
+                    <p style="font-size: 0.875rem; font-weight: 600; color: #6b7280; margin-bottom: 0.5rem;">ACCESSORI</p>
+                    <div style="background: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                        <span>Olio Catena 1L</span>
+                        <span style="font-weight: 600;">€ 8.50</span>
+                    </div>
+                </div>
+
+                <div class="totale-box">
+                    <span class="label">TOTALE</span>
+                    <span class="amount">€ 257.50</span>
+                </div>
+
+                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #d1d5db;">
+                    <p style="font-size: 0.75rem; color: #6b7280;">Documento non fiscale - Solo per uso interno</p>
+                    <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">OMPRA - Gestionale Magazzino v1.0</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <p class="info-text">
+                    📸 Nell'app reale, questa schermata appare a tutto schermo con sfondo nero,
+                    pronta per essere fotografata e inviata su WhatsApp
+                </p>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <p class="info-text">
+                <strong>💡 Per testare l'app completa:</strong><br>
+                1. Apri il terminale<br>
+                2. cd magazzino-ompra<br>
+                3. npm install<br>
+                4. npm run dev<br>
+                5. Apri http://localhost:3000<br><br>
+                📖 Leggi <strong>GUIDA_TEST.md</strong> per istruzioni dettagliate
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>OMPRA - Gestionale Magazzino v1.0</p>
+            <p>PWA Veloce per Carico Merce e Commissioni</p>
+        </div>
+    </div>
+
+    <script>
+        let giacenze = 0;
+
+        function updateDateTime() {
+            const now = new Date();
+            const formatted = now.toLocaleString('it-IT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('dateTime').textContent = formatted;
+        }
+
+        function demoCarico() {
+            giacenze += 3;
+            document.getElementById('giacenze').textContent = giacenze;
+            alert('✅ DEMO: 3 articoli caricati!\n\nNell\'app reale:\n- Scansioni OCR continue\n- Beep di conferma\n- Lista articoli in tempo reale\n- Salvataggio automatico');
+        }
+
+        function demoVendita() {
+            if (giacenze === 0) {
+                alert('⚠️ Nessun articolo in magazzino!\n\nCarica prima della merce con il pulsante "CARICO MERCE"');
+                return;
+            }
+            
+            giacenze -= 1;
+            document.getElementById('giacenze').textContent = giacenze;
+            
+            updateDateTime();
+            document.getElementById('commissionePreview').style.display = 'block';
+            document.getElementById('commissionePreview').scrollIntoView({ behavior: 'smooth' });
+            
+            alert('✅ DEMO: Vendita completata!\n\nVedi sotto l\'anteprima della commissione.\n\nNell\'app reale:\n- Appare a schermo intero\n- Sfondo nero per contrasto\n- Pinch-to-zoom abilitato\n- Pronta per screenshot WhatsApp');
+        }
+
+        function demoGiacenze() {
+            if (giacenze === 0) {
+                alert('📦 Magazzino vuoto\n\nCarica articoli con "CARICO MERCE" per vederli qui.\n\nNell\'app reale potrai:\n- Cercare per matricola/brand/modello\n- Filtrare per disponibili/vendute\n- Vedere dettagli completi\n- Statistiche in tempo reale');
+            } else {
+                alert(`📦 GIACENZE\n\nTotali: ${giacenze}\nDisponibili: ${giacenze}\nVendute: 0\n\nNell\'app reale vedrai:\n- Lista completa con dettagli\n- Ricerca avanzata\n- Filtri multipli\n- Cronologia vendite`);
+            }
+        }
+
+        // Inizializza data/ora
+        updateDateTime();
+    </script>
+</body>
+</html>

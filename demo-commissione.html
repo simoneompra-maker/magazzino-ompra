@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Commissione OMPRA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .commissione-sheet {
+            background: white;
+            color: black;
+            max-width: 800px;
+            width: 100%;
+            padding: 3rem;
+            box-shadow: 0 0 40px rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .header {
+            border-bottom: 2px solid black;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .header .date {
+            color: #6b7280;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .cliente-box {
+            background: #f3f4f6;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .cliente-box .label {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: #6b7280;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .cliente-box .name {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .articoli h2 {
+            font-size: 1.125rem;
+            font-weight: bold;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .macchina {
+            background: #fef3c7;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #f59e0b;
+            margin-bottom: 1.5rem;
+        }
+
+        .macchina-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.5rem;
+        }
+
+        .macchina-info .model {
+            font-size: 1.125rem;
+            font-weight: bold;
+        }
+
+        .macchina-info .serial {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #374151;
+            margin-top: 0.25rem;
+        }
+
+        .macchina-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .accessori-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .accessorio {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .accessorio-name {
+            color: #1f2937;
+        }
+
+        .accessorio-price {
+            font-weight: 600;
+        }
+
+        .totale {
+            border-top: 2px solid black;
+            padding-top: 1.5rem;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .totale-label {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .totale-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #d1d5db;
+            text-align: center;
+        }
+
+        .footer p {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .footer .version {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .instructions {
+            margin-top: 2rem;
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .instructions .main {
+            font-size: 0.875rem;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .instructions .sub {
+            font-size: 0.75rem;
+            color: #3b82f6;
+            margin-top: 0.25rem;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .instructions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="commissione-sheet">
+        <!-- Header -->
+        <div class="header">
+            <h1>OMPRA</h1>
+            <p class="subtitle">Commissione di Vendita</p>
+            <p class="date">04/12/2025, 14:30</p>
+        </div>
+
+        <!-- Cliente -->
+        <div class="cliente-box">
+            <p class="label">Cliente</p>
+            <p class="name">Mario Rossi</p>
+        </div>
+
+        <!-- Articoli -->
+        <div class="articoli">
+            <h2>Articoli</h2>
+
+            <!-- Macchina Principale -->
+            <div class="macchina">
+                <div class="macchina-header">
+                    <div class="macchina-info">
+                        <p class="model">Stihl MS 170</p>
+                        <p class="serial">SN: 123456789</p>
+                    </div>
+                    <div class="macchina-price">€ 249.00</div>
+                </div>
+            </div>
+
+            <!-- Accessori -->
+            <p class="accessori-label">Accessori</p>
+            <div class="accessorio">
+                <p class="accessorio-name">Olio Catena 1L</p>
+                <p class="accessorio-price">€ 8.50</p>
+            </div>
+            <div class="accessorio">
+                <p class="accessorio-name">Filo Decespugliatore</p>
+                <p class="accessorio-price">€ 12.00</p>
+            </div>
+        </div>
+
+        <!-- Totale -->
+        <div class="totale">
+            <p class="totale-label">Totale</p>
+            <p class="totale-amount">€ 269.50</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Documento non fiscale - Solo per uso interno</p>
+            <p class="version">OMPRA - Gestionale Magazzino v1.0</p>
+        </div>
+
+        <!-- Istruzioni -->
+        <div class="instructions">
+            <p class="main">📱 <strong>Fai uno screenshot</strong> di questa schermata e invialo su WhatsApp</p>
+            <p class="sub">Usa pinch-to-zoom per ingrandire se necessario</p>
+        </div>
+    </div>
+</body>
+</html>

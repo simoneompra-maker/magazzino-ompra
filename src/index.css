@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Colori OMPRA */
+:root {
+  --ompra-green: #006B3F;
+  --ompra-green-dark: #005432;
+  --ompra-green-light: #008C52;
+  --ompra-yellow: #FFDD00;
+  --ompra-yellow-dark: #E6C700;
+}
+
+/* Reset base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Classi colori OMPRA */
+.text-ompra-green {
+  color: var(--ompra-green);
+}
+
+.text-ompra-yellow {
+  color: var(--ompra-yellow);
+}
+
+.bg-ompra-green {
+  background-color: var(--ompra-green);
+}
+
+.bg-ompra-yellow {
+  background-color: var(--ompra-yellow);
+}
+
+.border-ompra-green {
+  border-color: var(--ompra-green);
+}
+
+/* Card base */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Input field */
+.input-field {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s;
+  background: white;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--ompra-green);
+  box-shadow: 0 0 0 3px rgba(0, 107, 63, 0.1);
+}
+
+/* Pulsanti */
+.btn-primary {
+  background-color: var(--ompra-green);
+  color: white;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  background-color: var(--ompra-green-dark);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-success {
+  background-color: var(--ompra-green);
+  color: white;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-success:hover {
+  background-color: var(--ompra-green-dark);
+}
+
+.btn-success:active {
+  transform: scale(0.98);
+}
+
+/* Colori di stato */
+.text-success {
+  color: var(--ompra-green);
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+.text-primary {
+  color: var(--ompra-green);
+}
+
+.bg-success {
+  background-color: var(--ompra-green);
+}
+
+.bg-primary {
+  background-color: var(--ompra-green);
+}
+
+.border-success {
+  border-color: var(--ompra-green);
+}
+
+/* Header OMPRA style */
+.header-ompra {
+  background: linear-gradient(135deg, var(--ompra-green) 0%, var(--ompra-green-dark) 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 0 0 20px 20px;
+}
+
+/* Card con accento OMPRA */
+.card-ompra {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 107, 63, 0.1);
+  border-left: 4px solid var(--ompra-green);
+}
+
+/* Pulsante giallo OMPRA */
+.btn-yellow {
+  background-color: var(--ompra-yellow);
+  color: var(--ompra-green);
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-yellow:hover {
+  background-color: var(--ompra-yellow-dark);
+}
+
+/* Safe area per dispositivi con notch */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Animazioni */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar personalizzata */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ompra-green);
+  border-radius: 3px;
+}
+
+/* Select styling */
+select.input-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23006B3F'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
+}
+
+/* Focus visible per accessibilità */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ompra-green);
+  outline-offset: 2px;
+}
+
+/* Touch feedback su mobile */
+@media (hover: none) {
+  .btn-primary:active,
+  .btn-success:active,
+  .btn-yellow:active {
+    opacity: 0.8;
+  }
+}

@@ -250,25 +250,6 @@ export default function CaricoMerce({ onNavigate }) {
   };
 
   // Componente campo Brand (input semplice con suggerimenti)
-  const BrandField = () => (
-    <div>
-      <label className="text-xs text-gray-500">Brand *</label>
-      <input
-        type="text"
-        list="brand-list"
-        placeholder="Digita o seleziona brand..."
-        className="w-full p-3 border rounded-lg mt-1"
-        value={formBrand}
-        onChange={(e) => setFormBrand(e.target.value)}
-      />
-      <datalist id="brand-list">
-        {allBrands.map(brand => (
-          <option key={brand} value={brand} />
-        ))}
-      </datalist>
-    </div>
-  );
-
   // Componente campo Tipo (riutilizzabile per preview e manual)
   const TipoField = () => (
     <div className="space-y-2">
@@ -517,7 +498,22 @@ export default function CaricoMerce({ onNavigate }) {
                   </div>
                   
                   {/* Campo Brand */}
-                  <BrandField />
+                  <div>
+                    <label className="text-xs text-gray-500">Brand *</label>
+                    <input
+                      type="text"
+                      list="brand-list"
+                      placeholder="Digita o seleziona brand..."
+                      className="w-full p-3 border rounded-lg mt-1"
+                      value={formBrand}
+                      onChange={(e) => setFormBrand(e.target.value)}
+                    />
+                    <datalist id="brand-list">
+                      {allBrands.map(brand => (
+                        <option key={brand} value={brand} />
+                      ))}
+                    </datalist>
+                  </div>
                   
                   {/* Campo Tipo */}
                   <TipoField />
@@ -557,7 +553,22 @@ export default function CaricoMerce({ onNavigate }) {
                   )}
                   
                   {/* Campo Brand */}
-                  <BrandField />
+                  <div>
+                    <label className="text-xs text-gray-500">Brand *</label>
+                    <input
+                      type="text"
+                      list="brand-list-manual"
+                      placeholder="Digita o seleziona brand..."
+                      className="w-full p-3 border rounded-lg mt-1"
+                      value={formBrand}
+                      onChange={(e) => setFormBrand(e.target.value)}
+                    />
+                    <datalist id="brand-list-manual">
+                      {allBrands.map(brand => (
+                        <option key={brand} value={brand} />
+                      ))}
+                    </datalist>
+                  </div>
                   
                   {/* Campo Tipo */}
                   <TipoField />

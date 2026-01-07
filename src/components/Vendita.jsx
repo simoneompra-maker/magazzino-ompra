@@ -395,8 +395,8 @@ export default function Vendita({ onNavigate }) {
       alert('Inserisci il nome dell\'operatore!');
       return;
     }
-    if (prodotti.length === 0) {
-      alert('Aggiungi almeno un prodotto!');
+    if (prodotti.length === 0 && accessori.length === 0 && !note.trim()) {
+      alert('Aggiungi almeno un prodotto, un accessorio o una nota!');
       return;
     }
     
@@ -938,7 +938,7 @@ export default function Vendita({ onNavigate }) {
 
         <button
           onClick={handleConcludi}
-          disabled={prodotti.length === 0 || !cliente.trim() || !operatore.trim()}
+          disabled={(prodotti.length === 0 && accessori.length === 0 && !note.trim()) || !cliente.trim() || !operatore.trim()}
           className="w-full py-4 rounded-lg font-bold text-lg disabled:opacity-50"
           style={{ backgroundColor: '#FFDD00', color: '#006B3F' }}
         >

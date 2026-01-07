@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Camera, Plus, Trash2, Package, CheckCircle, X, Edit2, Image, AlertCircle, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Camera, Plus, Trash2, Package, CheckCircle, X, Edit2, Image, AlertCircle } from 'lucide-react';
 import useStore from '../store';
 import { scanMatricola, checkRateLimitStatus } from '../services/ocrService';
 
@@ -59,7 +59,6 @@ export default function CaricoMerce({ onNavigate }) {
   
   // Campi form
   const [formBrand, setFormBrand] = useState('');
-  const [showBrandDropdown, setShowBrandDropdown] = useState(false);
   const [formTipo, setFormTipo] = useState('');
   const [formTipoAltro, setFormTipoAltro] = useState('');
   const [formModel, setFormModel] = useState('');
@@ -189,7 +188,6 @@ export default function CaricoMerce({ onNavigate }) {
   // Nuova scansione
   const handleNewScan = () => {
     setFormBrand('');
-    setShowBrandDropdown(false);
     setFormTipo('');
     setFormTipoAltro('');
     setFormModel('');
@@ -230,7 +228,6 @@ export default function CaricoMerce({ onNavigate }) {
     setShowModal(false);
     setModalMode('manual');
     setFormBrand('');
-    setShowBrandDropdown(false);
     setFormTipo('');
     setFormTipoAltro('');
     setFormModel('');
@@ -244,7 +241,6 @@ export default function CaricoMerce({ onNavigate }) {
     setShowModal(true);
     setModalMode(mode);
     setFormBrand('');
-    setShowBrandDropdown(false);
     setFormTipo('');
     setFormTipoAltro('');
     setFormModel('');
@@ -252,65 +248,24 @@ export default function CaricoMerce({ onNavigate }) {
     setScanPreview(null);
     setOcrError(null);
   };
-  
-  // Filtra brand in base al testo digitato
-  const filteredBrands = formBrand.trim() 
-    ? allBrands.filter(b => b.toLowerCase().includes(formBrand.toLowerCase()))
-    : allBrands;
 
-  // Componente campo Brand (autocomplete/combobox)
+  // Componente campo Brand (input semplice con suggerimenti)
   const BrandField = () => (
-    <div className="relative">
+    <div>
       <label className="text-xs text-gray-500">Brand *</label>
-      <div className="relative mt-1">
-        <input
-          type="text"
-          placeholder="Digita o seleziona brand..."
-          className="w-full p-3 pr-10 border rounded-lg"
-          value={formBrand}
-          onChange={(e) => {
-            setFormBrand(e.target.value);
-            setShowBrandDropdown(true);
-          }}
-          onFocus={() => setShowBrandDropdown(true)}
-        />
-        <button
-          type="button"
-          onClick={() => setShowBrandDropdown(!showBrandDropdown)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-        >
-          <ChevronDown className={`w-5 h-5 transition-transform ${showBrandDropdown ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
-      
-      {/* Dropdown suggerimenti */}
-      {showBrandDropdown && (
-        <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-auto">
-          {filteredBrands.length > 0 ? (
-            filteredBrands.map(brand => (
-              <button
-                key={brand}
-                type="button"
-                className={`w-full px-3 py-2 text-left hover:bg-gray-100 ${
-                  formBrand === brand ? 'bg-green-50 text-green-700 font-medium' : ''
-                }`}
-                onClick={() => {
-                  setFormBrand(brand);
-                  setShowBrandDropdown(false);
-                }}
-              >
-                {brand}
-              </button>
-            ))
-          ) : formBrand.trim() ? (
-            <div className="px-3 py-2 text-sm text-gray-500">
-              <span className="text-green-600 font-medium">"{formBrand}"</span> - Nuovo brand (verrà salvato)
-            </div>
-          ) : (
-            <div className="px-3 py-2 text-sm text-gray-400">Nessun brand trovato</div>
-          )}
-        </div>
-      )}
+      <input
+        type="text"
+        list="brand-list"
+        placeholder="Digita o seleziona brand..."
+        className="w-full p-3 border rounded-lg mt-1"
+        value={formBrand}
+        onChange={(e) => setFormBrand(e.target.value)}
+      />
+      <datalist id="brand-list">
+        {allBrands.map(brand => (
+          <option key={brand} value={brand} />
+        ))}
+      </datalist>
     </div>
   );
 

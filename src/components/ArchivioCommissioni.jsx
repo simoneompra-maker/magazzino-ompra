@@ -771,6 +771,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   <Send className="w-4 h-4" /> Invia
                 </button>
                 
+                {/* BLU - Stampa PDF diretto */}
+                <button
+                  onClick={() => generatePDF(comm)}
+                  className="p-2 text-blue-600 rounded-lg bg-blue-50 hover:bg-blue-100"
+                  title="Scarica PDF"
+                >
+                  <FileDown className="w-4 h-4" />
+                </button>
+                
                 {/* ROSSO - Elimina */}
                 <button
                   onClick={() => handleDelete(comm.id)}

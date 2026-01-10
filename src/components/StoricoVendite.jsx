@@ -82,10 +82,10 @@ export default function StoricoVendite({ onNavigate }) {
     }
     
     if (filters.prezzoFrom) {
-      result = result.filter(s => s.totale >= parseFloat(filters.prezzoFrom));
+      result = result.filter(s => (s.prezzo || 0) >= parseFloat(filters.prezzoFrom));
     }
     if (filters.prezzoTo) {
-      result = result.filter(s => s.totale <= parseFloat(filters.prezzoTo));
+      result = result.filter(s => (s.prezzo || 0) <= parseFloat(filters.prezzoTo));
     }
     if (filters.operatore) {
       result = result.filter(s => s.user === filters.operatore);
@@ -122,7 +122,7 @@ export default function StoricoVendite({ onNavigate }) {
 
   // Totale vendite filtrate
   const totaleSales = useMemo(() => {
-    return filteredSales.reduce((sum, s) => sum + (s.totale || 0), 0);
+    return filteredSales.reduce((sum, s) => sum + (s.prezzo || s.totale || 0), 0);
   }, [filteredSales]);
 
   // Conta filtri attivi
@@ -176,7 +176,7 @@ export default function StoricoVendite({ onNavigate }) {
         sale.model || '',
         sale.serialNumber || '',
         sale.cliente || '',
-        sale.totale?.toFixed(2) || '0.00',
+        (sale.prezzo || 0).toFixed(2),
         sale.user || ''
       ];
     });
@@ -238,7 +238,7 @@ export default function StoricoVendite({ onNavigate }) {
           <td>${sale.model || ''}</td>
           <td>${sale.serialNumber || ''}</td>
           <td>${sale.cliente || ''}</td>
-          <td class="prezzo">${sale.totale?.toFixed(2) || '0.00'}</td>
+          <td class="prezzo">${(sale.prezzo || 0).toFixed(2)}</td>
           <td>${sale.user || ''}</td>
         </tr>
       `;
@@ -570,9 +570,13 @@ export default function StoricoVendite({ onNavigate }) {
                   </div>
                   
                   <div className="flex-none w-16 text-right">
-                    <span className="font-bold" style={{ color: '#006B3F' }}>
-                      €{sale.totale?.toFixed(0) || '0'}
-                    </span>
+                    {(sale.prezzo === 0 || sale.prezzo === null || sale.prezzo === undefined) ? (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium">KIT</span>
+                    ) : (
+                      <span className="font-bold" style={{ color: '#006B3F' }}>
+                        €{sale.prezzo?.toFixed(0) || '0'}
+                      </span>
+                    )}
                   </div>
                 </div>
                 

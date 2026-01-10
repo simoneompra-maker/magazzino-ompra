@@ -62,7 +62,7 @@ export default function Vendita({ onNavigate }) {
   const [telefonoCliente, setTelefonoCliente] = useState('');
   const [prodotti, setProdotti] = useState([]);
   const [accessori, setAccessori] = useState([]);
-  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '' });
+  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1' });
   const [totaleManuale, setTotaleManuale] = useState('');
   
   // Caparra e Note
@@ -73,7 +73,7 @@ export default function Vendita({ onNavigate }) {
   
   // Modifica accessorio
   const [editingAccessorio, setEditingAccessorio] = useState(null);
-  const [editAccessorioData, setEditAccessorioData] = useState({ nome: '', prezzo: '' });
+  const [editAccessorioData, setEditAccessorioData] = useState({ nome: '', prezzo: '', quantita: '1' });
   
   // Modifica prezzo prodotto (MODAL invece di prompt)
   const [editingProduct, setEditingProduct] = useState(null);
@@ -181,7 +181,7 @@ export default function Vendita({ onNavigate }) {
   // Calcola totale
   const calcolaTotaleAuto = () => {
     const totProdotti = prodotti.reduce((sum, p) => sum + (p.prezzo || 0), 0);
-    const totAccessori = accessori.reduce((sum, a) => sum + (parseFloat(a.prezzo) || 0), 0);
+    const totAccessori = accessori.reduce((sum, a) => sum + ((parseFloat(a.prezzo) || 0) * (a.quantita || 1)), 0);
     return totProdotti + totAccessori;
   };
 
@@ -352,9 +352,10 @@ export default function Vendita({ onNavigate }) {
     setAccessori([...accessori, { 
       ...newAccessorio, 
       id: Date.now(),
-      prezzo: parseFloat(newAccessorio.prezzo) || 0
+      prezzo: parseFloat(newAccessorio.prezzo) || 0,
+      quantita: parseInt(newAccessorio.quantita) || 1
     }]);
-    setNewAccessorio({ nome: '', prezzo: '' });
+    setNewAccessorio({ nome: '', prezzo: '', quantita: '1' });
   };
 
   const handleRemoveAccessorio = (id) => {
@@ -364,7 +365,7 @@ export default function Vendita({ onNavigate }) {
   // Apri modifica accessorio
   const handleEditAccessorio = (acc) => {
     setEditingAccessorio(acc.id);
-    setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString() });
+    setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString(), quantita: (acc.quantita || 1).toString() });
   };
   
   // Salva modifica accessorio
@@ -376,12 +377,12 @@ export default function Vendita({ onNavigate }) {
     
     setAccessori(accessori.map(a => 
       a.id === editingAccessorio 
-        ? { ...a, nome: editAccessorioData.nome.trim(), prezzo: parseFloat(editAccessorioData.prezzo) || 0 }
+        ? { ...a, nome: editAccessorioData.nome.trim(), prezzo: parseFloat(editAccessorioData.prezzo) || 0, quantita: parseInt(editAccessorioData.quantita) || 1 }
         : a
     ));
     
     setEditingAccessorio(null);
-    setEditAccessorioData({ nome: '', prezzo: '' });
+    setEditAccessorioData({ nome: '', prezzo: '', quantita: '1' });
   };
 
   const hasOrderedProducts = prodotti.some(p => !p.serialNumber);
@@ -776,6 +777,14 @@ export default function Vendita({ onNavigate }) {
                       />
                       <input
                         type="number"
+                        placeholder="Qtà"
+                        className="w-14 p-2 border rounded text-sm text-center"
+                        min="1"
+                        value={editAccessorioData.quantita}
+                        onChange={(e) => setEditAccessorioData({ ...editAccessorioData, quantita: e.target.value })}
+                      />
+                      <input
+                        type="number"
                         placeholder="€"
                         className="w-16 p-2 border rounded text-sm text-center"
                         value={editAccessorioData.prezzo}
@@ -797,8 +806,15 @@ export default function Vendita({ onNavigate }) {
                     </div>
                   ) : (
                     <div className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-sm">
-                      <span className="flex-1 truncate">{acc.nome}</span>
-                      <span className="text-gray-600 mx-2">{acc.prezzo > 0 ? `€${acc.prezzo}` : 'Incluso'}</span>
+                      <span className="flex-1 truncate">
+                        {acc.quantita > 1 && <span className="font-medium text-blue-600 mr-1">{acc.quantita}x</span>}
+                        {acc.nome}
+                      </span>
+                      <span className="text-gray-600 mx-2">
+                        {acc.prezzo > 0 
+                          ? (acc.quantita > 1 ? `€${(acc.prezzo * acc.quantita).toFixed(2)}` : `€${acc.prezzo}`)
+                          : 'Incluso'}
+                      </span>
                       <button onClick={() => handleEditAccessorio(acc)} className="text-blue-500 p-1">
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -819,6 +835,14 @@ export default function Vendita({ onNavigate }) {
               className="flex-1 p-2 border rounded-lg text-sm"
               value={newAccessorio.nome}
               onChange={(e) => setNewAccessorio({ ...newAccessorio, nome: e.target.value })}
+            />
+            <input
+              type="number"
+              placeholder="Qtà"
+              className="w-14 p-2 border rounded-lg text-sm text-center"
+              min="1"
+              value={newAccessorio.quantita}
+              onChange={(e) => setNewAccessorio({ ...newAccessorio, quantita: e.target.value })}
             />
             <input
               type="number"

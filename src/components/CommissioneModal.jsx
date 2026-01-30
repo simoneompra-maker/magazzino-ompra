@@ -673,18 +673,6 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           </div>
         )}
 
-        {/* Pulsante Conferma (solo in anteprima) */}
-        {!isConfirmed && (
-          <button
-            onClick={onConfirm}
-            className="w-full mt-4 py-4 rounded-lg font-bold text-lg text-white flex items-center justify-center gap-2"
-            style={{ backgroundColor: '#006B3F' }}
-          >
-            <Check className="w-6 h-6" />
-            {data.isPending ? 'CONFERMA COMMISSIONE' : 'CONFERMA VENDITA'}
-          </button>
-        )}
-
         {/* Footer */}
         <div className="mt-4 pt-3 border-t border-gray-200 text-center">
           <p className="text-xs text-gray-500">
@@ -704,6 +692,18 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           </div>
         )}
       </div>
+
+      {/* Pulsante Conferma FISSO in basso (solo in anteprima) */}
+      {!isConfirmed && (
+        <button
+          onClick={onConfirm}
+          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-8 py-4 rounded-full font-bold text-lg text-white flex items-center justify-center gap-2 shadow-2xl z-50"
+          style={{ backgroundColor: '#006B3F' }}
+        >
+          <Check className="w-6 h-6" />
+          {data.isPending ? 'CONFERMA' : 'CONFERMA VENDITA'}
+        </button>
+      )}
     </div>
   );
 }

@@ -305,7 +305,256 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     const fileName = `Commissione_${getCliente().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(fileName);
     
-    return fileName;
+    return { fileName, doc };
+  };
+
+  // Genera PDF e restituisce il blob (per condivisione)
+  const generatePDFBlob = () => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    // Header semplice con bordo
+    doc.setDrawColor(0, 107, 63);
+    doc.setLineWidth(0.5);
+    doc.rect(margin, y, pageWidth - 2 * margin, 25);
+    
+    doc.setTextColor(0, 107, 63);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('OMPRA', pageWidth / 2, y + 10, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
+    doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
+
+    y += 32;
+
+    // Cliente, Telefono e Operatore
+    const boxHeight = getTelefono() ? 24 : 18;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, pageWidth - 2 * margin, boxHeight);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text('CLIENTE', margin + 3, y + 5);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(getCliente(), margin + 3, y + 12);
+
+    if (getTelefono()) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Tel: ${getTelefono()}`, margin + 3, y + 18);
+    }
+
+    if (getOperatore()) {
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.setFont('helvetica', 'normal');
+      doc.text('OPERATORE', pageWidth - margin - 35, y + 5);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text(getOperatore(), pageWidth - margin - 35, y + 12);
+    }
+
+    y += boxHeight + 5;
+
+    // Badge Tipo Documento
+    const tipoDoc = data.tipoDocumento === 'fattura' ? 'FATTURA' : 'SCONTRINO';
+    const badgeWidth = 30;
+    const badgeX = (pageWidth - badgeWidth) / 2;
+    
+    if (data.tipoDocumento === 'fattura') {
+      doc.setFillColor(219, 234, 254);
+      doc.setTextColor(30, 64, 175);
+    } else {
+      doc.setFillColor(220, 252, 231);
+      doc.setTextColor(22, 101, 52);
+    }
+    
+    doc.roundedRect(badgeX, y, badgeWidth, 7, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(tipoDoc, pageWidth / 2, y + 5, { align: 'center' });
+    
+    y += 12;
+
+    // Prodotti
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PRODOTTI', margin, y);
+    y += 5;
+
+    const prodotti = isKit && data.prodotti ? data.prodotti : [{
+      brand: data.brand,
+      model: data.model,
+      serialNumber: data.serialNumber,
+      prezzo: getTotaleProdotti()
+    }];
+
+    prodotti.forEach((prod) => {
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y + 12, pageWidth - margin, y + 12);
+
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${prod.brand} ${prod.model}`, margin, y + 5);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      if (prod.serialNumber) {
+        doc.text(`SN: ${prod.serialNumber}`, margin, y + 10);
+      } else {
+        doc.text('Matricola da inserire', margin, y + 10);
+      }
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      if (prod.isOmaggio) {
+        doc.text('OMAGGIO', pageWidth - margin, y + 7, { align: 'right' });
+      } else if (prod.prezzo === null || prod.prezzo === undefined || prod.prezzo === 0) {
+        doc.text('KIT', pageWidth - margin, y + 7, { align: 'right' });
+      } else {
+        doc.text(`€ ${prod.prezzo.toFixed(2)}`, pageWidth - margin, y + 7, { align: 'right' });
+      }
+
+      y += 15;
+    });
+
+    // Accessori
+    const accessoriPDF = isKit ? data.accessori : data.saleData?.accessori;
+    if (accessoriPDF && accessoriPDF.length > 0) {
+      y += 3;
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ACCESSORI', margin, y);
+      y += 5;
+
+      accessoriPDF.forEach((acc) => {
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y + 8, pageWidth - margin, y + 8);
+
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.setFont('helvetica', 'normal');
+        doc.text(acc.nome, margin, y + 5);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text(`€ ${parseFloat(acc.prezzo || 0).toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
+
+        y += 10;
+      });
+    }
+
+    // Sezione Totale con caparra
+    y += 8;
+    doc.setDrawColor(0, 107, 63);
+    doc.setLineWidth(0.5);
+    
+    const totaleBoxHeight = data.caparra ? 28 : 14;
+    doc.rect(margin, y, pageWidth - 2 * margin, totaleBoxHeight);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTALE', margin + 5, y + 9);
+
+    doc.setFontSize(14);
+    doc.text(`€ ${getTotale().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
+
+    if (data.caparra) {
+      y += 12;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`CAPARRA (${formatMetodoPagamento(data.metodoPagamento)})`, margin + 5, y + 5);
+      doc.text(`€ ${data.caparra.toFixed(2)}`, pageWidth - margin - 5, y + 5, { align: 'right' });
+      
+      y += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 107, 63);
+      doc.text('DA SALDARE', margin + 5, y + 5);
+      doc.text(`€ ${getDaSaldare().toFixed(2)}`, pageWidth - margin - 5, y + 5, { align: 'right' });
+      
+      y += 10;
+    } else {
+      y += totaleBoxHeight;
+    }
+
+    // Note
+    if (data.note) {
+      y += 5;
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.setFont('helvetica', 'bold');
+      doc.text('NOTE:', margin, y);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      
+      const noteLines = doc.splitTextToSize(data.note, pageWidth - 2 * margin);
+      y += 5;
+      noteLines.forEach((line) => {
+        doc.text(line, margin, y);
+        y += 4;
+      });
+    }
+
+    // Footer
+    y += 10;
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
+
+    const fileName = `Commissione_${getCliente().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const blob = doc.output('blob');
+    
+    return { blob, fileName };
+  };
+
+  // Condividi PDF direttamente (come WhatsApp)
+  const sharePDF = async () => {
+    try {
+      const { blob, fileName } = generatePDFBlob();
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Commissione OMPRA',
+          text: `Commissione per ${getCliente()}`
+        });
+      } else {
+        // Fallback: scarica il PDF
+        generatePDF();
+      }
+    } catch (err) {
+      console.log('Errore condivisione PDF:', err);
+      // Fallback: scarica il PDF
+      generatePDF();
+    }
   };
 
   // Condividi via WhatsApp
@@ -460,39 +709,24 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       ) : (
         // CONFERMATA: Pulsanti condivisione
         <>
-          <div className="fixed top-4 left-4 flex flex-wrap gap-2 z-50 max-w-[70vw]">
+          <div className="fixed top-4 left-4 flex flex-wrap gap-2 z-50">
             <button
-              onClick={shareWhatsApp}
-              className="bg-green-500 text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              onClick={sharePDF}
+              className="bg-green-500 text-white rounded-full p-3 shadow-lg flex items-center gap-2"
+              title="Invia PDF"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-xs font-medium hidden sm:inline">WhatsApp</span>
+              <Share2 className="w-5 h-5" />
+              <span className="text-sm font-medium">Invia PDF</span>
             </button>
             <button
               onClick={shareGmailWithPDF}
-              className="text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              className="text-white rounded-full p-3 shadow-lg flex items-center gap-2"
               style={{ backgroundColor: '#EA4335' }}
-              title="Scarica PDF + Apri Gmail"
+              title="Invia via Gmail"
             >
               <Mail className="w-5 h-5" />
-              <span className="text-xs font-medium hidden sm:inline">Gmail+PDF</span>
+              <span className="text-sm font-medium">Gmail</span>
             </button>
-            <button
-              onClick={generatePDF}
-              className="bg-blue-600 text-white rounded-full p-3 shadow-lg flex items-center gap-1"
-              title="Scarica PDF"
-            >
-              <FileDown className="w-5 h-5" />
-              <span className="text-xs font-medium hidden sm:inline">PDF</span>
-            </button>
-            {navigator.share && (
-              <button
-                onClick={shareGeneric}
-                className="bg-gray-600 text-white rounded-full p-3 shadow-lg"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            )}
           </div>
           <button
             onClick={onClose}

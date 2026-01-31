@@ -707,27 +707,15 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           </button>
         </>
       ) : (
-        // CONFERMATA: Pulsanti condivisione
+        // CONFERMATA: Pulsante condivisione
         <>
-          <div className="fixed top-4 left-4 flex flex-wrap gap-2 z-50">
-            <button
-              onClick={sharePDF}
-              className="bg-green-500 text-white rounded-full p-3 shadow-lg flex items-center gap-2"
-              title="Invia PDF"
-            >
-              <Share2 className="w-5 h-5" />
-              <span className="text-sm font-medium">Invia PDF</span>
-            </button>
-            <button
-              onClick={shareGmailWithPDF}
-              className="text-white rounded-full p-3 shadow-lg flex items-center gap-2"
-              style={{ backgroundColor: '#EA4335' }}
-              title="Invia via Gmail"
-            >
-              <Mail className="w-5 h-5" />
-              <span className="text-sm font-medium">Gmail</span>
-            </button>
-          </div>
+          <button
+            onClick={sharePDF}
+            className="fixed top-4 left-4 bg-green-500 text-white rounded-full px-5 py-3 shadow-lg flex items-center gap-2 z-50"
+          >
+            <Share2 className="w-5 h-5" />
+            <span className="text-sm font-bold">Condividi</span>
+          </button>
           <button
             onClick={onClose}
             className="fixed top-4 right-4 bg-red-500 text-white rounded-full p-3 shadow-lg z-50"

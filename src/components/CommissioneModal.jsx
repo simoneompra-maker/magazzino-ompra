@@ -503,11 +503,13 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         </>
       )}
 
-      {/* Foglio Commissione */}
-      <div 
-        className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full max-h-[85vh] overflow-auto"
-        style={{ touchAction: 'pinch-zoom' }}
-      >
+      {/* Container per Foglio + Pulsante */}
+      <div className="flex flex-col max-h-[95vh] w-full max-w-md">
+        {/* Foglio Commissione */}
+        <div 
+          className="bg-white rounded-lg shadow-2xl p-6 overflow-auto flex-1"
+          style={{ touchAction: 'pinch-zoom' }}
+        >
         {/* Badge anteprima */}
         {!isConfirmed && (
           <div className="mb-4 p-2 bg-blue-100 border border-blue-300 rounded-lg text-center">
@@ -693,17 +695,18 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         )}
       </div>
 
-      {/* Pulsante Conferma FISSO in basso (solo in anteprima) */}
+      {/* Pulsante Conferma sotto il foglio (solo in anteprima) */}
       {!isConfirmed && (
         <button
           onClick={onConfirm}
-          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-8 py-4 rounded-full font-bold text-lg text-white flex items-center justify-center gap-2 shadow-2xl z-50"
+          className="mt-4 w-full py-4 rounded-lg font-bold text-lg text-white flex items-center justify-center gap-2 shadow-lg flex-shrink-0"
           style={{ backgroundColor: '#006B3F' }}
         >
           <Check className="w-6 h-6" />
-          {data.isPending ? 'CONFERMA' : 'CONFERMA VENDITA'}
+          {data.isPending ? 'CONFERMA COMMISSIONE' : 'CONFERMA VENDITA'}
         </button>
       )}
+      </div>
     </div>
   );
 }

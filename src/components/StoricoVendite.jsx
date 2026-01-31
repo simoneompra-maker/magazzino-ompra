@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square } from 'lucide-react';
 import useStore from '../store';
 
 // Funzione per normalizzare la ricerca (rimuove spazi, trattini, converte in minuscolo)
@@ -14,6 +14,8 @@ const normalizeSearch = (str) => {
 export default function StoricoVendite({ onNavigate }) {
   const sales = useStore((state) => state.sales);
   const brands = useStore((state) => state.brands);
+  const deleteSale = useStore((state) => state.deleteSale);
+  const deleteMultipleSales = useStore((state) => state.deleteMultipleSales);
   
   const [filters, setFilters] = useState({
     dataFrom: '',
@@ -31,6 +33,12 @@ export default function StoricoVendite({ onNavigate }) {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [sortField, setSortField] = useState('timestamp');
   const [sortDirection, setSortDirection] = useState('desc');
+  
+  // Stati per eliminazione
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showDeleteMultipleModal, setShowDeleteMultipleModal] = useState(false);
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -163,6 +171,49 @@ export default function StoricoVendite({ onNavigate }) {
       : <ChevronDown className="w-4 h-4 inline" />;
   };
 
+  // Gestione eliminazione singola
+  const handleDeleteClick = (sale) => {
+    setDeleteConfirm(sale);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm) {
+      await deleteSale(deleteConfirm.id);
+      setDeleteConfirm(null);
+    }
+  };
+
+  // Gestione selezione multipla
+  const toggleSelectMode = () => {
+    setSelectMode(!selectMode);
+    setSelectedItems([]);
+  };
+
+  const toggleSelectItem = (id) => {
+    setSelectedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(i => i !== id)
+        : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (selectedItems.length === filteredSales.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredSales.map(s => s.id));
+    }
+  };
+
+  const handleDeleteMultiple = async () => {
+    if (selectedItems.length > 0) {
+      await deleteMultipleSales(selectedItems);
+      setSelectedItems([]);
+      setSelectMode(false);
+      setShowDeleteMultipleModal(false);
+    }
+  };
+
   // EXPORT CSV
   const exportCSV = () => {
     const headers = ['Data', 'Ora', 'Brand', 'Modello', 'Matricola', 'Cliente', 'Prezzo', 'Operatore'];
@@ -291,6 +342,14 @@ export default function StoricoVendite({ onNavigate }) {
             <h1 className="text-xl font-bold">Storico Vendite</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* Pulsante Seleziona */}
+            <button 
+              onClick={toggleSelectMode}
+              className={`p-2 rounded-lg ${selectMode ? 'bg-yellow-400 text-green-800' : 'bg-white/20'}`}
+            >
+              {selectMode ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+            </button>
+            
             {/* Pulsante Export */}
             <div className="relative">
               <button 
@@ -539,8 +598,22 @@ export default function StoricoVendite({ onNavigate }) {
         ) : (
           <div className="divide-y">
             {filteredSales.map((sale) => (
-              <div key={sale.id} className="px-4 py-3 bg-white hover:bg-gray-50">
+              <div key={sale.id} className={`px-4 py-3 bg-white hover:bg-gray-50 ${selectedItems.includes(sale.id) ? 'bg-green-50' : ''}`}>
                 <div className="flex items-start">
+                  {/* Checkbox in modalità selezione */}
+                  {selectMode && (
+                    <button 
+                      onClick={() => toggleSelectItem(sale.id)}
+                      className="flex-none mr-3 mt-1"
+                    >
+                      {selectedItems.includes(sale.id) ? (
+                        <CheckSquare className="w-5 h-5" style={{ color: '#006B3F' }} />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+                  )}
+                  
                   <div className="flex-none w-20">
                     <div className="text-sm font-medium">
                       {new Date(sale.timestamp).toLocaleDateString('it-IT', { 
@@ -578,6 +651,16 @@ export default function StoricoVendite({ onNavigate }) {
                       </span>
                     )}
                   </div>
+                  
+                  {/* Pulsante elimina (solo se non in modalità selezione) */}
+                  {!selectMode && (
+                    <button
+                      onClick={() => handleDeleteClick(sale)}
+                      className="flex-none ml-2 text-red-400 hover:text-red-600 p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 
                 <div className="flex justify-between mt-1 text-xs text-gray-400">
@@ -589,6 +672,116 @@ export default function StoricoVendite({ onNavigate }) {
           </div>
         )}
       </div>
+
+      {/* Barra azioni selezione multipla */}
+      {selectMode && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-40">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <button
+              onClick={selectAll}
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{ color: '#006B3F' }}
+            >
+              {selectedItems.length === filteredSales.length ? (
+                <>
+                  <CheckSquare className="w-5 h-5" />
+                  Deseleziona tutti
+                </>
+              ) : (
+                <>
+                  <Square className="w-5 h-5" />
+                  Seleziona tutti ({filteredSales.length})
+                </>
+              )}
+            </button>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                {selectedItems.length} selezionati
+              </span>
+              <button
+                onClick={() => setShowDeleteMultipleModal(true)}
+                disabled={selectedItems.length === 0}
+                className={`px-4 py-2 rounded-lg font-semibold flex items-center gap-2 ${
+                  selectedItems.length > 0 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Eliminazione Singola */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center mb-4">
+              <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+              <h3 className="text-lg font-bold">Eliminare questa vendita?</h3>
+              <p className="text-gray-600 mt-2">
+                {deleteConfirm.brand} {deleteConfirm.model}
+              </p>
+              <p className="text-sm font-mono text-gray-500">
+                {deleteConfirm.serialNumber}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Cliente: {deleteConfirm.cliente || 'N/D'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold"
+              >
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Eliminazione Multipla */}
+      {showDeleteMultipleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center mb-4">
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-red-600">⚠️ ATTENZIONE</h3>
+              <p className="text-gray-600 mt-2">
+                Stai per eliminare <strong>{selectedItems.length}</strong> vendite.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Questa azione è irreversibile!
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteMultipleModal(false)}
+                className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleDeleteMultiple}
+                className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold"
+              >
+                Elimina {selectedItems.length}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Package, CheckCircle, XCircle, Trash2, AlertTriangle, Download, FileSpreadsheet, Filter, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Search, Package, CheckCircle, XCircle, Trash2, AlertTriangle, Download, FileSpreadsheet, Filter, X, ChevronUp, ChevronDown, CheckSquare, Square } from 'lucide-react';
 import useStore from '../store';
 
 export default function Giacenze({ onNavigate }) {
@@ -7,6 +7,7 @@ export default function Giacenze({ onNavigate }) {
   const brands = useStore((state) => state.brands);
   const deleteItem = useStore((state) => state.deleteItem);
   const clearInventory = useStore((state) => state.clearInventory);
+  const deleteMultipleItems = useStore((state) => state.deleteMultipleItems);
   
   // Filtri
   const [filters, setFilters] = useState({
@@ -26,6 +27,11 @@ export default function Giacenze({ onNavigate }) {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [sortField, setSortField] = useState('timestamp');
   const [sortDirection, setSortDirection] = useState('desc');
+  
+  // Stati per selezione multipla
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showDeleteMultipleModal, setShowDeleteMultipleModal] = useState(false);
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -163,6 +169,37 @@ export default function Giacenze({ onNavigate }) {
     }
   };
 
+  // Gestione selezione multipla
+  const toggleSelectMode = () => {
+    setSelectMode(!selectMode);
+    setSelectedItems([]);
+  };
+
+  const toggleSelectItem = (serialNumber) => {
+    setSelectedItems(prev => 
+      prev.includes(serialNumber) 
+        ? prev.filter(s => s !== serialNumber)
+        : [...prev, serialNumber]
+    );
+  };
+
+  const selectAll = () => {
+    if (selectedItems.length === filteredInventory.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredInventory.map(i => i.serialNumber));
+    }
+  };
+
+  const handleDeleteMultiple = async () => {
+    if (selectedItems.length > 0) {
+      await deleteMultipleItems(selectedItems);
+      setSelectedItems([]);
+      setSelectMode(false);
+      setShowDeleteMultipleModal(false);
+    }
+  };
+
   // EXPORT CSV
   const exportCSV = () => {
     const headers = ['Data Carico', 'Brand', 'Modello', 'Matricola', 'Stato', 'Operatore'];
@@ -283,6 +320,14 @@ export default function Giacenze({ onNavigate }) {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Pulsante Seleziona */}
+            <button 
+              onClick={toggleSelectMode}
+              className={`p-2 rounded-lg ${selectMode ? 'bg-yellow-400 text-green-800' : 'bg-white/20 text-white'}`}
+            >
+              {selectMode ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+            </button>
+            
             {/* Pulsante Export */}
             <div className="relative">
               <button 
@@ -507,8 +552,22 @@ export default function Giacenze({ onNavigate }) {
         ) : (
           <div className="divide-y">
             {filteredInventory.map((item) => (
-              <div key={item.id} className="px-4 py-3 bg-white hover:bg-gray-50">
+              <div key={item.id} className={`px-4 py-3 bg-white hover:bg-gray-50 ${selectedItems.includes(item.serialNumber) ? 'bg-green-50' : ''}`}>
                 <div className="flex items-start">
+                  {/* Checkbox in modalità selezione */}
+                  {selectMode && (
+                    <button 
+                      onClick={() => toggleSelectItem(item.serialNumber)}
+                      className="flex-none mr-3 mt-1"
+                    >
+                      {selectedItems.includes(item.serialNumber) ? (
+                        <CheckSquare className="w-5 h-5" style={{ color: '#006B3F' }} />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+                  )}
+                  
                   {/* Data */}
                   <div className="flex-none w-16">
                     <div className="text-sm font-medium">
@@ -539,12 +598,14 @@ export default function Giacenze({ onNavigate }) {
                     ) : (
                       <XCircle className="w-5 h-5 text-gray-400" />
                     )}
-                    <button
-                      onClick={() => handleDeleteClick(item)}
-                      className="text-red-400 hover:text-red-600 p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {!selectMode && (
+                      <button
+                        onClick={() => handleDeleteClick(item)}
+                        className="text-red-400 hover:text-red-600 p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 
@@ -644,6 +705,81 @@ export default function Giacenze({ onNavigate }) {
                 }`}
               >
                 Conferma
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barra azioni selezione multipla */}
+      {selectMode && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-40">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <button
+              onClick={selectAll}
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{ color: '#006B3F' }}
+            >
+              {selectedItems.length === filteredInventory.length ? (
+                <>
+                  <CheckSquare className="w-5 h-5" />
+                  Deseleziona tutti
+                </>
+              ) : (
+                <>
+                  <Square className="w-5 h-5" />
+                  Seleziona tutti ({filteredInventory.length})
+                </>
+              )}
+            </button>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                {selectedItems.length} selezionati
+              </span>
+              <button
+                onClick={() => setShowDeleteMultipleModal(true)}
+                disabled={selectedItems.length === 0}
+                className={`px-4 py-2 rounded-lg font-semibold flex items-center gap-2 ${
+                  selectedItems.length > 0 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Eliminazione Multipla */}
+      {showDeleteMultipleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="text-center mb-4">
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-red-600">⚠️ ATTENZIONE</h3>
+              <p className="text-gray-600 mt-2">
+                Stai per eliminare <strong>{selectedItems.length}</strong> articoli.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Questa azione è irreversibile!
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteMultipleModal(false)}
+                className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleDeleteMultiple}
+                className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold"
+              >
+                Elimina {selectedItems.length}
               </button>
             </div>
           </div>

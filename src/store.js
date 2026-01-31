@@ -341,6 +341,78 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // ELIMINA MULTIPLI PRODOTTI (per selezione multipla giacenze)
+  deleteMultipleItems: async (serialNumbers) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .in('serialNumber', serialNumbers);
+      
+      if (error) throw error;
+      
+      await get().fetchInventory();
+      await get().fetchSales();
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Delete multiple error:', error);
+      set({ syncStatus: 'error' });
+      alert('Errore durante eliminazione multipla: ' + error.message);
+      return false;
+    }
+  },
+
+  // ELIMINA SINGOLA VENDITA (per id)
+  deleteSale: async (id) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      await get().fetchInventory();
+      await get().fetchSales();
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Delete sale error:', error);
+      set({ syncStatus: 'error' });
+      alert('Errore durante eliminazione vendita: ' + error.message);
+      return false;
+    }
+  },
+
+  // ELIMINA MULTIPLE VENDITE (per selezione multipla storico)
+  deleteMultipleSales: async (ids) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      await get().fetchInventory();
+      await get().fetchSales();
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Delete multiple sales error:', error);
+      set({ syncStatus: 'error' });
+      alert('Errore durante eliminazione multipla: ' + error.message);
+      return false;
+    }
+  },
+
   // AZZERA TUTTO IL MAGAZZINO
   clearInventory: async () => {
     set({ syncStatus: 'syncing' });

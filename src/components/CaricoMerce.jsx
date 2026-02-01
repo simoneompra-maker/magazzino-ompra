@@ -5,23 +5,12 @@ import { scanMatricola, checkRateLimitStatus } from '../services/ocrService';
 
 // Categorie prodotto per il dropdown Tipo
 const TIPI_PRODOTTO = [
-  'Motosega',
-  'Decespugliatore',
-  'Soffiatore',
-  'Rasaerba',
-  'Trattorino',
-  'Tagliasiepi',
-  'Motocoltivatore',
-  'Motozappa',
-  'Atomizzatore',
-  'Idropulitrice',
-  'Biotrituratore',
-  'Spaccalegna',
-  'Aspiratore',
-  'Potatore',
-  'Batteria',
-  'Caricabatterie',
-  'Altro'
+  'Motosega', 'Decespugliatore', 'Tagliabordi', 'Tagliasiepi', 'Soffiatore',
+  'Aspiratore', 'Tosaerba', 'Robot tosaerba', 'Trattorino', 'Biotrituratore',
+  'Idropulitrice', 'Motozappa', 'Arieggiatore', 'Troncatrice', 'Atomizzatore',
+  'Irroratore', 'Sramatore', 'Potatore', 'Trivella', 'Spazzatrice', 'Pompa acqua',
+  'Motocoltivatore', 'Forbice elettronica', 'Motore multifunzione', 'Batteria',
+  'Caricabatterie', 'Altro'
 ];
 
 // Gestione brand personalizzati
@@ -137,6 +126,14 @@ export default function CaricoMerce({ onNavigate }) {
       alert('Inserisci un brand!');
       return;
     }
+    if (!formTipo) {
+      alert('Seleziona un tipo di macchina!');
+      return;
+    }
+    if (formTipo === 'Altro' && !formTipoAltro.trim()) {
+      alert('Inserisci il tipo di macchina!');
+      return;
+    }
     if (!formModel.trim()) {
       alert('Inserisci il modello!');
       return;
@@ -170,7 +167,7 @@ export default function CaricoMerce({ onNavigate }) {
     setProdotti([...prodotti, {
       id: Date.now(),
       brand: brandNorm,
-      model: formModel.trim(),
+      model: `${getTipoFinale()} ${formModel.trim()}`,
       serialNumber: serialNorm,
       tipo: getTipoFinale()
     }]);
@@ -608,7 +605,7 @@ export default function CaricoMerce({ onNavigate }) {
                 <>
                   <button
                     onClick={handleConfirmAdd}
-                    disabled={!formBrand || !formModel.trim() || !formSerial.trim()}
+                    disabled={!formBrand || !formTipo || (formTipo === 'Altro' && !formTipoAltro.trim()) || !formModel.trim() || !formSerial.trim()}
                     className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-50"
                     style={{ backgroundColor: '#006B3F' }}
                   >

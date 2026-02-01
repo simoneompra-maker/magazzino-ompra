@@ -101,7 +101,18 @@ export default function Vendita({ onNavigate }) {
   
   // Per ordine
   const [orderBrand, setOrderBrand] = useState('');
+  const [orderTipo, setOrderTipo] = useState('');
+  const [orderTipoAltro, setOrderTipoAltro] = useState('');
   const [orderModel, setOrderModel] = useState('');
+  
+  // Lista tipologie macchine
+  const tipiMacchina = [
+    'Motosega', 'Decespugliatore', 'Tagliabordi', 'Tagliasiepi', 'Soffiatore',
+    'Aspiratore', 'Tosaerba', 'Robot tosaerba', 'Trattorino', 'Biotrituratore',
+    'Idropulitrice', 'Motozappa', 'Arieggiatore', 'Troncatrice', 'Atomizzatore',
+    'Irroratore', 'Sramatore', 'Potatore', 'Trivella', 'Spazzatrice', 'Pompa acqua',
+    'Motocoltivatore', 'Forbice elettronica', 'Motore multifunzione', 'Altro'
+  ];
   
   // OCR
   const [scanning, setScanning] = useState(false);
@@ -284,17 +295,27 @@ export default function Vendita({ onNavigate }) {
       alert('Seleziona un brand!');
       return;
     }
+    if (!orderTipo) {
+      alert('Seleziona un tipo di macchina!');
+      return;
+    }
+    if (orderTipo === 'Altro' && !orderTipoAltro.trim()) {
+      alert('Inserisci il tipo di macchina!');
+      return;
+    }
     if (!orderModel.trim()) {
       alert('Inserisci il modello!');
       return;
     }
 
     const prezzo = isOmaggio ? 0 : (parseFloat(productPrice) || null);
+    const tipoFinale = orderTipo === 'Altro' ? orderTipoAltro.trim() : orderTipo;
+    const modelCompleto = `${tipoFinale} ${orderModel.trim()}`;
 
     setProdotti([...prodotti, {
       id: Date.now(),
       brand: orderBrand,
-      model: orderModel.trim(),
+      model: modelCompleto,
       serialNumber: null,
       prezzo: prezzo,
       isOmaggio: isOmaggio,
@@ -302,6 +323,8 @@ export default function Vendita({ onNavigate }) {
     }]);
     
     setOrderBrand('');
+    setOrderTipo('');
+    setOrderTipoAltro('');
     setOrderModel('');
     setProductPrice('');
     setIsOmaggio(false);
@@ -316,6 +339,8 @@ export default function Vendita({ onNavigate }) {
     setIsOmaggio(false);
     setShowOmaggioOption(false);
     setOrderBrand('');
+    setOrderTipo('');
+    setOrderTipoAltro('');
     setOrderModel('');
     setOcrError(null);
     setAddMode('magazzino');
@@ -1221,6 +1246,36 @@ export default function Vendita({ onNavigate }) {
                   </div>
 
                   <div>
+                    <label className="text-xs text-gray-500">Tipo macchina *</label>
+                    <select
+                      className="w-full p-2 border rounded-lg mt-1"
+                      value={orderTipo}
+                      onChange={(e) => {
+                        setOrderTipo(e.target.value);
+                        if (e.target.value !== 'Altro') setOrderTipoAltro('');
+                      }}
+                    >
+                      <option value="">Seleziona...</option>
+                      {tipiMacchina.map(tipo => (
+                        <option key={tipo} value={tipo}>{tipo}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {orderTipo === 'Altro' && (
+                    <div>
+                      <label className="text-xs text-gray-500">Specifica tipo *</label>
+                      <input
+                        type="text"
+                        placeholder="Es: Aspirafoglie"
+                        className="w-full p-2 border rounded-lg mt-1"
+                        value={orderTipoAltro}
+                        onChange={(e) => setOrderTipoAltro(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  <div>
                     <label className="text-xs text-gray-500">Modello *</label>
                     <input
                       type="text"
@@ -1280,7 +1335,7 @@ export default function Vendita({ onNavigate }) {
               ) : (
                 <button
                   onClick={handleAddOrderProduct}
-                  disabled={!orderBrand || !orderModel.trim()}
+                  disabled={!orderBrand || !orderTipo || (orderTipo === 'Altro' && !orderTipoAltro.trim()) || !orderModel.trim()}
                   className="w-full py-3 rounded-lg font-bold text-white bg-yellow-500 disabled:opacity-50"
                 >
                   + AGGIUNGI IN ORDINE

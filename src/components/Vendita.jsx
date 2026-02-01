@@ -70,6 +70,7 @@ export default function Vendita({ onNavigate }) {
   const [metodoPagamento, setMetodoPagamento] = useState('');
   const [note, setNote] = useState('');
   const [tipoDocumento, setTipoDocumento] = useState('scontrino'); // 'scontrino' | 'fattura'
+  const [isPreventivo, setIsPreventivo] = useState(false);
   
   // Modifica accessorio
   const [editingAccessorio, setEditingAccessorio] = useState(null);
@@ -442,7 +443,8 @@ export default function Vendita({ onNavigate }) {
       metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
       note: note.trim() || null,
       tipoDocumento: tipoDocumento,
-      isPending: hasOrderedProducts
+      isPending: hasOrderedProducts,
+      isPreventivo: isPreventivo
     });
     setShowCommissione(true);
   };
@@ -459,6 +461,16 @@ export default function Vendita({ onNavigate }) {
     const nomeOperatore = operatore.trim();
     const totale = getTotaleFinale();
     const caparraValue = parseFloat(caparra) || 0;
+    
+    // Se è un preventivo, non salva nulla - solo conferma per condivisione
+    if (isPreventivo) {
+      setCommissioneData({
+        ...commissioneData,
+        confirmed: true,
+        isPreventivo: true
+      });
+      return;
+    }
     
     if (hasOrderedProducts) {
       const commissione = createCommissione({
@@ -531,6 +543,7 @@ export default function Vendita({ onNavigate }) {
     setCaparra('');
     setMetodoPagamento('');
     setNote('');
+    setIsPreventivo(false);
     setShowCommissione(false);
     setCommissioneData(null);
   };
@@ -948,15 +961,35 @@ export default function Vendita({ onNavigate }) {
               📄 Fattura
             </button>
           </div>
+          
+          {/* Checkbox Preventivo */}
+          <label className="flex items-center gap-3 mt-3 p-3 bg-orange-50 rounded-lg cursor-pointer border-2 border-transparent hover:border-orange-300 transition-all">
+            <input
+              type="checkbox"
+              checked={isPreventivo}
+              onChange={(e) => setIsPreventivo(e.target.checked)}
+              className="w-5 h-5 accent-orange-500"
+            />
+            <div>
+              <span className="font-medium text-orange-800">È un preventivo</span>
+              <p className="text-xs text-orange-600">Non registra la vendita, genera solo il documento</p>
+            </div>
+          </label>
         </div>
       </div>
 
       {/* Footer */}
       <div className="p-4 bg-white border-t">
-        {hasOrderedProducts && (
+        {hasOrderedProducts && !isPreventivo && (
           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             <span>Commissione in attesa di consegna</span>
+          </div>
+        )}
+        
+        {isPreventivo && (
+          <div className="mb-3 p-2 bg-orange-50 border border-orange-300 rounded-lg text-sm text-orange-800 flex items-center gap-2">
+            📝 <span>Preventivo - non verrà registrata la vendita</span>
           </div>
         )}
 
@@ -964,9 +997,16 @@ export default function Vendita({ onNavigate }) {
           onClick={handleConcludi}
           disabled={(prodotti.length === 0 && accessori.length === 0 && !note.trim()) || !cliente.trim() || !operatore.trim()}
           className="w-full py-4 rounded-lg font-bold text-lg disabled:opacity-50"
-          style={{ backgroundColor: '#FFDD00', color: '#006B3F' }}
+          style={{ 
+            backgroundColor: isPreventivo ? '#F97316' : '#FFDD00', 
+            color: isPreventivo ? 'white' : '#006B3F' 
+          }}
         >
-          {hasOrderedProducts ? '📋 ANTEPRIMA COMMISSIONE' : '✓ ANTEPRIMA VENDITA'}
+          {isPreventivo 
+            ? '📝 ANTEPRIMA PREVENTIVO' 
+            : hasOrderedProducts 
+              ? '📋 ANTEPRIMA COMMISSIONE' 
+              : '✓ ANTEPRIMA VENDITA'}
         </button>
       </div>
 

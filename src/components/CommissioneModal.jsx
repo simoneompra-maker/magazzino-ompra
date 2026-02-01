@@ -89,12 +89,15 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     const margin = 15;
     let y = 15;
 
+    // Colore header (arancione per preventivo, verde per commissione)
+    const headerColor = data.isPreventivo ? [249, 115, 22] : [0, 107, 63];
+
     // Header semplice con bordo
-    doc.setDrawColor(0, 107, 63);
+    doc.setDrawColor(...headerColor);
     doc.setLineWidth(0.5);
     doc.rect(margin, y, pageWidth - 2 * margin, 25);
     
-    doc.setTextColor(0, 107, 63);
+    doc.setTextColor(...headerColor);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('OMPRA', pageWidth / 2, y + 10, { align: 'center' });
@@ -102,7 +105,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
-    doc.text('Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
+    doc.text(data.isPreventivo ? 'PREVENTIVO' : 'Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
     doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
 
     y += 32;
@@ -300,9 +303,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
+    if (data.isPreventivo) {
+      doc.setTextColor(249, 115, 22);
+      doc.setFontSize(9);
+      doc.text('Preventivo valido 30 giorni', pageWidth / 2, y, { align: 'center' });
+    } else {
+      doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
+    }
 
-    const fileName = `Commissione_${getCliente().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const prefix = data.isPreventivo ? 'Preventivo' : 'Commissione';
+    const fileName = `${prefix}_${getCliente().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(fileName);
     
     return { fileName, doc };
@@ -320,12 +330,15 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     const margin = 15;
     let y = 15;
 
+    // Colore header (arancione per preventivo, verde per commissione)
+    const headerColor = data.isPreventivo ? [249, 115, 22] : [0, 107, 63];
+
     // Header semplice con bordo
-    doc.setDrawColor(0, 107, 63);
+    doc.setDrawColor(...headerColor);
     doc.setLineWidth(0.5);
     doc.rect(margin, y, pageWidth - 2 * margin, 25);
     
-    doc.setTextColor(0, 107, 63);
+    doc.setTextColor(...headerColor);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('OMPRA', pageWidth / 2, y + 10, { align: 'center' });
@@ -333,7 +346,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
-    doc.text('Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
+    doc.text(data.isPreventivo ? 'PREVENTIVO' : 'Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
     doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
 
     y += 32;
@@ -526,9 +539,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
+    if (data.isPreventivo) {
+      doc.setTextColor(249, 115, 22);
+      doc.setFontSize(9);
+      doc.text('Preventivo valido 30 giorni', pageWidth / 2, y, { align: 'center' });
+    } else {
+      doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
+    }
 
-    const fileName = `Commissione_${getCliente().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const prefix = data.isPreventivo ? 'Preventivo' : 'Commissione';
+    const fileName = `${prefix}_${getCliente().replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
     const blob = doc.output('blob');
     
     return { blob, fileName };
@@ -540,11 +560,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       const { blob, fileName } = generatePDFBlob();
       const file = new File([blob], fileName, { type: 'application/pdf' });
       
+      const title = data.isPreventivo ? 'Preventivo OMPRA' : 'Commissione OMPRA';
+      const text = data.isPreventivo 
+        ? `Preventivo per ${getCliente()}`
+        : `Commissione per ${getCliente()}`;
+      
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'Commissione OMPRA',
-          text: `Commissione per ${getCliente()}`
+          title: title,
+          text: text
         });
       } else {
         // Fallback: scarica il PDF
@@ -734,8 +759,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         >
         {/* Badge anteprima */}
         {!isConfirmed && (
-          <div className="mb-4 p-2 bg-blue-100 border border-blue-300 rounded-lg text-center">
-            <span className="text-blue-800 font-medium">👁️ Anteprima - Controlla i dati</span>
+          <div className={`mb-4 p-2 rounded-lg text-center border ${
+            data.isPreventivo 
+              ? 'bg-orange-100 border-orange-300' 
+              : 'bg-blue-100 border-blue-300'
+          }`}>
+            <span className={`font-medium ${data.isPreventivo ? 'text-orange-800' : 'text-blue-800'}`}>
+              {data.isPreventivo ? '📝 Anteprima Preventivo' : '👁️ Anteprima - Controlla i dati'}
+            </span>
           </div>
         )}
 
@@ -743,11 +774,13 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         <div className="border-b-2 border-gray-800 pb-4 mb-4">
           <h1 
             className="text-3xl font-bold text-center"
-            style={{ color: '#006B3F' }}
+            style={{ color: data.isPreventivo ? '#F97316' : '#006B3F' }}
           >
             OMPRA
           </h1>
-          <p className="text-center text-gray-600 text-sm">Commissione di Vendita</p>
+          <p className="text-center text-gray-600 text-sm">
+            {data.isPreventivo ? 'PREVENTIVO' : 'Commissione di Vendita'}
+          </p>
           <p className="text-center text-gray-500 text-xs mt-1">
             {formatDate(data.saleDate || data.createdAt || new Date().toISOString())}
           </p>
@@ -789,18 +822,20 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           </div>
         )}
 
-        {/* Badge Tipo Documento */}
-        <div className="mb-4 flex justify-center">
-          <span 
-            className={`px-4 py-2 rounded-full font-bold text-sm ${
-              data.tipoDocumento === 'fattura' 
-                ? 'bg-blue-100 text-blue-800 border border-blue-300' 
-                : 'bg-green-100 text-green-800 border border-green-300'
-            }`}
-          >
-            {data.tipoDocumento === 'fattura' ? '📄 FATTURA' : '🧾 SCONTRINO'}
-          </span>
-        </div>
+        {/* Badge Tipo Documento (nascosto se preventivo) */}
+        {!data.isPreventivo && (
+          <div className="mb-4 flex justify-center">
+            <span 
+              className={`px-4 py-2 rounded-full font-bold text-sm ${
+                data.tipoDocumento === 'fattura' 
+                  ? 'bg-blue-100 text-blue-800 border border-blue-300' 
+                  : 'bg-green-100 text-green-800 border border-green-300'
+              }`}
+            >
+              {data.tipoDocumento === 'fattura' ? '📄 FATTURA' : '🧾 SCONTRINO'}
+            </span>
+          </div>
+        )}
 
         {/* Prodotti */}
         <div className="mb-4">
@@ -899,19 +934,34 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
         {/* Footer */}
         <div className="mt-4 pt-3 border-t border-gray-200 text-center">
-          <p className="text-xs text-gray-500">
-            Documento non fiscale - Solo per uso interno
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            OMPRA Gestionale v1.5
-          </p>
+          {data.isPreventivo ? (
+            <>
+              <p className="text-sm text-orange-600 font-medium">
+                📝 Preventivo valido 30 giorni
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                OMPRA Gestionale
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500">
+                Documento non fiscale - Solo per uso interno
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                OMPRA Gestionale v1.5
+              </p>
+            </>
+          )}
         </div>
 
         {/* Istruzioni (solo dopo conferma) */}
         {isConfirmed && (
-          <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#e0f2fe' }}>
-            <p className="text-sm text-center" style={{ color: '#0369a1' }}>
-              ✅ Vendita registrata! Usa i pulsanti in alto per condividere
+          <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: data.isPreventivo ? '#fff7ed' : '#e0f2fe' }}>
+            <p className="text-sm text-center" style={{ color: data.isPreventivo ? '#c2410c' : '#0369a1' }}>
+              {data.isPreventivo 
+                ? '📝 Preventivo pronto! Usa il pulsante in alto per condividere'
+                : '✅ Vendita registrata! Usa i pulsanti in alto per condividere'}
             </p>
           </div>
         )}
@@ -922,10 +972,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         <button
           onClick={onConfirm}
           className="mt-4 w-full py-4 rounded-lg font-bold text-lg text-white flex items-center justify-center gap-2 shadow-lg flex-shrink-0"
-          style={{ backgroundColor: '#006B3F' }}
+          style={{ backgroundColor: data.isPreventivo ? '#F97316' : '#006B3F' }}
         >
           <Check className="w-6 h-6" />
-          {data.isPending ? 'CONFERMA COMMISSIONE' : 'CONFERMA VENDITA'}
+          {data.isPreventivo 
+            ? 'GENERA PREVENTIVO' 
+            : data.isPending 
+              ? 'CONFERMA COMMISSIONE' 
+              : 'CONFERMA VENDITA'}
         </button>
       )}
       </div>

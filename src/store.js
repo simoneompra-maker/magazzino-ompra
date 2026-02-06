@@ -184,7 +184,7 @@ const useStore = create((set, get) => ({
       const { error } = await supabase
         .from('inventory')
         .insert({
-          timestamp: new Date().toISOString(),
+          timestamp: saleData.dataVendita || new Date().toISOString(),
           action: 'VENDITA',
           brand: product.brand,
           model: product.model,
@@ -193,7 +193,7 @@ const useStore = create((set, get) => ({
           prezzo: parseFloat(saleData.prezzo),
           totale: parseFloat(saleData.totale),
           status: 'sold',
-          user: get().user,
+          user: saleData.operatore || get().user,
           location: get().location
         });
       
@@ -218,7 +218,7 @@ const useStore = create((set, get) => ({
       const { error } = await supabase
         .from('inventory')
         .insert({
-          timestamp: new Date().toISOString(),
+          timestamp: saleData.dataVendita || new Date().toISOString(),
           action: 'VENDITA',
           brand: saleData.brand || 'VARIE',
           model: saleData.model || saleData.descrizione || 'Vendita',
@@ -239,6 +239,52 @@ const useStore = create((set, get) => ({
       
     } catch (error) {
       console.error('❌ Vendita generica error:', error);
+      set({ syncStatus: 'error' });
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Elimina singola vendita
+  deleteSale: async (saleId) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', saleId);
+      
+      if (error) throw error;
+      
+      await get().fetchSales();
+      set({ syncStatus: 'success' });
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Errore eliminazione vendita:', error);
+      set({ syncStatus: 'error' });
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Elimina vendite multiple
+  deleteMultipleSales: async (saleIds) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .in('id', saleIds);
+      
+      if (error) throw error;
+      
+      await get().fetchSales();
+      set({ syncStatus: 'success' });
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Errore eliminazione vendite multiple:', error);
       set({ syncStatus: 'error' });
       return { success: false, error: error.message };
     }

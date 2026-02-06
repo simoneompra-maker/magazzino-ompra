@@ -72,6 +72,7 @@ export default function Vendita({ onNavigate }) {
   const [note, setNote] = useState('');
   const [tipoDocumento, setTipoDocumento] = useState('scontrino'); // 'scontrino' | 'fattura'
   const [isPreventivo, setIsPreventivo] = useState(false);
+  const [dataVendita, setDataVendita] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
   
   // Modifica accessorio
   const [editingAccessorio, setEditingAccessorio] = useState(null);
@@ -426,6 +427,20 @@ export default function Vendita({ onNavigate }) {
           setNote(prev => prev ? `${prev}\n${result.note}` : result.note);
         }
         
+        // Imposta data se estratta (formato dd/mm/yyyy → yyyy-mm-dd)
+        if (result.data && result.data !== 'ILLEGGIBILE') {
+          try {
+            const parts = result.data.split('/');
+            if (parts.length === 3) {
+              const [dd, mm, yyyy] = parts;
+              const dataFormattata = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+              setDataVendita(dataFormattata);
+            }
+          } catch (e) {
+            console.log('Data non parsabile:', result.data);
+          }
+        }
+        
       } else {
         setScanResult({
           success: false,
@@ -566,6 +581,7 @@ export default function Vendita({ onNavigate }) {
       metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
       note: note.trim() || null,
       tipoDocumento: tipoDocumento,
+      dataVendita: dataVendita,
       isPending: hasOrderedProducts,
       isPreventivo: isPreventivo
     });
@@ -622,6 +638,9 @@ export default function Vendita({ onNavigate }) {
 
     let allSuccess = true;
     
+    // Converti data in formato ISO
+    const dataISO = new Date(dataVendita + 'T12:00:00').toISOString();
+    
     // Gestisci ogni prodotto
     for (const prod of prodotti) {
       if (prod.serialNumber) {
@@ -630,7 +649,8 @@ export default function Vendita({ onNavigate }) {
           cliente: nomeCliente,
           operatore: nomeOperatore,
           prezzo: prod.prezzo || 0,
-          totale: totale
+          totale: totale,
+          dataVendita: dataISO
         });
         if (!result.success) allSuccess = false;
       } else {
@@ -641,7 +661,8 @@ export default function Vendita({ onNavigate }) {
           brand: prod.brand,
           model: prod.model,
           prezzo: prod.prezzo || 0,
-          totale: totale
+          totale: totale,
+          dataVendita: dataISO
         });
         if (!result.success) allSuccess = false;
       }
@@ -655,7 +676,8 @@ export default function Vendita({ onNavigate }) {
         brand: 'ACCESSORI',
         model: acc.descrizione,
         prezzo: acc.prezzo * (acc.quantita || 1),
-        totale: totale
+        totale: totale,
+        dataVendita: dataISO
       });
       if (!result.success) allSuccess = false;
     }
@@ -696,6 +718,7 @@ export default function Vendita({ onNavigate }) {
     setMetodoPagamento('');
     setNote('');
     setIsPreventivo(false);
+    setDataVendita(new Date().toISOString().split('T')[0]);
     setShowCommissione(false);
     setCommissioneData(null);
   };
@@ -809,48 +832,62 @@ export default function Vendita({ onNavigate }) {
       )}
 
       <div className="flex-1 p-4 overflow-auto space-y-3">
-        {/* Operatore */}
-        <div className="bg-white rounded-lg p-3 relative">
-          <label className="text-xs text-gray-500 flex items-center gap-1">
-            <UserCircle className="w-3 h-3" /> Operatore
-          </label>
-          <div className="relative mt-1">
-            <input
-              type="text"
-              placeholder="Nome operatore..."
-              className="w-full p-2 pr-10 border rounded-lg"
-              value={operatore}
-              onChange={(e) => handleOperatoreChange(e.target.value)}
-              onFocus={() => operatoriList.length > 0 && setShowOperatoriDropdown(true)}
-            />
-            {operatoriList.length > 0 && (
-              <button 
-                onClick={() => setShowOperatoriDropdown(!showOperatoriDropdown)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
-              >
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              </button>
-            )}
-          </div>
-          
-          {showOperatoriDropdown && operatoriList.length > 0 && (
-            <div className="absolute left-3 right-3 top-full mt-1 bg-white border rounded-lg shadow-xl z-30 max-h-48 overflow-auto">
-              {operatoriList.map((op) => (
-                <button
-                  key={op}
-                  className={`w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 text-sm flex items-center justify-between ${
-                    op === getUltimoOperatore() ? 'bg-green-50' : ''
-                  }`}
-                  onClick={() => handleSelectOperatore(op)}
+        {/* Operatore e Data */}
+        <div className="flex gap-2">
+          {/* Operatore */}
+          <div className="flex-1 bg-white rounded-lg p-3 relative">
+            <label className="text-xs text-gray-500 flex items-center gap-1">
+              <UserCircle className="w-3 h-3" /> Operatore
+            </label>
+            <div className="relative mt-1">
+              <input
+                type="text"
+                placeholder="Nome operatore..."
+                className="w-full p-2 pr-10 border rounded-lg"
+                value={operatore}
+                onChange={(e) => handleOperatoreChange(e.target.value)}
+                onFocus={() => operatoriList.length > 0 && setShowOperatoriDropdown(true)}
+              />
+              {operatoriList.length > 0 && (
+                <button 
+                  onClick={() => setShowOperatoriDropdown(!showOperatoriDropdown)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
                 >
-                  <span className="font-medium">{op}</span>
-                  {op === getUltimoOperatore() && (
-                    <span className="text-xs text-green-600">(ultimo)</span>
-                  )}
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                </button>
+              )}
+            </div>
+            
+            {showOperatoriDropdown && operatoriList.length > 0 && (
+              <div className="absolute left-3 right-3 top-full mt-1 bg-white border rounded-lg shadow-xl z-30 max-h-48 overflow-auto">
+                {operatoriList.map((op) => (
+                  <button
+                    key={op}
+                    className={`w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 text-sm flex items-center justify-between ${
+                      op === getUltimoOperatore() ? 'bg-green-50' : ''
+                    }`}
+                    onClick={() => handleSelectOperatore(op)}
+                  >
+                    <span className="font-medium">{op}</span>
+                    {op === getUltimoOperatore() && (
+                      <span className="text-xs text-green-600">(ultimo)</span>
+                    )}
                 </button>
               ))}
             </div>
           )}
+          </div>
+          
+          {/* Data Vendita */}
+          <div className="w-32 bg-white rounded-lg p-3">
+            <label className="text-xs text-gray-500">📅 Data</label>
+            <input
+              type="date"
+              className="w-full p-2 border rounded-lg mt-1 text-sm"
+              value={dataVendita}
+              onChange={(e) => setDataVendita(e.target.value)}
+            />
+          </div>
         </div>
 
         {showOperatoriDropdown && (

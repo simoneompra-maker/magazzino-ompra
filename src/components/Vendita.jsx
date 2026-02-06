@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Camera, Search, Plus, Trash2, Package, Clock, Gift, MapPin, User, X, ChevronRight, ChevronDown, UserCircle, Edit2, CreditCard, FileText, Phone } from 'lucide-react';
 import useStore from '../store';
 import CommissioneModal from './CommissioneModal';
-import { scanMatricola } from '../services/ocrService';
+import { scanMatricola, scanCommissione } from '../services/ocrService';
 import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono } from '../services/clientiService';
 
 // Gestione operatori in localStorage
@@ -117,6 +117,10 @@ export default function Vendita({ onNavigate }) {
   // OCR
   const [scanning, setScanning] = useState(false);
   const [ocrError, setOcrError] = useState(null);
+  
+  // Scansione commissione manuale
+  const [scanningCommissione, setScanningCommissione] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
   
   // Commissione
   const [showCommissione, setShowCommissione] = useState(false);
@@ -344,6 +348,68 @@ export default function Vendita({ onNavigate }) {
     setOrderModel('');
     setOcrError(null);
     setAddMode('magazzino');
+  };
+
+  // Scansione commissione/buono di consegna manuale
+  const handleScanCommissione = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setScanningCommissione(true);
+    setScanResult(null);
+    
+    try {
+      const result = await scanCommissione(file);
+      
+      if (result.success) {
+        // Precompila i campi con i dati estratti
+        if (result.cliente) {
+          setCliente(result.cliente);
+        }
+        
+        // Se ci sono articoli, aggiungili come accessori
+        if (result.articoli && result.articoli.length > 0) {
+          const nuoviAccessori = result.articoli.map((art, idx) => ({
+            id: Date.now() + idx,
+            descrizione: art.descrizione || '',
+            quantita: art.quantita || 1,
+            prezzo: art.prezzo || 0
+          }));
+          setAccessori(prev => [...prev, ...nuoviAccessori]);
+        }
+        
+        // Imposta fattura se indicato
+        if (result.fattura === true) {
+          setTipoDocumento('fattura');
+        }
+        
+        // Aggiungi note se presenti
+        if (result.note) {
+          setNote(prev => prev ? `${prev}\n${result.note}` : result.note);
+        }
+        
+        setScanResult({
+          success: true,
+          message: `✓ Dati estratti! Confidenza: ${result.confidenza}`,
+          data: result
+        });
+        
+      } else {
+        setScanResult({
+          success: false,
+          message: result.error || 'Errore nella scansione'
+        });
+      }
+    } catch (error) {
+      console.error('Errore scansione commissione:', error);
+      setScanResult({
+        success: false,
+        message: 'Errore durante la scansione. Riprova.'
+      });
+    } finally {
+      setScanningCommissione(false);
+      e.target.value = '';
+    }
   };
 
   const handleRemoveProduct = (id) => {
@@ -605,11 +671,28 @@ export default function Vendita({ onNavigate }) {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="flex items-center p-4 bg-white border-b">
-        <button onClick={() => onNavigate('home')} className="mr-3">
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-xl font-bold">Nuova Vendita</h1>
+      <div className="flex items-center justify-between p-4 bg-white border-b">
+        <div className="flex items-center">
+          <button onClick={() => onNavigate('home')} className="mr-3">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-bold">Nuova Vendita</h1>
+        </div>
+        
+        {/* Pulsante Scansiona Buono */}
+        <label className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600">
+          <Camera className="w-4 h-4" />
+          <span className="hidden sm:inline">Scansiona Buono</span>
+          <span className="sm:hidden">📷</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleScanCommissione}
+            style={{ display: 'none' }}
+            disabled={scanningCommissione}
+          />
+        </label>
       </div>
 
       <input
@@ -620,6 +703,49 @@ export default function Vendita({ onNavigate }) {
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
+
+      {/* Box risultato scansione commissione */}
+      {(scanningCommissione || scanResult) && (
+        <div className={`mx-4 mt-2 p-3 rounded-lg ${
+          scanningCommissione ? 'bg-blue-50 border border-blue-200' :
+          scanResult?.success ? 'bg-green-50 border border-green-200' :
+          'bg-red-50 border border-red-200'
+        }`}>
+          {scanningCommissione ? (
+            <div className="flex items-center gap-2 text-blue-700">
+              <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+              <span className="text-sm">Analizzo il buono...</span>
+            </div>
+          ) : scanResult?.success ? (
+            <div className="text-green-700">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{scanResult.message}</span>
+                <button 
+                  onClick={() => setScanResult(null)}
+                  className="text-green-500 hover:text-green-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {scanResult.data?.articoli?.length > 0 && (
+                <div className="text-xs mt-1">
+                  Aggiunti {scanResult.data.articoli.length} articoli come accessori
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-between text-red-700">
+              <span className="text-sm">{scanResult?.message}</span>
+              <button 
+                onClick={() => setScanResult(null)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 p-4 overflow-auto space-y-3">
         {/* Operatore */}

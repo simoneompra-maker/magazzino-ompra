@@ -554,19 +554,19 @@ export default function StoricoVendite({ onNavigate }) {
       {/* Intestazioni colonne */}
       <div className="bg-gray-100 px-4 py-2 flex text-xs font-semibold text-gray-600 sticky top-[108px] z-5 border-b">
         <button 
-          className="flex-none w-20 text-left flex items-center gap-1"
+          className="flex-none w-16 text-left flex items-center gap-1"
           onClick={() => toggleSort('timestamp')}
         >
           Data <SortIcon field="timestamp" />
         </button>
         <button 
-          className="flex-1 text-left flex items-center gap-1"
+          className="flex-1 min-w-0 text-left flex items-center gap-1"
           onClick={() => toggleSort('brand')}
         >
           Prodotto <SortIcon field="brand" />
         </button>
         <button 
-          className="flex-none w-24 text-left flex items-center gap-1"
+          className="flex-none w-32 text-left flex items-center gap-1 pl-2"
           onClick={() => toggleSort('cliente')}
         >
           Cliente <SortIcon field="cliente" />
@@ -614,7 +614,7 @@ export default function StoricoVendite({ onNavigate }) {
                     </button>
                   )}
                   
-                  <div className="flex-none w-20">
+                  <div className="flex-none w-16">
                     <div className="text-sm font-medium">
                       {new Date(sale.timestamp).toLocaleDateString('it-IT', { 
                         day: '2-digit', 
@@ -629,7 +629,7 @@ export default function StoricoVendite({ onNavigate }) {
                     </div>
                   </div>
                   
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-2">
                     <div className="font-semibold text-sm truncate">
                       <span style={{ color: '#006B3F' }}>{sale.brand}</span> {sale.model}
                     </div>
@@ -638,7 +638,7 @@ export default function StoricoVendite({ onNavigate }) {
                     </div>
                   </div>
                   
-                  <div className="flex-none w-24 text-sm truncate px-2">
+                  <div className="flex-none w-32 text-sm truncate pl-2">
                     {sale.cliente || '-'}
                   </div>
                   

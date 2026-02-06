@@ -268,6 +268,175 @@ export function checkRateLimitStatus() {
   };
 }
 
+// OCR Commissione/Buono di consegna scritto a mano
+export async function scanCommissione(imageFile) {
+  try {
+    // Controlla se siamo bloccati
+    const rateInfo = getRateLimitInfo();
+    
+    if (rateInfo.blocked && rateInfo.blockedUntil) {
+      const remainingMs = rateInfo.blockedUntil - Date.now();
+      if (remainingMs > 0) {
+        const remainingMin = Math.ceil(remainingMs / 60000);
+        return {
+          success: false,
+          error: `⏳ Limite API raggiunto. Riprova tra ${remainingMin} minuti.`,
+          needsWait: true,
+          isRateLimited: true
+        };
+      } else {
+        rateInfo.blocked = false;
+        rateInfo.blockedUntil = null;
+        saveRateLimitInfo(rateInfo);
+      }
+    }
+    
+    console.log('📸 Inizio scansione commissione manuale...');
+    
+    // Comprimi immagine
+    const compressed = await compressImage(imageFile);
+    const base64Data = await fileToBase64(compressed);
+    
+    // Prompt specifico per buoni di consegna scritti a mano
+    const prompt = `
+Analizza questa immagine di un BUONO DI CONSEGNA scritto a mano.
+È un modulo pre-stampato con campi compilati a penna.
+
+Estrai le seguenti informazioni:
+
+1. CLIENTE - Nome del cliente/destinatario (campo "A" o simile in alto)
+2. ARTICOLI - Lista degli articoli con:
+   - Descrizione prodotto
+   - Quantità (numero)
+   - Prezzo unitario o totale (se presente)
+3. FATTURA - Se è indicato "Segue Fattura: SÌ" o "NO"
+4. DATA - Data del documento se leggibile
+5. NOTE - Eventuali annotazioni aggiuntive
+
+IMPORTANTE:
+- La scrittura è a mano, fai del tuo meglio per interpretarla
+- Se un campo non è leggibile, indica "ILLEGGIBILE"
+- Se un campo è vuoto, indica "VUOTO"
+- I prezzi possono essere scritti come "400,00" o "€ 400" ecc.
+
+RISPONDI IN QUESTO FORMATO JSON:
+{
+  "cliente": "nome cliente",
+  "articoli": [
+    {
+      "descrizione": "descrizione prodotto",
+      "quantita": 1,
+      "prezzo": 400.00
+    }
+  ],
+  "fattura": true,
+  "data": "gg/mm/aaaa",
+  "note": "eventuali note",
+  "confidenza": "alta"
+}
+
+Il campo "confidenza" può essere: "alta", "media", "bassa"
+Se non riesci a leggere nulla, rispondi con:
+{ "errore": "descrizione problema" }
+`;
+    
+    console.log('⚡ Chiamata API Gemini per OCR commissione...');
+    const startTime = Date.now();
+    
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: base64Data,
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
+    
+    const responseTime = Date.now() - startTime;
+    console.log(`✓ Risposta ricevuta in ${responseTime}ms`);
+    
+    // Aggiorna contatore
+    rateInfo.count++;
+    saveRateLimitInfo(rateInfo);
+    
+    const text = result.response.text().trim();
+    console.log('📝 Risposta OCR:', text);
+    
+    // Estrai JSON dalla risposta
+    let jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return {
+        success: false,
+        error: "Non riesco a interpretare il buono. Riprova con foto più chiara.",
+        rawText: text
+      };
+    }
+    
+    try {
+      const data = JSON.parse(jsonMatch[0]);
+      
+      if (data.errore) {
+        return {
+          success: false,
+          error: data.errore,
+          rawText: text
+        };
+      }
+      
+      console.log('✅ OCR commissione completato:', data);
+      
+      return {
+        success: true,
+        cliente: data.cliente !== 'ILLEGGIBILE' && data.cliente !== 'VUOTO' ? data.cliente : null,
+        articoli: data.articoli || [],
+        fattura: data.fattura === true,
+        data: data.data !== 'ILLEGGIBILE' && data.data !== 'VUOTO' ? data.data : null,
+        note: data.note !== 'ILLEGGIBILE' && data.note !== 'VUOTO' ? data.note : null,
+        confidenza: data.confidenza || 'media',
+        responseTime: responseTime,
+        rawText: text
+      };
+      
+    } catch (parseError) {
+      console.error('Errore parsing JSON:', parseError);
+      return {
+        success: false,
+        error: "Errore nell'elaborazione. Riprova.",
+        rawText: text
+      };
+    }
+    
+  } catch (error) {
+    console.error('❌ Errore OCR commissione:', error);
+    
+    const rateInfo = getRateLimitInfo();
+    
+    if (error.message?.includes('429') || 
+        error.message?.includes('quota') || 
+        error.message?.includes('rate') ||
+        error.message?.includes('RESOURCE_EXHAUSTED')) {
+      
+      rateInfo.blocked = true;
+      rateInfo.blockedUntil = Date.now() + (2 * 60 * 1000);
+      saveRateLimitInfo(rateInfo);
+      
+      return {
+        success: false,
+        error: '⏳ Troppe richieste. Attendi 2 minuti.',
+        needsWait: true,
+        isRateLimited: true
+      };
+    }
+    
+    return {
+      success: false,
+      error: 'Errore durante scansione. Riprova.',
+      technical: error.message
+    };
+  }
+}
+
 // Reset manuale rate limit (per debug)
 export function resetRateLimit() {
   localStorage.removeItem(STORAGE_KEY);

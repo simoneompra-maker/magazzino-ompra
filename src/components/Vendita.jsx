@@ -771,7 +771,6 @@ export default function Vendita({ onNavigate }) {
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleScanCommissione}
             style={{ display: 'none' }}
             disabled={scanningCommissione}
@@ -783,7 +782,6 @@ export default function Vendita({ onNavigate }) {
         type="file"
         id="vendita-ocr-input"
         accept="image/*"
-        capture="environment"
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />

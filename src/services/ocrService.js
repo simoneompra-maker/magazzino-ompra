@@ -302,42 +302,65 @@ export async function scanCommissione(imageFile) {
 Analizza questa immagine di un BUONO DI CONSEGNA scritto a mano.
 È un modulo pre-stampato con campi compilati a penna.
 
-Estrai le seguenti informazioni:
+STRUTTURA TIPICA DEL MODULO:
+- In alto: "BUONO DI CONSEGNA" con data e numero
+- Campo "A": nome del CLIENTE/destinatario
+- Righe centrali: ARTICOLI con descrizione, quantità e prezzo
+- In basso: "SEGUE FATTURA: SI/NO" e firma
 
-1. CLIENTE - Nome del cliente/destinatario (campo "A" o simile in alto)
-2. ARTICOLI - Lista degli articoli con:
-   - Descrizione prodotto
-   - Quantità (numero)
-   - Prezzo unitario o totale (se presente)
-3. FATTURA - Se è indicato "Segue Fattura: SÌ" o "NO"
-4. DATA - Data del documento se leggibile
-5. NOTE - Eventuali annotazioni aggiuntive
+ESTRAI CON ATTENZIONE:
 
-IMPORTANTE:
-- La scrittura è a mano, fai del tuo meglio per interpretarla
-- Se un campo non è leggibile, indica "ILLEGGIBILE"
-- Se un campo è vuoto, indica "VUOTO"
-- I prezzi possono essere scritti come "400,00" o "€ 400" ecc.
+1. CLIENTE - Il nome scritto dopo "A" in alto (es: "Moz Floreno", "Rossi Mario")
+
+2. ARTICOLI - MOLTO IMPORTANTE! Per OGNI riga scritta:
+   
+   Cerca di riconoscere se è una MACCHINA o un ACCESSORIO:
+   
+   MACCHINE - Hanno un BRAND riconoscibile:
+   - Brand noti: Stihl, Honda, Echo, Husqvarna, Grillo, Viking, John Deere, Kawasaki, Makita, Bosch, Oleo-Mac
+   - Tipologie: Motosega, Decespugliatore, Tosaerba, Tagliasiepi, Soffiatore, Trattorino, Motozappa, Idropulitrice
+   - Esempio: "Motosega MS 162" → brand: "Stihl", modello: "Motosega MS 162"
+   - Esempio: "HRG 537" → brand: "Honda", modello: "Tosaerba HRG 537"
+   
+   ACCESSORI - Tutto il resto:
+   - Esempio: "Zaino supporto tosasiepi", "Olio catena", "Cintura bretelle", "Filo nylon"
+   - brand: null, modello: la descrizione completa
+
+3. FATTURA - Controlla se è barrato/segnato "SI" o "NO" in basso
+
+4. DATA - La data scritta in alto
 
 RISPONDI IN QUESTO FORMATO JSON:
 {
-  "cliente": "nome cliente",
+  "cliente": "nome cliente letto",
   "articoli": [
     {
-      "descrizione": "descrizione prodotto",
+      "tipo": "macchina",
+      "brand": "Stihl",
+      "descrizione": "Motosega MS 162",
+      "quantita": 1,
+      "prezzo": 360.00
+    },
+    {
+      "tipo": "accessorio",
+      "brand": null,
+      "descrizione": "Zaino supporto tosasiepi",
       "quantita": 1,
       "prezzo": 400.00
     }
   ],
   "fattura": true,
   "data": "gg/mm/aaaa",
-  "note": "eventuali note",
+  "note": "eventuali note aggiuntive",
   "confidenza": "alta"
 }
 
-Il campo "confidenza" può essere: "alta", "media", "bassa"
-Se non riesci a leggere nulla, rispondi con:
-{ "errore": "descrizione problema" }
+REGOLE IMPORTANTI:
+- Leggi TUTTE le righe scritte, non solo la prima
+- Se riconosci un brand, mettilo nel campo "brand" e tipo="macchina"
+- Se NON riconosci un brand, metti brand=null e tipo="accessorio"
+- Il campo "confidenza" può essere: "alta", "media", "bassa"
+- Se un campo non è leggibile usa "ILLEGGIBILE"
 `;
     
     console.log('⚡ Chiamata API Gemini per OCR commissione...');

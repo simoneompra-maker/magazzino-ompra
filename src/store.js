@@ -210,6 +210,40 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // Vendita generica senza matricola (accessori o macchine senza seriale)
+  addGenericSale: async (saleData) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .insert({
+          timestamp: new Date().toISOString(),
+          action: 'VENDITA',
+          brand: saleData.brand || 'VARIE',
+          model: saleData.model || saleData.descrizione || 'Vendita',
+          serialNumber: saleData.serialNumber || `NOMAT-${Date.now()}`,
+          cliente: saleData.cliente,
+          prezzo: parseFloat(saleData.prezzo || saleData.totale),
+          totale: parseFloat(saleData.totale),
+          status: 'sold',
+          user: saleData.operatore || get().user,
+          location: get().location
+        });
+      
+      if (error) throw error;
+      
+      await get().fetchSales();
+      set({ syncStatus: 'success' });
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Vendita generica error:', error);
+      set({ syncStatus: 'error' });
+      return { success: false, error: error.message };
+    }
+  },
+
   // ============ COMMISSIONI ============
 
   // Crea nuova commissione (può essere senza matricola = in attesa)
@@ -337,78 +371,6 @@ const useStore = create((set, get) => ({
       console.error('❌ Delete error:', error);
       set({ syncStatus: 'error' });
       alert('Errore durante eliminazione: ' + error.message);
-      return false;
-    }
-  },
-
-  // ELIMINA MULTIPLI PRODOTTI (per selezione multipla giacenze)
-  deleteMultipleItems: async (serialNumbers) => {
-    set({ syncStatus: 'syncing' });
-    
-    try {
-      const { error } = await supabase
-        .from('inventory')
-        .delete()
-        .in('serialNumber', serialNumbers);
-      
-      if (error) throw error;
-      
-      await get().fetchInventory();
-      await get().fetchSales();
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Delete multiple error:', error);
-      set({ syncStatus: 'error' });
-      alert('Errore durante eliminazione multipla: ' + error.message);
-      return false;
-    }
-  },
-
-  // ELIMINA SINGOLA VENDITA (per id)
-  deleteSale: async (id) => {
-    set({ syncStatus: 'syncing' });
-    
-    try {
-      const { error } = await supabase
-        .from('inventory')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      await get().fetchInventory();
-      await get().fetchSales();
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Delete sale error:', error);
-      set({ syncStatus: 'error' });
-      alert('Errore durante eliminazione vendita: ' + error.message);
-      return false;
-    }
-  },
-
-  // ELIMINA MULTIPLE VENDITE (per selezione multipla storico)
-  deleteMultipleSales: async (ids) => {
-    set({ syncStatus: 'syncing' });
-    
-    try {
-      const { error } = await supabase
-        .from('inventory')
-        .delete()
-        .in('id', ids);
-      
-      if (error) throw error;
-      
-      await get().fetchInventory();
-      await get().fetchSales();
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Delete multiple sales error:', error);
-      set({ syncStatus: 'error' });
-      alert('Errore durante eliminazione multipla: ' + error.message);
       return false;
     }
   },

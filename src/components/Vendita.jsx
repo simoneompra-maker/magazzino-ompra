@@ -53,6 +53,7 @@ export default function Vendita({ onNavigate }) {
   const inventory = useStore((state) => state.inventory);
   const findBySerialNumber = useStore((state) => state.findBySerialNumber);
   const sellProduct = useStore((state) => state.sellProduct);
+  const addGenericSale = useStore((state) => state.addGenericSale);
   const createCommissione = useStore((state) => state.createCommissione);
   const brands = useStore((state) => state.brands);
 
@@ -367,15 +368,52 @@ export default function Vendita({ onNavigate }) {
           setCliente(result.cliente);
         }
         
-        // Se ci sono articoli, aggiungili come accessori
+        // Se ci sono articoli, distingui tra macchine e accessori
         if (result.articoli && result.articoli.length > 0) {
-          const nuoviAccessori = result.articoli.map((art, idx) => ({
-            id: Date.now() + idx,
-            descrizione: art.descrizione || '',
-            quantita: art.quantita || 1,
-            prezzo: art.prezzo || 0
-          }));
-          setAccessori(prev => [...prev, ...nuoviAccessori]);
+          const nuoveMacchine = [];
+          const nuoviAccessori = [];
+          
+          result.articoli.forEach((art, idx) => {
+            if (art.tipo === 'macchina' && art.brand) {
+              // È una macchina con brand riconosciuto → aggiungi ai prodotti
+              nuoveMacchine.push({
+                id: Date.now() + idx,
+                brand: art.brand,
+                model: art.descrizione || '',
+                serialNumber: null, // Senza matricola
+                prezzo: art.prezzo || 0,
+                isOmaggio: false,
+                isOrdered: false
+              });
+            } else {
+              // È un accessorio → aggiungi agli accessori
+              nuoviAccessori.push({
+                id: Date.now() + 1000 + idx,
+                descrizione: art.descrizione || '',
+                quantita: art.quantita || 1,
+                prezzo: art.prezzo || 0
+              });
+            }
+          });
+          
+          if (nuoveMacchine.length > 0) {
+            setProdotti(prev => [...prev, ...nuoveMacchine]);
+          }
+          if (nuoviAccessori.length > 0) {
+            setAccessori(prev => [...prev, ...nuoviAccessori]);
+          }
+          
+          setScanResult({
+            success: true,
+            message: `✓ Estratti: ${nuoveMacchine.length} macchine, ${nuoviAccessori.length} accessori. Confidenza: ${result.confidenza}`,
+            data: result
+          });
+        } else {
+          setScanResult({
+            success: true,
+            message: `✓ Cliente estratto. Confidenza: ${result.confidenza}`,
+            data: result
+          });
         }
         
         // Imposta fattura se indicato
@@ -387,12 +425,6 @@ export default function Vendita({ onNavigate }) {
         if (result.note) {
           setNote(prev => prev ? `${prev}\n${result.note}` : result.note);
         }
-        
-        setScanResult({
-          success: true,
-          message: `✓ Dati estratti! Confidenza: ${result.confidenza}`,
-          data: result
-        });
         
       } else {
         setScanResult({
@@ -589,11 +621,40 @@ export default function Vendita({ onNavigate }) {
     }
 
     let allSuccess = true;
+    
+    // Gestisci ogni prodotto
     for (const prod of prodotti) {
-      const result = await sellProduct(prod.serialNumber, {
+      if (prod.serialNumber) {
+        // Prodotto CON matricola → vendi da magazzino
+        const result = await sellProduct(prod.serialNumber, {
+          cliente: nomeCliente,
+          operatore: nomeOperatore,
+          prezzo: prod.prezzo || 0,
+          totale: totale
+        });
+        if (!result.success) allSuccess = false;
+      } else {
+        // Prodotto SENZA matricola → registra vendita generica
+        const result = await addGenericSale({
+          cliente: nomeCliente,
+          operatore: nomeOperatore,
+          brand: prod.brand,
+          model: prod.model,
+          prezzo: prod.prezzo || 0,
+          totale: totale
+        });
+        if (!result.success) allSuccess = false;
+      }
+    }
+    
+    // Se ci sono accessori, registra anche quelli
+    for (const acc of accessori) {
+      const result = await addGenericSale({
         cliente: nomeCliente,
         operatore: nomeOperatore,
-        prezzo: prod.prezzo || 0,
+        brand: 'ACCESSORI',
+        model: acc.descrizione,
+        prezzo: acc.prezzo * (acc.quantita || 1),
         totale: totale
       });
       if (!result.success) allSuccess = false;

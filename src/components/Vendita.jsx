@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Camera, Search, Plus, Trash2, Package, Clock, Gift, MapPin, User, X, ChevronRight, ChevronDown, UserCircle, Edit2, CreditCard, FileText, Phone } from 'lucide-react';
+import { ArrowLeft, Camera, Search, Plus, Trash2, Package, Clock, Gift, MapPin, User, X, ChevronRight, ChevronDown, UserCircle, Edit2, CreditCard, FileText, Phone, Image as ImageIcon } from 'lucide-react';
 import useStore from '../store';
 import CommissioneModal from './CommissioneModal';
 import { scanMatricola, scanCommissione } from '../services/ocrService';
@@ -763,24 +763,45 @@ export default function Vendita({ onNavigate }) {
           <h1 className="text-xl font-bold">Nuova Vendita</h1>
         </div>
         
-        {/* Pulsante Scansiona Buono */}
-        <label className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-600">
-          <Camera className="w-4 h-4" />
-          <span className="hidden sm:inline">Scansiona Buono</span>
-          <span className="sm:hidden">📷</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleScanCommissione}
-            style={{ display: 'none' }}
-            disabled={scanningCommissione}
-          />
-        </label>
+        {/* Pulsanti Scansiona Buono: Fotocamera + Galleria */}
+        <div className="flex items-center gap-1">
+          <label className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-l-lg text-sm font-medium cursor-pointer hover:bg-blue-600">
+            <Camera className="w-4 h-4" />
+            <span className="hidden sm:inline">Scatta</span>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleScanCommissione}
+              style={{ display: 'none' }}
+              disabled={scanningCommissione}
+            />
+          </label>
+          <label className="flex items-center gap-1 px-3 py-2 bg-blue-400 text-white rounded-r-lg text-sm font-medium cursor-pointer hover:bg-blue-500">
+            <ImageIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Galleria</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleScanCommissione}
+              style={{ display: 'none' }}
+              disabled={scanningCommissione}
+            />
+          </label>
+        </div>
       </div>
 
       <input
         type="file"
         id="vendita-ocr-input"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+      <input
+        type="file"
+        id="vendita-ocr-input-gallery"
         accept="image/*"
         onChange={handleFileSelect}
         style={{ display: 'none' }}
@@ -1356,11 +1377,21 @@ export default function Vendita({ onNavigate }) {
                       <button
                         onClick={() => document.getElementById('vendita-ocr-input')?.click()}
                         disabled={scanning}
-                        className="px-3 rounded-lg text-white flex items-center"
+                        className="px-3 rounded-l-lg text-white flex items-center"
                         style={{ backgroundColor: '#006B3F' }}
+                        title="Scatta foto"
                       >
                         <Camera className="w-5 h-5" />
                         {scanning && <span className="ml-1 text-xs">...</span>}
+                      </button>
+                      <button
+                        onClick={() => document.getElementById('vendita-ocr-input-gallery')?.click()}
+                        disabled={scanning}
+                        className="px-2 rounded-r-lg text-white flex items-center"
+                        style={{ backgroundColor: '#059669' }}
+                        title="Carica da galleria"
+                      >
+                        <ImageIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

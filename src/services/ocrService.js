@@ -6,7 +6,6 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // USA gemini-2.5-flash-lite - 1000 req/giorno nel piano gratuito!
-// Molto meglio di gemini-2.5-flash che ha solo 20 req/giorno
 const model = genAI.getGenerativeModel({ 
   model: "gemini-2.5-flash-lite"
 });
@@ -19,7 +18,6 @@ function getRateLimitInfo() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const data = JSON.parse(stored);
-      // Reset se è passato più di 1 giorno
       if (Date.now() - data.lastReset > 24 * 60 * 60 * 1000) {
         return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null };
       }
@@ -82,7 +80,6 @@ async function compressImage(file) {
 // OCR Matricola con Gemini Vision
 export async function scanMatricola(imageFile) {
   try {
-    // Controlla se siamo bloccati
     const rateInfo = getRateLimitInfo();
     
     if (rateInfo.blocked && rateInfo.blockedUntil) {
@@ -91,30 +88,23 @@ export async function scanMatricola(imageFile) {
         const remainingMin = Math.ceil(remainingMs / 60000);
         return {
           success: false,
-          error: `⏳ Limite API raggiunto. Riprova tra ${remainingMin} minuti o usa inserimento manuale.`,
+          error: `Limite API raggiunto. Riprova tra ${remainingMin} minuti o usa inserimento manuale.`,
           needsWait: true,
           isRateLimited: true
         };
       } else {
-        // Sblocca
         rateInfo.blocked = false;
         rateInfo.blockedUntil = null;
         saveRateLimitInfo(rateInfo);
       }
     }
     
-    console.log('📸 Inizio scansione OCR...');
-    console.log(`📊 Scansioni oggi: ${rateInfo.count}/1000`);
+    console.log('Inizio scansione OCR...');
+    console.log(`Scansioni oggi: ${rateInfo.count}/1000`);
     
-    // Comprimi immagine
     const compressed = await compressImage(imageFile);
-    console.log('✓ Immagine compressa');
-    
-    // Converti in base64
     const base64Data = await fileToBase64(compressed);
-    console.log('✓ Convertita in base64');
     
-    // Prompt ottimizzato per OCR etichette - con supporto matricole alfanumeriche
     const prompt = `
 Analizza questa immagine di un'etichetta di una macchina agricola.
 Estrai le seguenti informazioni se presenti:
@@ -128,7 +118,7 @@ IMPORTANTE PER MATRICOLA:
 - Honda: formato tipico 4 lettere + 7 numeri (es: GCARK1234567, GJNAK5678901)
 - Stihl: principalmente numeri (es: 450163072)
 - Echo/Yamabiko: mix lettere e numeri
-- Grillo: può avere prefissi con lettere
+- Grillo: puo avere prefissi con lettere
 - LEGGI TUTTI I CARATTERI, sia lettere che numeri, dall'inizio alla fine
 - NON omettere le lettere iniziali o finali
 
@@ -140,7 +130,7 @@ MATRICOLA: [matricola COMPLETA con tutte le lettere e numeri, o ILLEGGIBILE]
 Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
 `;
     
-    console.log('⚡ Chiamata API Gemini (gemini-2.5-flash-lite)...');
+    console.log('Chiamata API Gemini (gemini-2.5-flash-lite)...');
     const startTime = Date.now();
     
     const result = await model.generateContent([
@@ -154,16 +144,14 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     ]);
     
     const responseTime = Date.now() - startTime;
-    console.log(`✓ Risposta ricevuta in ${responseTime}ms`);
+    console.log(`Risposta ricevuta in ${responseTime}ms`);
     
-    // Aggiorna contatore
     rateInfo.count++;
     saveRateLimitInfo(rateInfo);
     
     const text = result.response.text().trim();
-    console.log('📝 Risposta:', text);
+    console.log('Risposta:', text);
     
-    // Parse risposta
     const lines = text.split('\n');
     let brand = null;
     let modello = null;
@@ -185,7 +173,6 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
       }
     }
     
-    // Se non ha trovato niente nel formato standard, prova a estrarre la matricola raw
     if (!matricola && text.length > 5 && text.length < 30 && !text.includes(':')) {
       matricola = text.replace(/\s+/g, '').toUpperCase();
     }
@@ -195,12 +182,12 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     if (!hasData) {
       return {
         success: false,
-        error: "Non riesco a leggere l'etichetta. Riprova con foto più chiara o inserisci manualmente.",
+        error: "Non riesco a leggere l'etichetta. Riprova con foto piu chiara o inserisci manualmente.",
         confidence: 0
       };
     }
     
-    console.log('✅ OCR completato:', { brand, modello, matricola });
+    console.log('OCR completato:', { brand, modello, matricola });
     
     return {
       success: true,
@@ -213,25 +200,23 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     };
     
   } catch (error) {
-    console.error('❌ Errore OCR:', error);
+    console.error('Errore OCR:', error);
     
     const rateInfo = getRateLimitInfo();
     
-    // Gestione errore 429 (rate limit)
     if (error.message?.includes('429') || 
         error.message?.includes('quota') || 
         error.message?.includes('rate') ||
         error.message?.includes('RESOURCE_EXHAUSTED') ||
         error.message?.includes('Too Many Requests')) {
       
-      // Blocca per 2 minuti (flash-lite ha limiti molto alti, quindi blocco breve)
       rateInfo.blocked = true;
       rateInfo.blockedUntil = Date.now() + (2 * 60 * 1000);
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: '⏳ Troppe richieste ravvicinate. Attendi 2 minuti o usa inserimento manuale.',
+        error: 'Troppe richieste ravvicinate. Attendi 2 minuti o usa inserimento manuale.',
         needsWait: true,
         isRateLimited: true,
         waitMinutes: 2
@@ -241,7 +226,7 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     if (error.message?.includes('API_KEY') || error.message?.includes('401')) {
       return {
         success: false,
-        error: '🔑 Errore API Key. Contatta amministratore.',
+        error: 'Errore API Key. Contatta amministratore.',
         needsConfig: true
       };
     }
@@ -269,9 +254,9 @@ export function checkRateLimitStatus() {
 }
 
 // OCR Commissione/Buono di consegna scritto a mano
+// Approccio: legge righe e suggerisce categoria, l'utente corregge
 export async function scanCommissione(imageFile) {
   try {
-    // Controlla se siamo bloccati
     const rateInfo = getRateLimitInfo();
     
     if (rateInfo.blocked && rateInfo.blockedUntil) {
@@ -280,7 +265,7 @@ export async function scanCommissione(imageFile) {
         const remainingMin = Math.ceil(remainingMs / 60000);
         return {
           success: false,
-          error: `⏳ Limite API raggiunto. Riprova tra ${remainingMin} minuti.`,
+          error: `Limite API raggiunto. Riprova tra ${remainingMin} minuti.`,
           needsWait: true,
           isRateLimited: true
         };
@@ -291,79 +276,52 @@ export async function scanCommissione(imageFile) {
       }
     }
     
-    console.log('📸 Inizio scansione commissione manuale...');
+    console.log('Inizio scansione commissione manuale...');
     
-    // Comprimi immagine
     const compressed = await compressImage(imageFile);
     const base64Data = await fileToBase64(compressed);
     
-    // Prompt specifico per buoni di consegna scritti a mano
     const prompt = `
 Analizza questa immagine di un BUONO DI CONSEGNA scritto a mano.
-È un modulo pre-stampato con campi compilati a penna.
 
-STRUTTURA TIPICA DEL MODULO:
-- In alto: "BUONO DI CONSEGNA" con data e numero
-- Campo "A": nome del CLIENTE/destinatario
-- Righe centrali: ARTICOLI con descrizione, quantità e prezzo
-- In basso: "SEGUE FATTURA: SI/NO" e firma
+LEGGI OGNI RIGA scritta nel documento e per ognuna suggerisci a quale CAMPO appartiene.
 
-ESTRAI CON ATTENZIONE:
+CAMPI POSSIBILI:
+- "cliente" = nome del cliente/destinatario (di solito dopo "A:" in alto)
+- "macchina" = macchina/attrezzo con brand riconoscibile (Stihl, Honda, Echo, Husqvarna, Grillo, Viking, Kawasaki, Makita, Oleo-Mac, Bosch, John Deere). Se riconosci il brand, aggiungilo.
+- "accessorio" = accessori, ricambi, consumabili (olio, filo, cinture, zaini, ecc.)
+- "prezzo" = importo totale della vendita
+- "caparra" = acconto/caparra versata
+- "fattura" = indicazione se serve fattura (SI/NO)
+- "data" = data del documento
+- "note" = altre annotazioni
+- "ignora" = intestazione modulo, campi vuoti, cose irrilevanti
 
-1. CLIENTE - Il nome scritto dopo "A" in alto (es: "Moz Floreno", "Rossi Mario")
-
-2. ARTICOLI - MOLTO IMPORTANTE! Per OGNI riga scritta:
-   
-   Cerca di riconoscere se è una MACCHINA o un ACCESSORIO:
-   
-   MACCHINE - Hanno un BRAND riconoscibile:
-   - Brand noti: Stihl, Honda, Echo, Husqvarna, Grillo, Viking, John Deere, Kawasaki, Makita, Bosch, Oleo-Mac
-   - Tipologie: Motosega, Decespugliatore, Tosaerba, Tagliasiepi, Soffiatore, Trattorino, Motozappa, Idropulitrice
-   - Esempio: "Motosega MS 162" → brand: "Stihl", modello: "Motosega MS 162"
-   - Esempio: "HRG 537" → brand: "Honda", modello: "Tosaerba HRG 537"
-   
-   ACCESSORI - Tutto il resto:
-   - Esempio: "Zaino supporto tosasiepi", "Olio catena", "Cintura bretelle", "Filo nylon"
-   - brand: null, modello: la descrizione completa
-
-3. FATTURA - Controlla se è barrato/segnato "SI" o "NO" in basso
-
-4. DATA - La data scritta in alto
-
-RISPONDI IN QUESTO FORMATO JSON:
+RISPONDI IN JSON - un array di oggetti, uno per ogni riga letta:
 {
-  "cliente": "nome cliente letto",
-  "articoli": [
-    {
-      "tipo": "macchina",
-      "brand": "Stihl",
-      "descrizione": "Motosega MS 162",
-      "quantita": 1,
-      "prezzo": 360.00
-    },
-    {
-      "tipo": "accessorio",
-      "brand": null,
-      "descrizione": "Zaino supporto tosasiepi",
-      "quantita": 1,
-      "prezzo": 400.00
-    }
-  ],
-  "fattura": true,
-  "data": "gg/mm/aaaa",
-  "note": "eventuali note aggiuntive",
-  "confidenza": "alta"
+  "righe": [
+    { "testo": "Mario Rossi", "campo": "cliente", "brand": null },
+    { "testo": "Motosega MS 162", "campo": "macchina", "brand": "Stihl" },
+    { "testo": "Olio catena 1L", "campo": "accessorio", "brand": null },
+    { "testo": "360,00", "campo": "prezzo", "brand": null },
+    { "testo": "100,00", "campo": "caparra", "brand": null },
+    { "testo": "SI", "campo": "fattura", "brand": null },
+    { "testo": "05/02/2025", "campo": "data", "brand": null }
+  ]
 }
 
-REGOLE IMPORTANTI:
-- Leggi TUTTE le righe scritte, non solo la prima
-- Se riconosci un brand, mettilo nel campo "brand" e tipo="macchina"
-- Se NON riconosci un brand, metti brand=null e tipo="accessorio"
-- Il campo "confidenza" può essere: "alta", "media", "bassa"
-- Se un campo non è leggibile usa "ILLEGGIBILE"
+REGOLE:
+- Leggi TUTTE le righe scritte a mano, dall'alto in basso
+- NON saltare nessuna riga
+- Per le macchine: se riconosci il brand mettilo nel campo "brand"
+- Per i prezzi: scrivi solo il numero (es: "360,00" non "euro 360")
+- Se un importo sembra un acconto/caparra, usa "caparra"
+- Se un importo sembra il totale, usa "prezzo"
+- Ignora le parti pre-stampate del modulo (intestazioni, righe vuote)
+- RISPONDI SOLO CON IL JSON, nessun altro testo
 `;
     
-    console.log('⚡ Chiamata API Gemini per OCR commissione...');
+    console.log('Chiamata API Gemini per OCR commissione...');
     const startTime = Date.now();
     
     const result = await model.generateContent([
@@ -377,21 +335,20 @@ REGOLE IMPORTANTI:
     ]);
     
     const responseTime = Date.now() - startTime;
-    console.log(`✓ Risposta ricevuta in ${responseTime}ms`);
+    console.log(`Risposta ricevuta in ${responseTime}ms`);
     
-    // Aggiorna contatore
     rateInfo.count++;
     saveRateLimitInfo(rateInfo);
     
     const text = result.response.text().trim();
-    console.log('📝 Risposta OCR:', text);
+    console.log('Risposta OCR:', text);
     
     // Estrai JSON dalla risposta
     let jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return {
         success: false,
-        error: "Non riesco a interpretare il buono. Riprova con foto più chiara.",
+        error: "Non riesco a leggere il buono. Riprova con foto piu chiara.",
         rawText: text
       };
     }
@@ -399,24 +356,27 @@ REGOLE IMPORTANTI:
     try {
       const data = JSON.parse(jsonMatch[0]);
       
-      if (data.errore) {
+      if (!data.righe || data.righe.length === 0) {
         return {
           success: false,
-          error: data.errore,
+          error: "Nessuna riga letta. Riprova con foto piu chiara.",
           rawText: text
         };
       }
       
-      console.log('✅ OCR commissione completato:', data);
+      // Mappa le righe con id univoco
+      const righe = data.righe.map((r, i) => ({
+        id: i,
+        testo: r.testo || '',
+        campo: r.campo || 'ignora',
+        brand: r.brand || null
+      }));
+      
+      console.log('OCR commissione completato:', righe);
       
       return {
         success: true,
-        cliente: data.cliente !== 'ILLEGGIBILE' && data.cliente !== 'VUOTO' ? data.cliente : null,
-        articoli: data.articoli || [],
-        fattura: data.fattura === true,
-        data: data.data !== 'ILLEGGIBILE' && data.data !== 'VUOTO' ? data.data : null,
-        note: data.note !== 'ILLEGGIBILE' && data.note !== 'VUOTO' ? data.note : null,
-        confidenza: data.confidenza || 'media',
+        righe: righe,
         responseTime: responseTime,
         rawText: text
       };
@@ -431,7 +391,7 @@ REGOLE IMPORTANTI:
     }
     
   } catch (error) {
-    console.error('❌ Errore OCR commissione:', error);
+    console.error('Errore OCR commissione:', error);
     
     const rateInfo = getRateLimitInfo();
     
@@ -446,7 +406,7 @@ REGOLE IMPORTANTI:
       
       return {
         success: false,
-        error: '⏳ Troppe richieste. Attendi 2 minuti.',
+        error: 'Troppe richieste. Attendi 2 minuti.',
         needsWait: true,
         isRateLimited: true
       };
@@ -463,7 +423,7 @@ REGOLE IMPORTANTI:
 // Reset manuale rate limit (per debug)
 export function resetRateLimit() {
   localStorage.removeItem(STORAGE_KEY);
-  console.log('✓ Rate limit reset');
+  console.log('Rate limit reset');
 }
 
 // Test connessione API

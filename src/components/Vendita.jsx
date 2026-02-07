@@ -125,6 +125,8 @@ export default function Vendita({ onNavigate }) {
   const [scanResult, setScanResult] = useState(null);
   const [showScanBuonoModal, setShowScanBuonoModal] = useState(false);
   const [showOcrChoice, setShowOcrChoice] = useState(false);
+  const [ocrRighe, setOcrRighe] = useState([]); // righe lette dall'OCR per revisione
+  const [showOcrReview, setShowOcrReview] = useState(false); // modale revisione righe
   
   // Commissione
   const [showCommissione, setShowCommissione] = useState(false);
@@ -361,92 +363,19 @@ export default function Vendita({ onNavigate }) {
     
     setScanningCommissione(true);
     setScanResult(null);
+    setOcrRighe([]);
     
     try {
       const result = await scanCommissione(file);
       
-      if (result.success) {
-        // Precompila i campi con i dati estratti
-        if (result.cliente) {
-          setCliente(result.cliente);
-        }
-        
-        // Se ci sono articoli, distingui tra macchine e accessori
-        if (result.articoli && result.articoli.length > 0) {
-          const nuoveMacchine = [];
-          const nuoviAccessori = [];
-          
-          result.articoli.forEach((art, idx) => {
-            if (art.tipo === 'macchina' && art.brand) {
-              // È una macchina con brand riconosciuto → aggiungi ai prodotti
-              nuoveMacchine.push({
-                id: Date.now() + idx,
-                brand: art.brand,
-                model: art.descrizione || '',
-                serialNumber: null, // Senza matricola
-                prezzo: art.prezzo || 0,
-                isOmaggio: false,
-                isOrdered: false
-              });
-            } else {
-              // È un accessorio → aggiungi agli accessori
-              nuoviAccessori.push({
-                id: Date.now() + 1000 + idx,
-                descrizione: art.descrizione || '',
-                quantita: art.quantita || 1,
-                prezzo: art.prezzo || 0
-              });
-            }
-          });
-          
-          if (nuoveMacchine.length > 0) {
-            setProdotti(prev => [...prev, ...nuoveMacchine]);
-          }
-          if (nuoviAccessori.length > 0) {
-            setAccessori(prev => [...prev, ...nuoviAccessori]);
-          }
-          
-          setScanResult({
-            success: true,
-            message: `✓ Estratti: ${nuoveMacchine.length} macchine, ${nuoviAccessori.length} accessori. Confidenza: ${result.confidenza}`,
-            data: result
-          });
-        } else {
-          setScanResult({
-            success: true,
-            message: `✓ Cliente estratto. Confidenza: ${result.confidenza}`,
-            data: result
-          });
-        }
-        
-        // Imposta fattura se indicato
-        if (result.fattura === true) {
-          setTipoDocumento('fattura');
-        }
-        
-        // Aggiungi note se presenti
-        if (result.note) {
-          setNote(prev => prev ? `${prev}\n${result.note}` : result.note);
-        }
-        
-        // Imposta data se estratta (formato dd/mm/yyyy → yyyy-mm-dd)
-        if (result.data && result.data !== 'ILLEGGIBILE') {
-          try {
-            const parts = result.data.split('/');
-            if (parts.length === 3) {
-              const [dd, mm, yyyy] = parts;
-              const dataFormattata = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
-              setDataVendita(dataFormattata);
-            }
-          } catch (e) {
-            console.log('Data non parsabile:', result.data);
-          }
-        }
-        
+      if (result.success && result.righe?.length > 0) {
+        // Mostra modale revisione con le righe lette
+        setOcrRighe(result.righe.filter(r => r.campo !== 'ignora'));
+        setShowOcrReview(true);
       } else {
         setScanResult({
           success: false,
-          message: result.error || 'Errore nella scansione'
+          message: result.error || 'Nessuna riga letta dal buono'
         });
       }
     } catch (error) {
@@ -459,6 +388,106 @@ export default function Vendita({ onNavigate }) {
       setScanningCommissione(false);
       e.target.value = '';
     }
+  };
+
+  // Cambia campo di una riga OCR
+  const handleOcrCampoChange = (id, newCampo) => {
+    setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, campo: newCampo } : r));
+  };
+
+  // Modifica testo di una riga OCR
+  const handleOcrTestoChange = (id, newTesto) => {
+    setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, testo: newTesto } : r));
+  };
+
+  // Conferma righe OCR e compila il form
+  const handleConfirmOcrRighe = () => {
+    const righe = ocrRighe.filter(r => r.campo !== 'ignora');
+    
+    let nuoveMacchine = [];
+    let nuoviAccessori = [];
+    
+    righe.forEach((riga, idx) => {
+      switch (riga.campo) {
+        case 'cliente':
+          setCliente(riga.testo);
+          break;
+        case 'macchina':
+          nuoveMacchine.push({
+            id: Date.now() + idx,
+            brand: riga.brand || 'Sconosciuto',
+            model: riga.testo || '',
+            serialNumber: null,
+            prezzo: 0,
+            isOmaggio: false,
+            isOrdered: false
+          });
+          break;
+        case 'accessorio':
+          nuoviAccessori.push({
+            id: Date.now() + 1000 + idx,
+            descrizione: riga.testo || '',
+            quantita: 1,
+            prezzo: 0
+          });
+          break;
+        case 'prezzo': {
+          const val = riga.testo.replace(/[^\d.,]/g, '').replace(',', '.');
+          const num = parseFloat(val);
+          if (!isNaN(num) && num > 0) {
+            setTotaleManuale(num.toFixed(2));
+          }
+          break;
+        }
+        case 'caparra': {
+          const val = riga.testo.replace(/[^\d.,]/g, '').replace(',', '.');
+          const num = parseFloat(val);
+          if (!isNaN(num) && num > 0) {
+            setCaparra(num.toFixed(2));
+          }
+          break;
+        }
+        case 'fattura':
+          if (riga.testo.toUpperCase().includes('SI') || riga.testo.toUpperCase() === 'S') {
+            setTipoDocumento('fattura');
+          } else {
+            setTipoDocumento('scontrino');
+          }
+          break;
+        case 'data':
+          try {
+            const parts = riga.testo.split('/');
+            if (parts.length === 3) {
+              const [dd, mm, yyyy] = parts;
+              const year = yyyy.length === 2 ? `20${yyyy}` : yyyy;
+              const dataFormattata = `${year}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+              setDataVendita(dataFormattata);
+            }
+          } catch (e) {
+            console.log('Data non parsabile:', riga.testo);
+          }
+          break;
+        case 'note':
+          setNote(prev => prev ? `${prev}\n${riga.testo}` : riga.testo);
+          break;
+      }
+    });
+    
+    if (nuoveMacchine.length > 0) {
+      setProdotti(prev => [...prev, ...nuoveMacchine]);
+    }
+    if (nuoviAccessori.length > 0) {
+      setAccessori(prev => [...prev, ...nuoviAccessori]);
+    }
+    
+    const totItems = nuoveMacchine.length + nuoviAccessori.length;
+    setScanResult({
+      success: true,
+      message: `Importati: ${righe.filter(r => r.campo === 'cliente').length ? 'cliente, ' : ''}${nuoveMacchine.length} macchine, ${nuoviAccessori.length} accessori`
+    });
+    
+    setShowOcrReview(false);
+    setOcrRighe([]);
   };
 
   const handleRemoveProduct = (id) => {
@@ -825,29 +854,12 @@ export default function Vendita({ onNavigate }) {
               <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
               <span className="text-sm">Analizzo il buono...</span>
             </div>
-          ) : scanResult?.success ? (
-            <div className="text-green-700">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{scanResult.message}</span>
-                <button 
-                  onClick={() => setScanResult(null)}
-                  className="text-green-500 hover:text-green-700"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              {scanResult.data?.articoli?.length > 0 && (
-                <div className="text-xs mt-1">
-                  Aggiunti {scanResult.data.articoli.length} articoli come accessori
-                </div>
-              )}
-            </div>
           ) : (
-            <div className="flex items-center justify-between text-red-700">
-              <span className="text-sm">{scanResult?.message}</span>
+            <div className={`flex items-center justify-between ${scanResult?.success ? 'text-green-700' : 'text-red-700'}`}>
+              <span className="text-sm font-medium">{scanResult?.message}</span>
               <button 
                 onClick={() => setScanResult(null)}
-                className="text-red-500 hover:text-red-700"
+                className="opacity-50 hover:opacity-100"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1591,6 +1603,85 @@ export default function Vendita({ onNavigate }) {
                   + AGGIUNGI IN ORDINE
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODALE Revisione Righe OCR */}
+      {showOcrReview && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h3 className="font-bold text-lg">Verifica Righe</h3>
+                <p className="text-xs text-gray-500">{ocrRighe.length} righe lette - correggi se necessario</p>
+              </div>
+              <button onClick={() => { setShowOcrReview(false); setOcrRighe([]); }}>
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-auto p-3 space-y-2">
+              {ocrRighe.map((riga) => (
+                <div key={riga.id} className={`p-3 rounded-lg border ${
+                  riga.campo === 'ignora' ? 'bg-gray-50 border-gray-200 opacity-50' :
+                  riga.campo === 'cliente' ? 'bg-blue-50 border-blue-200' :
+                  riga.campo === 'macchina' ? 'bg-green-50 border-green-200' :
+                  riga.campo === 'accessorio' ? 'bg-yellow-50 border-yellow-200' :
+                  riga.campo === 'prezzo' ? 'bg-purple-50 border-purple-200' :
+                  riga.campo === 'caparra' ? 'bg-orange-50 border-orange-200' :
+                  riga.campo === 'fattura' ? 'bg-indigo-50 border-indigo-200' :
+                  riga.campo === 'data' ? 'bg-cyan-50 border-cyan-200' :
+                  riga.campo === 'note' ? 'bg-pink-50 border-pink-200' :
+                  'bg-white border-gray-200'
+                }`}>
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={riga.testo}
+                        onChange={(e) => handleOcrTestoChange(riga.id, e.target.value)}
+                        className="w-full text-sm font-medium bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                      />
+                      {riga.brand && (
+                        <span className="text-xs text-green-600 font-medium">Brand: {riga.brand}</span>
+                      )}
+                    </div>
+                    <select
+                      value={riga.campo}
+                      onChange={(e) => handleOcrCampoChange(riga.id, e.target.value)}
+                      className="text-xs font-medium border rounded-md px-2 py-1 bg-white min-w-[100px]"
+                    >
+                      <option value="cliente">Cliente</option>
+                      <option value="macchina">Macchina</option>
+                      <option value="accessorio">Accessorio</option>
+                      <option value="prezzo">Prezzo tot.</option>
+                      <option value="caparra">Caparra</option>
+                      <option value="fattura">Fattura</option>
+                      <option value="data">Data</option>
+                      <option value="note">Note</option>
+                      <option value="ignora">Ignora</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="p-4 border-t flex gap-2">
+              <button
+                onClick={() => { setShowOcrReview(false); setOcrRighe([]); }}
+                className="flex-1 py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleConfirmOcrRighe}
+                className="flex-[2] py-3 rounded-lg font-bold text-white"
+                style={{ backgroundColor: '#3b82f6' }}
+              >
+                Conferma e compila
+              </button>
             </div>
           </div>
         </div>

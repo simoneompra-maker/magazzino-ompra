@@ -5,10 +5,41 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-// USA gemini-2.5-flash-lite - 1000 req/giorno nel piano gratuito!
-const model = genAI.getGenerativeModel({ 
-  model: "gemini-2.5-flash-lite"
-});
+// Modello primario e fallback
+const PRIMARY_MODEL = "gemini-2.0-flash-lite";
+const FALLBACK_MODEL = "gemini-2.0-flash";
+
+let currentModelName = PRIMARY_MODEL;
+const model = genAI.getGenerativeModel({ model: PRIMARY_MODEL });
+const fallbackModel = genAI.getGenerativeModel({ model: FALLBACK_MODEL });
+
+// Chiama Gemini con fallback automatico
+async function callGemini(contents) {
+  try {
+    const result = await model.generateContent(contents);
+    currentModelName = PRIMARY_MODEL;
+    return result;
+  } catch (primaryError) {
+    console.warn(`Modello primario (${PRIMARY_MODEL}) fallito:`, primaryError.message);
+    
+    // Se 429/quota, prova fallback
+    if (primaryError.message?.includes('429') || 
+        primaryError.message?.includes('quota') ||
+        primaryError.message?.includes('RESOURCE_EXHAUSTED') ||
+        primaryError.message?.includes('Too Many Requests')) {
+      try {
+        console.log(`Provo fallback (${FALLBACK_MODEL})...`);
+        const result = await fallbackModel.generateContent(contents);
+        currentModelName = FALLBACK_MODEL;
+        return result;
+      } catch (fallbackError) {
+        console.error(`Anche fallback (${FALLBACK_MODEL}) fallito:`, fallbackError.message);
+        throw fallbackError; // rilancia l'errore del fallback
+      }
+    }
+    throw primaryError;
+  }
+}
 
 // Rate limiting info - salvato in localStorage per persistenza
 const STORAGE_KEY = 'ocr_rate_limit';
@@ -157,10 +188,10 @@ MATRICOLA: [matricola COMPLETA con tutte le lettere e numeri, o ILLEGGIBILE]
 Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
 `;
     
-    console.log('Chiamata API Gemini (gemini-2.5-flash-lite)...');
+    console.log('Chiamata API Gemini...');
     const startTime = Date.now();
     
-    const result = await model.generateContent([
+    const result = await callGemini([
       prompt,
       {
         inlineData: {
@@ -171,7 +202,7 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     ]);
     
     const responseTime = Date.now() - startTime;
-    console.log(`Risposta ricevuta in ${responseTime}ms`);
+    console.log(`Risposta ricevuta in ${responseTime}ms (modello: ${currentModelName})`);
     
     rateInfo.count++;
     rateInfo.consecutive429 = 0;
@@ -247,9 +278,15 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
       rateInfo.blockedUntil = Date.now() + waitMs;
       saveRateLimitInfo(rateInfo);
       
+      // Messaggio più informativo
+      const isQuota = error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED');
+      const msg = isQuota 
+        ? `Quota API esaurita per oggi. Riprova domani o usa un altro API key.`
+        : `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`;
+      
       return {
         success: false,
-        error: `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`,
+        error: msg,
         needsWait: true,
         isRateLimited: true,
         waitSeconds: waitSec
@@ -264,9 +301,11 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
       };
     }
     
+    // Mostra errore reale per debug
+    console.error('Errore OCR dettaglio:', error.message);
     return {
       success: false,
-      error: 'Errore durante scansione. Riprova o inserisci manualmente.',
+      error: `Errore scansione: ${error.message?.substring(0, 80) || 'sconosciuto'}`,
       technical: error.message
     };
   }
@@ -361,7 +400,7 @@ REGOLE:
     console.log('Chiamata API Gemini per OCR commissione...');
     const startTime = Date.now();
     
-    const result = await model.generateContent([
+    const result = await callGemini([
       prompt,
       {
         inlineData: {
@@ -372,7 +411,7 @@ REGOLE:
     ]);
     
     const responseTime = Date.now() - startTime;
-    console.log(`Risposta ricevuta in ${responseTime}ms`);
+    console.log(`Risposta ricevuta in ${responseTime}ms (modello: ${currentModelName})`);
     
     rateInfo.count++;
     rateInfo.consecutive429 = 0;
@@ -448,17 +487,23 @@ REGOLE:
       rateInfo.blockedUntil = Date.now() + waitMs;
       saveRateLimitInfo(rateInfo);
       
+      const isQuota = error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED');
+      const msg = isQuota 
+        ? `Quota API esaurita per oggi. Riprova domani.`
+        : `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`;
+      
       return {
         success: false,
-        error: `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`,
+        error: msg,
         needsWait: true,
         isRateLimited: true
       };
     }
     
+    console.error('Errore OCR commissione dettaglio:', error.message);
     return {
       success: false,
-      error: 'Errore durante scansione. Riprova.',
+      error: `Errore scansione: ${error.message?.substring(0, 80) || 'sconosciuto'}`,
       technical: error.message
     };
   }
@@ -480,20 +525,20 @@ export async function testGeminiAPI() {
       };
     }
     
-    const result = await model.generateContent("Rispondi solo: OK");
+    const result = await callGemini("Rispondi solo: OK");
     const text = result.response.text();
     
     return { 
       success: true, 
-      message: 'API Gemini funzionante!',
-      model: 'gemini-2.5-flash-lite',
+      message: `API Gemini funzionante! (${currentModelName})`,
+      model: currentModelName,
       response: text
     };
     
   } catch (error) {
     return { 
       success: false, 
-      error: error.message 
+      error: `${error.message} (entrambi i modelli falliti)`
     };
   }
 }

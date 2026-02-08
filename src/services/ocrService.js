@@ -5,9 +5,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-// Modello primario e fallback
-const PRIMARY_MODEL = "gemini-1.5-flash"; 
-const FALLBACK_MODEL = "gemini-1.5-flash"; // Puoi usare lo stesso o "gemini-1.5-pro"
+// Modelli corretti - usa questi nomi esatti
+const PRIMARY_MODEL = "gemini-1.5-flash"; // Questo è il più stabile
+const FALLBACK_MODEL = "gemini-1.5-flash-8b"; // Versione leggerissima, sempre disponibile
 
 let currentModelName = PRIMARY_MODEL;
 const model = genAI.getGenerativeModel({ model: PRIMARY_MODEL });

@@ -85,10 +85,10 @@ export async function scanMatricola(imageFile) {
     if (rateInfo.blocked && rateInfo.blockedUntil) {
       const remainingMs = rateInfo.blockedUntil - Date.now();
       if (remainingMs > 0) {
-        const remainingMin = Math.ceil(remainingMs / 60000);
+        const remainingSec = Math.ceil(remainingMs / 1000);
         return {
           success: false,
-          error: `Limite API raggiunto. Riprova tra ${remainingMin} minuti o usa inserimento manuale.`,
+          error: `Attendi ${remainingSec} secondi prima di riprovare.`,
           needsWait: true,
           isRateLimited: true
         };
@@ -211,15 +211,15 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
         error.message?.includes('Too Many Requests')) {
       
       rateInfo.blocked = true;
-      rateInfo.blockedUntil = Date.now() + (1 * 60 * 1000);
+      rateInfo.blockedUntil = Date.now() + (30 * 1000);
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: 'Troppe richieste ravvicinate. Attendi 1 minuto o usa inserimento manuale.',
+        error: 'Troppe richieste. Attendi 30 secondi.',
         needsWait: true,
         isRateLimited: true,
-        waitMinutes: 1
+        waitSeconds: 30
       };
     }
     
@@ -247,8 +247,8 @@ export function checkRateLimitStatus() {
     maxDaily: 1000,
     blocked: info.blocked,
     blockedUntil: info.blockedUntil,
-    remainingMinutes: info.blocked && info.blockedUntil 
-      ? Math.max(0, Math.ceil((info.blockedUntil - Date.now()) / 60000))
+    remainingSeconds: info.blocked && info.blockedUntil 
+      ? Math.max(0, Math.ceil((info.blockedUntil - Date.now()) / 1000))
       : 0
   };
 }
@@ -262,10 +262,10 @@ export async function scanCommissione(imageFile) {
     if (rateInfo.blocked && rateInfo.blockedUntil) {
       const remainingMs = rateInfo.blockedUntil - Date.now();
       if (remainingMs > 0) {
-        const remainingMin = Math.ceil(remainingMs / 60000);
+        const remainingSec = Math.ceil(remainingMs / 1000);
         return {
           success: false,
-          error: `Limite API raggiunto. Riprova tra ${remainingMin} minuti.`,
+          error: `Attendi ${remainingSec} secondi prima di riprovare.`,
           needsWait: true,
           isRateLimited: true
         };
@@ -410,12 +410,12 @@ REGOLE:
         error.message?.includes('RESOURCE_EXHAUSTED')) {
       
       rateInfo.blocked = true;
-      rateInfo.blockedUntil = Date.now() + (1 * 60 * 1000);
+      rateInfo.blockedUntil = Date.now() + (30 * 1000);
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: 'Troppe richieste. Attendi 1 minuto.',
+        error: 'Troppe richieste. Attendi 30 secondi.',
         needsWait: true,
         isRateLimited: true
       };

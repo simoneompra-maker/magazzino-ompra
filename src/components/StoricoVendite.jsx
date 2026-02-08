@@ -566,7 +566,7 @@ export default function StoricoVendite({ onNavigate }) {
           Prodotto <SortIcon field="brand" />
         </button>
         <button 
-          className="flex-none w-32 text-left flex items-center gap-1 pl-2"
+          className="flex-1 min-w-0 text-left flex items-center gap-1 pl-2"
           onClick={() => toggleSort('cliente')}
         >
           Cliente <SortIcon field="cliente" />
@@ -638,7 +638,7 @@ export default function StoricoVendite({ onNavigate }) {
                     </div>
                   </div>
                   
-                  <div className="flex-none w-32 text-sm truncate pl-2">
+                  <div className="flex-1 min-w-0 text-sm truncate pl-2">
                     {sale.cliente || '-'}
                   </div>
                   

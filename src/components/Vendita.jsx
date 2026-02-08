@@ -404,6 +404,8 @@ export default function Vendita({ onNavigate }) {
           success: false,
           message: result.error || 'Nessuna riga letta dal buono'
         });
+        // Auto-dismiss errore dopo 10 secondi
+        setTimeout(() => setScanResult(null), 10000);
       }
     } catch (error) {
       console.error('Errore scansione commissione:', error);
@@ -411,6 +413,8 @@ export default function Vendita({ onNavigate }) {
         success: false,
         message: 'Errore durante la scansione. Riprova.'
       });
+      // Auto-dismiss errore dopo 10 secondi
+      setTimeout(() => setScanResult(null), 10000);
     } finally {
       setScanningCommissione(false);
       e.target.value = '';
@@ -504,6 +508,17 @@ export default function Vendita({ onNavigate }) {
             parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.'));
           if (!isNaN(val) && val > 0) {
             setCaparra(val.toFixed(2));
+          }
+          // Estrai metodo pagamento dal testo caparra
+          const testoUp = riga.testo.toUpperCase();
+          if (testoUp.includes('BANCOMAT') || testoUp.includes('POS')) {
+            setMetodoPagamento('pos');
+          } else if (testoUp.includes('CARTA') || testoUp.includes('CARD')) {
+            setMetodoPagamento('carta');
+          } else if (testoUp.includes('CONTANT') || testoUp.includes('CASH')) {
+            setMetodoPagamento('contanti');
+          } else if (testoUp.includes('BONIFIC') || testoUp.includes('IBAN')) {
+            setMetodoPagamento('bonifico');
           }
           break;
         }
@@ -718,28 +733,27 @@ export default function Vendita({ onNavigate }) {
 
       const dataISO = new Date(dataVendita + 'T12:00:00').toISOString();
       
-      // Raccogli tutto per un unico salvataggio combinato
+      // Raccogli TUTTI gli articoli per un unico record vendita
       const allParts = [];
       let combinedBrand = '';
       let combinedPrezzo = 0;
       
       for (const prod of prodotti) {
+        combinedBrand = combinedBrand || prod.brand || '';
+        const label = `${prod.brand ? prod.brand + ' ' : ''}${prod.model}`;
+        allParts.push(prod.serialNumber ? `${label} (SN: ${prod.serialNumber})` : label);
+        combinedPrezzo += (prod.prezzo || 0);
+        
+        // Aggiorna inventario se ha matricola (best-effort, non blocca il salvataggio)
         if (prod.serialNumber) {
-          // Prova a vendere da magazzino
-          const result = await sellProduct(prod.serialNumber, {
-            cliente: nomeCliente, operatore: nomeOperatore,
-            prezzo: prod.prezzo || 0, totale, dataVendita: dataISO
-          });
-          if (!result.success) {
-            // Non trovata in magazzino → salva come generica con SN
-            combinedBrand = combinedBrand || prod.brand || '';
-            allParts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model} (SN: ${prod.serialNumber})`);
-            combinedPrezzo += (prod.prezzo || 0);
+          try {
+            await sellProduct(prod.serialNumber, {
+              cliente: nomeCliente, operatore: nomeOperatore,
+              prezzo: prod.prezzo || 0, totale, dataVendita: dataISO
+            });
+          } catch (e) {
+            console.warn('Inventario non aggiornato per SN:', prod.serialNumber, e);
           }
-        } else {
-          combinedBrand = combinedBrand || prod.brand || '';
-          allParts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model}`);
-          combinedPrezzo += (prod.prezzo || 0);
         }
       }
       
@@ -751,7 +765,7 @@ export default function Vendita({ onNavigate }) {
         combinedPrezzo += accPrezzo;
       });
       
-      // Salva tutto il resto come UN SOLO record
+      // Salva SEMPRE come record vendita generico
       if (allParts.length > 0) {
         if (!combinedBrand && accessori.length > 0) combinedBrand = 'ACCESSORI';
         await addGenericSale({
@@ -1306,6 +1320,7 @@ export default function Vendita({ onNavigate }) {
               <option value="">Metodo...</option>
               <option value="contanti">Contanti</option>
               <option value="carta">Carta</option>
+              <option value="pos">POS</option>
               <option value="bonifico">Bonifico</option>
             </select>
           </div>
@@ -1769,7 +1784,23 @@ export default function Vendita({ onNavigate }) {
                         className="w-full text-sm font-medium bg-transparent border-none p-0 focus:outline-none focus:ring-0"
                       />
                       {riga.brand && (
-                        <span className="text-xs text-green-600 font-medium">Brand: {riga.brand}</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="text-xs text-green-600">Brand:</span>
+                          <input
+                            type="text"
+                            value={riga.brand}
+                            onChange={(e) => {
+                              const newBrand = e.target.value;
+                              setOcrRighe(prev => prev.map(r => r.id === riga.id ? { ...r, brand: newBrand } : r));
+                            }}
+                            className="text-xs text-green-700 font-medium bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-24 focus:outline-none focus:ring-1 focus:ring-green-300"
+                          />
+                          <button
+                            onClick={() => setOcrRighe(prev => prev.map(r => r.id === riga.id ? { ...r, brand: '' } : r))}
+                            className="text-xs text-red-400 hover:text-red-600"
+                            title="Rimuovi brand"
+                          >✕</button>
+                        </div>
                       )}
                     </div>
                     {/* Campo prezzo per macchine e accessori */}

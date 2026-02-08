@@ -20,6 +20,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     const metodi = {
       'contanti': 'Contanti',
       'carta': 'Carta',
+      'pos': 'POS',
       'bonifico': 'Bonifico'
     };
     return metodi[metodo] || metodo;

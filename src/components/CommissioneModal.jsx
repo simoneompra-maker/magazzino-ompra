@@ -253,7 +253,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('TOTALE', margin + 5, y + 9);
+    doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE', margin + 5, y + 9);
 
     doc.setFontSize(14);
     doc.text(`€ ${getTotale().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
@@ -491,7 +491,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('TOTALE', margin + 5, y + 9);
+    doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE', margin + 5, y + 9);
 
     doc.setFontSize(14);
     doc.text(`€ ${getTotale().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
@@ -621,7 +621,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     }
     
     text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `💰 *TOTALE: €${getTotale().toFixed(2)}*`;
+    text += `💰 *TOTALE${data.ivaCompresa ? ' (I.C.)' : ''}: €${getTotale().toFixed(2)}*`;
     
     // Aggiungi caparra se presente
     if (data.caparra) {
@@ -905,7 +905,12 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           style={{ backgroundColor: '#006B3F' }}
         >
           <div className="flex justify-between items-center text-white">
-            <p className="text-lg font-bold uppercase">Totale</p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold uppercase">Totale</p>
+              {data.ivaCompresa && (
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded">I.C.</span>
+              )}
+            </div>
             <p className="text-3xl font-bold">€ {getTotale().toFixed(2)}</p>
           </div>
           

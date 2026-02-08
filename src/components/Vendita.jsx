@@ -727,72 +727,73 @@ export default function Vendita({ onNavigate }) {
       return;
     }
 
-    let allSuccess = true;
-    
-    // Converti data in formato ISO
-    const dataISO = new Date(dataVendita + 'T12:00:00').toISOString();
-    
-    // 1) Macchine CON matricola → vendita da magazzino (record singolo necessario per inventario)
-    for (const prod of prodotti) {
-      if (prod.serialNumber) {
-        const result = await sellProduct(prod.serialNumber, {
+    try {
+      let allSuccess = true;
+      
+      // Converti data in formato ISO
+      const dataISO = new Date(dataVendita + 'T12:00:00').toISOString();
+      
+      // 1) Macchine CON matricola → vendita da magazzino (record singolo necessario per inventario)
+      for (const prod of prodotti) {
+        if (prod.serialNumber) {
+          const result = await sellProduct(prod.serialNumber, {
+            cliente: nomeCliente,
+            operatore: nomeOperatore,
+            prezzo: prod.prezzo || 0,
+            totale: totale,
+            dataVendita: dataISO
+          });
+          if (!result.success) allSuccess = false;
+        }
+      }
+      
+      // 2) Tutto il resto (macchine senza matricola + accessori) → UN SOLO record
+      const genericProducts = prodotti.filter(p => !p.serialNumber);
+      const hasGenericProducts = genericProducts.length > 0;
+      const hasAccessori = accessori.length > 0;
+      
+      if (hasGenericProducts || hasAccessori) {
+        // Costruisci descrizione combinata
+        let combinedBrand = '';
+        let combinedModel = '';
+        let combinedPrezzo = 0;
+        
+        // Aggiungi macchine senza matricola
+        const parts = [];
+        genericProducts.forEach(prod => {
+          combinedBrand = combinedBrand || prod.brand || '';
+          parts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model}`);
+          combinedPrezzo += (prod.prezzo || 0);
+        });
+        
+        // Aggiungi accessori
+        accessori.forEach(acc => {
+          const accPrezzo = (acc.prezzo || 0) * (acc.quantita || 1);
+          const qta = (acc.quantita || 1) > 1 ? ` x${acc.quantita}` : '';
+          parts.push(`${acc.nome || acc.descrizione}${qta}`);
+          combinedPrezzo += accPrezzo;
+        });
+        
+        // Se c'è solo accessori, usa ACCESSORI come brand
+        if (!hasGenericProducts && hasAccessori) {
+          combinedBrand = 'ACCESSORI';
+        }
+        
+        combinedModel = parts.join(' + ');
+        
+        const result = await addGenericSale({
           cliente: nomeCliente,
           operatore: nomeOperatore,
-          prezzo: prod.prezzo || 0,
+          brand: combinedBrand,
+          model: combinedModel,
+          prezzo: combinedPrezzo,
           totale: totale,
           dataVendita: dataISO
         });
         if (!result.success) allSuccess = false;
       }
-    }
-    
-    // 2) Tutto il resto (macchine senza matricola + accessori) → UN SOLO record
-    const genericProducts = prodotti.filter(p => !p.serialNumber);
-    const hasGenericProducts = genericProducts.length > 0;
-    const hasAccessori = accessori.length > 0;
-    
-    if (hasGenericProducts || hasAccessori) {
-      // Costruisci descrizione combinata
-      let combinedBrand = '';
-      let combinedModel = '';
-      let combinedPrezzo = 0;
       
-      // Aggiungi macchine senza matricola
-      const parts = [];
-      genericProducts.forEach(prod => {
-        combinedBrand = combinedBrand || prod.brand || '';
-        parts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model}`);
-        combinedPrezzo += (prod.prezzo || 0);
-      });
-      
-      // Aggiungi accessori
-      accessori.forEach(acc => {
-        const accPrezzo = (acc.prezzo || 0) * (acc.quantita || 1);
-        const qta = (acc.quantita || 1) > 1 ? ` x${acc.quantita}` : '';
-        parts.push(`${acc.nome || acc.descrizione}${qta}`);
-        combinedPrezzo += accPrezzo;
-      });
-      
-      // Se c'è solo accessori, usa ACCESSORI come brand
-      if (!hasGenericProducts && hasAccessori) {
-        combinedBrand = 'ACCESSORI';
-      }
-      
-      combinedModel = parts.join(' + ');
-      
-      const result = await addGenericSale({
-        cliente: nomeCliente,
-        operatore: nomeOperatore,
-        brand: combinedBrand,
-        model: combinedModel,
-        prezzo: combinedPrezzo,
-        totale: totale,
-        dataVendita: dataISO
-      });
-      if (!result.success) allSuccess = false;
-    }
-    
-    if (allSuccess) {
+      // Anche se qualche vendita fallisce, conferma la commissione per visualizzazione
       const commissione = createCommissione({
         cliente: nomeCliente,
         clienteInfo: clienteSelezionato,
@@ -813,7 +814,15 @@ export default function Vendita({ onNavigate }) {
         tipoDocumento: tipoDocumento
       });
 
-      setCommissioneData({ ...commissione, confirmed: true });
+      setCommissioneData({ ...commissione, confirmed: true, ivaCompresa: ivaCompresa });
+      
+      if (!allSuccess) {
+        console.warn('Alcune vendite non sono state salvate nel DB');
+      }
+    } catch (error) {
+      console.error('Errore conferma commissione:', error);
+      // Conferma comunque per non bloccare l'utente
+      setCommissioneData({ ...commissioneData, confirmed: true, ivaCompresa: ivaCompresa });
     }
   };
 

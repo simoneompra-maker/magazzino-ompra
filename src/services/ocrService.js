@@ -12,19 +12,38 @@ const model = genAI.getGenerativeModel({
 
 // Rate limiting info - salvato in localStorage per persistenza
 const STORAGE_KEY = 'ocr_rate_limit';
+const BACKOFF_RESET_MS = 10 * 60 * 1000; // Reset backoff dopo 10 min senza errori
 
 function getRateLimitInfo() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const data = JSON.parse(stored);
+      // Reset giornaliero contatore
       if (Date.now() - data.lastReset > 24 * 60 * 60 * 1000) {
-        return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0 };
+        return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0, last429Time: null };
       }
-      return { ...data, consecutive429: data.consecutive429 || 0 };
+      const info = { ...data, consecutive429: data.consecutive429 || 0, last429Time: data.last429Time || null };
+      
+      // Se il blocco è scaduto, resetta tutto il backoff
+      if (info.blocked && info.blockedUntil && Date.now() > info.blockedUntil) {
+        info.blocked = false;
+        info.blockedUntil = null;
+        info.consecutive429 = 0;
+        info.last429Time = null;
+        saveRateLimitInfo(info);
+      }
+      // Se sono passati 10+ min dall'ultimo 429, resetta backoff
+      else if (info.consecutive429 > 0 && info.last429Time && (Date.now() - info.last429Time > BACKOFF_RESET_MS)) {
+        info.consecutive429 = 0;
+        info.last429Time = null;
+        saveRateLimitInfo(info);
+      }
+      
+      return info;
     }
   } catch (e) {}
-  return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0 };
+  return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0, last429Time: null };
 }
 
 // Calcola tempo di attesa con backoff: 60s, 120s, 180s...
@@ -87,20 +106,16 @@ export async function scanMatricola(imageFile) {
   try {
     const rateInfo = getRateLimitInfo();
     
+    // Blocco gestito da getRateLimitInfo(), qui controlliamo solo se ancora attivo
     if (rateInfo.blocked && rateInfo.blockedUntil) {
-      const remainingMs = rateInfo.blockedUntil - Date.now();
-      if (remainingMs > 0) {
-        const remainingSec = Math.ceil(remainingMs / 1000);
+      const remainingSec = Math.ceil((rateInfo.blockedUntil - Date.now()) / 1000);
+      if (remainingSec > 0) {
         return {
           success: false,
           error: `Attendi ${remainingSec} secondi prima di riprovare.`,
           needsWait: true,
           isRateLimited: true
         };
-      } else {
-        rateInfo.blocked = false;
-        rateInfo.blockedUntil = null;
-        saveRateLimitInfo(rateInfo);
       }
     }
     
@@ -153,6 +168,7 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     
     rateInfo.count++;
     rateInfo.consecutive429 = 0;
+    rateInfo.last429Time = null;
     saveRateLimitInfo(rateInfo);
     
     const text = result.response.text().trim();
@@ -217,6 +233,7 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
         error.message?.includes('Too Many Requests')) {
       
       rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
+      rateInfo.last429Time = Date.now();
       const waitMs = getBackoffMs(rateInfo.consecutive429);
       const waitSec = Math.ceil(waitMs / 1000);
       rateInfo.blocked = true;
@@ -268,20 +285,16 @@ export async function scanCommissione(imageFile) {
   try {
     const rateInfo = getRateLimitInfo();
     
+    // Blocco gestito da getRateLimitInfo(), qui controlliamo solo se ancora attivo
     if (rateInfo.blocked && rateInfo.blockedUntil) {
-      const remainingMs = rateInfo.blockedUntil - Date.now();
-      if (remainingMs > 0) {
-        const remainingSec = Math.ceil(remainingMs / 1000);
+      const remainingSec = Math.ceil((rateInfo.blockedUntil - Date.now()) / 1000);
+      if (remainingSec > 0) {
         return {
           success: false,
           error: `Attendi ${remainingSec} secondi prima di riprovare.`,
           needsWait: true,
           isRateLimited: true
         };
-      } else {
-        rateInfo.blocked = false;
-        rateInfo.blockedUntil = null;
-        saveRateLimitInfo(rateInfo);
       }
     }
     
@@ -356,6 +369,7 @@ REGOLE:
     
     rateInfo.count++;
     rateInfo.consecutive429 = 0;
+    rateInfo.last429Time = null;
     saveRateLimitInfo(rateInfo);
     
     const text = result.response.text().trim();
@@ -420,6 +434,7 @@ REGOLE:
         error.message?.includes('RESOURCE_EXHAUSTED')) {
       
       rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
+      rateInfo.last429Time = Date.now();
       const waitMs = getBackoffMs(rateInfo.consecutive429);
       const waitSec = Math.ceil(waitMs / 1000);
       rateInfo.blocked = true;

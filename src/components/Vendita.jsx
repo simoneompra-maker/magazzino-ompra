@@ -127,6 +127,7 @@ export default function Vendita({ onNavigate }) {
   const [showOcrChoice, setShowOcrChoice] = useState(false);
   const [ocrRighe, setOcrRighe] = useState([]); // righe lette dall'OCR per revisione
   const [showOcrReview, setShowOcrReview] = useState(false); // modale revisione righe
+  const [ocrPreview, setOcrPreview] = useState(null); // preview rapido dopo scan
   
   // Commissione
   const [showCommissione, setShowCommissione] = useState(false);
@@ -364,14 +365,32 @@ export default function Vendita({ onNavigate }) {
     setScanningCommissione(true);
     setScanResult(null);
     setOcrRighe([]);
+    setOcrPreview(null);
     
     try {
       const result = await scanCommissione(file);
       
       if (result.success && result.righe?.length > 0) {
-        // Mostra modale revisione con le righe lette
-        setOcrRighe(result.righe.filter(r => r.campo !== 'ignora'));
-        setShowOcrReview(true);
+        const righe = result.righe.filter(r => r.campo !== 'ignora');
+        setOcrRighe(righe);
+        
+        // Costruisci preview rapido
+        const preview = {
+          cliente: righe.find(r => r.campo === 'cliente')?.testo || null,
+          macchine: righe.filter(r => r.campo === 'macchina').map(r => ({
+            testo: `${r.brand ? r.brand + ' ' : ''}${r.testo}`,
+            prezzo: r.prezzo
+          })),
+          accessori: righe.filter(r => r.campo === 'accessorio').map(r => ({
+            testo: r.testo,
+            prezzo: r.prezzo
+          })),
+          prezzoTotale: righe.find(r => r.campo === 'prezzo_totale')?.prezzo || null,
+          caparra: righe.find(r => r.campo === 'caparra')?.prezzo || null,
+          fattura: righe.find(r => r.campo === 'fattura')?.testo || null,
+          data: righe.find(r => r.campo === 'data')?.testo || null
+        };
+        setOcrPreview(preview);
       } else {
         setScanResult({
           success: false,
@@ -400,6 +419,31 @@ export default function Vendita({ onNavigate }) {
     setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, testo: newTesto } : r));
   };
 
+  // Modifica prezzo di una riga OCR
+  const handleOcrPrezzoChange = (id, newPrezzo) => {
+    const val = newPrezzo === '' ? null : parseFloat(newPrezzo);
+    setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, prezzo: isNaN(val) ? null : val } : r));
+  };
+
+  // Unisci riga con quella sopra
+  const handleOcrMergeUp = (id) => {
+    setOcrRighe(prev => {
+      const idx = prev.findIndex(r => r.id === id);
+      if (idx <= 0) return prev;
+      const above = prev[idx - 1];
+      const current = prev[idx];
+      const merged = {
+        ...above,
+        testo: `${above.testo} ${current.testo}`.trim(),
+        // Se la riga corrente ha un prezzo e quella sopra no, prendi il prezzo
+        prezzo: above.prezzo != null ? above.prezzo : current.prezzo,
+        // Se la riga corrente ha un brand e quella sopra no, prendi il brand
+        brand: above.brand || current.brand
+      };
+      return prev.filter(r => r.id !== id).map(r => r.id === above.id ? merged : r);
+    });
+  };
+
   // Conferma righe OCR e compila il form
   const handleConfirmOcrRighe = () => {
     const righe = ocrRighe.filter(r => r.campo !== 'ignora');
@@ -418,7 +462,7 @@ export default function Vendita({ onNavigate }) {
             brand: riga.brand || '',
             model: riga.testo || '',
             serialNumber: null,
-            prezzo: 0,
+            prezzo: riga.prezzo || 0,
             isOmaggio: false,
             isOrdered: false
           });
@@ -428,22 +472,22 @@ export default function Vendita({ onNavigate }) {
             id: Date.now() + 1000 + idx,
             nome: riga.testo || '',
             quantita: 1,
-            prezzo: 0
+            prezzo: riga.prezzo || 0
           });
           break;
-        case 'prezzo': {
-          const val = riga.testo.replace(/[^\d.,]/g, '').replace(',', '.');
-          const num = parseFloat(val);
-          if (!isNaN(num) && num > 0) {
-            setTotaleManuale(num.toFixed(2));
+        case 'prezzo_totale': {
+          const val = typeof riga.prezzo === 'number' ? riga.prezzo : 
+            parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.'));
+          if (!isNaN(val) && val > 0) {
+            setTotaleManuale(val.toFixed(2));
           }
           break;
         }
         case 'caparra': {
-          const val = riga.testo.replace(/[^\d.,]/g, '').replace(',', '.');
-          const num = parseFloat(val);
-          if (!isNaN(num) && num > 0) {
-            setCaparra(num.toFixed(2));
+          const val = typeof riga.prezzo === 'number' ? riga.prezzo :
+            parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.'));
+          if (!isNaN(val) && val > 0) {
+            setCaparra(val.toFixed(2));
           }
           break;
         }
@@ -843,7 +887,63 @@ export default function Vendita({ onNavigate }) {
       />
 
       {/* Box risultato scansione commissione */}
-      {(scanningCommissione || scanResult) && (
+      {/* Preview rapido OCR */}
+      {ocrPreview && (
+        <div className="mx-4 mt-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+          <div className="space-y-1 text-sm">
+            {ocrPreview.cliente && (
+              <div className="flex items-center gap-2">
+                <span className="text-blue-400 w-5 text-center">👤</span>
+                <span className="font-medium">{ocrPreview.cliente}</span>
+              </div>
+            )}
+            {ocrPreview.macchine.map((m, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-green-500 w-5 text-center">⚙️</span>
+                <span className="flex-1">{m.testo}</span>
+                {m.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{m.prezzo.toFixed(2)}</span>}
+              </div>
+            ))}
+            {ocrPreview.accessori.map((a, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-yellow-500 w-5 text-center">🔧</span>
+                <span className="flex-1">{a.testo}</span>
+                {a.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{a.prezzo.toFixed(2)}</span>}
+              </div>
+            ))}
+            <div className="flex items-center gap-3 text-xs text-gray-500 pt-1">
+              {ocrPreview.prezzoTotale && <span>Tot: €{ocrPreview.prezzoTotale.toFixed(2)}</span>}
+              {ocrPreview.caparra && <span>Caparra: €{ocrPreview.caparra.toFixed(2)}</span>}
+              {ocrPreview.fattura && <span>Fatt: {ocrPreview.fattura}</span>}
+              {ocrPreview.data && <span>Data: {ocrPreview.data}</span>}
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => { handleConfirmOcrRighe(); setOcrPreview(null); }}
+              className="flex-[2] py-2 rounded-lg font-bold text-white text-sm"
+              style={{ backgroundColor: '#006B3F' }}
+            >
+              ✓ Conferma
+            </button>
+            <button
+              onClick={() => { setShowOcrReview(true); setOcrPreview(null); }}
+              className="flex-1 py-2 rounded-lg font-medium text-sm border-2 border-gray-300 text-gray-600"
+            >
+              ✏️ Correggi
+            </button>
+            <button
+              onClick={() => { setOcrPreview(null); setOcrRighe([]); }}
+              className="px-3 py-2 rounded-lg text-gray-400 text-sm"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Errore/successo scansione */}
+      {!ocrPreview && (scanningCommissione || scanResult) && (
         <div className={`mx-4 mt-2 p-3 rounded-lg ${
           scanningCommissione ? 'bg-blue-50 border border-blue-200' :
           scanResult?.success ? 'bg-green-50 border border-green-200' :
@@ -1629,7 +1729,7 @@ export default function Vendita({ onNavigate }) {
                   riga.campo === 'cliente' ? 'bg-blue-50 border-blue-200' :
                   riga.campo === 'macchina' ? 'bg-green-50 border-green-200' :
                   riga.campo === 'accessorio' ? 'bg-yellow-50 border-yellow-200' :
-                  riga.campo === 'prezzo' ? 'bg-purple-50 border-purple-200' :
+                  riga.campo === 'prezzo_totale' ? 'bg-purple-50 border-purple-200' :
                   riga.campo === 'caparra' ? 'bg-orange-50 border-orange-200' :
                   riga.campo === 'fattura' ? 'bg-indigo-50 border-indigo-200' :
                   riga.campo === 'data' ? 'bg-cyan-50 border-cyan-200' :
@@ -1637,7 +1737,20 @@ export default function Vendita({ onNavigate }) {
                   'bg-white border-gray-200'
                 }`}>
                   <div className="flex items-start gap-2">
-                    <div className="flex-1">
+                    {/* Pulsante unisci con riga sopra */}
+                    {ocrRighe.indexOf(riga) > 0 && (
+                      <button
+                        onClick={() => handleOcrMergeUp(riga.id)}
+                        className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded"
+                        title="Unisci con riga sopra"
+                      >
+                        ↑
+                      </button>
+                    )}
+                    {ocrRighe.indexOf(riga) === 0 && (
+                      <div className="shrink-0 w-6" />
+                    )}
+                    <div className="flex-1 min-w-0">
                       <input
                         type="text"
                         value={riga.testo}
@@ -1648,15 +1761,29 @@ export default function Vendita({ onNavigate }) {
                         <span className="text-xs text-green-600 font-medium">Brand: {riga.brand}</span>
                       )}
                     </div>
+                    {/* Campo prezzo per macchine e accessori */}
+                    {(riga.campo === 'macchina' || riga.campo === 'accessorio') && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-xs text-gray-400">€</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={riga.prezzo != null && riga.prezzo !== 0 ? riga.prezzo : ''}
+                          onChange={(e) => handleOcrPrezzoChange(riga.id, e.target.value)}
+                          className="w-20 text-sm text-right bg-white border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                        />
+                      </div>
+                    )}
                     <select
                       value={riga.campo}
                       onChange={(e) => handleOcrCampoChange(riga.id, e.target.value)}
-                      className="text-xs font-medium border rounded-md px-2 py-1 bg-white min-w-[100px]"
+                      className="text-xs font-medium border rounded-md px-2 py-1 bg-white min-w-[100px] shrink-0"
                     >
                       <option value="cliente">Cliente</option>
                       <option value="macchina">Macchina</option>
                       <option value="accessorio">Accessorio</option>
-                      <option value="prezzo">Prezzo tot.</option>
+                      <option value="prezzo_totale">Prezzo tot.</option>
                       <option value="caparra">Caparra</option>
                       <option value="fattura">Fattura</option>
                       <option value="data">Data</option>

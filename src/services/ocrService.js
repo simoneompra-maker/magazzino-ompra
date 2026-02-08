@@ -289,24 +289,29 @@ LEGGI OGNI RIGA scritta nel documento e per ognuna suggerisci a quale CAMPO appa
 CAMPI POSSIBILI:
 - "cliente" = nome del cliente/destinatario (di solito dopo "A:" in alto)
 - "macchina" = macchina/attrezzo con brand riconoscibile (Stihl, Honda, Echo, Husqvarna, Grillo, Viking, Kawasaki, Makita, Oleo-Mac, Bosch, John Deere, ARS, Pellenc, Infaco, Campagnola, Zanon, Cifarelli, Shindaiwa, Maruyama, Benassi). Se riconosci il brand, aggiungilo.
-- "accessorio" = accessori, ricambi, consumabili (olio, filo, cinture, zaini, ecc.)
-- "prezzo" = importo totale della vendita
+- "accessorio" = accessori, ricambi, consumabili (olio, filo, cinture, zaini, manici, ecc.)
+- "prezzo_totale" = importo TOTALE della vendita (di solito in fondo al documento)
 - "caparra" = acconto/caparra versata
 - "fattura" = indicazione se serve fattura (SI/NO)
 - "data" = data del documento
 - "note" = altre annotazioni
 - "ignora" = intestazione modulo, campi vuoti, cose irrilevanti
 
-RISPONDI IN JSON - un array di oggetti, uno per ogni riga letta:
+IMPORTANTE PER I PREZZI:
+- Se accanto a una macchina o accessorio c'e un prezzo, INCLUDILO nel campo "prezzo" della stessa riga
+- Il campo "prezzo_totale" e SOLO per l'importo totale finale in fondo al documento
+- NON creare righe separate per i prezzi degli articoli - mettili nel campo "prezzo" dell'articolo
+
+RISPONDI IN JSON:
 {
   "righe": [
-    { "testo": "Mario Rossi", "campo": "cliente", "brand": null },
-    { "testo": "Motosega MS 162", "campo": "macchina", "brand": "Stihl" },
-    { "testo": "Olio catena 1L", "campo": "accessorio", "brand": null },
-    { "testo": "360,00", "campo": "prezzo", "brand": null },
-    { "testo": "100,00", "campo": "caparra", "brand": null },
-    { "testo": "SI", "campo": "fattura", "brand": null },
-    { "testo": "05/02/2025", "campo": "data", "brand": null }
+    { "testo": "Mario Rossi", "campo": "cliente", "brand": null, "prezzo": null },
+    { "testo": "Segaccio 470mm", "campo": "macchina", "brand": "ARS", "prezzo": 150.00 },
+    { "testo": "Manico telescopico", "campo": "accessorio", "brand": null, "prezzo": 40.00 },
+    { "testo": "190,00", "campo": "prezzo_totale", "brand": null, "prezzo": 190.00 },
+    { "testo": "50,00", "campo": "caparra", "brand": null, "prezzo": 50.00 },
+    { "testo": "SI", "campo": "fattura", "brand": null, "prezzo": null },
+    { "testo": "07/01/2025", "campo": "data", "brand": null, "prezzo": null }
   ]
 }
 
@@ -314,10 +319,10 @@ REGOLE:
 - Leggi TUTTE le righe scritte a mano, dall'alto in basso
 - NON saltare nessuna riga
 - Per le macchine: se riconosci il brand mettilo nel campo "brand"
-- Per i prezzi: scrivi solo il numero (es: "360,00" non "euro 360")
-- Se un importo sembra un acconto/caparra, usa "caparra"
-- Se un importo sembra il totale, usa "prezzo"
-- Ignora le parti pre-stampate del modulo (intestazioni, righe vuote)
+- ASSOCIA i prezzi agli articoli: se una riga ha sia descrizione che prezzo, metti il prezzo nel campo "prezzo" di quella riga
+- Se un prezzo e chiaramente il totale complessivo, usa "prezzo_totale"
+- Se un importo sembra un acconto/caparra, usa "caparra"  
+- Ignora le parti pre-stampate del modulo
 - RISPONDI SOLO CON IL JSON, nessun altro testo
 `;
     
@@ -369,7 +374,8 @@ REGOLE:
         id: i,
         testo: r.testo || '',
         campo: r.campo || 'ignora',
-        brand: r.brand || null
+        brand: r.brand || null,
+        prezzo: r.prezzo != null ? r.prezzo : null
       }));
       
       console.log('OCR commissione completato:', righe);

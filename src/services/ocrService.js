@@ -25,6 +25,13 @@ function getRateLimitInfo() {
       }
       const info = { ...data, consecutive429: data.consecutive429 || 0, last429Time: data.last429Time || null };
       
+      // Migrazione: se consecutive429 è alto ma last429Time manca (dati vecchi), resetta
+      if (info.consecutive429 > 0 && !info.last429Time) {
+        info.consecutive429 = 0;
+        info.blocked = false;
+        info.blockedUntil = null;
+        saveRateLimitInfo(info);
+      }
       // Se il blocco è scaduto, resetta tutto il backoff
       if (info.blocked && info.blockedUntil && Date.now() > info.blockedUntil) {
         info.blocked = false;

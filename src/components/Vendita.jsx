@@ -531,7 +531,9 @@ export default function Vendita({ onNavigate }) {
           break;
         case 'data':
           try {
-            const parts = riga.testo.split('/');
+            // Rimuovi prefisso non numerico (es. "Data ", "data:")
+            const dataTesto = riga.testo.replace(/^[^0-9]*/i, '').trim();
+            const parts = dataTesto.split('/');
             if (parts.length === 3) {
               const [dd, mm, yyyy] = parts;
               const year = yyyy.length === 2 ? `20${yyyy}` : yyyy;
@@ -739,7 +741,10 @@ export default function Vendita({ onNavigate }) {
         return;
       }
 
-      const dataISO = new Date(dataVendita + 'T12:00:00').toISOString();
+      const dataISO = (() => {
+        const d = new Date(dataVendita + 'T12:00:00');
+        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+      })();
       
       // Raccogli TUTTI gli articoli per un unico record vendita
       const allParts = [];

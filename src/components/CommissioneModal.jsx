@@ -1,7 +1,7 @@
 import { X, Share2, MessageCircle, Mail, FileDown, ArrowLeft, Check, Phone } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
-export default function CommissioneModal({ data, isKit = false, onBack, onConfirm, onClose }) {
+export default function CommissioneModal({ data, isKit = false, onBack, onConfirm, onClose, isSaving = false }) {
   const isConfirmed = data.confirmed;
   
   const formatDate = (dateString) => {
@@ -976,15 +976,25 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       {!isConfirmed && (
         <button
           onClick={onConfirm}
-          className="mt-4 w-full py-4 rounded-lg font-bold text-lg text-white flex items-center justify-center gap-2 shadow-lg flex-shrink-0"
+          disabled={isSaving}
+          className={`mt-4 w-full py-4 rounded-lg font-bold text-lg text-white flex items-center justify-center gap-2 shadow-lg flex-shrink-0 ${isSaving ? 'opacity-50' : ''}`}
           style={{ backgroundColor: data.isPreventivo ? '#F97316' : '#006B3F' }}
         >
-          <Check className="w-6 h-6" />
-          {data.isPreventivo 
-            ? 'GENERA PREVENTIVO' 
-            : data.isPending 
-              ? 'CONFERMA COMMISSIONE' 
-              : 'CONFERMA VENDITA'}
+          {isSaving ? (
+            <>
+              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+              Salvataggio...
+            </>
+          ) : (
+            <>
+              <Check className="w-6 h-6" />
+              {data.isPreventivo 
+                ? 'GENERA PREVENTIVO' 
+                : data.isPending 
+                  ? 'CONFERMA COMMISSIONE' 
+                  : 'CONFERMA VENDITA'}
+            </>
+          )}
         </button>
       )}
       </div>

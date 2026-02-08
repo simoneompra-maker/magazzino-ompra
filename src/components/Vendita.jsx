@@ -66,6 +66,7 @@ export default function Vendita({ onNavigate }) {
   const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1' });
   const [totaleManuale, setTotaleManuale] = useState('');
   const [ivaCompresa, setIvaCompresa] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Caparra e Note
   const [caparra, setCaparra] = useState('');
@@ -687,142 +688,93 @@ export default function Vendita({ onNavigate }) {
   
   // Conferma definitiva commissione
   const handleConfirmCommissione = async () => {
-    const nomeCliente = cliente.trim();
-    const nomeOperatore = operatore.trim();
-    const totale = getTotaleFinale();
-    const caparraValue = parseFloat(caparra) || 0;
+    if (isSaving) return; // Previeni doppio click
+    setIsSaving(true);
     
-    // Se è un preventivo, non salva nulla - solo conferma per condivisione
-    if (isPreventivo) {
-      setCommissioneData({
-        ...commissioneData,
-        confirmed: true,
-        isPreventivo: true
-      });
-      return;
-    }
-    
-    if (hasOrderedProducts) {
-      const commissione = createCommissione({
-        cliente: nomeCliente,
-        clienteInfo: clienteSelezionato,
-        telefono: telefonoCliente.trim() || null,
-        operatore: nomeOperatore,
-        prodotti: prodotti.map(p => ({
-          brand: p.brand,
-          model: p.model,
-          serialNumber: p.serialNumber || null,
-          prezzo: p.prezzo,
-          isOmaggio: p.isOmaggio
-        })),
-        accessori: accessori,
-        totale: totale,
-        caparra: caparraValue > 0 ? caparraValue : null,
-        metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-        note: note.trim() || null,
-        tipoDocumento: tipoDocumento
-      });
-      
-      setCommissioneData({ ...commissione, isPending: true, confirmed: true });
-      return;
-    }
-
     try {
-      let allSuccess = true;
+      const nomeCliente = cliente.trim();
+      const nomeOperatore = operatore.trim();
+      const totale = getTotaleFinale();
+      const caparraValue = parseFloat(caparra) || 0;
       
-      // Converti data in formato ISO
+      // Se è un preventivo, non salva nulla
+      if (isPreventivo) {
+        setCommissioneData({ ...commissioneData, confirmed: true, isPreventivo: true });
+        return;
+      }
+      
+      if (hasOrderedProducts) {
+        const commissione = createCommissione({
+          cliente: nomeCliente, clienteInfo: clienteSelezionato,
+          telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
+          prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio })),
+          accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
+          metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
+          note: note.trim() || null, tipoDocumento
+        });
+        setCommissioneData({ ...commissione, isPending: true, confirmed: true });
+        return;
+      }
+
       const dataISO = new Date(dataVendita + 'T12:00:00').toISOString();
       
-      // 1) Macchine CON matricola → vendita da magazzino (record singolo necessario per inventario)
+      // Raccogli tutto per un unico salvataggio combinato
+      const allParts = [];
+      let combinedBrand = '';
+      let combinedPrezzo = 0;
+      
       for (const prod of prodotti) {
         if (prod.serialNumber) {
+          // Prova a vendere da magazzino
           const result = await sellProduct(prod.serialNumber, {
-            cliente: nomeCliente,
-            operatore: nomeOperatore,
-            prezzo: prod.prezzo || 0,
-            totale: totale,
-            dataVendita: dataISO
+            cliente: nomeCliente, operatore: nomeOperatore,
+            prezzo: prod.prezzo || 0, totale, dataVendita: dataISO
           });
-          if (!result.success) allSuccess = false;
-        }
-      }
-      
-      // 2) Tutto il resto (macchine senza matricola + accessori) → UN SOLO record
-      const genericProducts = prodotti.filter(p => !p.serialNumber);
-      const hasGenericProducts = genericProducts.length > 0;
-      const hasAccessori = accessori.length > 0;
-      
-      if (hasGenericProducts || hasAccessori) {
-        // Costruisci descrizione combinata
-        let combinedBrand = '';
-        let combinedModel = '';
-        let combinedPrezzo = 0;
-        
-        // Aggiungi macchine senza matricola
-        const parts = [];
-        genericProducts.forEach(prod => {
+          if (!result.success) {
+            // Non trovata in magazzino → salva come generica con SN
+            combinedBrand = combinedBrand || prod.brand || '';
+            allParts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model} (SN: ${prod.serialNumber})`);
+            combinedPrezzo += (prod.prezzo || 0);
+          }
+        } else {
           combinedBrand = combinedBrand || prod.brand || '';
-          parts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model}`);
+          allParts.push(`${prod.brand ? prod.brand + ' ' : ''}${prod.model}`);
           combinedPrezzo += (prod.prezzo || 0);
-        });
-        
-        // Aggiungi accessori
-        accessori.forEach(acc => {
-          const accPrezzo = (acc.prezzo || 0) * (acc.quantita || 1);
-          const qta = (acc.quantita || 1) > 1 ? ` x${acc.quantita}` : '';
-          parts.push(`${acc.nome || acc.descrizione}${qta}`);
-          combinedPrezzo += accPrezzo;
-        });
-        
-        // Se c'è solo accessori, usa ACCESSORI come brand
-        if (!hasGenericProducts && hasAccessori) {
-          combinedBrand = 'ACCESSORI';
         }
-        
-        combinedModel = parts.join(' + ');
-        
-        const result = await addGenericSale({
-          cliente: nomeCliente,
-          operatore: nomeOperatore,
-          brand: combinedBrand,
-          model: combinedModel,
-          prezzo: combinedPrezzo,
-          totale: totale,
-          dataVendita: dataISO
-        });
-        if (!result.success) allSuccess = false;
       }
       
-      // Anche se qualche vendita fallisce, conferma la commissione per visualizzazione
-      const commissione = createCommissione({
-        cliente: nomeCliente,
-        clienteInfo: clienteSelezionato,
-        telefono: telefonoCliente.trim() || null,
-        operatore: nomeOperatore,
-        prodotti: prodotti.map(p => ({
-          brand: p.brand,
-          model: p.model,
-          serialNumber: p.serialNumber,
-          prezzo: p.prezzo,
-          isOmaggio: p.isOmaggio
-        })),
-        accessori: accessori,
-        totale: totale,
-        caparra: caparraValue > 0 ? caparraValue : null,
-        metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-        note: note.trim() || null,
-        tipoDocumento: tipoDocumento
+      // Aggiungi accessori
+      accessori.forEach(acc => {
+        const accPrezzo = (acc.prezzo || 0) * (acc.quantita || 1);
+        const qta = (acc.quantita || 1) > 1 ? ` x${acc.quantita}` : '';
+        allParts.push(`${acc.nome || acc.descrizione}${qta}`);
+        combinedPrezzo += accPrezzo;
       });
-
-      setCommissioneData({ ...commissione, confirmed: true, ivaCompresa: ivaCompresa });
       
-      if (!allSuccess) {
-        console.warn('Alcune vendite non sono state salvate nel DB');
+      // Salva tutto il resto come UN SOLO record
+      if (allParts.length > 0) {
+        if (!combinedBrand && accessori.length > 0) combinedBrand = 'ACCESSORI';
+        await addGenericSale({
+          cliente: nomeCliente, operatore: nomeOperatore,
+          brand: combinedBrand, model: allParts.join(' + '),
+          prezzo: combinedPrezzo, totale, dataVendita: dataISO
+        });
       }
+      
+      const commissione = createCommissione({
+        cliente: nomeCliente, clienteInfo: clienteSelezionato,
+        telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
+        prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio })),
+        accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
+        metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
+        note: note.trim() || null, tipoDocumento
+      });
+      setCommissioneData({ ...commissione, confirmed: true, ivaCompresa });
     } catch (error) {
       console.error('Errore conferma commissione:', error);
-      // Conferma comunque per non bloccare l'utente
-      setCommissioneData({ ...commissioneData, confirmed: true, ivaCompresa: ivaCompresa });
+      setCommissioneData({ ...commissioneData, confirmed: true, ivaCompresa });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -854,6 +806,7 @@ export default function Vendita({ onNavigate }) {
           handleReset();
           onNavigate('home');
         }}
+        isSaving={isSaving}
       />
     );
   }

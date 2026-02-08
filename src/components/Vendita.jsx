@@ -65,6 +65,7 @@ export default function Vendita({ onNavigate }) {
   const [accessori, setAccessori] = useState([]);
   const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1' });
   const [totaleManuale, setTotaleManuale] = useState('');
+  const [ivaCompresa, setIvaCompresa] = useState(false);
   
   // Caparra e Note
   const [caparra, setCaparra] = useState('');
@@ -613,7 +614,7 @@ export default function Vendita({ onNavigate }) {
     setEditAccessorioData({ nome: '', prezzo: '', quantita: '1' });
   };
 
-  const hasOrderedProducts = prodotti.some(p => !p.serialNumber);
+  const hasOrderedProducts = prodotti.some(p => p.isOrdered === true);
 
   const handleConcludi = async () => {
     if (!cliente.trim()) {
@@ -672,7 +673,8 @@ export default function Vendita({ onNavigate }) {
       tipoDocumento: tipoDocumento,
       dataVendita: dataVendita,
       isPending: hasOrderedProducts,
-      isPreventivo: isPreventivo
+      isPreventivo: isPreventivo,
+      ivaCompresa: ivaCompresa
     });
     setShowCommissione(true);
   };
@@ -826,6 +828,7 @@ export default function Vendita({ onNavigate }) {
     setMetodoPagamento('');
     setNote('');
     setIsPreventivo(false);
+    setIvaCompresa(false);
     setDataVendita(new Date().toISOString().split('T')[0]);
     setShowCommissione(false);
     setCommissioneData(null);
@@ -1306,6 +1309,15 @@ export default function Vendita({ onNavigate }) {
               onChange={(e) => setTotaleManuale(e.target.value)}
             />
           </div>
+          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={ivaCompresa}
+              onChange={(e) => setIvaCompresa(e.target.checked)}
+              className="w-4 h-4 accent-green-600 rounded"
+            />
+            <span className="text-sm text-gray-600">I.C. (IVA compresa)</span>
+          </label>
         </div>
 
         {/* Caparra */}

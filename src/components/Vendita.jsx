@@ -543,16 +543,23 @@ export default function Vendita({ onNavigate }) {
           }
           break;
         case 'note':
-          setNote(prev => prev ? `${prev}\n${riga.testo}` : riga.testo);
+          setNote(prev => {
+            // Se è la prima nota nel batch, sostituisci
+            const isFirst = !righe.slice(0, righe.indexOf(riga)).some(r => r.campo === 'note');
+            return isFirst ? riga.testo : `${prev}\n${riga.testo}`;
+          });
           break;
       }
     });
     
     if (nuoveMacchine.length > 0) {
-      setProdotti(prev => [...prev, ...nuoveMacchine]);
+      setProdotti(nuoveMacchine);
     }
     if (nuoviAccessori.length > 0) {
-      setAccessori(prev => [...prev, ...nuoviAccessori]);
+      setAccessori(nuoviAccessori);
+    } else if (nuoveMacchine.length > 0) {
+      // Se ci sono macchine ma non accessori, resetta comunque gli accessori OCR
+      setAccessori([]);
     }
     
     const totItems = nuoveMacchine.length + nuoviAccessori.length;
@@ -562,7 +569,7 @@ export default function Vendita({ onNavigate }) {
     });
     
     setShowOcrReview(false);
-    setOcrRighe([]);
+    // NON svuotiamo ocrRighe — serve per riaprire la revisione
   };
 
   const handleRemoveProduct = (id) => {
@@ -787,7 +794,8 @@ export default function Vendita({ onNavigate }) {
       setCommissioneData({ ...commissione, confirmed: true, ivaCompresa });
     } catch (error) {
       console.error('Errore conferma commissione:', error);
-      setCommissioneData({ ...commissioneData, confirmed: true, ivaCompresa });
+      alert('⚠️ Errore durante il salvataggio della vendita. Riprova.');
+      // NON settiamo confirmed: true — la vendita non è stata salvata
     } finally {
       setIsSaving(false);
     }
@@ -808,6 +816,9 @@ export default function Vendita({ onNavigate }) {
     setDataVendita(new Date().toISOString().split('T')[0]);
     setShowCommissione(false);
     setCommissioneData(null);
+    setOcrRighe([]);
+    setOcrPreview(null);
+    setScanResult(null);
   };
 
   if (showCommissione && commissioneData) {
@@ -973,14 +984,36 @@ export default function Vendita({ onNavigate }) {
           ) : (
             <div className={`flex items-center justify-between ${scanResult?.success ? 'text-green-700' : 'text-red-700'}`}>
               <span className="text-sm font-medium">{scanResult?.message}</span>
-              <button 
-                onClick={() => setScanResult(null)}
-                className="opacity-50 hover:opacity-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {scanResult?.success && ocrRighe.length > 0 && (
+                  <button
+                    onClick={() => setShowOcrReview(true)}
+                    className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100"
+                  >
+                    ✏️ Modifica OCR
+                  </button>
+                )}
+                <button 
+                  onClick={() => setScanResult(null)}
+                  className="opacity-50 hover:opacity-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Pulsante Modifica OCR persistente (visibile anche dopo dismiss del banner) */}
+      {!ocrPreview && !scanResult && !scanningCommissione && ocrRighe.length > 0 && (
+        <div className="mx-4 mt-2">
+          <button
+            onClick={() => setShowOcrReview(true)}
+            className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 hover:bg-blue-100 flex items-center gap-1"
+          >
+            ✏️ Modifica dati OCR
+          </button>
         </div>
       )}
 
@@ -1868,7 +1901,7 @@ export default function Vendita({ onNavigate }) {
             
             <div className="p-4 border-t flex gap-2">
               <button
-                onClick={() => { setShowOcrReview(false); setOcrRighe([]); }}
+                onClick={() => setShowOcrReview(false)}
                 className="flex-1 py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500"
               >
                 Annulla

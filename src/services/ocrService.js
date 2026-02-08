@@ -46,9 +46,9 @@ function getRateLimitInfo() {
   return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0, last429Time: null };
 }
 
-// Calcola tempo di attesa con backoff: 60s, 120s, 180s...
+// Calcola tempo di attesa con backoff: 30s, 60s, 90s, 120s... max 5min
 function getBackoffMs(consecutive) {
-  return Math.min((consecutive + 1) * 60 * 1000, 5 * 60 * 1000); // max 5 minuti
+  return Math.min(consecutive * 30 * 1000, 5 * 60 * 1000); // max 5 minuti
 }
 
 function saveRateLimitInfo(info) {

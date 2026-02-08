@@ -13,31 +13,43 @@ let currentModelName = PRIMARY_MODEL;
 const model = genAI.getGenerativeModel({ model: PRIMARY_MODEL });
 const fallbackModel = genAI.getGenerativeModel({ model: FALLBACK_MODEL });
 
-// Chiama Gemini con fallback automatico
+// Chiama Gemini con retry per 503 e fallback automatico
 async function callGemini(contents) {
-  try {
-    const result = await model.generateContent(contents);
-    currentModelName = PRIMARY_MODEL;
-    return result;
-  } catch (primaryError) {
-    console.warn(`Modello primario (${PRIMARY_MODEL}) fallito:`, primaryError.message);
-    
-    // Se 429/quota, prova fallback
-    if (primaryError.message?.includes('429') || 
-        primaryError.message?.includes('quota') ||
-        primaryError.message?.includes('RESOURCE_EXHAUSTED') ||
-        primaryError.message?.includes('Too Many Requests')) {
-      try {
-        console.log(`Provo fallback (${FALLBACK_MODEL})...`);
-        const result = await fallbackModel.generateContent(contents);
-        currentModelName = FALLBACK_MODEL;
-        return result;
-      } catch (fallbackError) {
-        console.error(`Anche fallback (${FALLBACK_MODEL}) fallito:`, fallbackError.message);
-        throw fallbackError; // rilancia l'errore del fallback
+  // Primo tentativo con modello primario
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await model.generateContent(contents);
+      currentModelName = PRIMARY_MODEL;
+      return result;
+    } catch (primaryError) {
+      // Se 503 (overloaded), riprova dopo breve pausa
+      if (attempt === 0 && (primaryError.message?.includes('503') || primaryError.message?.includes('overloaded'))) {
+        console.log(`Modello sovraccarico, riprovo tra 3 secondi...`);
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
       }
+      
+      console.warn(`Modello primario (${PRIMARY_MODEL}) fallito:`, primaryError.message);
+      
+      // Se 429/quota/503, prova fallback
+      if (primaryError.message?.includes('429') || 
+          primaryError.message?.includes('503') ||
+          primaryError.message?.includes('overloaded') ||
+          primaryError.message?.includes('quota') ||
+          primaryError.message?.includes('RESOURCE_EXHAUSTED') ||
+          primaryError.message?.includes('Too Many Requests')) {
+        try {
+          console.log(`Provo fallback (${FALLBACK_MODEL})...`);
+          const result = await fallbackModel.generateContent(contents);
+          currentModelName = FALLBACK_MODEL;
+          return result;
+        } catch (fallbackError) {
+          console.error(`Anche fallback (${FALLBACK_MODEL}) fallito:`, fallbackError.message);
+          throw fallbackError;
+        }
+      }
+      throw primaryError;
     }
-    throw primaryError;
   }
 }
 
@@ -268,7 +280,9 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
         error.message?.includes('quota') || 
         error.message?.includes('rate') ||
         error.message?.includes('RESOURCE_EXHAUSTED') ||
-        error.message?.includes('Too Many Requests')) {
+        error.message?.includes('Too Many Requests') ||
+        error.message?.includes('503') ||
+        error.message?.includes('overloaded')) {
       
       rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
       rateInfo.last429Time = Date.now();
@@ -280,8 +294,11 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
       
       // Messaggio più informativo
       const isQuota = error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED');
+      const isOverloaded = error.message?.includes('503') || error.message?.includes('overloaded');
       const msg = isQuota 
         ? `Quota API esaurita per oggi. Riprova domani o usa un altro API key.`
+        : isOverloaded
+        ? `Server AI sovraccarico. Riprova tra ${waitSec} secondi.`
         : `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`;
       
       return {
@@ -477,7 +494,9 @@ REGOLE:
     if (error.message?.includes('429') || 
         error.message?.includes('quota') || 
         error.message?.includes('rate') ||
-        error.message?.includes('RESOURCE_EXHAUSTED')) {
+        error.message?.includes('RESOURCE_EXHAUSTED') ||
+        error.message?.includes('503') ||
+        error.message?.includes('overloaded')) {
       
       rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
       rateInfo.last429Time = Date.now();
@@ -488,8 +507,11 @@ REGOLE:
       saveRateLimitInfo(rateInfo);
       
       const isQuota = error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED');
+      const isOverloaded = error.message?.includes('503') || error.message?.includes('overloaded');
       const msg = isQuota 
         ? `Quota API esaurita per oggi. Riprova domani.`
+        : isOverloaded
+        ? `Server AI sovraccarico. Riprova tra ${waitSec} secondi.`
         : `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`;
       
       return {

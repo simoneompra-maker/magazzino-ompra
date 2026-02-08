@@ -415,7 +415,7 @@ export default function Vendita({ onNavigate }) {
         case 'macchina':
           nuoveMacchine.push({
             id: Date.now() + idx,
-            brand: riga.brand || 'Sconosciuto',
+            brand: riga.brand || '',
             model: riga.testo || '',
             serialNumber: null,
             prezzo: 0,
@@ -426,7 +426,7 @@ export default function Vendita({ onNavigate }) {
         case 'accessorio':
           nuoviAccessori.push({
             id: Date.now() + 1000 + idx,
-            descrizione: riga.testo || '',
+            nome: riga.testo || '',
             quantita: 1,
             prezzo: 0
           });

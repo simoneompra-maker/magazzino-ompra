@@ -211,15 +211,15 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
         error.message?.includes('Too Many Requests')) {
       
       rateInfo.blocked = true;
-      rateInfo.blockedUntil = Date.now() + (2 * 60 * 1000);
+      rateInfo.blockedUntil = Date.now() + (1 * 60 * 1000);
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: 'Troppe richieste ravvicinate. Attendi 2 minuti o usa inserimento manuale.',
+        error: 'Troppe richieste ravvicinate. Attendi 1 minuto o usa inserimento manuale.',
         needsWait: true,
         isRateLimited: true,
-        waitMinutes: 2
+        waitMinutes: 1
       };
     }
     
@@ -288,7 +288,7 @@ LEGGI OGNI RIGA scritta nel documento e per ognuna suggerisci a quale CAMPO appa
 
 CAMPI POSSIBILI:
 - "cliente" = nome del cliente/destinatario (di solito dopo "A:" in alto)
-- "macchina" = macchina/attrezzo con brand riconoscibile (Stihl, Honda, Echo, Husqvarna, Grillo, Viking, Kawasaki, Makita, Oleo-Mac, Bosch, John Deere). Se riconosci il brand, aggiungilo.
+- "macchina" = macchina/attrezzo con brand riconoscibile (Stihl, Honda, Echo, Husqvarna, Grillo, Viking, Kawasaki, Makita, Oleo-Mac, Bosch, John Deere, ARS, Pellenc, Infaco, Campagnola, Zanon, Cifarelli, Shindaiwa, Maruyama, Benassi). Se riconosci il brand, aggiungilo.
 - "accessorio" = accessori, ricambi, consumabili (olio, filo, cinture, zaini, ecc.)
 - "prezzo" = importo totale della vendita
 - "caparra" = acconto/caparra versata
@@ -401,12 +401,12 @@ REGOLE:
         error.message?.includes('RESOURCE_EXHAUSTED')) {
       
       rateInfo.blocked = true;
-      rateInfo.blockedUntil = Date.now() + (2 * 60 * 1000);
+      rateInfo.blockedUntil = Date.now() + (1 * 60 * 1000);
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: 'Troppe richieste. Attendi 2 minuti.',
+        error: 'Troppe richieste. Attendi 1 minuto.',
         needsWait: true,
         isRateLimited: true
       };

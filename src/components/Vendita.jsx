@@ -377,10 +377,16 @@ export default function Vendita({ onNavigate }) {
         // Costruisci preview rapido
         const preview = {
           cliente: righe.find(r => r.campo === 'cliente')?.testo || null,
-          macchine: righe.filter(r => r.campo === 'macchina').map(r => ({
-            testo: `${r.brand ? r.brand + ' ' : ''}${r.testo}`,
-            prezzo: r.prezzo
-          })),
+          macchine: righe.filter(r => r.campo === 'macchina').map((r, i) => {
+            // Cerca matricola subito dopo questa macchina
+            const rigaIdx = righe.indexOf(r);
+            const nextMatricola = righe[rigaIdx + 1]?.campo === 'matricola' ? righe[rigaIdx + 1].testo : null;
+            return {
+              testo: `${r.brand ? r.brand + ' ' : ''}${r.testo}`,
+              prezzo: r.prezzo,
+              matricola: nextMatricola
+            };
+          }),
           accessori: righe.filter(r => r.campo === 'accessorio').map(r => ({
             testo: r.testo,
             prezzo: r.prezzo
@@ -467,6 +473,14 @@ export default function Vendita({ onNavigate }) {
             isOrdered: false
           });
           break;
+        case 'matricola': {
+          // Associa la matricola all'ultima macchina aggiunta
+          const matricolaVal = riga.testo.replace(/^MATR\.?\s*/i, '').trim();
+          if (nuoveMacchine.length > 0) {
+            nuoveMacchine[nuoveMacchine.length - 1].serialNumber = matricolaVal;
+          }
+          break;
+        }
         case 'accessorio':
           nuoviAccessori.push({
             id: Date.now() + 1000 + idx,
@@ -900,7 +914,10 @@ export default function Vendita({ onNavigate }) {
             {ocrPreview.macchine.map((m, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-green-500 w-5 text-center">⚙️</span>
-                <span className="flex-1">{m.testo}</span>
+                <div className="flex-1">
+                  <span>{m.testo}</span>
+                  {m.matricola && <span className="text-xs text-gray-400 ml-1 font-mono">({m.matricola})</span>}
+                </div>
                 {m.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{m.prezzo.toFixed(2)}</span>}
               </div>
             ))}
@@ -1728,6 +1745,7 @@ export default function Vendita({ onNavigate }) {
                   riga.campo === 'ignora' ? 'bg-gray-50 border-gray-200 opacity-50' :
                   riga.campo === 'cliente' ? 'bg-blue-50 border-blue-200' :
                   riga.campo === 'macchina' ? 'bg-green-50 border-green-200' :
+                  riga.campo === 'matricola' ? 'bg-emerald-50 border-emerald-300' :
                   riga.campo === 'accessorio' ? 'bg-yellow-50 border-yellow-200' :
                   riga.campo === 'prezzo_totale' ? 'bg-purple-50 border-purple-200' :
                   riga.campo === 'caparra' ? 'bg-orange-50 border-orange-200' :
@@ -1741,14 +1759,14 @@ export default function Vendita({ onNavigate }) {
                     {ocrRighe.indexOf(riga) > 0 && (
                       <button
                         onClick={() => handleOcrMergeUp(riga.id)}
-                        className="shrink-0 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded"
+                        className="shrink-0 w-7 h-7 flex items-center justify-center text-blue-500 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 active:bg-blue-200 text-base font-bold"
                         title="Unisci con riga sopra"
                       >
                         ↑
                       </button>
                     )}
                     {ocrRighe.indexOf(riga) === 0 && (
-                      <div className="shrink-0 w-6" />
+                      <div className="shrink-0 w-7" />
                     )}
                     <div className="flex-1 min-w-0">
                       <input
@@ -1782,6 +1800,7 @@ export default function Vendita({ onNavigate }) {
                     >
                       <option value="cliente">Cliente</option>
                       <option value="macchina">Macchina</option>
+                      <option value="matricola">Matricola</option>
                       <option value="accessorio">Accessorio</option>
                       <option value="prezzo_totale">Prezzo tot.</option>
                       <option value="caparra">Caparra</option>

@@ -289,6 +289,7 @@ LEGGI OGNI RIGA scritta nel documento e per ognuna suggerisci a quale CAMPO appa
 CAMPI POSSIBILI:
 - "cliente" = nome del cliente/destinatario (di solito dopo "A:" in alto)
 - "macchina" = macchina/attrezzo con brand riconoscibile (Stihl, Honda, Echo, Husqvarna, Grillo, Viking, Kawasaki, Makita, Oleo-Mac, Bosch, John Deere, ARS, Pellenc, Infaco, Campagnola, Zanon, Cifarelli, Shindaiwa, Maruyama, Benassi). Se riconosci il brand, aggiungilo.
+- "matricola" = numero di matricola/serial number di una macchina (es: "MATR. 450906088", "S/N: GCARK1234567"). Va SEMPRE dopo la riga macchina a cui si riferisce.
 - "accessorio" = accessori, ricambi, consumabili (olio, filo, cinture, zaini, manici, ecc.)
 - "prezzo_totale" = importo TOTALE della vendita (di solito in fondo al documento)
 - "caparra" = acconto/caparra versata
@@ -307,6 +308,7 @@ RISPONDI IN JSON:
   "righe": [
     { "testo": "Mario Rossi", "campo": "cliente", "brand": null, "prezzo": null },
     { "testo": "Segaccio 470mm", "campo": "macchina", "brand": "ARS", "prezzo": 150.00 },
+    { "testo": "MATR. 450906088", "campo": "matricola", "brand": null, "prezzo": null },
     { "testo": "Manico telescopico", "campo": "accessorio", "brand": null, "prezzo": 40.00 },
     { "testo": "190,00", "campo": "prezzo_totale", "brand": null, "prezzo": 190.00 },
     { "testo": "50,00", "campo": "caparra", "brand": null, "prezzo": 50.00 },
@@ -319,6 +321,7 @@ REGOLE:
 - Leggi TUTTE le righe scritte a mano, dall'alto in basso
 - NON saltare nessuna riga
 - Per le macchine: se riconosci il brand mettilo nel campo "brand"
+- Se trovi un numero di matricola (MATR., S/N, serial), mettilo come riga separata con campo "matricola" SUBITO DOPO la riga macchina corrispondente
 - ASSOCIA i prezzi agli articoli: se una riga ha sia descrizione che prezzo, metti il prezzo nel campo "prezzo" di quella riga
 - Se un prezzo e chiaramente il totale complessivo, usa "prezzo_totale"
 - Se un importo sembra un acconto/caparra, usa "caparra"  

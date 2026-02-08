@@ -63,7 +63,7 @@ export default function Vendita({ onNavigate }) {
   const [telefonoCliente, setTelefonoCliente] = useState('');
   const [prodotti, setProdotti] = useState([]);
   const [accessori, setAccessori] = useState([]);
-  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1' });
+  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   const [totaleManuale, setTotaleManuale] = useState('');
   const [ivaCompresa, setIvaCompresa] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -78,7 +78,7 @@ export default function Vendita({ onNavigate }) {
   
   // Modifica accessorio
   const [editingAccessorio, setEditingAccessorio] = useState(null);
-  const [editAccessorioData, setEditAccessorioData] = useState({ nome: '', prezzo: '', quantita: '1' });
+  const [editAccessorioData, setEditAccessorioData] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   
   // Modifica prezzo prodotto (MODAL invece di prompt)
   const [editingProduct, setEditingProduct] = useState(null);
@@ -598,9 +598,10 @@ export default function Vendita({ onNavigate }) {
       ...newAccessorio, 
       id: Date.now(),
       prezzo: parseFloat(newAccessorio.prezzo) || 0,
-      quantita: parseInt(newAccessorio.quantita) || 1
+      quantita: parseInt(newAccessorio.quantita) || 1,
+      matricola: newAccessorio.matricola?.trim() || null
     }]);
-    setNewAccessorio({ nome: '', prezzo: '', quantita: '1' });
+    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   };
 
   const handleRemoveAccessorio = (id) => {
@@ -610,7 +611,7 @@ export default function Vendita({ onNavigate }) {
   // Apri modifica accessorio
   const handleEditAccessorio = (acc) => {
     setEditingAccessorio(acc.id);
-    setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString(), quantita: (acc.quantita || 1).toString() });
+    setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString(), quantita: (acc.quantita || 1).toString(), matricola: acc.matricola || '' });
   };
   
   // Salva modifica accessorio
@@ -622,12 +623,12 @@ export default function Vendita({ onNavigate }) {
     
     setAccessori(accessori.map(a => 
       a.id === editingAccessorio 
-        ? { ...a, nome: editAccessorioData.nome.trim(), prezzo: parseFloat(editAccessorioData.prezzo) || 0, quantita: parseInt(editAccessorioData.quantita) || 1 }
+        ? { ...a, nome: editAccessorioData.nome.trim(), prezzo: parseFloat(editAccessorioData.prezzo) || 0, quantita: parseInt(editAccessorioData.quantita) || 1, matricola: editAccessorioData.matricola?.trim() || null }
         : a
     ));
     
     setEditingAccessorio(null);
-    setEditAccessorioData({ nome: '', prezzo: '', quantita: '1' });
+    setEditAccessorioData({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   };
 
   const hasOrderedProducts = prodotti.some(p => p.isOrdered === true);
@@ -1180,51 +1181,67 @@ export default function Vendita({ onNavigate }) {
               {accessori.map((acc) => (
                 <div key={acc.id}>
                   {editingAccessorio === acc.id ? (
-                    <div className="flex gap-2 p-2 bg-blue-50 rounded border border-blue-200">
-                      <input
-                        type="text"
-                        placeholder="Descrizione"
-                        className="flex-1 p-2 border rounded text-sm"
-                        value={editAccessorioData.nome}
-                        onChange={(e) => setEditAccessorioData({ ...editAccessorioData, nome: e.target.value })}
-                        autoFocus
-                      />
-                      <input
-                        type="number"
-                        placeholder="Qtà"
-                        className="w-14 p-2 border rounded text-sm text-center"
-                        min="1"
-                        value={editAccessorioData.quantita}
-                        onChange={(e) => setEditAccessorioData({ ...editAccessorioData, quantita: e.target.value })}
-                      />
-                      <input
-                        type="number"
-                        placeholder="€"
-                        className="w-16 p-2 border rounded text-sm text-center"
-                        value={editAccessorioData.prezzo}
-                        onChange={(e) => setEditAccessorioData({ ...editAccessorioData, prezzo: e.target.value })}
-                      />
-                      <button 
-                        onClick={handleSaveAccessorio} 
-                        className="px-3 rounded text-white text-sm"
-                        style={{ backgroundColor: '#006B3F' }}
-                      >
-                        ✓
-                      </button>
-                      <button 
-                        onClick={() => setEditingAccessorio(null)} 
-                        className="px-2 text-gray-500"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div className="p-2 bg-blue-50 rounded border border-blue-200 space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Descrizione"
+                          className="flex-1 p-2 border rounded text-sm"
+                          value={editAccessorioData.nome}
+                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, nome: e.target.value })}
+                          autoFocus
+                        />
+                        <input
+                          type="number"
+                          placeholder="Qtà"
+                          className="w-14 p-2 border rounded text-sm text-center"
+                          min="1"
+                          value={editAccessorioData.quantita}
+                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, quantita: e.target.value })}
+                        />
+                        <input
+                          type="number"
+                          placeholder="€"
+                          className="w-16 p-2 border rounded text-sm text-center"
+                          value={editAccessorioData.prezzo}
+                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, prezzo: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Matricola (opzionale)"
+                          className="flex-1 p-2 border rounded text-sm font-mono"
+                          value={editAccessorioData.matricola}
+                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, matricola: e.target.value })}
+                        />
+                        <button 
+                          onClick={handleSaveAccessorio} 
+                          className="px-3 rounded text-white text-sm"
+                          style={{ backgroundColor: '#006B3F' }}
+                        >
+                          ✓
+                        </button>
+                        <button 
+                          onClick={() => setEditingAccessorio(null)} 
+                          className="px-2 text-gray-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-sm">
-                      <span className="flex-1 truncate">
-                        {acc.quantita > 1 && <span className="font-medium text-blue-600 mr-1">{acc.quantita}x</span>}
-                        {acc.nome}
-                      </span>
-                      <span className="text-gray-600 mx-2">
+                      <div className="flex-1 min-w-0">
+                        <span className="truncate block">
+                          {acc.quantita > 1 && <span className="font-medium text-blue-600 mr-1">{acc.quantita}x</span>}
+                          {acc.nome}
+                        </span>
+                        {acc.matricola && (
+                          <span className="text-xs text-gray-500 font-mono block truncate">SN: {acc.matricola}</span>
+                        )}
+                      </div>
+                      <span className="text-gray-600 mx-2 shrink-0">
                         {acc.prezzo > 0 
                           ? (acc.quantita > 1 ? `€${(acc.prezzo * acc.quantita).toFixed(2)}` : `€${acc.prezzo}`)
                           : 'Incluso'}
@@ -1242,32 +1259,43 @@ export default function Vendita({ onNavigate }) {
             </div>
           )}
           
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Descrizione"
-              className="flex-1 p-2 border rounded-lg text-sm"
-              value={newAccessorio.nome}
-              onChange={(e) => setNewAccessorio({ ...newAccessorio, nome: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="Qtà"
-              className="w-14 p-2 border rounded-lg text-sm text-center"
-              min="1"
-              value={newAccessorio.quantita}
-              onChange={(e) => setNewAccessorio({ ...newAccessorio, quantita: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="€"
-              className="w-16 p-2 border rounded-lg text-sm text-center"
-              value={newAccessorio.prezzo}
-              onChange={(e) => setNewAccessorio({ ...newAccessorio, prezzo: e.target.value })}
-            />
-            <button onClick={handleAddAccessorio} className="p-2 rounded-lg text-white" style={{ backgroundColor: '#006B3F' }}>
-              <Plus className="w-5 h-5" />
-            </button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Descrizione"
+                className="flex-1 p-2 border rounded-lg text-sm"
+                value={newAccessorio.nome}
+                onChange={(e) => setNewAccessorio({ ...newAccessorio, nome: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="Qtà"
+                className="w-14 p-2 border rounded-lg text-sm text-center"
+                min="1"
+                value={newAccessorio.quantita}
+                onChange={(e) => setNewAccessorio({ ...newAccessorio, quantita: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="€"
+                className="w-16 p-2 border rounded-lg text-sm text-center"
+                value={newAccessorio.prezzo}
+                onChange={(e) => setNewAccessorio({ ...newAccessorio, prezzo: e.target.value })}
+              />
+              <button onClick={handleAddAccessorio} className="p-2 rounded-lg text-white" style={{ backgroundColor: '#006B3F' }}>
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
+            {newAccessorio.nome && (
+              <input
+                type="text"
+                placeholder="Matricola (opzionale)"
+                className="w-full p-2 border rounded-lg text-sm font-mono"
+                value={newAccessorio.matricola}
+                onChange={(e) => setNewAccessorio({ ...newAccessorio, matricola: e.target.value })}
+              />
+            )}
           </div>
         </div>
 

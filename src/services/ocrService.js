@@ -19,12 +19,17 @@ function getRateLimitInfo() {
     if (stored) {
       const data = JSON.parse(stored);
       if (Date.now() - data.lastReset > 24 * 60 * 60 * 1000) {
-        return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null };
+        return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0 };
       }
-      return data;
+      return { ...data, consecutive429: data.consecutive429 || 0 };
     }
   } catch (e) {}
-  return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null };
+  return { count: 0, lastReset: Date.now(), blocked: false, blockedUntil: null, consecutive429: 0 };
+}
+
+// Calcola tempo di attesa con backoff: 60s, 120s, 180s...
+function getBackoffMs(consecutive) {
+  return Math.min((consecutive + 1) * 60 * 1000, 5 * 60 * 1000); // max 5 minuti
 }
 
 function saveRateLimitInfo(info) {
@@ -147,6 +152,7 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     console.log(`Risposta ricevuta in ${responseTime}ms`);
     
     rateInfo.count++;
+    rateInfo.consecutive429 = 0;
     saveRateLimitInfo(rateInfo);
     
     const text = result.response.text().trim();
@@ -210,16 +216,19 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
         error.message?.includes('RESOURCE_EXHAUSTED') ||
         error.message?.includes('Too Many Requests')) {
       
+      rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
+      const waitMs = getBackoffMs(rateInfo.consecutive429);
+      const waitSec = Math.ceil(waitMs / 1000);
       rateInfo.blocked = true;
-      rateInfo.blockedUntil = Date.now() + (30 * 1000);
+      rateInfo.blockedUntil = Date.now() + waitMs;
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: 'Troppe richieste. Attendi 30 secondi.',
+        error: `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`,
         needsWait: true,
         isRateLimited: true,
-        waitSeconds: 30
+        waitSeconds: waitSec
       };
     }
     
@@ -346,6 +355,7 @@ REGOLE:
     console.log(`Risposta ricevuta in ${responseTime}ms`);
     
     rateInfo.count++;
+    rateInfo.consecutive429 = 0;
     saveRateLimitInfo(rateInfo);
     
     const text = result.response.text().trim();
@@ -409,13 +419,16 @@ REGOLE:
         error.message?.includes('rate') ||
         error.message?.includes('RESOURCE_EXHAUSTED')) {
       
+      rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
+      const waitMs = getBackoffMs(rateInfo.consecutive429);
+      const waitSec = Math.ceil(waitMs / 1000);
       rateInfo.blocked = true;
-      rateInfo.blockedUntil = Date.now() + (30 * 1000);
+      rateInfo.blockedUntil = Date.now() + waitMs;
       saveRateLimitInfo(rateInfo);
       
       return {
         success: false,
-        error: 'Troppe richieste. Attendi 30 secondi.',
+        error: `Limite API. Riprova tra ${waitSec >= 60 ? Math.ceil(waitSec/60) + ' minuti' : waitSec + ' secondi'}.`,
         needsWait: true,
         isRateLimited: true
       };

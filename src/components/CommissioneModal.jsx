@@ -78,6 +78,103 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     return `€${prod.prezzo.toFixed(2)}`;
   };
 
+  // === CALCOLO SCORPORO IVA ===
+  // Raccoglie tutti gli importi con le rispettive aliquote
+  const getDettaglioIva = () => {
+    const items = [];
+    
+    // Prodotti
+    const prodotti = isKit && data.prodotti ? data.prodotti : [{
+      prezzo: getTotaleProdotti(),
+      aliquotaIva: data.prodotti?.[0]?.aliquotaIva || 22,
+      isOmaggio: false
+    }];
+    
+    prodotti.forEach(p => {
+      if (p.isOmaggio || !p.prezzo) return;
+      items.push({ importo: p.prezzo, aliquota: p.aliquotaIva || 22 });
+    });
+    
+    // Accessori
+    const acc = isKit ? data.accessori : data.saleData?.accessori;
+    if (acc) {
+      acc.forEach(a => {
+        const prezzo = (parseFloat(a.prezzo) || 0) * (a.quantita || 1);
+        if (prezzo <= 0) return;
+        items.push({ importo: prezzo, aliquota: a.aliquotaIva || 22 });
+      });
+    }
+    
+    // Raggruppa per aliquota
+    const perAliquota = {};
+    items.forEach(({ importo, aliquota }) => {
+      if (!perAliquota[aliquota]) perAliquota[aliquota] = 0;
+      perAliquota[aliquota] += importo;
+    });
+    
+    // Calcola scorporo
+    const righe = Object.entries(perAliquota)
+      .sort(([a], [b]) => Number(b) - Number(a)) // 22, 10, 4
+      .map(([aliquota, totale]) => {
+        const aliq = Number(aliquota);
+        let imponibile, iva;
+        if (data.ivaCompresa) {
+          imponibile = totale / (1 + aliq / 100);
+          iva = totale - imponibile;
+        } else {
+          imponibile = totale;
+          iva = totale * (aliq / 100);
+        }
+        return { aliquota: aliq, totale, imponibile, iva };
+      });
+    
+    const totImponibile = righe.reduce((s, r) => s + r.imponibile, 0);
+    const totIva = righe.reduce((s, r) => s + r.iva, 0);
+    
+    return { righe, totImponibile, totIva };
+  };
+
+  // Controlla se ci sono aliquote miste (non solo 22%)
+  const hasAliquoteMiste = () => {
+    const { righe } = getDettaglioIva();
+    return righe.length > 1 || (righe.length === 1 && righe[0].aliquota !== 22);
+  };
+
+  // Helper: aggiunge sezione IVA al PDF
+  const addIvaToPDF = (doc, margin, pageWidth, yStart) => {
+    let y = yStart;
+    if (getTotale() <= 0) return y;
+    
+    const { righe: righeIva, totImponibile, totIva } = getDettaglioIva();
+    
+    y += 5;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DETTAGLIO IVA', margin, y);
+    y += 4;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    righeIva.forEach(r => {
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Imponibile ${r.aliquota}%: € ${r.imponibile.toFixed(2)}`, margin, y);
+      doc.setTextColor(130, 130, 130);
+      doc.text(`IVA € ${r.iva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      y += 4;
+    });
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Totale imponibile: € ${totImponibile.toFixed(2)}`, margin, y);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`IVA totale: € ${totIva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    y += 3;
+    
+    return y;
+  };
+
   // Genera PDF - versione minimal bianca per risparmio inchiostro
   const generatePDF = () => {
     const doc = new jsPDF({
@@ -287,6 +384,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     } else {
       y += totaleBoxHeight;
     }
+
+    // Dettaglio IVA nel PDF
+    y = addIvaToPDF(doc, margin, pageWidth, y);
 
     // Note
     if (data.note) {
@@ -534,6 +634,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       y += totaleBoxHeight;
     }
 
+    // Dettaglio IVA nel PDF
+    y = addIvaToPDF(doc, margin, pageWidth, y);
+
     // Note
     if (data.note) {
       y += 5;
@@ -642,9 +745,19 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
     text += `💰 *TOTALE${data.ivaCompresa ? ' (I.C.)' : ''}: €${getTotale().toFixed(2)}*`;
     
+    // Dettaglio IVA
+    const { righe: righeIva, totImponibile, totIva } = getDettaglioIva();
+    if (getTotale() > 0) {
+      text += `\n\n📊 *Dettaglio IVA:*`;
+      righeIva.forEach(r => {
+        text += `\nImponibile ${r.aliquota}%: €${r.imponibile.toFixed(2)} (IVA €${r.iva.toFixed(2)})`;
+      });
+      text += `\n*Totale imponibile: €${totImponibile.toFixed(2)}*`;
+    }
+    
     // Aggiungi caparra se presente
     if (data.caparra) {
-      text += `\n💳 *CAPARRA: €${data.caparra.toFixed(2)}* (${formatMetodoPagamento(data.metodoPagamento)})`;
+      text += `\n\n💳 *CAPARRA: €${data.caparra.toFixed(2)}* (${formatMetodoPagamento(data.metodoPagamento)})`;
       text += `\n📌 *DA SALDARE: €${getDaSaldare().toFixed(2)}*`;
     }
     
@@ -882,7 +995,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
                         <p className="text-xs text-yellow-600">⚠️ Matricola da inserire</p>
                       )}
                     </div>
-                    {formatPrezzoDisplay(prod)}
+                    <div className="flex items-center gap-1">
+                      {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                          prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {prod.aliquotaIva}%
+                        </span>
+                      )}
+                      {formatPrezzoDisplay(prod)}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -916,7 +1038,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
                       <p className="text-xs text-gray-500 font-mono">SN: {acc.matricola}</p>
                     )}
                   </div>
-                  <p className="font-semibold shrink-0 ml-2">€ {parseFloat(acc.prezzo || 0).toFixed(2)}</p>
+                  <div className="flex items-center gap-1">
+                    {(acc.aliquotaIva && acc.aliquotaIva !== 22) && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        acc.aliquotaIva === 4 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {acc.aliquotaIva}%
+                      </span>
+                    )}
+                    <p className="font-semibold shrink-0 ml-1">€ {parseFloat(acc.prezzo || 0).toFixed(2)}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -952,6 +1083,34 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
             </div>
           )}
         </div>
+
+        {/* Dettaglio IVA / Scorporo */}
+        {getTotale() > 0 && (
+          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 uppercase font-bold mb-2">📊 Dettaglio IVA</p>
+            {(() => {
+              const { righe, totImponibile, totIva } = getDettaglioIva();
+              return (
+                <>
+                  {righe.map(r => (
+                    <div key={r.aliquota} className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>Imponibile {r.aliquota}%</span>
+                      <span>€ {r.imponibile.toFixed(2)} <span className="text-gray-400">(IVA € {r.iva.toFixed(2)})</span></span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm font-bold text-gray-800 mt-2 pt-2 border-t border-gray-300">
+                    <span>Totale imponibile</span>
+                    <span>€ {totImponibile.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Totale IVA</span>
+                    <span>€ {totIva.toFixed(2)}</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Note */}
         {data.note && (

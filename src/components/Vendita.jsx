@@ -289,7 +289,8 @@ export default function Vendita({ onNavigate }) {
       model: selectedProduct.model,
       serialNumber: selectedProduct.serialNumber,
       prezzo: prezzo,
-      isOmaggio: isOmaggio
+      isOmaggio: isOmaggio,
+      aliquotaIva: 22
     }]);
     
     setSelectedProduct(null);
@@ -332,7 +333,8 @@ export default function Vendita({ onNavigate }) {
       serialNumber: null,
       prezzo: prezzo,
       isOmaggio: isOmaggio,
-      isOrdered: true
+      isOrdered: true,
+      aliquotaIva: 22
     }]);
     
     setOrderBrand('');
@@ -476,7 +478,8 @@ export default function Vendita({ onNavigate }) {
             serialNumber: null,
             prezzo: riga.prezzo || 0,
             isOmaggio: false,
-            isOrdered: false
+            isOrdered: false,
+            aliquotaIva: 22
           });
           break;
         case 'matricola': {
@@ -492,7 +495,8 @@ export default function Vendita({ onNavigate }) {
             id: Date.now() + 1000 + idx,
             nome: riga.testo || '',
             quantita: 1,
-            prezzo: riga.prezzo || 0
+            prezzo: riga.prezzo || 0,
+            aliquotaIva: 22
           });
           break;
         case 'prezzo_totale': {
@@ -598,6 +602,33 @@ export default function Vendita({ onNavigate }) {
     setEditProductPrice('');
   };
 
+  // Cicla aliquota IVA prodotto: 22 → 10 → 4 → 22
+  const cycleIvaProdotto = (id) => {
+    setProdotti(prodotti.map(p => {
+      if (p.id !== id) return p;
+      const current = p.aliquotaIva || 22;
+      const next = current === 22 ? 10 : current === 10 ? 4 : 22;
+      return { ...p, aliquotaIva: next };
+    }));
+  };
+
+  // Cicla aliquota IVA accessorio: 22 → 10 → 4 → 22
+  const cycleIvaAccessorio = (id) => {
+    setAccessori(accessori.map(a => {
+      if (a.id !== id) return a;
+      const current = a.aliquotaIva || 22;
+      const next = current === 22 ? 10 : current === 10 ? 4 : 22;
+      return { ...a, aliquotaIva: next };
+    }));
+  };
+
+  // Stile badge IVA
+  const getIvaBadgeStyle = (aliquota) => {
+    if (aliquota === 4) return 'bg-green-100 text-green-700 border-green-300';
+    if (aliquota === 10) return 'bg-amber-100 text-amber-700 border-amber-300';
+    return 'bg-gray-100 text-gray-400 border-gray-200';
+  };
+
   const handleAddAccessorio = () => {
     if (!newAccessorio.nome) {
       alert('Inserisci la descrizione!');
@@ -608,7 +639,8 @@ export default function Vendita({ onNavigate }) {
       id: Date.now(),
       prezzo: parseFloat(newAccessorio.prezzo) || 0,
       quantita: parseInt(newAccessorio.quantita) || 1,
-      matricola: newAccessorio.matricola?.trim() || null
+      matricola: newAccessorio.matricola?.trim() || null,
+      aliquotaIva: 22
     }]);
     setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   };
@@ -689,7 +721,8 @@ export default function Vendita({ onNavigate }) {
         serialNumber: p.serialNumber || null,
         prezzo: p.prezzo,
         isOmaggio: p.isOmaggio,
-        isOrdered: p.isOrdered
+        isOrdered: p.isOrdered,
+        aliquotaIva: p.aliquotaIva || 22
       })),
       accessori: accessori,
       totale: totale,
@@ -732,7 +765,7 @@ export default function Vendita({ onNavigate }) {
         const commissione = createCommissione({
           cliente: nomeCliente, clienteInfo: clienteSelezionato,
           telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
-          prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio })),
+          prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
           accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
           metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
           note: note.trim() || null, tipoDocumento
@@ -791,7 +824,7 @@ export default function Vendita({ onNavigate }) {
       const commissione = createCommissione({
         cliente: nomeCliente, clienteInfo: clienteSelezionato,
         telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
-        prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio })),
+        prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
         accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
         metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
         note: note.trim() || null, tipoDocumento
@@ -1197,6 +1230,13 @@ export default function Vendita({ onNavigate }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
+                    <button 
+                      onClick={() => cycleIvaProdotto(prod.id)}
+                      className={`text-xs px-1.5 py-0.5 rounded border font-medium ${getIvaBadgeStyle(prod.aliquotaIva || 22)}`}
+                      title="Tocca per cambiare aliquota IVA"
+                    >
+                      {prod.aliquotaIva || 22}%
+                    </button>
                     <button onClick={() => handleOpenEditPrice(prod)} className="p-1">
                       {formatPrezzo(prod)}
                     </button>
@@ -1279,7 +1319,14 @@ export default function Vendita({ onNavigate }) {
                           <span className="text-xs text-gray-500 font-mono block truncate">SN: {acc.matricola}</span>
                         )}
                       </div>
-                      <span className="text-gray-600 mx-2 shrink-0">
+                      <button 
+                        onClick={() => cycleIvaAccessorio(acc.id)}
+                        className={`text-xs px-1.5 py-0.5 rounded border font-medium mx-1 shrink-0 ${getIvaBadgeStyle(acc.aliquotaIva || 22)}`}
+                        title="Tocca per cambiare aliquota IVA"
+                      >
+                        {acc.aliquotaIva || 22}%
+                      </button>
+                      <span className="text-gray-600 mx-1 shrink-0">
                         {acc.prezzo > 0 
                           ? (acc.quantita > 1 ? `€${(acc.prezzo * acc.quantita).toFixed(2)}` : `€${acc.prezzo}`)
                           : 'Incluso'}

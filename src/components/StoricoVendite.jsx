@@ -16,6 +16,7 @@ export default function StoricoVendite({ onNavigate }) {
   const brands = useStore((state) => state.brands);
   const deleteSale = useStore((state) => state.deleteSale);
   const deleteMultipleSales = useStore((state) => state.deleteMultipleSales);
+  const updateSaleDate = useStore((state) => state.updateSaleDate);
   
   const [filters, setFilters] = useState({
     dataFrom: '',
@@ -39,6 +40,11 @@ export default function StoricoVendite({ onNavigate }) {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDeleteMultipleModal, setShowDeleteMultipleModal] = useState(false);
+
+  // Stato per modifica data
+  const [editDateSale, setEditDateSale] = useState(null);
+  const [editDateValue, setEditDateValue] = useState('');
+  const [savingDate, setSavingDate] = useState(false);
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -225,6 +231,34 @@ export default function StoricoVendite({ onNavigate }) {
       setSelectedItems([]);
       setSelectMode(false);
       setShowDeleteMultipleModal(false);
+    }
+  };
+
+  // Gestione modifica data
+  const handleEditDate = (sale) => {
+    const d = new Date(sale.timestamp);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    setEditDateValue(`${yyyy}-${mm}-${dd}`);
+    setEditDateSale(sale);
+  };
+
+  const handleSaveDate = async () => {
+    if (!editDateSale || !editDateValue) return;
+    setSavingDate(true);
+    try {
+      const newTimestamp = new Date(editDateValue + 'T12:00:00').toISOString();
+      const result = await updateSaleDate(editDateSale.id, newTimestamp);
+      if (result.success) {
+        setEditDateSale(null);
+      } else {
+        alert('Errore: ' + (result.error || 'impossibile aggiornare'));
+      }
+    } catch (e) {
+      alert('Errore: ' + e.message);
+    } finally {
+      setSavingDate(false);
     }
   };
 
@@ -635,8 +669,8 @@ export default function StoricoVendite({ onNavigate }) {
                     </button>
                   )}
                   
-                  <div className="flex-none w-16">
-                    <div className="text-sm font-medium">
+                  <div className="flex-none w-16" onClick={() => handleEditDate(sale)}>
+                    <div className="text-sm font-medium text-blue-600 underline decoration-dotted cursor-pointer">
                       {new Date(sale.timestamp).toLocaleDateString('it-IT', { 
                         day: '2-digit', 
                         month: '2-digit' 
@@ -803,6 +837,50 @@ export default function StoricoVendite({ onNavigate }) {
                 className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold"
               >
                 Elimina {selectedItems.length}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifica Data */}
+      {editDateSale && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold mb-1">📅 Modifica data</h3>
+            <p className="text-sm text-gray-500 mb-4 truncate">
+              {editDateSale.brand} {editDateSale.model} — {editDateSale.cliente}
+            </p>
+            <div className="mb-2">
+              <label className="text-xs text-gray-500">Data attuale</label>
+              <p className="text-sm font-medium text-red-500">
+                {new Date(editDateSale.timestamp).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="text-xs text-gray-500">Nuova data</label>
+              <input
+                type="date"
+                className="w-full p-3 border-2 rounded-lg text-lg font-bold"
+                style={{ borderColor: '#006B3F' }}
+                value={editDateValue}
+                onChange={(e) => setEditDateValue(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditDateSale(null)}
+                className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleSaveDate}
+                disabled={savingDate}
+                className="flex-1 py-3 text-white rounded-lg font-semibold"
+                style={{ backgroundColor: '#006B3F' }}
+              >
+                {savingDate ? '⏳ Salvo...' : '✓ Salva'}
               </button>
             </div>
           </div>

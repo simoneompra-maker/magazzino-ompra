@@ -244,6 +244,29 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // Modifica data di una vendita
+  updateSaleDate: async (saleId, newDate) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .update({ timestamp: newDate })
+        .eq('id', saleId);
+      
+      if (error) throw error;
+      
+      await get().fetchSales();
+      set({ syncStatus: 'success' });
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Errore modifica data vendita:', error);
+      set({ syncStatus: 'error' });
+      return { success: false, error: error.message };
+    }
+  },
+
   // Elimina singola vendita
   deleteSale: async (saleId) => {
     set({ syncStatus: 'syncing' });

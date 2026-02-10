@@ -133,6 +133,20 @@ export default function StoricoVendite({ onNavigate }) {
     return filteredSales.reduce((sum, s) => sum + (s.prezzo || s.totale || 0), 0);
   }, [filteredSales]);
 
+  // Totale imponibile (scorporo IVA 22% default)
+  const totaleImponibile = useMemo(() => {
+    return filteredSales.reduce((sum, s) => {
+      const prezzo = s.prezzo || s.totale || 0;
+      return sum + (prezzo / 1.22);
+    }, 0);
+  }, [filteredSales]);
+
+  // Helper: calcola imponibile singola vendita
+  const getImponibile = (sale) => {
+    const prezzo = sale.prezzo || sale.totale || 0;
+    return prezzo / 1.22;
+  };
+
   // Conta filtri attivi
   const activeFiltersCount = useMemo(() => {
     return Object.values(filters).filter(v => v !== '').length;
@@ -216,7 +230,7 @@ export default function StoricoVendite({ onNavigate }) {
 
   // EXPORT CSV
   const exportCSV = () => {
-    const headers = ['Data', 'Ora', 'Brand', 'Modello', 'Matricola', 'Cliente', 'Prezzo', 'Operatore'];
+    const headers = ['Data', 'Ora', 'Brand', 'Modello', 'Matricola', 'Cliente', 'Prezzo', 'Imponibile', 'Operatore'];
     
     const rows = filteredSales.map(sale => {
       const date = new Date(sale.timestamp);
@@ -228,13 +242,14 @@ export default function StoricoVendite({ onNavigate }) {
         sale.serialNumber || '',
         sale.cliente || '',
         (sale.prezzo || 0).toFixed(2),
+        getImponibile(sale).toFixed(2),
         sale.user || ''
       ];
     });
     
     // Aggiungi riga totale
     rows.push([]);
-    rows.push(['', '', '', '', '', 'TOTALE:', totaleSales.toFixed(2), '']);
+    rows.push(['', '', '', '', '', 'TOTALE:', totaleSales.toFixed(2), totaleImponibile.toFixed(2), '']);
     
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${cell}"`).join(';'))
@@ -262,7 +277,7 @@ export default function StoricoVendite({ onNavigate }) {
       <body>
       <h2>OMPRA - Storico Vendite</h2>
       <p>Esportato il: ${new Date().toLocaleString('it-IT')}</p>
-      <p>Vendite: ${filteredSales.length} | Totale: € ${totaleSales.toFixed(2)}</p>
+      <p>Vendite: ${filteredSales.length} | Totale: € ${totaleSales.toFixed(2)} | Imponibile: € ${totaleImponibile.toFixed(2)}</p>
       <table>
         <thead>
           <tr>
@@ -273,6 +288,7 @@ export default function StoricoVendite({ onNavigate }) {
             <th>Matricola</th>
             <th>Cliente</th>
             <th>Prezzo €</th>
+            <th>Imponibile €</th>
             <th>Operatore</th>
           </tr>
         </thead>
@@ -290,6 +306,7 @@ export default function StoricoVendite({ onNavigate }) {
           <td>${sale.serialNumber || ''}</td>
           <td>${sale.cliente || ''}</td>
           <td class="prezzo">${(sale.prezzo || 0).toFixed(2)}</td>
+          <td class="prezzo">${getImponibile(sale).toFixed(2)}</td>
           <td>${sale.user || ''}</td>
         </tr>
       `;
@@ -299,6 +316,7 @@ export default function StoricoVendite({ onNavigate }) {
         <tr class="totale">
           <td colspan="6" style="text-align: right;"><strong>TOTALE</strong></td>
           <td class="prezzo"><strong>€ ${totaleSales.toFixed(2)}</strong></td>
+          <td class="prezzo"><strong>€ ${totaleImponibile.toFixed(2)}</strong></td>
           <td></td>
         </tr>
         </tbody>
@@ -403,7 +421,10 @@ export default function StoricoVendite({ onNavigate }) {
         {/* Riepilogo */}
         <div className="mt-3 flex justify-between text-sm">
           <span>{filteredSales.length} vendite</span>
-          <span className="font-bold">Totale: € {totaleSales.toFixed(2)}</span>
+          <div className="text-right">
+            <span className="font-bold">Totale: € {totaleSales.toFixed(2)}</span>
+            <span className="block text-xs text-white/70">Imponibile: € {totaleImponibile.toFixed(2)}</span>
+          </div>
         </div>
       </div>
 
@@ -572,7 +593,7 @@ export default function StoricoVendite({ onNavigate }) {
           Cliente <SortIcon field="cliente" />
         </button>
         <button 
-          className="flex-none w-16 text-right flex items-center justify-end gap-1"
+          className="flex-none w-20 text-right flex items-center justify-end gap-1"
           onClick={() => toggleSort('totale')}
         >
           € <SortIcon field="totale" />
@@ -642,13 +663,18 @@ export default function StoricoVendite({ onNavigate }) {
                     {sale.cliente || '-'}
                   </div>
                   
-                  <div className="flex-none w-16 text-right">
+                  <div className="flex-none w-20 text-right">
                     {(sale.prezzo === 0 || sale.prezzo === null || sale.prezzo === undefined) ? (
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium">KIT</span>
                     ) : (
-                      <span className="font-bold" style={{ color: '#006B3F' }}>
-                        €{sale.prezzo?.toFixed(0) || '0'}
-                      </span>
+                      <>
+                        <span className="font-bold block" style={{ color: '#006B3F' }}>
+                          €{sale.prezzo?.toFixed(0) || '0'}
+                        </span>
+                        <span className="text-xs text-gray-400 block">
+                          imp. €{getImponibile(sale).toFixed(0)}
+                        </span>
+                      </>
                     )}
                   </div>
                   

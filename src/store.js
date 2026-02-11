@@ -429,28 +429,19 @@ const useStore = create((set, get) => ({
 
   // ============ FINE COMMISSIONI ============
 
-  // Segna manualmente un prodotto come venduto (per pulizia giacenze fantasma)
-  markAsSold: async (serialNumber, cliente) => {
+  // Segna manualmente un prodotto come venduto (pulizia giacenze fantasma)
+  // Rimuove il record CARICO dalla giacenza — la vendita vera esiste già nello storico
+  markAsSold: async (serialNumber) => {
     set({ syncStatus: 'syncing' });
     
     try {
-      const product = get().inventory.find(i => i.serialNumber === serialNumber);
-      
+      // Elimina tutti i record con questa matricola (CARICO)
+      // Se esiste già una VENDITA con questa matricola, la manteniamo
       const { error } = await supabase
         .from('inventory')
-        .insert({
-          timestamp: new Date().toISOString(),
-          action: 'VENDITA',
-          brand: product?.brand || '',
-          model: product?.model || '',
-          serialNumber: serialNumber,
-          cliente: cliente || 'Venduta (correzione manuale)',
-          prezzo: 0,
-          totale: 0,
-          status: 'sold',
-          user: get().user,
-          location: get().location
-        });
+        .delete()
+        .eq('serialNumber', serialNumber)
+        .eq('action', 'CARICO');
       
       if (error) throw error;
       
@@ -462,6 +453,31 @@ const useStore = create((set, get) => ({
       console.error('❌ Mark as sold error:', error);
       set({ syncStatus: 'error' });
       return { success: false, error: error.message };
+    }
+  },
+
+  // Elimina multipli prodotti da inventario (per serialNumber)
+  deleteMultipleItems: async (serialNumbers) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .in('serialNumber', serialNumbers);
+      
+      if (error) throw error;
+      
+      await get().fetchInventory();
+      await get().fetchSales();
+      set({ syncStatus: 'success' });
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Delete multiple items error:', error);
+      set({ syncStatus: 'error' });
+      alert('Errore durante eliminazione: ' + error.message);
+      return false;
     }
   },
 

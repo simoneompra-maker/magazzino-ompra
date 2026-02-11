@@ -36,7 +36,6 @@ export default function Giacenze({ onNavigate }) {
 
   // Stato per segna come venduta
   const [markSoldItem, setMarkSoldItem] = useState(null);
-  const [markSoldCliente, setMarkSoldCliente] = useState('');
   const [markingSold, setMarkingSold] = useState(false);
 
   // Operatori unici
@@ -206,15 +205,14 @@ export default function Giacenze({ onNavigate }) {
     }
   };
 
-  // Segna come venduta
+  // Segna come venduta (elimina record CARICO)
   const handleMarkSold = async () => {
     if (!markSoldItem) return;
     setMarkingSold(true);
     try {
-      const result = await markAsSold(markSoldItem.serialNumber, markSoldCliente.trim() || null);
+      const result = await markAsSold(markSoldItem.serialNumber);
       if (result.success) {
         setMarkSoldItem(null);
-        setMarkSoldCliente('');
       } else {
         alert('Errore: ' + (result.error || 'impossibile aggiornare'));
       }
@@ -627,7 +625,7 @@ export default function Giacenze({ onNavigate }) {
                       <>
                         {item.status === 'available' && (
                           <button
-                            onClick={() => { setMarkSoldItem(item); setMarkSoldCliente(''); }}
+                            onClick={() => setMarkSoldItem(item)}
                             className="text-orange-400 hover:text-orange-600 p-1"
                             title="Segna come venduta"
                           >
@@ -826,25 +824,15 @@ export default function Giacenze({ onNavigate }) {
       {markSoldItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold mb-1">📦 Segna come venduta</h3>
+            <h3 className="text-lg font-bold mb-1">📦 Rimuovi da giacenze</h3>
             <p className="text-sm text-gray-600 mb-1">
               <span style={{ color: '#006B3F' }} className="font-bold">{markSoldItem.brand}</span> {markSoldItem.model}
             </p>
             <p className="text-xs text-gray-400 font-mono mb-4">{markSoldItem.serialNumber}</p>
             
-            <div className="mb-4">
-              <label className="text-xs text-gray-500">Cliente (opzionale)</label>
-              <input
-                type="text"
-                className="w-full p-2 border rounded-lg mt-1"
-                placeholder="Nome cliente..."
-                value={markSoldCliente}
-                onChange={(e) => setMarkSoldCliente(e.target.value)}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Questa macchina verrà rimossa dalle giacenze
-              </p>
-            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Il record di carico verrà eliminato. La vendita (se già registrata nello storico) non viene toccata.
+            </p>
             
             <div className="flex gap-3">
               <button
@@ -858,7 +846,7 @@ export default function Giacenze({ onNavigate }) {
                 disabled={markingSold}
                 className="flex-1 py-3 text-white rounded-lg font-semibold bg-orange-500"
               >
-                {markingSold ? '⏳...' : '✓ Venduta'}
+                {markingSold ? '⏳...' : '✓ Rimuovi'}
               </button>
             </div>
           </div>

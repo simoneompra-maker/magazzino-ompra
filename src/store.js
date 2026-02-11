@@ -174,9 +174,6 @@ const useStore = create((set, get) => ({
   // VENDITA
   sellProduct: async (serialNumber, saleData) => {
     const product = get().findBySerialNumber(serialNumber);
-    if (!product) {
-      return { success: false, error: 'Prodotto non trovato' };
-    }
 
     set({ syncStatus: 'syncing' });
     
@@ -186,9 +183,9 @@ const useStore = create((set, get) => ({
         .insert({
           timestamp: saleData.dataVendita || new Date().toISOString(),
           action: 'VENDITA',
-          brand: product.brand,
-          model: product.model,
-          serialNumber: product.serialNumber,
+          brand: product?.brand || saleData.brand || '',
+          model: product?.model || saleData.model || '',
+          serialNumber: serialNumber,
           cliente: saleData.cliente,
           prezzo: parseFloat(saleData.prezzo),
           totale: parseFloat(saleData.totale),
@@ -201,7 +198,7 @@ const useStore = create((set, get) => ({
       
       await get().fetchInventory();
       await get().fetchSales();
-      return { success: true, product: { ...product, saleData } };
+      return { success: true, product: { ...(product || {}), saleData } };
       
     } catch (error) {
       console.error('❌ Vendita error:', error);
@@ -244,24 +241,36 @@ const useStore = create((set, get) => ({
     }
   },
 
-  // Modifica data di una vendita
-  updateSaleDate: async (saleId, newDate) => {
+  // Modifica campi di una vendita
+  updateSale: async (saleId, updates) => {
     set({ syncStatus: 'syncing' });
     
     try {
+      // Mappa i campi del form ai campi Supabase
+      const dbUpdates = {};
+      if (updates.timestamp !== undefined) dbUpdates.timestamp = updates.timestamp;
+      if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
+      if (updates.model !== undefined) dbUpdates.model = updates.model;
+      if (updates.serialNumber !== undefined) dbUpdates.serialNumber = updates.serialNumber;
+      if (updates.cliente !== undefined) dbUpdates.cliente = updates.cliente;
+      if (updates.prezzo !== undefined) dbUpdates.prezzo = parseFloat(updates.prezzo) || 0;
+      if (updates.totale !== undefined) dbUpdates.totale = parseFloat(updates.totale) || 0;
+      if (updates.user !== undefined) dbUpdates.user = updates.user;
+      
       const { error } = await supabase
         .from('inventory')
-        .update({ timestamp: newDate })
+        .update(dbUpdates)
         .eq('id', saleId);
       
       if (error) throw error;
       
       await get().fetchSales();
+      await get().fetchInventory();
       set({ syncStatus: 'success' });
       return { success: true };
       
     } catch (error) {
-      console.error('❌ Errore modifica data vendita:', error);
+      console.error('❌ Errore modifica vendita:', error);
       set({ syncStatus: 'error' });
       return { success: false, error: error.message };
     }
@@ -419,6 +428,42 @@ const useStore = create((set, get) => ({
   },
 
   // ============ FINE COMMISSIONI ============
+
+  // Segna manualmente un prodotto come venduto (per pulizia giacenze fantasma)
+  markAsSold: async (serialNumber, cliente) => {
+    set({ syncStatus: 'syncing' });
+    
+    try {
+      const product = get().inventory.find(i => i.serialNumber === serialNumber);
+      
+      const { error } = await supabase
+        .from('inventory')
+        .insert({
+          timestamp: new Date().toISOString(),
+          action: 'VENDITA',
+          brand: product?.brand || '',
+          model: product?.model || '',
+          serialNumber: serialNumber,
+          cliente: cliente || 'Venduta (correzione manuale)',
+          prezzo: 0,
+          totale: 0,
+          status: 'sold',
+          user: get().user,
+          location: get().location
+        });
+      
+      if (error) throw error;
+      
+      await get().fetchInventory();
+      set({ syncStatus: 'success' });
+      return { success: true };
+      
+    } catch (error) {
+      console.error('❌ Mark as sold error:', error);
+      set({ syncStatus: 'error' });
+      return { success: false, error: error.message };
+    }
+  },
 
   // ELIMINA SINGOLO PRODOTTO
   deleteItem: async (serialNumber) => {

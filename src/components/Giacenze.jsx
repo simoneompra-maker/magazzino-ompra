@@ -8,6 +8,7 @@ export default function Giacenze({ onNavigate }) {
   const deleteItem = useStore((state) => state.deleteItem);
   const clearInventory = useStore((state) => state.clearInventory);
   const deleteMultipleItems = useStore((state) => state.deleteMultipleItems);
+  const markAsSold = useStore((state) => state.markAsSold);
   
   // Filtri
   const [filters, setFilters] = useState({
@@ -32,6 +33,11 @@ export default function Giacenze({ onNavigate }) {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDeleteMultipleModal, setShowDeleteMultipleModal] = useState(false);
+
+  // Stato per segna come venduta
+  const [markSoldItem, setMarkSoldItem] = useState(null);
+  const [markSoldCliente, setMarkSoldCliente] = useState('');
+  const [markingSold, setMarkingSold] = useState(false);
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -197,6 +203,25 @@ export default function Giacenze({ onNavigate }) {
       setSelectedItems([]);
       setSelectMode(false);
       setShowDeleteMultipleModal(false);
+    }
+  };
+
+  // Segna come venduta
+  const handleMarkSold = async () => {
+    if (!markSoldItem) return;
+    setMarkingSold(true);
+    try {
+      const result = await markAsSold(markSoldItem.serialNumber, markSoldCliente.trim() || null);
+      if (result.success) {
+        setMarkSoldItem(null);
+        setMarkSoldCliente('');
+      } else {
+        alert('Errore: ' + (result.error || 'impossibile aggiornare'));
+      }
+    } catch (e) {
+      alert('Errore: ' + e.message);
+    } finally {
+      setMarkingSold(false);
     }
   };
 
@@ -592,19 +617,30 @@ export default function Giacenze({ onNavigate }) {
                   </div>
                   
                   {/* Stato e Azioni */}
-                  <div className="flex-none flex items-center gap-2">
+                  <div className="flex-none flex items-center gap-1">
                     {item.status === 'available' ? (
                       <CheckCircle className="w-5 h-5" style={{ color: '#006B3F' }} />
                     ) : (
                       <XCircle className="w-5 h-5 text-gray-400" />
                     )}
                     {!selectMode && (
-                      <button
-                        onClick={() => handleDeleteClick(item)}
-                        className="text-red-400 hover:text-red-600 p-1"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <>
+                        {item.status === 'available' && (
+                          <button
+                            onClick={() => { setMarkSoldItem(item); setMarkSoldCliente(''); }}
+                            className="text-orange-400 hover:text-orange-600 p-1"
+                            title="Segna come venduta"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteClick(item)}
+                          className="text-red-400 hover:text-red-600 p-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -780,6 +816,49 @@ export default function Giacenze({ onNavigate }) {
                 className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold"
               >
                 Elimina {selectedItems.length}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Segna come venduta */}
+      {markSoldItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold mb-1">📦 Segna come venduta</h3>
+            <p className="text-sm text-gray-600 mb-1">
+              <span style={{ color: '#006B3F' }} className="font-bold">{markSoldItem.brand}</span> {markSoldItem.model}
+            </p>
+            <p className="text-xs text-gray-400 font-mono mb-4">{markSoldItem.serialNumber}</p>
+            
+            <div className="mb-4">
+              <label className="text-xs text-gray-500">Cliente (opzionale)</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-lg mt-1"
+                placeholder="Nome cliente..."
+                value={markSoldCliente}
+                onChange={(e) => setMarkSoldCliente(e.target.value)}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Questa macchina verrà rimossa dalle giacenze
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setMarkSoldItem(null)}
+                className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleMarkSold}
+                disabled={markingSold}
+                className="flex-1 py-3 text-white rounded-lg font-semibold bg-orange-500"
+              >
+                {markingSold ? '⏳...' : '✓ Venduta'}
               </button>
             </div>
           </div>

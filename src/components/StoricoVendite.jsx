@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square } from 'lucide-react';
+import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square, Edit2 } from 'lucide-react';
 import useStore from '../store';
 
 // Funzione per normalizzare la ricerca (rimuove spazi, trattini, converte in minuscolo)
@@ -16,7 +16,7 @@ export default function StoricoVendite({ onNavigate }) {
   const brands = useStore((state) => state.brands);
   const deleteSale = useStore((state) => state.deleteSale);
   const deleteMultipleSales = useStore((state) => state.deleteMultipleSales);
-  const updateSaleDate = useStore((state) => state.updateSaleDate);
+  const updateSale = useStore((state) => state.updateSale);
   
   const [filters, setFilters] = useState({
     dataFrom: '',
@@ -41,10 +41,10 @@ export default function StoricoVendite({ onNavigate }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDeleteMultipleModal, setShowDeleteMultipleModal] = useState(false);
 
-  // Stato per modifica data
-  const [editDateSale, setEditDateSale] = useState(null);
-  const [editDateValue, setEditDateValue] = useState('');
-  const [savingDate, setSavingDate] = useState(false);
+  // Stato per modifica vendita
+  const [editSale, setEditSale] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -234,31 +234,48 @@ export default function StoricoVendite({ onNavigate }) {
     }
   };
 
-  // Gestione modifica data
-  const handleEditDate = (sale) => {
+  // Gestione modifica vendita
+  const handleEditSale = (sale) => {
     const d = new Date(sale.timestamp);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
-    setEditDateValue(`${yyyy}-${mm}-${dd}`);
-    setEditDateSale(sale);
+    setEditForm({
+      data: `${yyyy}-${mm}-${dd}`,
+      brand: sale.brand || '',
+      model: sale.model || '',
+      serialNumber: sale.serialNumber || '',
+      cliente: sale.cliente || '',
+      prezzo: (sale.prezzo || 0).toString(),
+      user: sale.user || ''
+    });
+    setEditSale(sale);
   };
 
-  const handleSaveDate = async () => {
-    if (!editDateSale || !editDateValue) return;
-    setSavingDate(true);
+  const handleSaveEdit = async () => {
+    if (!editSale) return;
+    setSavingEdit(true);
     try {
-      const newTimestamp = new Date(editDateValue + 'T12:00:00').toISOString();
-      const result = await updateSaleDate(editDateSale.id, newTimestamp);
+      const updates = {
+        timestamp: new Date(editForm.data + 'T12:00:00').toISOString(),
+        brand: editForm.brand.trim(),
+        model: editForm.model.trim(),
+        serialNumber: editForm.serialNumber.trim(),
+        cliente: editForm.cliente.trim(),
+        prezzo: parseFloat(editForm.prezzo) || 0,
+        totale: parseFloat(editForm.prezzo) || 0,
+        user: editForm.user.trim()
+      };
+      const result = await updateSale(editSale.id, updates);
       if (result.success) {
-        setEditDateSale(null);
+        setEditSale(null);
       } else {
         alert('Errore: ' + (result.error || 'impossibile aggiornare'));
       }
     } catch (e) {
       alert('Errore: ' + e.message);
     } finally {
-      setSavingDate(false);
+      setSavingEdit(false);
     }
   };
 
@@ -669,7 +686,7 @@ export default function StoricoVendite({ onNavigate }) {
                     </button>
                   )}
                   
-                  <div className="flex-none w-16" onClick={() => handleEditDate(sale)}>
+                  <div className="flex-none w-16" onClick={() => handleEditSale(sale)}>
                     <div className="text-sm font-medium text-blue-600 underline decoration-dotted cursor-pointer">
                       {new Date(sale.timestamp).toLocaleDateString('it-IT', { 
                         day: '2-digit', 
@@ -712,14 +729,22 @@ export default function StoricoVendite({ onNavigate }) {
                     )}
                   </div>
                   
-                  {/* Pulsante elimina (solo se non in modalità selezione) */}
+                  {/* Pulsanti modifica/elimina (solo se non in modalità selezione) */}
                   {!selectMode && (
-                    <button
-                      onClick={() => handleDeleteClick(sale)}
-                      className="flex-none ml-2 text-red-400 hover:text-red-600 p-1"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex-none flex flex-col ml-1">
+                      <button
+                        onClick={() => handleEditSale(sale)}
+                        className="text-blue-400 hover:text-blue-600 p-1"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(sale)}
+                        className="text-red-400 hover:text-red-600 p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 
@@ -843,44 +868,110 @@ export default function StoricoVendite({ onNavigate }) {
         </div>
       )}
 
-      {/* Modal Modifica Data */}
-      {editDateSale && (
+      {/* Modal Modifica Vendita */}
+      {editSale && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold mb-1">📅 Modifica data</h3>
-            <p className="text-sm text-gray-500 mb-4 truncate">
-              {editDateSale.brand} {editDateSale.model} — {editDateSale.cliente}
-            </p>
-            <div className="mb-2">
-              <label className="text-xs text-gray-500">Data attuale</label>
-              <p className="text-sm font-medium text-red-500">
-                {new Date(editDateSale.timestamp).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-              </p>
+          <div className="bg-white rounded-lg p-5 max-w-sm w-full max-h-[90vh] overflow-auto">
+            <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+              <Edit2 className="w-5 h-5" style={{ color: '#006B3F' }} /> Modifica vendita
+            </h3>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500">Data</label>
+                <input
+                  type="date"
+                  className="w-full p-2 border-2 rounded-lg font-medium"
+                  style={{ borderColor: '#006B3F' }}
+                  value={editForm.data}
+                  onChange={(e) => setEditForm({...editForm, data: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-500">Brand</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded-lg"
+                  value={editForm.brand}
+                  onChange={(e) => setEditForm({...editForm, brand: e.target.value})}
+                  list="edit-brands"
+                />
+                <datalist id="edit-brands">
+                  {brands.map(b => <option key={b} value={b} />)}
+                </datalist>
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-500">Modello / Descrizione</label>
+                <textarea
+                  className="w-full p-2 border rounded-lg text-sm"
+                  rows={2}
+                  value={editForm.model}
+                  onChange={(e) => setEditForm({...editForm, model: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-500">Matricola</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded-lg font-mono text-sm"
+                  value={editForm.serialNumber}
+                  onChange={(e) => setEditForm({...editForm, serialNumber: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-500">Cliente</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded-lg"
+                  value={editForm.cliente}
+                  onChange={(e) => setEditForm({...editForm, cliente: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-500">Prezzo €</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="w-full p-2 border rounded-lg text-right font-bold"
+                  value={editForm.prezzo}
+                  onChange={(e) => setEditForm({...editForm, prezzo: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-500">Operatore</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded-lg"
+                  value={editForm.user}
+                  onChange={(e) => setEditForm({...editForm, user: e.target.value})}
+                  list="edit-operators"
+                />
+                <datalist id="edit-operators">
+                  {operators.map(op => <option key={op} value={op} />)}
+                </datalist>
+              </div>
             </div>
-            <div className="mb-4">
-              <label className="text-xs text-gray-500">Nuova data</label>
-              <input
-                type="date"
-                className="w-full p-3 border-2 rounded-lg text-lg font-bold"
-                style={{ borderColor: '#006B3F' }}
-                value={editDateValue}
-                onChange={(e) => setEditDateValue(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-3">
+            
+            <div className="flex gap-3 mt-4">
               <button
-                onClick={() => setEditDateSale(null)}
+                onClick={() => setEditSale(null)}
                 className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
               >
                 Annulla
               </button>
               <button
-                onClick={handleSaveDate}
-                disabled={savingDate}
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
                 className="flex-1 py-3 text-white rounded-lg font-semibold"
                 style={{ backgroundColor: '#006B3F' }}
               >
-                {savingDate ? '⏳ Salvo...' : '✓ Salva'}
+                {savingEdit ? '⏳ Salvo...' : '✓ Salva'}
               </button>
             </div>
           </div>

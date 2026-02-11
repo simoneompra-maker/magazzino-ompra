@@ -883,11 +883,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       )}
 
       {/* Container per Foglio + Pulsante */}
-      <div className="flex flex-col max-h-[95vh] w-full max-w-md">
+      <div className="flex flex-col max-h-[95vh] w-full max-w-md mt-14">
         {/* Foglio Commissione */}
         <div 
-          className="bg-white rounded-lg shadow-2xl p-6 overflow-auto flex-1"
-          style={{ touchAction: 'pinch-zoom' }}
+          className="bg-white rounded-lg shadow-2xl p-6 overflow-auto flex-1 min-h-0 pb-8"
+          style={{ touchAction: 'pan-y pinch-zoom' }}
         >
         {/* Badge anteprima */}
         {!isConfirmed && (

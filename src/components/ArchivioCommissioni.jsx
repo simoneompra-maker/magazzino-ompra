@@ -211,71 +211,103 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
     y += boxHeight + 7;
 
-    // Prodotti
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
+    // === TABELLA ARTICOLI ===
+    const colQta = margin;
+    const colDesc = margin + 14;
+    const colUnit = pageWidth - margin - 58;
+    const colTot = pageWidth - margin - 26;
+    const rightEdge = pageWidth - margin;
+
+    // Header tabella
+    doc.setFillColor(245, 245, 245);
+    doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y + 7, rightEdge, y + 7);
+
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
     doc.setFont('helvetica', 'bold');
-    doc.text('PRODOTTI', margin, y);
-    y += 5;
+    doc.text('QTÀ', colQta + 1, y + 5);
+    doc.text('DESCRIZIONE', colDesc, y + 5);
+    doc.text('P.ZO UNIT.', colUnit, y + 5);
+    doc.text('TOTALE', colTot, y + 5);
+    y += 9;
 
+    // Prodotti
     comm.prodotti?.forEach((prod) => {
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.2);
-      doc.line(margin, y + 12, pageWidth - margin, y + 12);
+      const rowH = prod.serialNumber ? 13 : 8;
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.15);
+      doc.line(margin, y + rowH, rightEdge, y + rowH);
 
-      doc.setFontSize(10);
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont('helvetica', 'normal');
+      doc.text('1', colQta + 4, y + 5, { align: 'center' });
+
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'bold');
-      doc.text(`${prod.brand} ${prod.model}`, margin, y + 5);
+      doc.text(`${prod.brand} ${prod.model}`, colDesc, y + 5);
 
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
       if (prod.serialNumber) {
-        doc.text(`SN: ${prod.serialNumber}`, margin, y + 10);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(120, 120, 120);
+        doc.text(`SN: ${prod.serialNumber}`, colDesc, y + 10);
       } else {
-        doc.text('Matricola da inserire', margin, y + 10);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(180, 140, 0);
+        doc.text('Matricola da inserire', colDesc, y + 10);
       }
 
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       if (prod.isOmaggio) {
-        doc.text('OMAGGIO', pageWidth - margin, y + 7, { align: 'right' });
+        doc.text('OMAGGIO', colTot, y + 5);
       } else if (prod.prezzo === null || prod.prezzo === undefined || prod.prezzo === 0) {
-        doc.text('KIT', pageWidth - margin, y + 7, { align: 'right' });
+        doc.text('KIT', colTot, y + 5);
       } else {
-        doc.text(`€ ${prod.prezzo.toFixed(2)}`, pageWidth - margin, y + 7, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.text(`€ ${prod.prezzo.toFixed(2)}`, colUnit, y + 5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`€ ${prod.prezzo.toFixed(2)}`, colTot, y + 5);
       }
 
-      y += 15;
+      y += rowH + 2;
     });
 
     // Accessori
     if (comm.accessori && comm.accessori.length > 0) {
-      y += 3;
-      doc.setFontSize(9);
-      doc.setTextColor(80, 80, 80);
+      y += 1;
+      doc.setFontSize(7);
+      doc.setTextColor(140, 140, 140);
       doc.setFont('helvetica', 'bold');
-      doc.text('ACCESSORI', margin, y);
+      doc.text('ACCESSORI', colDesc, y + 3);
       y += 5;
 
       comm.accessori.forEach((acc) => {
-        doc.setDrawColor(220, 220, 220);
-        doc.setLineWidth(0.2);
-        doc.line(margin, y + 8, pageWidth - margin, y + 8);
-
         const qta = acc.quantita || 1;
-        const accNome = qta > 1 ? `${acc.nome} ×${qta}` : acc.nome;
-        const accPrezzo = (parseFloat(acc.prezzo) || 0) * qta;
+        const unitPrezzo = parseFloat(acc.prezzo) || 0;
+        const totPrezzo = unitPrezzo * qta;
+
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.15);
+        doc.line(margin, y + 8, rightEdge, y + 8);
 
         doc.setFontSize(9);
         doc.setTextColor(60, 60, 60);
         doc.setFont('helvetica', 'normal');
-        doc.text(accNome, margin, y + 5);
+        doc.text(String(qta), colQta + 4, y + 5, { align: 'center' });
 
+        doc.text(acc.nome, colDesc, y + 5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.text(`€ ${unitPrezzo.toFixed(2)}`, colUnit, y + 5);
         doc.setFont('helvetica', 'bold');
-        doc.text(`€ ${accPrezzo.toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
+        doc.text(`€ ${totPrezzo.toFixed(2)}`, colTot, y + 5);
 
         y += 10;
       });

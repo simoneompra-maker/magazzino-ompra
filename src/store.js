@@ -405,34 +405,56 @@ const useStore = create((set, get) => ({
     if (!commissione) return { success: false, error: 'Commissione non trovata' };
     
     // Verifica che tutti i prodotti abbiano matricola
-    if (commissione.prodotti.some(p => !p.serialNumber)) {
+    if (commissione.prodotti?.some(p => !p.serialNumber)) {
       return { success: false, error: 'Alcuni prodotti non hanno matricola' };
     }
     
-    // Registra vendite per ogni prodotto
-    for (const prod of commissione.prodotti) {
-      // Prima carica il prodotto se non esiste
-      const existing = get().findBySerialNumber(prod.serialNumber);
-      if (!existing) {
-        await get().bulkAddInventory([{
-          brand: prod.brand,
-          model: prod.model,
-          serialNumber: prod.serialNumber
-        }]);
-      }
+    const dataISO = new Date().toISOString();
+    const allParts = [];
+    let combinedBrand = '';
+    let combinedPrezzo = 0;
+    
+    // Scarica inventario per ogni prodotto con matricola
+    for (const prod of commissione.prodotti || []) {
+      combinedBrand = combinedBrand || prod.brand || '';
+      const label = `${prod.brand ? prod.brand + ' ' : ''}${prod.model}`;
+      allParts.push(prod.serialNumber ? `${label} (SN: ${prod.serialNumber})` : label);
+      combinedPrezzo += (prod.prezzo || 0);
       
-      // Poi vendi
-      await get().sellProduct(prod.serialNumber, {
+      // Scarica da inventario (SCARICO, non VENDITA)
+      try {
+        await get().dischargeInventory(prod.serialNumber, commissione.cliente);
+      } catch (e) {
+        console.warn('Inventario non scaricato per SN:', prod.serialNumber, e);
+      }
+    }
+    
+    // Aggiungi accessori
+    (commissione.accessori || []).forEach(acc => {
+      const accPrezzo = (acc.prezzo || 0) * (acc.quantita || 1);
+      const qta = (acc.quantita || 1) > 1 ? ` x${acc.quantita}` : '';
+      allParts.push(`${acc.nome}${qta}`);
+      combinedPrezzo += accPrezzo;
+    });
+    
+    // Salva come record vendita in Supabase
+    if (allParts.length > 0) {
+      if (!combinedBrand && (commissione.accessori || []).length > 0) combinedBrand = 'ACCESSORI';
+      await get().addGenericSale({
         cliente: commissione.cliente,
-        prezzo: prod.prezzo,
-        totale: commissione.totale
+        operatore: commissione.operatore || '',
+        brand: combinedBrand,
+        model: allParts.join(' + '),
+        prezzo: combinedPrezzo,
+        totale: commissione.totale || combinedPrezzo,
+        dataVendita: dataISO
       });
     }
     
     // Aggiorna stato commissione
     get().updateCommissione(id, { 
       status: 'completed',
-      completedAt: new Date().toISOString()
+      completedAt: dataISO
     });
     
     return { success: true };

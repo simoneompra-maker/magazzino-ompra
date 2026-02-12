@@ -328,10 +328,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         const accHeight = acc.matricola ? 13 : 8;
         doc.line(margin, y + accHeight, pageWidth - margin, y + accHeight);
 
+        const qta = acc.quantita || 1;
+        const accNome = qta > 1 ? `${acc.nome} ×${qta}` : acc.nome;
+        const accPrezzo = (parseFloat(acc.prezzo) || 0) * qta;
+
         doc.setFontSize(9);
         doc.setTextColor(60, 60, 60);
         doc.setFont('helvetica', 'normal');
-        doc.text(acc.nome, margin, y + 5);
+        doc.text(accNome, margin, y + 5);
 
         if (acc.matricola) {
           doc.setFontSize(7);
@@ -342,7 +346,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(60, 60, 60);
-        doc.text(`€ ${parseFloat(acc.prezzo || 0).toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
+        doc.text(`€ ${accPrezzo.toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
 
         y += acc.matricola ? 15 : 10;
       });
@@ -579,10 +583,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         const accHeight = acc.matricola ? 13 : 8;
         doc.line(margin, y + accHeight, pageWidth - margin, y + accHeight);
 
+        const qta = acc.quantita || 1;
+        const accNome = qta > 1 ? `${acc.nome} ×${qta}` : acc.nome;
+        const accPrezzo = (parseFloat(acc.prezzo) || 0) * qta;
+
         doc.setFontSize(9);
         doc.setTextColor(60, 60, 60);
         doc.setFont('helvetica', 'normal');
-        doc.text(acc.nome, margin, y + 5);
+        doc.text(accNome, margin, y + 5);
 
         if (acc.matricola) {
           doc.setFontSize(7);
@@ -593,7 +601,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(60, 60, 60);
-        doc.text(`€ ${parseFloat(acc.prezzo || 0).toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
+        doc.text(`€ ${accPrezzo.toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
 
         y += acc.matricola ? 15 : 10;
       });
@@ -738,7 +746,10 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (accessori && accessori.length > 0) {
       text += `\n🔧 *ACCESSORI:*\n`;
       accessori.forEach(a => {
-        text += `• ${a.nome} - €${parseFloat(a.prezzo || 0).toFixed(2)}\n`;
+        const qta = a.quantita || 1;
+        const accPrezzo = (parseFloat(a.prezzo) || 0) * qta;
+        const qtaLabel = qta > 1 ? ` ×${qta}` : '';
+        text += `• ${a.nome}${qtaLabel} - €${accPrezzo.toFixed(2)}\n`;
       });
     }
     
@@ -1033,7 +1044,12 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
               {accessori.map((acc, index) => (
                 <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                   <div className="flex-1 min-w-0">
-                    <p className="text-gray-800 text-sm">{acc.nome}</p>
+                    <p className="text-gray-800 text-sm">
+                      {acc.nome}
+                      {(acc.quantita || 1) > 1 && (
+                        <span className="text-gray-500 ml-1">×{acc.quantita}</span>
+                      )}
+                    </p>
                     {acc.matricola && (
                       <p className="text-xs text-gray-500 font-mono">SN: {acc.matricola}</p>
                     )}
@@ -1046,7 +1062,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
                         {acc.aliquotaIva}%
                       </span>
                     )}
-                    <p className="font-semibold shrink-0 ml-1">€ {parseFloat(acc.prezzo || 0).toFixed(2)}</p>
+                    <p className="font-semibold shrink-0 ml-1">€ {((parseFloat(acc.prezzo) || 0) * (acc.quantita || 1)).toFixed(2)}</p>
                   </div>
                 </div>
               ))}

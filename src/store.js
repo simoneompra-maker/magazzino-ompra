@@ -171,6 +171,34 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // Scarica prodotto da inventario SENZA creare una vendita nello storico
+  // Crea record SCARICO (non VENDITA) - serve solo per aggiornare lo stato inventario
+  dischargeInventory: async (serialNumber, cliente) => {
+    try {
+      const product = get().inventory.find(i => i.serialNumber === serialNumber);
+      
+      await supabase
+        .from('inventory')
+        .insert({
+          timestamp: new Date().toISOString(),
+          action: 'SCARICO',
+          brand: product?.brand || '',
+          model: product?.model || '',
+          serialNumber: serialNumber,
+          cliente: cliente || '',
+          prezzo: 0,
+          totale: 0,
+          status: 'sold',
+          user: get().user,
+          location: get().location
+        });
+      
+      // Non aspettiamo fetchInventory qui - viene fatto dopo addGenericSale
+    } catch (error) {
+      console.warn('⚠️ Inventario non scaricato per SN:', serialNumber, error);
+    }
+  },
+
   // VENDITA
   sellProduct: async (serialNumber, saleData) => {
     const product = get().findBySerialNumber(serialNumber);

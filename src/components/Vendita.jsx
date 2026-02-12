@@ -52,7 +52,7 @@ function addOperatore(nome) {
 export default function Vendita({ onNavigate }) {
   const inventory = useStore((state) => state.inventory);
   const findBySerialNumber = useStore((state) => state.findBySerialNumber);
-  const sellProduct = useStore((state) => state.sellProduct);
+  const dischargeInventory = useStore((state) => state.dischargeInventory);
   const addGenericSale = useStore((state) => state.addGenericSale);
   const createCommissione = useStore((state) => state.createCommissione);
   const brands = useStore((state) => state.brands);
@@ -790,15 +790,12 @@ export default function Vendita({ onNavigate }) {
         allParts.push(prod.serialNumber ? `${label} (SN: ${prod.serialNumber})` : label);
         combinedPrezzo += (prod.prezzo || 0);
         
-        // Aggiorna inventario se ha matricola (best-effort, non blocca il salvataggio)
+        // Aggiorna inventario se ha matricola (scarica da giacenze senza creare vendita duplicata)
         if (prod.serialNumber) {
           try {
-            await sellProduct(prod.serialNumber, {
-              cliente: nomeCliente, operatore: nomeOperatore,
-              prezzo: prod.prezzo || 0, totale, dataVendita: dataISO
-            });
+            await dischargeInventory(prod.serialNumber, nomeCliente);
           } catch (e) {
-            console.warn('Inventario non aggiornato per SN:', prod.serialNumber, e);
+            console.warn('Inventario non scaricato per SN:', prod.serialNumber, e);
           }
         }
       }

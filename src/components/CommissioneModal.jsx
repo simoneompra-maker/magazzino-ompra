@@ -933,15 +933,46 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           </button>
         </>
       ) : (
-        // CONFERMATA: Pulsante condivisione
+        // CONFERMATA: Pulsanti condivisione dedicati
         <>
-          <button
-            onClick={sharePDF}
-            className="fixed top-4 left-4 bg-green-500 text-white rounded-full px-5 py-3 shadow-lg flex items-center gap-2 z-50"
-          >
-            <Share2 className="w-5 h-5" />
-            <span className="text-sm font-bold">Condividi</span>
-          </button>
+          <div className="fixed top-4 left-4 flex items-center gap-2 z-50">
+            {/* WhatsApp */}
+            <button
+              onClick={shareWhatsApp}
+              className="text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              style={{ backgroundColor: '#25D366' }}
+              title="WhatsApp"
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-xs font-bold hidden sm:inline">WhatsApp</span>
+            </button>
+            {/* Gmail + PDF */}
+            <button
+              onClick={shareGmailWithPDF}
+              className="text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              style={{ backgroundColor: '#EA4335' }}
+              title="Gmail + PDF"
+            >
+              <Mail className="w-5 h-5" />
+              <span className="text-xs font-bold hidden sm:inline">Gmail</span>
+            </button>
+            {/* PDF download */}
+            <button
+              onClick={() => generatePDF()}
+              className="bg-blue-600 text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              title="Scarica PDF"
+            >
+              <FileDown className="w-5 h-5" />
+            </button>
+            {/* Share nativo (PDF) */}
+            <button
+              onClick={sharePDF}
+              className="bg-gray-600 text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              title="Condividi"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="fixed top-4 right-4 bg-red-500 text-white rounded-full p-3 shadow-lg z-50"

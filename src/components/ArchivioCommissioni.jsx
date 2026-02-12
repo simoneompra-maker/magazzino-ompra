@@ -120,7 +120,10 @@ export default function ArchivioCommissioni({ onNavigate }) {
     if (comm.accessori?.length > 0) {
       text += `\n🔧 *ACCESSORI:*\n`;
       comm.accessori.forEach(acc => {
-        text += `• ${acc.nome} - €${acc.prezzo || 0}\n`;
+        const qta = acc.quantita || 1;
+        const accPrezzo = (parseFloat(acc.prezzo) || 0) * qta;
+        const qtaLabel = qta > 1 ? ` ×${qta}` : '';
+        text += `• ${acc.nome}${qtaLabel} - €${accPrezzo.toFixed(2)}\n`;
       });
     }
     
@@ -262,13 +265,17 @@ export default function ArchivioCommissioni({ onNavigate }) {
         doc.setLineWidth(0.2);
         doc.line(margin, y + 8, pageWidth - margin, y + 8);
 
+        const qta = acc.quantita || 1;
+        const accNome = qta > 1 ? `${acc.nome} ×${qta}` : acc.nome;
+        const accPrezzo = (parseFloat(acc.prezzo) || 0) * qta;
+
         doc.setFontSize(9);
         doc.setTextColor(60, 60, 60);
         doc.setFont('helvetica', 'normal');
-        doc.text(acc.nome, margin, y + 5);
+        doc.text(accNome, margin, y + 5);
 
         doc.setFont('helvetica', 'bold');
-        doc.text(`€ ${parseFloat(acc.prezzo || 0).toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
+        doc.text(`€ ${accPrezzo.toFixed(2)}`, pageWidth - margin, y + 5, { align: 'right' });
 
         y += 10;
       });
@@ -727,7 +734,10 @@ export default function ArchivioCommissioni({ onNavigate }) {
               {/* Accessori */}
               {comm.accessori?.length > 0 && (
                 <div className="text-xs text-gray-500 mb-3">
-                  Accessori: {comm.accessori.map(a => a.nome).join(', ')}
+                  Accessori: {comm.accessori.map(a => {
+                    const qta = a.quantita || 1;
+                    return qta > 1 ? `${a.nome} ×${qta}` : a.nome;
+                  }).join(', ')}
                 </div>
               )}
 
@@ -1017,8 +1027,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <div className="space-y-1">
                   {previewCommissione.accessori.map((acc, idx) => (
                     <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-800 text-sm">{acc.nome}</p>
-                      <p className="font-semibold">€ {parseFloat(acc.prezzo || 0).toFixed(2)}</p>
+                      <p className="text-gray-800 text-sm">
+                        {acc.nome}
+                        {(acc.quantita || 1) > 1 && <span className="text-gray-500 ml-1">×{acc.quantita}</span>}
+                      </p>
+                      <p className="font-semibold">€ {((parseFloat(acc.prezzo) || 0) * (acc.quantita || 1)).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -1140,6 +1153,14 @@ export default function ArchivioCommissioni({ onNavigate }) {
                       />
                       <input
                         type="number"
+                        placeholder="Qtà"
+                        className="w-14 p-2 border rounded text-sm text-center"
+                        min="1"
+                        value={acc.quantita || 1}
+                        onChange={(e) => handleEditAccessorio(idx, 'quantita', parseInt(e.target.value) || 1)}
+                      />
+                      <input
+                        type="number"
                         placeholder="€"
                         className="w-20 p-2 border rounded text-sm text-right"
                         value={acc.prezzo || ''}
@@ -1156,7 +1177,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   <button
                     onClick={() => setEditForm({
                       ...editForm,
-                      accessori: [...editForm.accessori, { nome: '', prezzo: 0, id: Date.now() }]
+                      accessori: [...editForm.accessori, { nome: '', prezzo: 0, quantita: 1, id: Date.now() }]
                     })}
                     className="text-sm text-blue-600"
                   >

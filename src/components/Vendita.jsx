@@ -786,7 +786,11 @@ export default function Vendita({ onNavigate }) {
       
       for (const prod of prodotti) {
         combinedBrand = combinedBrand || prod.brand || '';
-        const label = `${prod.brand ? prod.brand + ' ' : ''}${prod.model}`;
+        // Avoid brand duplication: if model already starts with brand, don't prepend
+        const modelUp = (prod.model || '').toUpperCase();
+        const brandUp = (prod.brand || '').toUpperCase();
+        const needsBrand = prod.brand && !modelUp.startsWith(brandUp + ' ') && !modelUp.startsWith(brandUp + ' ');
+        const label = needsBrand ? `${prod.brand} ${prod.model}` : (prod.model || '');
         allParts.push(prod.serialNumber ? `${label} (SN: ${prod.serialNumber})` : label);
         combinedPrezzo += (prod.prezzo || 0);
         

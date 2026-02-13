@@ -417,7 +417,10 @@ const useStore = create((set, get) => ({
     // Scarica inventario per ogni prodotto con matricola
     for (const prod of commissione.prodotti || []) {
       combinedBrand = combinedBrand || prod.brand || '';
-      const label = `${prod.brand ? prod.brand + ' ' : ''}${prod.model}`;
+      const modelUp = (prod.model || '').toUpperCase();
+      const brandUp = (prod.brand || '').toUpperCase();
+      const needsBrand = prod.brand && !modelUp.startsWith(brandUp + ' ');
+      const label = needsBrand ? `${prod.brand} ${prod.model}` : (prod.model || '');
       allParts.push(prod.serialNumber ? `${label} (SN: ${prod.serialNumber})` : label);
       combinedPrezzo += (prod.prezzo || 0);
       

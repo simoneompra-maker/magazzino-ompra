@@ -352,6 +352,23 @@ export default function StoricoVendite({ onNavigate }) {
     const modelStr = sale.model || '';
     const items = modelStr.split(' + ').map(item => item.trim()).filter(Boolean);
     const prezzo = sale.prezzo || sale.totale || 0;
+    const brand = sale.brand || '';
+
+    // Helper: remove leading brand duplication from description
+    const cleanDesc = (desc) => {
+      if (!brand || brand === 'ACCESSORI') return desc;
+      // "VOLPI Forbice..." when brand is "VOLPI" → "Forbice..."
+      // "ECHO ECHO Motosega..." → "ECHO Motosega..."
+      const brandUpper = brand.toUpperCase();
+      const descUpper = desc.toUpperCase();
+      if (descUpper.startsWith(brandUpper + ' ' + brandUpper + ' ')) {
+        return brand + ' ' + desc.substring(brand.length + 1 + brand.length + 1);
+      }
+      if (descUpper.startsWith(brandUpper + ' ')) {
+        // Already has brand once - keep as is
+      }
+      return desc;
+    };
 
     if (items.length <= 1) {
       // Single item
@@ -367,7 +384,16 @@ export default function StoricoVendite({ onNavigate }) {
 
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'bold');
-      const desc = (sale.brand && sale.brand !== 'ACCESSORI' ? sale.brand + ' ' : '') + (modelStr || '');
+      // Build description: add brand only if model doesn't already contain it
+      let desc = modelStr || '';
+      const descUp = desc.toUpperCase();
+      const brandUp = brand.toUpperCase();
+      if (brand && brand !== 'ACCESSORI' && !descUp.startsWith(brandUp)) {
+        desc = brand + ' ' + desc;
+      }
+      desc = cleanDesc(desc);
+      // Remove SN from description if present (we show it on next line)
+      desc = desc.replace(/\s*\(SN:\s*[^)]+\)/, '');
       doc.text(desc.substring(0, 60), colDesc, y + 5);
 
       if (sale.serialNumber && !sale.serialNumber.startsWith('NOMAT')) {
@@ -390,11 +416,13 @@ export default function StoricoVendite({ onNavigate }) {
         // Extract SN if present: "Brand Model (SN: xxx)"
         const snMatch = item.match(/\(SN:\s*([^)]+)\)/);
         const sn = snMatch ? snMatch[1].trim() : null;
-        const itemName = item.replace(/\s*\(SN:\s*[^)]+\)/, '').trim();
-        // Extract quantity: "item x3" or "item ×3"
-        const qtaMatch = itemName.match(/\s*[x×](\d+)$/i);
+        let itemName = item.replace(/\s*\(SN:\s*[^)]+\)/, '').trim();
+        // Extract quantity: "item x3" or "item ×3" at end only
+        const qtaMatch = itemName.match(/\s+[x×](\d+)$/i);
         const qta = qtaMatch ? parseInt(qtaMatch[1]) : 1;
-        const cleanName = qtaMatch ? itemName.replace(/\s*[x×]\d+$/i, '').trim() : itemName;
+        let cleanName = qtaMatch ? itemName.replace(/\s+[x×]\d+$/i, '').trim() : itemName;
+        // Clean brand duplication
+        cleanName = cleanDesc(cleanName);
 
         const rowH = sn ? 13 : 8;
         doc.setDrawColor(230, 230, 230);

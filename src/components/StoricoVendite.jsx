@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square, Edit2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square, Edit2, FileDown } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import useStore from '../store';
 
 // Funzione per normalizzare la ricerca (rimuove spazi, trattini, converte in minuscolo)
@@ -277,6 +278,183 @@ export default function StoricoVendite({ onNavigate }) {
     } finally {
       setSavingEdit(false);
     }
+  };
+
+  // Genera PDF semplificato da vendita storica
+  const generateSalePDF = (sale) => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    // Header
+    doc.setDrawColor(0, 107, 63);
+    doc.setLineWidth(0.5);
+    doc.rect(margin, y, pageWidth - 2 * margin, 25);
+    doc.setTextColor(0, 107, 63);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('OMPRA', pageWidth / 2, y + 10, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
+    const saleDate = new Date(sale.timestamp);
+    doc.text(saleDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }), pageWidth / 2, y + 22, { align: 'center' });
+    y += 32;
+
+    // Cliente e Operatore
+    const boxH = 18;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, y, pageWidth - 2 * margin, boxH);
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text('CLIENTE', margin + 3, y + 5);
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(sale.cliente || 'N/D', margin + 3, y + 12);
+    if (sale.user) {
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.setFont('helvetica', 'normal');
+      doc.text('OPERATORE', pageWidth - margin - 35, y + 5);
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text(sale.user, pageWidth - margin - 35, y + 12);
+    }
+    y += boxH + 7;
+
+    // Tabella articoli
+    const colQta = margin;
+    const colDesc = margin + 14;
+    const colUnit = pageWidth - margin - 58;
+    const colTot = pageWidth - margin - 26;
+    const rightEdge = pageWidth - margin;
+
+    // Header tabella
+    doc.setFillColor(245, 245, 245);
+    doc.rect(margin, y, pageWidth - 2 * margin, 7, 'F');
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y + 7, rightEdge, y + 7);
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'bold');
+    doc.text('QTÀ', colQta + 1, y + 5);
+    doc.text('DESCRIZIONE', colDesc, y + 5);
+    doc.text('P.ZO UNIT.', colUnit, y + 5);
+    doc.text('TOTALE', colTot, y + 5);
+    y += 9;
+
+    // Parse model field to extract individual items
+    const modelStr = sale.model || '';
+    const items = modelStr.split(' + ').map(item => item.trim()).filter(Boolean);
+    const prezzo = sale.prezzo || sale.totale || 0;
+
+    if (items.length <= 1) {
+      // Single item
+      const rowH = sale.serialNumber && !sale.serialNumber.startsWith('NOMAT') ? 13 : 8;
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.15);
+      doc.line(margin, y + rowH, rightEdge, y + rowH);
+
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont('helvetica', 'normal');
+      doc.text('1', colQta + 4, y + 5, { align: 'center' });
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      const desc = (sale.brand && sale.brand !== 'ACCESSORI' ? sale.brand + ' ' : '') + (modelStr || '');
+      doc.text(desc.substring(0, 60), colDesc, y + 5);
+
+      if (sale.serialNumber && !sale.serialNumber.startsWith('NOMAT')) {
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(120, 120, 120);
+        doc.text(`SN: ${sale.serialNumber}`, colDesc, y + 10);
+      }
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      doc.text(`€ ${prezzo.toFixed(2)}`, colUnit, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`€ ${prezzo.toFixed(2)}`, colTot, y + 5);
+      y += rowH + 2;
+    } else {
+      // Multiple items from combined model string
+      items.forEach((item) => {
+        // Extract SN if present: "Brand Model (SN: xxx)"
+        const snMatch = item.match(/\(SN:\s*([^)]+)\)/);
+        const sn = snMatch ? snMatch[1].trim() : null;
+        const itemName = item.replace(/\s*\(SN:\s*[^)]+\)/, '').trim();
+        // Extract quantity: "item x3" or "item ×3"
+        const qtaMatch = itemName.match(/\s*[x×](\d+)$/i);
+        const qta = qtaMatch ? parseInt(qtaMatch[1]) : 1;
+        const cleanName = qtaMatch ? itemName.replace(/\s*[x×]\d+$/i, '').trim() : itemName;
+
+        const rowH = sn ? 13 : 8;
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.15);
+        doc.line(margin, y + rowH, rightEdge, y + rowH);
+
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(qta), colQta + 4, y + 5, { align: 'center' });
+
+        doc.setTextColor(60, 60, 60);
+        doc.text(cleanName.substring(0, 55), colDesc, y + 5);
+
+        if (sn) {
+          doc.setFontSize(7);
+          doc.setTextColor(120, 120, 120);
+          doc.text(`SN: ${sn}`, colDesc, y + 10);
+        }
+
+        y += rowH + 2;
+      });
+    }
+
+    // Totale
+    y += 8;
+    doc.setDrawColor(0, 107, 63);
+    doc.setLineWidth(0.5);
+    doc.rect(margin, y, pageWidth - 2 * margin, 14);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTALE', margin + 5, y + 9);
+    doc.setFontSize(14);
+    doc.text(`€ ${prezzo.toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
+    y += 22;
+
+    // Dettaglio IVA
+    const imponibile = prezzo / 1.22;
+    const iva = prezzo - imponibile;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Imponibile 22%: € ${imponibile.toFixed(2)}`, margin, y);
+    doc.text(`IVA € ${iva.toFixed(2)}`, margin + 60, y);
+    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Totale imponibile: € ${imponibile.toFixed(2)}`, margin, y);
+    doc.text(`IVA totale: € ${iva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    y += 10;
+
+    // Footer
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
+
+    const clienteName = (sale.cliente || 'Vendita').replace(/\s+/g, '_');
+    const dateStr = saleDate.toISOString().slice(0, 10);
+    doc.save(`Commissione_${clienteName}_${dateStr}.pdf`);
   };
 
   // EXPORT CSV
@@ -729,7 +907,7 @@ export default function StoricoVendite({ onNavigate }) {
                     )}
                   </div>
                   
-                  {/* Pulsanti modifica/elimina (solo se non in modalità selezione) */}
+                  {/* Pulsanti modifica/PDF/elimina (solo se non in modalità selezione) */}
                   {!selectMode && (
                     <div className="flex-none flex flex-col ml-1">
                       <button
@@ -737,6 +915,13 @@ export default function StoricoVendite({ onNavigate }) {
                         className="text-blue-400 hover:text-blue-600 p-1"
                       >
                         <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => generateSalePDF(sale)}
+                        className="text-green-500 hover:text-green-700 p-1"
+                        title="Scarica PDF"
+                      >
+                        <FileDown className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteClick(sale)}

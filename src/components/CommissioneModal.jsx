@@ -1069,95 +1069,87 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           </div>
         )}
 
-        {/* Prodotti */}
+        {/* Tabella Articoli */}
         <div className="mb-4">
-          <h2 className="text-sm font-bold mb-2 text-gray-700 uppercase">
-            {isKit && data.prodotti?.length > 1 ? 'Articoli' : 'Articolo'}
-          </h2>
-          
+          {/* Header tabella */}
+          <div className="flex bg-gray-100 rounded-t px-2 py-1.5 text-xs font-bold text-gray-500 uppercase">
+            <span className="w-8 text-center shrink-0">Qtà</span>
+            <span className="flex-1 ml-1">Descrizione</span>
+            <span className="w-16 text-right shrink-0">P.Unit</span>
+            <span className="w-16 text-right shrink-0">Totale</span>
+          </div>
+
+          {/* Prodotti */}
           {isKit && data.prodotti ? (
-            <div className="space-y-2">
-              {data.prodotti.map((prod, index) => (
-                <div 
-                  key={prod.id || index} 
-                  className="p-3 rounded-lg border-l-4"
-                  style={{ 
-                    backgroundColor: prod.isOmaggio ? '#ecfdf5' : '#fffbeb', 
-                    borderLeftColor: prod.isOmaggio ? '#10b981' : (prod.isOrdered ? '#f59e0b' : '#006B3F')
-                  }}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-bold">{prod.brand} {prod.model}</p>
-                      {prod.serialNumber ? (
-                        <p className="font-mono text-xs text-gray-600">SN: {prod.serialNumber}</p>
-                      ) : (
-                        <p className="text-xs text-yellow-600">⚠️ Matricola da inserire</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                          prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {prod.aliquotaIva}%
-                        </span>
-                      )}
-                      {formatPrezzoDisplay(prod)}
-                    </div>
-                  </div>
+            data.prodotti.map((prod, index) => (
+              <div key={prod.id || index} className="flex items-start px-2 py-2 border-b border-gray-100">
+                <span className="w-8 text-center text-sm text-gray-600 shrink-0">1</span>
+                <div className="flex-1 ml-1 min-w-0">
+                  <p className="font-bold text-sm">{prod.brand} {prod.model}</p>
+                  {prod.serialNumber ? (
+                    <p className="font-mono text-xs text-gray-500">SN: {prod.serialNumber}</p>
+                  ) : (
+                    <p className="text-xs text-yellow-600">⚠️ Matricola da inserire</p>
+                  )}
+                  {prod.isOmaggio && <span className="text-xs text-green-600 font-medium">OMAGGIO</span>}
+                  {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
+                    <span className={`text-xs px-1 rounded ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {prod.aliquotaIva}%
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div 
-              className="p-3 rounded-lg border-l-4"
-              style={{ backgroundColor: '#fffbeb', borderLeftColor: '#f59e0b' }}
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <p className="font-bold">{data.brand} {data.model}</p>
-                  <p className="font-mono text-xs text-gray-600">SN: {data.serialNumber}</p>
-                </div>
-                <p className="text-lg font-bold">€ {getTotaleProdotti().toFixed(2)}</p>
+                <span className="w-16 text-right text-sm text-gray-600 shrink-0">
+                  {prod.isOmaggio ? '' : prod.prezzo > 0 ? `€ ${prod.prezzo.toFixed(2)}` : 'KIT'}
+                </span>
+                <span className="w-16 text-right text-sm font-semibold shrink-0">
+                  {prod.isOmaggio ? 'OMAGGIO' : prod.prezzo > 0 ? `€ ${prod.prezzo.toFixed(2)}` : 'KIT'}
+                </span>
               </div>
+            ))
+          ) : (
+            <div className="flex items-start px-2 py-2 border-b border-gray-100">
+              <span className="w-8 text-center text-sm text-gray-600 shrink-0">1</span>
+              <div className="flex-1 ml-1 min-w-0">
+                <p className="font-bold text-sm">{data.brand} {data.model}</p>
+                <p className="font-mono text-xs text-gray-500">SN: {data.serialNumber}</p>
+              </div>
+              <span className="w-16 text-right text-sm text-gray-600 shrink-0">€ {getTotaleProdotti().toFixed(2)}</span>
+              <span className="w-16 text-right text-sm font-semibold shrink-0">€ {getTotaleProdotti().toFixed(2)}</span>
             </div>
           )}
-        </div>
 
-        {/* Accessori */}
-        {accessori && accessori.length > 0 && (
-          <div className="mb-4">
-            <h2 className="text-sm font-bold mb-2 text-gray-700 uppercase">Accessori</h2>
-            <div className="space-y-1">
-              {accessori.map((acc, index) => (
-                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-800 text-sm">
-                      {acc.nome}
-                      {(acc.quantita || 1) > 1 && (
-                        <span className="text-gray-500 ml-1">×{acc.quantita}</span>
+          {/* Separatore Accessori */}
+          {accessori && accessori.length > 0 && (
+            <>
+              <div className="px-2 py-1 bg-gray-50">
+                <p className="text-xs font-bold text-gray-400 uppercase">Accessori</p>
+              </div>
+              {accessori.map((acc, index) => {
+                const qta = acc.quantita || 1;
+                const unitPrice = parseFloat(acc.prezzo) || 0;
+                const lineTotal = unitPrice * qta;
+                return (
+                  <div key={index} className="flex items-start px-2 py-2 border-b border-gray-100">
+                    <span className="w-8 text-center text-sm text-gray-600 shrink-0">{qta}</span>
+                    <div className="flex-1 ml-1 min-w-0">
+                      <p className="text-sm text-gray-800">{acc.nome}</p>
+                      {acc.matricola && (
+                        <p className="text-xs text-gray-500 font-mono">SN: {acc.matricola}</p>
                       )}
-                    </p>
-                    {acc.matricola && (
-                      <p className="text-xs text-gray-500 font-mono">SN: {acc.matricola}</p>
-                    )}
+                      {(acc.aliquotaIva && acc.aliquotaIva !== 22) && (
+                        <span className={`text-xs px-1 rounded ${acc.aliquotaIva === 4 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {acc.aliquotaIva}%
+                        </span>
+                      )}
+                    </div>
+                    <span className="w-16 text-right text-sm text-gray-600 shrink-0">€ {unitPrice.toFixed(2)}</span>
+                    <span className="w-16 text-right text-sm font-semibold shrink-0">€ {lineTotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {(acc.aliquotaIva && acc.aliquotaIva !== 22) && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        acc.aliquotaIva === 4 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {acc.aliquotaIva}%
-                      </span>
-                    )}
-                    <p className="font-semibold shrink-0 ml-1">€ {((parseFloat(acc.prezzo) || 0) * (acc.quantita || 1)).toFixed(2)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                );
+              })}
+            </>
+          )}
+        </div>
 
         {/* Totale */}
         <div 

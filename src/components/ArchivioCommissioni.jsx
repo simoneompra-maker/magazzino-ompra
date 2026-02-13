@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Clock, CheckCircle, Search, Trash2, Edit2, X, Camera, Send, Mail, MessageCircle, FileDown, Phone } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Search, Trash2, Edit2, X, Camera, Send, Mail, MessageCircle, FileDown, Phone, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import useStore from '../store';
 import { scanMatricola } from '../services/ocrService';
@@ -26,6 +26,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
   
   // Modal modifica commissione completa
   const [editingFullCommissione, setEditingFullCommissione] = useState(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [editForm, setEditForm] = useState({
     prodotti: [],
     accessori: [],
@@ -613,6 +614,153 @@ export default function ArchivioCommissioni({ onNavigate }) {
     return <span className="font-medium">€ {prod.prezzo}</span>;
   };
 
+  // Export Excel
+  const exportExcel = () => {
+    const comms = filteredCommissioni;
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head><meta charset="UTF-8">
+      <style>
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 8px; }
+        th { background-color: #006B3F; color: white; font-weight: bold; }
+        .totale { font-weight: bold; background-color: #FFDD00; }
+        .prezzo { text-align: right; }
+      </style>
+      </head>
+      <body>
+      <h2>OMPRA - Archivio Commissioni</h2>
+      <p>Esportato il: ${new Date().toLocaleString('it-IT')}</p>
+      <p>Commissioni: ${comms.length} | Filtro: ${filterStatus === 'pending' ? 'In attesa' : filterStatus === 'completed' ? 'Completate' : 'Tutte'}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Stato</th>
+            <th>Cliente</th>
+            <th>Telefono</th>
+            <th>Operatore</th>
+            <th>Prodotti</th>
+            <th>Accessori</th>
+            <th>Totale €</th>
+            <th>Caparra €</th>
+            <th>Da Saldare €</th>
+            <th>Metodo Pag.</th>
+            <th>Documento</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    let totaleGen = 0;
+    let totaleCaparre = 0;
+    
+    comms.forEach(comm => {
+      const prodottiStr = (comm.prodotti || []).map(p => {
+        let s = `${p.brand} ${p.model}`;
+        if (p.serialNumber) s += ` (SN: ${p.serialNumber})`;
+        if (p.isOmaggio) s += ' [OMAGGIO]';
+        else if (p.prezzo) s += ` €${p.prezzo}`;
+        return s;
+      }).join('; ');
+      
+      const accessoriStr = (comm.accessori || []).map(a => {
+        const qta = a.quantita || 1;
+        const tot = (parseFloat(a.prezzo) || 0) * qta;
+        return qta > 1 ? `${a.nome} x${qta} €${tot.toFixed(2)}` : `${a.nome} €${tot.toFixed(2)}`;
+      }).join('; ');
+      
+      const totale = comm.totale || 0;
+      const caparra = comm.caparra || 0;
+      const daSaldare = totale - caparra;
+      totaleGen += totale;
+      totaleCaparre += caparra;
+      
+      html += `
+        <tr>
+          <td>${formatDate(comm.createdAt)}</td>
+          <td>${comm.status === 'completed' ? 'Completata' : 'In attesa'}</td>
+          <td>${comm.cliente || ''}</td>
+          <td>${comm.telefono || ''}</td>
+          <td>${comm.operatore || ''}</td>
+          <td>${prodottiStr}</td>
+          <td>${accessoriStr}</td>
+          <td class="prezzo">${totale.toFixed(2)}</td>
+          <td class="prezzo">${caparra > 0 ? caparra.toFixed(2) : ''}</td>
+          <td class="prezzo">${caparra > 0 ? daSaldare.toFixed(2) : ''}</td>
+          <td>${comm.metodoPagamento ? formatMetodoPagamento(comm.metodoPagamento) : ''}</td>
+          <td>${comm.tipoDocumento === 'fattura' ? 'Fattura' : 'Scontrino'}</td>
+          <td>${comm.note || ''}</td>
+        </tr>
+      `;
+    });
+    
+    html += `
+        <tr class="totale">
+          <td colspan="7" style="text-align: right;"><strong>TOTALE</strong></td>
+          <td class="prezzo"><strong>€ ${totaleGen.toFixed(2)}</strong></td>
+          <td class="prezzo"><strong>€ ${totaleCaparre.toFixed(2)}</strong></td>
+          <td class="prezzo"><strong>€ ${(totaleGen - totaleCaparre).toFixed(2)}</strong></td>
+          <td colspan="3"></td>
+        </tr>
+        </tbody>
+      </table>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `commissioni_ompra_${new Date().toISOString().slice(0, 10)}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  // Export CSV
+  const exportCSV = () => {
+    const comms = filteredCommissioni;
+    const headers = ['Data', 'Stato', 'Cliente', 'Telefono', 'Operatore', 'Prodotti', 'Accessori', 'Totale', 'Caparra', 'Da Saldare', 'Metodo Pag.', 'Documento', 'Note'];
+    
+    const rows = comms.map(comm => {
+      const prodottiStr = (comm.prodotti || []).map(p => `${p.brand} ${p.model}${p.serialNumber ? ' SN:' + p.serialNumber : ''}`).join(' | ');
+      const accessoriStr = (comm.accessori || []).map(a => {
+        const qta = a.quantita || 1;
+        return qta > 1 ? `${a.nome} x${qta}` : a.nome;
+      }).join(' | ');
+      const caparra = comm.caparra || 0;
+      
+      return [
+        formatDate(comm.createdAt),
+        comm.status === 'completed' ? 'Completata' : 'In attesa',
+        comm.cliente || '',
+        comm.telefono || '',
+        comm.operatore || '',
+        prodottiStr,
+        accessoriStr,
+        (comm.totale || 0).toFixed(2),
+        caparra > 0 ? caparra.toFixed(2) : '',
+        caparra > 0 ? (comm.totale - caparra).toFixed(2) : '',
+        comm.metodoPagamento ? formatMetodoPagamento(comm.metodoPagamento) : '',
+        comm.tipoDocumento === 'fattura' ? 'Fattura' : 'Scontrino',
+        comm.note || ''
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+    });
+    
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `commissioni_ompra_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -623,6 +771,41 @@ export default function ArchivioCommissioni({ onNavigate }) {
               <ArrowLeft className="w-6 h-6" />
             </button>
             <h1 className="text-xl font-bold">Archivio Commissioni</h1>
+          </div>
+          
+          {/* Export */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="p-2 rounded-lg bg-white/20"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            
+            {showExportMenu && (
+              <div className="absolute right-0 top-12 bg-white rounded-lg shadow-xl py-2 min-w-[160px] z-20">
+                <button
+                  onClick={exportExcel}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                >
+                  <FileDown className="w-5 h-5 text-green-600" />
+                  <div>
+                    <div className="font-medium">Excel (.xls)</div>
+                    <div className="text-xs text-gray-500">Per Microsoft Excel</div>
+                  </div>
+                </button>
+                <button
+                  onClick={exportCSV}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                >
+                  <FileDown className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <div className="font-medium">CSV</div>
+                    <div className="text-xs text-gray-500">Universale</div>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
         

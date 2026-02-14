@@ -10,6 +10,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const deleteCommissione = useStore((state) => state.deleteCommissione);
   const completeCommissione = useStore((state) => state.completeCommissione);
   const recoverMissingCommissioni = useStore((state) => state.recoverMissingCommissioni);
+  const cleanDuplicateCommissioni = useStore((state) => state.cleanDuplicateCommissioni);
   
   // Default a "Chiuse"
   const [filterStatus, setFilterStatus] = useState('completed');
@@ -612,6 +613,23 @@ export default function ArchivioCommissioni({ onNavigate }) {
     setRecovering(false);
   };
 
+  // Pulisci duplicati
+  const handleCleanDuplicates = async () => {
+    if (!confirm('Eliminare le commissioni duplicate (stesso cliente e totale)?')) return;
+    setRecovering(true);
+    try {
+      const count = await cleanDuplicateCommissioni();
+      if (count > 0) {
+        alert(`🧹 Eliminati ${count} duplicati!`);
+      } else {
+        alert('Nessun duplicato trovato.');
+      }
+    } catch (e) {
+      alert('Errore: ' + e.message);
+    }
+    setRecovering(false);
+  };
+
   // Export Excel
   const exportExcel = () => {
     const comms = filteredCommissioni;
@@ -810,8 +828,19 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 >
                   <Download className="w-5 h-5 text-orange-500" />
                   <div>
-                    <div className="font-medium">{recovering ? 'Recupero...' : 'Recupera da storico'}</div>
+                    <div className="font-medium">{recovering ? 'Elaborazione...' : 'Recupera da storico'}</div>
                     <div className="text-xs text-gray-500">Importa commissioni mancanti</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setShowExportMenu(false); handleCleanDuplicates(); }}
+                  disabled={recovering}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                >
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                  <div>
+                    <div className="font-medium">{recovering ? 'Elaborazione...' : 'Pulisci duplicati'}</div>
+                    <div className="text-xs text-gray-500">Rimuovi commissioni doppie</div>
                   </div>
                 </button>
               </div>

@@ -656,24 +656,37 @@ const useStore = create((set, get) => ({
   // Recupera commissioni mancanti dallo storico vendite
   recoverMissingCommissioni: async () => {
     const sales = get().sales;
+    await get().fetchCommissioni(); // Refresh prima
     const comms = get().commissioni;
     let recovered = 0;
     
-    // Per ogni vendita, controlla se esiste una commissione corrispondente
+    // Build set di commissioni esistenti per matching flessibile
+    // Match per: cliente + totale (arrotondato) oppure cliente + data ±1 giorno
+    const existingKeys = new Set();
+    comms.forEach(c => {
+      const clienteKey = (c.cliente || '').trim().toUpperCase();
+      const totKey = Math.round((c.totale || 0) * 100);
+      existingKeys.add(`${clienteKey}|${totKey}`);
+      
+      // Aggiungi anche match per date multiple (createdAt, completedAt)
+      [c.createdAt, c.completedAt].filter(Boolean).forEach(d => {
+        const dateStr = d.slice(0, 10);
+        existingKeys.add(`${clienteKey}|${dateStr}`);
+      });
+    });
+    
     for (const sale of sales) {
       if (!sale.cliente) continue;
       
-      const saleDate = new Date(sale.timestamp);
-      const saleDateStr = saleDate.toISOString().slice(0, 10);
+      const clienteKey = sale.cliente.trim().toUpperCase();
+      const totKey = Math.round((sale.prezzo || 0) * 100);
+      const saleDateStr = (sale.timestamp || '').slice(0, 10);
       
-      // Cerca commissione con stesso cliente e stessa data
-      const hasComm = comms.some(c => {
-        if (c.cliente !== sale.cliente) return false;
-        const commDate = (c.completedAt || c.createdAt || '').slice(0, 10);
-        return commDate === saleDateStr;
-      });
-      
-      if (hasComm) continue;
+      // Skip se esiste già (per totale O per data)
+      if (existingKeys.has(`${clienteKey}|${totKey}`) || 
+          existingKeys.has(`${clienteKey}|${saleDateStr}`)) {
+        continue;
+      }
       
       // Crea commissione da dati vendita
       const modelStr = sale.model || '';
@@ -690,7 +703,6 @@ const useStore = create((set, get) => ({
         const name = qtaMatch ? cleanItem.replace(/\s+[x×]\d+$/i, '').trim() : cleanItem;
         
         if (sn) {
-          // Prodotto con matricola
           prodotti.push({
             brand: sale.brand || '',
             model: name.replace(new RegExp('^' + (sale.brand || '') + '\\s*', 'i'), ''),
@@ -699,17 +711,15 @@ const useStore = create((set, get) => ({
             aliquotaIva: 22
           });
         } else {
-          // Accessorio
           accessori.push({
             nome: name,
-            prezzo: 0, // Prezzo singolo non disponibile
+            prezzo: 0,
             quantita: qta,
             aliquotaIva: 22
           });
         }
       });
       
-      // Se nessun prodotto con SN, metti tutto come singolo prodotto
       if (prodotti.length === 0 && accessori.length === 0) {
         prodotti.push({
           brand: sale.brand || '',
@@ -745,7 +755,12 @@ const useStore = create((set, get) => ({
           .from('commissioni')
           .upsert(commToDb(newComm), { onConflict: 'id' });
         
-        if (!error) recovered++;
+        if (!error) {
+          recovered++;
+          // Aggiungi alla set per evitare doppi nella stessa sessione
+          existingKeys.add(`${clienteKey}|${totKey}`);
+          existingKeys.add(`${clienteKey}|${saleDateStr}`);
+        }
       } catch (e) {
         console.warn('Skip recovery per:', sale.cliente, e);
       }
@@ -757,6 +772,43 @@ const useStore = create((set, get) => ({
     }
     
     return recovered;
+  },
+
+  // Pulisci commissioni duplicate (tiene la più vecchia per ogni cliente+totale)
+  cleanDuplicateCommissioni: async () => {
+    await get().fetchCommissioni();
+    const comms = get().commissioni;
+    const seen = new Map(); // key → first commission id
+    const toDelete = [];
+    
+    // Ordina per createdAt ASC (tieni la più vecchia)
+    const sorted = [...comms].sort((a, b) => 
+      (a.createdAt || '').localeCompare(b.createdAt || '')
+    );
+    
+    sorted.forEach(c => {
+      const key = `${(c.cliente || '').trim().toUpperCase()}|${Math.round((c.totale || 0) * 100)}`;
+      if (seen.has(key)) {
+        toDelete.push(c.id);
+      } else {
+        seen.set(key, c.id);
+      }
+    });
+    
+    if (toDelete.length === 0) return 0;
+    
+    // Elimina duplicati in batch
+    for (const id of toDelete) {
+      try {
+        await supabase.from('commissioni').delete().eq('id', id);
+      } catch (e) {
+        console.warn('Errore pulizia:', id, e);
+      }
+    }
+    
+    await get().fetchCommissioni();
+    console.log(`🧹 Eliminati ${toDelete.length} duplicati`);
+    return toDelete.length;
   },
 
   // Getter commissioni pendenti

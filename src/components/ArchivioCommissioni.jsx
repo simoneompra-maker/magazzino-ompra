@@ -147,7 +147,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
   };
 
   // Genera PDF
-  const generatePDF = (comm) => {
+  const generatePDF = (comm, returnBlob = false) => {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -377,8 +377,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
     doc.text('Documento non fiscale - Solo per uso interno', pageWidth / 2, y, { align: 'center' });
 
     const fileName = `Commissione_${(comm.cliente || 'Cliente').replace(/\s+/g, '_')}_${new Date(comm.createdAt).toISOString().slice(0, 10)}.pdf`;
-    doc.save(fileName);
     
+    if (returnBlob) {
+      return { blob: doc.output('blob'), fileName };
+    }
+    
+    doc.save(fileName);
     return fileName;
   };
 
@@ -391,37 +395,44 @@ export default function ArchivioCommissioni({ onNavigate }) {
     setPreviewCommissione(null);
   };
 
-  // Scarica PDF e apri Gmail
-  const handleSendGmailWithPDF = (comm) => {
-    generatePDF(comm);
-    
-    setTimeout(() => {
-      const subject = `Commissione OMPRA - ${comm.cliente} - ${formatDate(comm.createdAt)}`;
+  // Condividi PDF via Email (Web Share API con file)
+  const handleSendEmailWithPDF = async (comm) => {
+    try {
+      const { blob, fileName } = generatePDF(comm, true);
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      
+      const subject = `Commissione OMPRA - ${comm.cliente}`;
       let body = `Buongiorno,\n\nin allegato la commissione di vendita.\n\nCliente: ${comm.cliente}`;
-      
-      if (comm.telefono) {
-        body += `\nTelefono: ${comm.telefono}`;
-      }
-      
+      if (comm.telefono) body += `\nTelefono: ${comm.telefono}`;
       body += `\nTotale: € ${(comm.totale || 0).toFixed(2)}`;
-      
       if (comm.caparra) {
         body += `\nCaparra: € ${comm.caparra.toFixed(2)} (${formatMetodoPagamento(comm.metodoPagamento)})`;
-        const daSaldare = comm.totale - comm.caparra;
-        body += `\nDa saldare: € ${daSaldare.toFixed(2)}`;
+        body += `\nDa saldare: € ${(comm.totale - comm.caparra).toFixed(2)}`;
       }
-      
-      if (comm.note) {
-        body += `\n\nNote: ${comm.note}`;
-      }
-      
+      if (comm.note) body += `\n\nNote: ${comm.note}`;
       body += `\n\nCordiali saluti`;
       
-      const url = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(url, '_blank');
-      setSendingCommissione(null);
-      setPreviewCommissione(null);
-    }, 500);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: subject,
+          text: body
+        });
+      } else {
+        // Fallback: scarica PDF + apri mailto
+        generatePDF(comm);
+        setTimeout(() => {
+          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n⚠️ Ricorda di allegare il PDF scaricato!')}`;
+        }, 500);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.log('Share fallback:', err);
+        generatePDF(comm);
+      }
+    }
+    setSendingCommissione(null);
+    setPreviewCommissione(null);
   };
 
   // Solo download PDF
@@ -1109,13 +1120,13 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </button>
               
-              {/* ROSSO Gmail - Gmail + PDF */}
+              {/* ROSSO Email - Email + PDF */}
               <button
-                onClick={() => handleSendGmailWithPDF(sendingCommissione)}
+                onClick={() => handleSendEmailWithPDF(sendingCommissione)}
                 className="w-full py-3 rounded-lg font-medium text-white flex items-center justify-center gap-2"
                 style={{ backgroundColor: '#EA4335' }}
               >
-                <Mail className="w-5 h-5" /> Gmail + PDF allegato
+                <Mail className="w-5 h-5" /> Email + PDF allegato
               </button>
               
               {/* BLU - Solo PDF */}
@@ -1151,12 +1162,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
               <span className="text-xs font-medium hidden sm:inline">WhatsApp</span>
             </button>
             <button
-              onClick={() => handleSendGmailWithPDF(previewCommissione)}
+              onClick={() => handleSendEmailWithPDF(previewCommissione)}
               className="text-white rounded-full p-3 shadow-lg flex items-center gap-1"
               style={{ backgroundColor: '#EA4335' }}
             >
               <Mail className="w-5 h-5" />
-              <span className="text-xs font-medium hidden sm:inline">Gmail+PDF</span>
+              <span className="text-xs font-medium hidden sm:inline">Email+PDF</span>
             </button>
             <button
               onClick={() => { generatePDF(previewCommissione); }}

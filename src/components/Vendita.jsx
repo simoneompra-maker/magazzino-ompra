@@ -762,7 +762,7 @@ export default function Vendita({ onNavigate }) {
       }
       
       if (hasOrderedProducts) {
-        const commissione = createCommissione({
+        const commissione = await createCommissione({
           cliente: nomeCliente, clienteInfo: clienteSelezionato,
           telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
           prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
@@ -822,7 +822,7 @@ export default function Vendita({ onNavigate }) {
         });
       }
       
-      const commissione = createCommissione({
+      const commissione = await createCommissione({
         cliente: nomeCliente, clienteInfo: clienteSelezionato,
         telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
         prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),

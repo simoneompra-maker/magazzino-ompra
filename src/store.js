@@ -12,26 +12,52 @@ const LOCATION = 'main';
 
 localStorage.setItem('ompra_user', USERNAME);
 
-// Carica commissioni da localStorage
-const loadCommissioni = () => {
-  try {
-    const saved = localStorage.getItem('ompra_commissioni');
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-};
+// Mapping commissione: JS camelCase ↔ DB snake_case
+const commToDb = (c) => ({
+  id: c.id,
+  created_at: c.createdAt,
+  cliente: c.cliente,
+  cliente_info: c.clienteInfo || null,
+  telefono: c.telefono || null,
+  operatore: c.operatore || null,
+  prodotti: c.prodotti || [],
+  accessori: c.accessori || [],
+  totale: c.totale || 0,
+  caparra: c.caparra || null,
+  metodo_pagamento: c.metodoPagamento || null,
+  note: c.note || null,
+  tipo_documento: c.tipoDocumento || 'scontrino',
+  status: c.status || 'pending',
+  completed_at: c.completedAt || null,
+  iva_compresa: c.ivaCompresa !== false,
+  user_id: c.user || null
+});
 
-// Salva commissioni in localStorage
-const saveCommissioni = (commissioni) => {
-  localStorage.setItem('ompra_commissioni', JSON.stringify(commissioni));
-};
+const commFromDb = (row) => ({
+  id: row.id,
+  createdAt: row.created_at,
+  cliente: row.cliente,
+  clienteInfo: row.cliente_info,
+  telefono: row.telefono,
+  operatore: row.operatore,
+  prodotti: row.prodotti || [],
+  accessori: row.accessori || [],
+  totale: row.totale || 0,
+  caparra: row.caparra || null,
+  metodoPagamento: row.metodo_pagamento,
+  note: row.note,
+  tipoDocumento: row.tipo_documento || 'scontrino',
+  status: row.status || 'pending',
+  completedAt: row.completed_at,
+  ivaCompresa: row.iva_compresa !== false,
+  user: row.user_id
+});
 
 const useStore = create((set, get) => ({
   // Stato
   inventory: [],
   sales: [],
-  commissioni: loadCommissioni(), // Commissioni (pendenti e completate)
+  commissioni: [], // Loaded from Supabase via fetchCommissioni
   brands: [
     'Archman', 'Bluebird', 'Captain', 'Cutman', 'Echo', 'Forest', 'GGP', 'Grillo',
     'Honda', 'Negri', 'Pasquali', 'Segway', 'Snapper', 'Stihl', 'Volpi',
@@ -50,15 +76,26 @@ const useStore = create((set, get) => ({
     
     await get().fetchInventory();
     await get().fetchSales();
+    await get().fetchCommissioni();
+    
+    // Migra commissioni da localStorage a Supabase (una tantum)
+    await get().migrateLocalCommissioni();
     
     const subscription = supabase
       .channel('inventory-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'inventory' },
         () => {
-          console.log('📡 Real-time update received');
+          console.log('📡 Real-time update inventory');
           get().fetchInventory();
           get().fetchSales();
+        }
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'commissioni' },
+        () => {
+          console.log('📡 Real-time update commissioni');
+          get().fetchCommissioni();
         }
       )
       .subscribe();
@@ -125,6 +162,64 @@ const useStore = create((set, get) => ({
       
     } catch (error) {
       console.error('❌ Fetch sales error:', error);
+    }
+  },
+
+  // FETCH COMMISSIONI da Supabase
+  fetchCommissioni: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('commissioni')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      const commissioni = (data || []).map(commFromDb);
+      set({ commissioni });
+      
+    } catch (error) {
+      console.error('❌ Fetch commissioni error:', error);
+    }
+  },
+
+  // Migrazione una tantum: localStorage → Supabase
+  migrateLocalCommissioni: async () => {
+    try {
+      const saved = localStorage.getItem('ompra_commissioni');
+      if (!saved) return;
+      
+      const local = JSON.parse(saved);
+      if (!local || local.length === 0) return;
+      
+      // Controlla se sono già migrate (confronto ID)
+      const existing = get().commissioni;
+      const existingIds = new Set(existing.map(c => c.id));
+      const toMigrate = local.filter(c => !existingIds.has(c.id));
+      
+      if (toMigrate.length === 0) {
+        // Tutte già migrate, pulisci localStorage
+        localStorage.removeItem('ompra_commissioni');
+        console.log('✅ Commissioni già migrate, localStorage pulito');
+        return;
+      }
+      
+      console.log(`📦 Migrazione ${toMigrate.length} commissioni da localStorage a Supabase...`);
+      
+      const rows = toMigrate.map(commToDb);
+      const { error } = await supabase
+        .from('commissioni')
+        .upsert(rows, { onConflict: 'id' });
+      
+      if (error) throw error;
+      
+      // Pulisci localStorage e ricarica
+      localStorage.removeItem('ompra_commissioni');
+      await get().fetchCommissioni();
+      console.log(`✅ Migrazione completata: ${toMigrate.length} commissioni`);
+      
+    } catch (error) {
+      console.error('❌ Migrazione commissioni error:', error);
+      // Non cancellare localStorage se la migrazione fallisce
     }
   },
 
@@ -353,39 +448,50 @@ const useStore = create((set, get) => ({
   // ============ COMMISSIONI ============
 
   // Crea nuova commissione (può essere senza matricola = in attesa)
-  createCommissione: (data) => {
+  createCommissione: async (data) => {
     const commissione = {
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       cliente: data.cliente,
-      clienteInfo: data.clienteInfo || null, // Info cliente dal database
+      clienteInfo: data.clienteInfo || null,
       telefono: data.telefono || null,
       operatore: data.operatore || null,
-      prodotti: data.prodotti || [], // Array di { brand, model, tipo, serialNumber (opzionale), prezzo }
+      prodotti: data.prodotti || [],
       accessori: data.accessori || [],
       totale: data.totale,
       caparra: data.caparra || null,
       metodoPagamento: data.metodoPagamento || null,
       note: data.note || null,
-      tipoDocumento: data.tipoDocumento || 'scontrino', // 'scontrino' | 'fattura'
+      tipoDocumento: data.tipoDocumento || 'scontrino',
+      ivaCompresa: data.ivaCompresa !== false,
       status: data.prodotti?.some(p => !p.serialNumber) ? 'pending' : 'completed',
       completedAt: data.prodotti?.every(p => p.serialNumber) ? new Date().toISOString() : null,
       user: get().user
     };
     
-    const commissioni = [...get().commissioni, commissione];
-    saveCommissioni(commissioni);
-    set({ commissioni });
+    try {
+      const { error } = await supabase
+        .from('commissioni')
+        .insert(commToDb(commissione));
+      
+      if (error) throw error;
+      
+      // Aggiorna stato locale
+      set({ commissioni: [commissione, ...get().commissioni] });
+    } catch (error) {
+      console.error('❌ Errore creazione commissione:', error);
+      // Fallback: salva comunque localmente
+      set({ commissioni: [commissione, ...get().commissioni] });
+    }
     
     return commissione;
   },
 
   // Aggiorna commissione (es. aggiungi matricola)
-  updateCommissione: (id, updates) => {
+  updateCommissione: async (id, updates) => {
     const commissioni = get().commissioni.map(c => {
       if (c.id === id) {
         const updated = { ...c, ...updates };
-        // Se tutti i prodotti hanno matricola, segna come completata
         if (updated.prodotti?.every(p => p.serialNumber)) {
           updated.status = 'completed';
           updated.completedAt = new Date().toISOString();
@@ -395,8 +501,23 @@ const useStore = create((set, get) => ({
       return c;
     });
     
-    saveCommissioni(commissioni);
+    // Aggiorna stato locale subito
     set({ commissioni });
+    
+    // Sync con Supabase
+    const updated = commissioni.find(c => c.id === id);
+    if (updated) {
+      try {
+        const { error } = await supabase
+          .from('commissioni')
+          .update(commToDb(updated))
+          .eq('id', id);
+        
+        if (error) throw error;
+      } catch (error) {
+        console.error('❌ Errore update commissione:', error);
+      }
+    }
   },
 
   // Completa commissione e registra vendita
@@ -455,7 +576,7 @@ const useStore = create((set, get) => ({
     }
     
     // Aggiorna stato commissione
-    get().updateCommissione(id, { 
+    await get().updateCommissione(id, { 
       status: 'completed',
       completedAt: dataISO
     });
@@ -464,10 +585,20 @@ const useStore = create((set, get) => ({
   },
 
   // Elimina commissione
-  deleteCommissione: (id) => {
+  deleteCommissione: async (id) => {
     const commissioni = get().commissioni.filter(c => c.id !== id);
-    saveCommissioni(commissioni);
     set({ commissioni });
+    
+    try {
+      const { error } = await supabase
+        .from('commissioni')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('❌ Errore delete commissione:', error);
+    }
   },
 
   // Getter commissioni pendenti

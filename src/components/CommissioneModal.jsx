@@ -1,4 +1,4 @@
-import { X, Share2, MessageCircle, Mail, FileDown, ArrowLeft, Check, Phone } from 'lucide-react';
+import { X, Share2, MessageCircle, Mail, FileDown, ArrowLeft, Check, Phone, Printer } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 export default function CommissioneModal({ data, isKit = false, onBack, onConfirm, onClose, isSaving = false }) {
@@ -839,42 +839,22 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     window.open(url, '_blank');
   };
 
-  // Condividi PDF via Email (usa Web Share API con file)
-  const shareEmailWithPDF = async () => {
+  // Stampa PDF - apre in nuova tab pronta per stampare
+  const printPDF = () => {
     try {
-      const { blob, fileName } = generatePDFBlob();
-      const file = new File([blob], fileName, { type: 'application/pdf' });
-      
-      const subject = `Commissione OMPRA - ${getCliente()}`;
-      let body = `Buongiorno,\n\nin allegato la commissione di vendita.\n\nCliente: ${getCliente()}`;
-      if (getTelefono()) body += `\nTelefono: ${getTelefono()}`;
-      body += `\nTotale: € ${getTotale().toFixed(2)}`;
-      if (data.caparra) {
-        body += `\nCaparra: € ${data.caparra.toFixed(2)} (${formatMetodoPagamento(data.metodoPagamento)})`;
-        body += `\nDa saldare: € ${getDaSaldare().toFixed(2)}`;
-      }
-      if (data.note) body += `\n\nNote: ${data.note}`;
-      body += `\n\nCordiali saluti`;
-      
-      // Prova Web Share API con file
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: subject,
-          text: body
+      const { blob } = generatePDFBlob();
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 300);
         });
-      } else {
-        // Fallback: scarica PDF + apri mailto
-        generatePDF();
-        setTimeout(() => {
-          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n⚠️ Ricorda di allegare il PDF scaricato!')}`;
-        }, 500);
       }
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.log('Share fallback:', err);
-        generatePDF();
-      }
+      console.log('Errore stampa:', err);
+      generatePDF();
     }
   };
 
@@ -955,15 +935,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
               <MessageCircle className="w-5 h-5" />
               <span className="text-xs font-bold hidden sm:inline">WhatsApp</span>
             </button>
-            {/* Email + PDF */}
+            {/* Stampa */}
             <button
-              onClick={shareEmailWithPDF}
-              className="text-white rounded-full p-3 shadow-lg flex items-center gap-1"
-              style={{ backgroundColor: '#EA4335' }}
-              title="Email + PDF"
+              onClick={printPDF}
+              className="bg-gray-700 text-white rounded-full p-3 shadow-lg flex items-center gap-1"
+              title="Stampa"
             >
-              <Mail className="w-5 h-5" />
-              <span className="text-xs font-bold hidden sm:inline">Email</span>
+              <Printer className="w-5 h-5" />
+              <span className="text-xs font-bold hidden sm:inline">Stampa</span>
             </button>
             {/* PDF download */}
             <button

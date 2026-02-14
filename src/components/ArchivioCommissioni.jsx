@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Clock, CheckCircle, Search, Trash2, Edit2, X, Camera, Send, Mail, MessageCircle, FileDown, Phone, Download } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Search, Trash2, Edit2, X, Camera, Send, Mail, MessageCircle, FileDown, Phone, Download, Printer } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import useStore from '../store';
 import { scanMatricola } from '../services/ocrService';
@@ -395,58 +395,26 @@ export default function ArchivioCommissioni({ onNavigate }) {
     setPreviewCommissione(null);
   };
 
-  // Condividi PDF via Email (Web Share API con file)
-  const handleSendEmailWithPDF = async (comm) => {
-    try {
-      const { blob, fileName } = generatePDF(comm, true);
-      const file = new File([blob], fileName, { type: 'application/pdf' });
-      
-      const subject = `Commissione OMPRA - ${comm.cliente}`;
-      let body = `Buongiorno,\n\nin allegato la commissione di vendita.\n\nCliente: ${comm.cliente}`;
-      if (comm.telefono) body += `\nTelefono: ${comm.telefono}`;
-      body += `\nTotale: € ${(comm.totale || 0).toFixed(2)}`;
-      if (comm.caparra) {
-        body += `\nCaparra: € ${comm.caparra.toFixed(2)} (${formatMetodoPagamento(comm.metodoPagamento)})`;
-        body += `\nDa saldare: € ${(comm.totale - comm.caparra).toFixed(2)}`;
-      }
-      if (comm.note) body += `\n\nNote: ${comm.note}`;
-      body += `\n\nCordiali saluti`;
-      
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: subject,
-          text: body
-        });
-      } else {
-        // Fallback: scarica PDF + apri mailto
-        generatePDF(comm);
-        setTimeout(() => {
-          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n⚠️ Ricorda di allegare il PDF scaricato!')}`;
-        }, 500);
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.log('Share fallback:', err);
-        generatePDF(comm);
-      }
-    }
-    setSendingCommissione(null);
-    setPreviewCommissione(null);
-  };
-
   // Solo download PDF
   const handleDownloadPDF = (comm) => {
     generatePDF(comm);
     setSendingCommissione(null);
   };
 
-  // Invia via Email (client predefinito)
-  const handleSendEmail = (comm) => {
-    const subject = `Commissione OMPRA - ${comm.cliente}`;
-    const body = generateCommissioneText(comm);
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  // Stampa PDF - apre in nuova tab pronta per stampare
+  const handlePrintPDF = (comm) => {
+    const { blob } = generatePDF(comm, true);
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+      printWindow.addEventListener('load', () => {
+        setTimeout(() => {
+          printWindow.print();
+        }, 300);
+      });
+    }
     setSendingCommissione(null);
+    setPreviewCommissione(null);
   };
 
   // Apri modal per aggiungere matricola
@@ -1007,7 +975,16 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   <Send className="w-4 h-4" /> Invia
                 </button>
                 
-                {/* BLU - Stampa PDF diretto */}
+                {/* GRIGIO - Stampa PDF */}
+                <button
+                  onClick={() => handlePrintPDF(comm)}
+                  className="p-2 text-gray-700 rounded-lg bg-gray-100 hover:bg-gray-200"
+                  title="Stampa"
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
+                
+                {/* BLU - Scarica PDF */}
                 <button
                   onClick={() => generatePDF(comm)}
                   className="p-2 text-blue-600 rounded-lg bg-blue-50 hover:bg-blue-100"
@@ -1120,13 +1097,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </button>
               
-              {/* ROSSO Email - Email + PDF */}
+              {/* GRIGIO SCURO - Stampa */}
               <button
-                onClick={() => handleSendEmailWithPDF(sendingCommissione)}
-                className="w-full py-3 rounded-lg font-medium text-white flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#EA4335' }}
+                onClick={() => handlePrintPDF(sendingCommissione)}
+                className="w-full py-3 rounded-lg font-medium text-white bg-gray-700 flex items-center justify-center gap-2"
               >
-                <Mail className="w-5 h-5" /> Email + PDF allegato
+                <Printer className="w-5 h-5" /> Stampa
               </button>
               
               {/* BLU - Solo PDF */}
@@ -1134,15 +1110,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 onClick={() => handleDownloadPDF(sendingCommissione)}
                 className="w-full py-3 rounded-lg font-medium text-white bg-blue-600 flex items-center justify-center gap-2"
               >
-                <FileDown className="w-5 h-5" /> Scarica solo PDF
-              </button>
-              
-              {/* GRIGIO - Email predefinita */}
-              <button
-                onClick={() => handleSendEmail(sendingCommissione)}
-                className="w-full py-3 rounded-lg font-medium text-gray-700 bg-gray-100 flex items-center justify-center gap-2"
-              >
-                <Mail className="w-5 h-5" /> Email (testo)
+                <FileDown className="w-5 h-5" /> Scarica PDF
               </button>
             </div>
           </div>
@@ -1162,12 +1130,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
               <span className="text-xs font-medium hidden sm:inline">WhatsApp</span>
             </button>
             <button
-              onClick={() => handleSendEmailWithPDF(previewCommissione)}
-              className="text-white rounded-full p-3 shadow-lg flex items-center gap-1"
-              style={{ backgroundColor: '#EA4335' }}
+              onClick={() => handlePrintPDF(previewCommissione)}
+              className="bg-gray-700 text-white rounded-full p-3 shadow-lg flex items-center gap-1"
             >
-              <Mail className="w-5 h-5" />
-              <span className="text-xs font-medium hidden sm:inline">Email+PDF</span>
+              <Printer className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:inline">Stampa</span>
             </button>
             <button
               onClick={() => { generatePDF(previewCommissione); }}

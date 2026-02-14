@@ -9,10 +9,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const updateCommissione = useStore((state) => state.updateCommissione);
   const deleteCommissione = useStore((state) => state.deleteCommissione);
   const completeCommissione = useStore((state) => state.completeCommissione);
+  const recoverMissingCommissioni = useStore((state) => state.recoverMissingCommissioni);
   
-  // Default a "In attesa" invece di "all"
-  const [filterStatus, setFilterStatus] = useState('pending');
+  // Default a "Chiuse"
+  const [filterStatus, setFilterStatus] = useState('completed');
   const [searchTerm, setSearchTerm] = useState('');
+  const [recovering, setRecovering] = useState(false);
   const [editingCommissione, setEditingCommissione] = useState(null);
   const [editingProductIndex, setEditingProductIndex] = useState(null);
   const [newSerial, setNewSerial] = useState('');
@@ -505,7 +507,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
   // Elimina commissione
   const handleDelete = (id) => {
-    if (confirm('Eliminare questa commissione?')) {
+    if (confirm('Eliminare questa commissione e la vendita associata dallo storico?')) {
       deleteCommissione(id);
     }
   };
@@ -591,6 +593,23 @@ export default function ArchivioCommissioni({ onNavigate }) {
       return <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium">KIT</span>;
     }
     return <span className="font-medium">€ {prod.prezzo}</span>;
+  };
+
+  // Recupera commissioni mancanti dallo storico
+  const handleRecover = async () => {
+    if (!confirm('Recuperare le commissioni mancanti dallo storico vendite?')) return;
+    setRecovering(true);
+    try {
+      const count = await recoverMissingCommissioni();
+      if (count > 0) {
+        alert(`✅ Recuperate ${count} commissioni dallo storico!`);
+      } else {
+        alert('Nessuna commissione da recuperare — archivio e storico sono allineati.');
+      }
+    } catch (e) {
+      alert('Errore durante il recupero: ' + e.message);
+    }
+    setRecovering(false);
   };
 
   // Export Excel
@@ -781,6 +800,18 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   <div>
                     <div className="font-medium">CSV</div>
                     <div className="text-xs text-gray-500">Universale</div>
+                  </div>
+                </button>
+                <div className="border-t my-1"></div>
+                <button
+                  onClick={() => { setShowExportMenu(false); handleRecover(); }}
+                  disabled={recovering}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                >
+                  <Download className="w-5 h-5 text-orange-500" />
+                  <div>
+                    <div className="font-medium">{recovering ? 'Recupero...' : 'Recupera da storico'}</div>
+                    <div className="text-xs text-gray-500">Importa commissioni mancanti</div>
                   </div>
                 </button>
               </div>

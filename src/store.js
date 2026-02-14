@@ -584,21 +584,179 @@ const useStore = create((set, get) => ({
     return { success: true };
   },
 
-  // Elimina commissione
+  // Elimina commissione + vendita associata dallo storico
   deleteCommissione: async (id) => {
+    const comm = get().commissioni.find(c => c.id === id);
     const commissioni = get().commissioni.filter(c => c.id !== id);
     set({ commissioni });
     
     try {
+      // Elimina commissione da Supabase
       const { error } = await supabase
         .from('commissioni')
         .delete()
         .eq('id', id);
-      
       if (error) throw error;
+      
+      // Elimina anche la vendita associata dallo storico
+      if (comm && comm.cliente) {
+        // Cerca vendita con stesso cliente e data simile (±1 giorno)
+        const commDate = comm.completedAt || comm.createdAt;
+        if (commDate) {
+          const d = new Date(commDate);
+          const dayStart = new Date(d);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(d);
+          dayEnd.setHours(23, 59, 59, 999);
+          
+          const { data: matches } = await supabase
+            .from('inventory')
+            .select('id, serialNumber, cliente, timestamp')
+            .eq('action', 'VENDITA')
+            .eq('cliente', comm.cliente)
+            .gte('timestamp', dayStart.toISOString())
+            .lte('timestamp', dayEnd.toISOString());
+          
+          if (matches && matches.length > 0) {
+            // Elimina i record VENDITA trovati (NOMAT e non)
+            const ids = matches.map(m => m.id);
+            await supabase
+              .from('inventory')
+              .delete()
+              .in('id', ids);
+            
+            // Elimina anche eventuali record SCARICO associati
+            const { data: scarichi } = await supabase
+              .from('inventory')
+              .select('id')
+              .eq('action', 'SCARICO')
+              .eq('cliente', comm.cliente)
+              .gte('timestamp', dayStart.toISOString())
+              .lte('timestamp', dayEnd.toISOString());
+            
+            if (scarichi && scarichi.length > 0) {
+              await supabase
+                .from('inventory')
+                .delete()
+                .in('id', scarichi.map(s => s.id));
+            }
+            
+            console.log(`🗑️ Eliminati ${ids.length} record vendita + ${scarichi?.length || 0} scarichi per ${comm.cliente}`);
+          }
+        }
+        
+        await get().fetchSales();
+        await get().fetchInventory();
+      }
     } catch (error) {
       console.error('❌ Errore delete commissione:', error);
     }
+  },
+
+  // Recupera commissioni mancanti dallo storico vendite
+  recoverMissingCommissioni: async () => {
+    const sales = get().sales;
+    const comms = get().commissioni;
+    let recovered = 0;
+    
+    // Per ogni vendita, controlla se esiste una commissione corrispondente
+    for (const sale of sales) {
+      if (!sale.cliente) continue;
+      
+      const saleDate = new Date(sale.timestamp);
+      const saleDateStr = saleDate.toISOString().slice(0, 10);
+      
+      // Cerca commissione con stesso cliente e stessa data
+      const hasComm = comms.some(c => {
+        if (c.cliente !== sale.cliente) return false;
+        const commDate = (c.completedAt || c.createdAt || '').slice(0, 10);
+        return commDate === saleDateStr;
+      });
+      
+      if (hasComm) continue;
+      
+      // Crea commissione da dati vendita
+      const modelStr = sale.model || '';
+      const items = modelStr.split(' + ').map(s => s.trim()).filter(Boolean);
+      const prodotti = [];
+      const accessori = [];
+      
+      items.forEach(item => {
+        const snMatch = item.match(/\(SN:\s*([^)]+)\)/);
+        const sn = snMatch ? snMatch[1].trim() : null;
+        const cleanItem = item.replace(/\s*\(SN:\s*[^)]+\)/, '').trim();
+        const qtaMatch = cleanItem.match(/\s+[x×](\d+)$/i);
+        const qta = qtaMatch ? parseInt(qtaMatch[1]) : 1;
+        const name = qtaMatch ? cleanItem.replace(/\s+[x×]\d+$/i, '').trim() : cleanItem;
+        
+        if (sn) {
+          // Prodotto con matricola
+          prodotti.push({
+            brand: sale.brand || '',
+            model: name.replace(new RegExp('^' + (sale.brand || '') + '\\s*', 'i'), ''),
+            serialNumber: sn,
+            prezzo: prodotti.length === 0 && items.length === 1 ? (sale.prezzo || 0) : 0,
+            aliquotaIva: 22
+          });
+        } else {
+          // Accessorio
+          accessori.push({
+            nome: name,
+            prezzo: 0, // Prezzo singolo non disponibile
+            quantita: qta,
+            aliquotaIva: 22
+          });
+        }
+      });
+      
+      // Se nessun prodotto con SN, metti tutto come singolo prodotto
+      if (prodotti.length === 0 && accessori.length === 0) {
+        prodotti.push({
+          brand: sale.brand || '',
+          model: modelStr || 'Vendita',
+          serialNumber: null,
+          prezzo: sale.prezzo || 0,
+          aliquotaIva: 22
+        });
+      }
+      
+      const newComm = {
+        id: `recovered-${sale.id}`,
+        createdAt: sale.timestamp,
+        cliente: sale.cliente,
+        clienteInfo: null,
+        telefono: null,
+        operatore: sale.user || null,
+        prodotti,
+        accessori,
+        totale: sale.prezzo || 0,
+        caparra: null,
+        metodoPagamento: null,
+        note: null,
+        tipoDocumento: 'scontrino',
+        ivaCompresa: true,
+        status: 'completed',
+        completedAt: sale.timestamp,
+        user: sale.user || null
+      };
+      
+      try {
+        const { error } = await supabase
+          .from('commissioni')
+          .upsert(commToDb(newComm), { onConflict: 'id' });
+        
+        if (!error) recovered++;
+      } catch (e) {
+        console.warn('Skip recovery per:', sale.cliente, e);
+      }
+    }
+    
+    if (recovered > 0) {
+      await get().fetchCommissioni();
+      console.log(`✅ Recuperate ${recovered} commissioni dallo storico`);
+    }
+    
+    return recovered;
   },
 
   // Getter commissioni pendenti

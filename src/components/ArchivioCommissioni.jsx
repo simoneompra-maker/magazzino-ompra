@@ -517,6 +517,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const handleOpenEditFull = (comm) => {
     setEditingFullCommissione(comm);
     setEditForm({
+      cliente: comm.cliente || '',
+      telefono: comm.telefono || '',
+      operatore: comm.operatore || '',
       prodotti: comm.prodotti.map(p => ({ ...p })),
       accessori: comm.accessori ? comm.accessori.map(a => ({ ...a })) : [],
       totale: comm.totale?.toString() || '',
@@ -536,8 +539,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
   // Rimuovi prodotto in modifica
   const handleRemoveEditProduct = (index) => {
-    if (editForm.prodotti.length <= 1) {
-      alert('Devi avere almeno un prodotto!');
+    if (editForm.prodotti.length <= 1 && editForm.accessori.length === 0) {
+      alert('Devi avere almeno un articolo!');
       return;
     }
     const updated = editForm.prodotti.filter((_, i) => i !== index);
@@ -547,7 +550,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
   // Aggiorna accessorio in modifica
   const handleEditAccessorio = (index, field, value) => {
     const updated = [...editForm.accessori];
-    updated[index][field] = field === 'prezzo' ? (value === '' ? 0 : parseFloat(value)) : value;
+    if (field === 'prezzo' || field === 'quantita') {
+      updated[index][field] = value === '' ? 0 : parseFloat(value);
+    } else {
+      updated[index][field] = value;
+    }
     setEditForm({ ...editForm, accessori: updated });
   };
 
@@ -557,8 +564,20 @@ export default function ArchivioCommissioni({ onNavigate }) {
     setEditForm({ ...editForm, accessori: updated });
   };
 
+  // Aggiungi accessorio in modifica
+  const handleAddEditAccessorio = () => {
+    setEditForm({
+      ...editForm,
+      accessori: [...editForm.accessori, { nome: '', prezzo: 0, quantita: 1, aliquotaIva: 22 }]
+    });
+  };
+
   // Salva modifiche commissione
   const handleSaveEditFull = () => {
+    if (!editForm.cliente.trim()) {
+      alert('Inserisci il nome del cliente!');
+      return;
+    }
     const totale = parseFloat(editForm.totale);
     if (isNaN(totale) || totale <= 0) {
       alert('Inserisci un totale valido!');
@@ -572,6 +591,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
     }
 
     updateCommissione(editingFullCommissione.id, {
+      cliente: editForm.cliente.trim(),
+      telefono: editForm.telefono.trim() || null,
+      operatore: editForm.operatore.trim() || null,
       prodotti: editForm.prodotti,
       accessori: editForm.accessori,
       totale: totale,
@@ -582,7 +604,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
     });
 
     setEditingFullCommissione(null);
-    setEditForm({ prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino' });
+    setEditForm({ cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino' });
   };
 
   // Formatta prezzo per visualizzazione
@@ -1352,10 +1374,38 @@ export default function ArchivioCommissioni({ onNavigate }) {
             </div>
             
             <div className="flex-1 overflow-auto p-4 space-y-4">
-              {/* Info cliente (non modificabile) */}
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <p className="text-xs text-gray-500">Cliente</p>
-                <p className="font-bold">{editingFullCommissione.cliente}</p>
+              {/* Dati cliente e operatore */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Cliente</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded-lg mt-1"
+                    value={editForm.cliente}
+                    onChange={(e) => setEditForm({ ...editForm, cliente: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-gray-500">Telefono</label>
+                    <input
+                      type="tel"
+                      className="w-full p-2 border rounded-lg mt-1"
+                      value={editForm.telefono}
+                      onChange={(e) => setEditForm({ ...editForm, telefono: e.target.value })}
+                      placeholder="Opzionale"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-gray-500">Operatore</label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border rounded-lg mt-1"
+                      value={editForm.operatore}
+                      onChange={(e) => setEditForm({ ...editForm, operatore: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Prodotti */}

@@ -53,7 +53,6 @@ export default function Vendita({ onNavigate }) {
   const inventory = useStore((state) => state.inventory);
   const findBySerialNumber = useStore((state) => state.findBySerialNumber);
   const dischargeInventory = useStore((state) => state.dischargeInventory);
-  const addGenericSale = useStore((state) => state.addGenericSale);
   const createCommissione = useStore((state) => state.createCommissione);
   const brands = useStore((state) => state.brands);
 
@@ -779,22 +778,8 @@ export default function Vendita({ onNavigate }) {
         return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
       })();
       
-      // Raccogli TUTTI gli articoli per un unico record vendita
-      const allParts = [];
-      let combinedBrand = '';
-      let combinedPrezzo = 0;
-      
+      // Scarica inventario per ogni prodotto con matricola
       for (const prod of prodotti) {
-        combinedBrand = combinedBrand || prod.brand || '';
-        // Avoid brand duplication: if model already starts with brand, don't prepend
-        const modelUp = (prod.model || '').toUpperCase();
-        const brandUp = (prod.brand || '').toUpperCase();
-        const needsBrand = prod.brand && !modelUp.startsWith(brandUp + ' ') && !modelUp.startsWith(brandUp + ' ');
-        const label = needsBrand ? `${prod.brand} ${prod.model}` : (prod.model || '');
-        allParts.push(prod.serialNumber ? `${label} (SN: ${prod.serialNumber})` : label);
-        combinedPrezzo += (prod.prezzo || 0);
-        
-        // Aggiorna inventario se ha matricola (scarica da giacenze senza creare vendita duplicata)
         if (prod.serialNumber) {
           try {
             await dischargeInventory(prod.serialNumber, nomeCliente);
@@ -804,31 +789,15 @@ export default function Vendita({ onNavigate }) {
         }
       }
       
-      // Aggiungi accessori
-      accessori.forEach(acc => {
-        const accPrezzo = (acc.prezzo || 0) * (acc.quantita || 1);
-        const qta = (acc.quantita || 1) > 1 ? ` x${acc.quantita}` : '';
-        allParts.push(`${acc.nome || acc.descrizione}${qta}`);
-        combinedPrezzo += accPrezzo;
-      });
-      
-      // Salva SEMPRE come record vendita generico
-      if (allParts.length > 0) {
-        if (!combinedBrand && accessori.length > 0) combinedBrand = 'ACCESSORI';
-        await addGenericSale({
-          cliente: nomeCliente, operatore: nomeOperatore,
-          brand: combinedBrand, model: allParts.join(' + '),
-          prezzo: combinedPrezzo, totale, dataVendita: dataISO
-        });
-      }
-      
+      // La commissione è l'unica fonte di verità
       const commissione = await createCommissione({
         cliente: nomeCliente, clienteInfo: clienteSelezionato,
         telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
         prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
         accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
         metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-        note: note.trim() || null, tipoDocumento
+        note: note.trim() || null, tipoDocumento, ivaCompresa,
+        dataVendita: dataISO
       });
       setCommissioneData({ ...commissione, confirmed: true, ivaCompresa });
     } catch (error) {

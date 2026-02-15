@@ -494,7 +494,8 @@ const useStore = create((set, get) => ({
     const commissioni = get().commissioni.map(c => {
       if (c.id === id) {
         const updated = { ...c, ...updates };
-        if (updated.prodotti?.every(p => p.serialNumber)) {
+        // Auto-completa solo se non è già completed e non stiamo settando la data manualmente
+        if (updated.prodotti?.every(p => p.serialNumber) && c.status !== 'completed' && !updates.completedAt) {
           updated.status = 'completed';
           updated.completedAt = new Date().toISOString();
         }

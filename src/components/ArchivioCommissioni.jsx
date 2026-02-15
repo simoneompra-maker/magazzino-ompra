@@ -516,7 +516,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
   // Apri modifica commissione completa
   const handleOpenEditFull = (comm) => {
     setEditingFullCommissione(comm);
+    const dateRef = new Date(comm.completedAt || comm.createdAt);
+    const yyyy = dateRef.getFullYear();
+    const mm = String(dateRef.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateRef.getDate()).padStart(2, '0');
     setEditForm({
+      data: `${yyyy}-${mm}-${dd}`,
       cliente: comm.cliente || '',
       telefono: comm.telefono || '',
       operatore: comm.operatore || '',
@@ -590,7 +595,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
       return;
     }
 
+    // Calcola data aggiornata
+    const newDate = new Date(editForm.data + 'T12:00:00').toISOString();
+    const dateUpdates = { createdAt: newDate };
+    if (editingFullCommissione.status === 'completed') {
+      dateUpdates.completedAt = newDate;
+    }
+
     updateCommissione(editingFullCommissione.id, {
+      ...dateUpdates,
       cliente: editForm.cliente.trim(),
       telefono: editForm.telefono.trim() || null,
       operatore: editForm.operatore.trim() || null,
@@ -604,7 +617,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
     });
 
     setEditingFullCommissione(null);
-    setEditForm({ cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino' });
+    setEditForm({ data: '', cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino' });
   };
 
   // Formatta prezzo per visualizzazione
@@ -1374,6 +1387,18 @@ export default function ArchivioCommissioni({ onNavigate }) {
             </div>
             
             <div className="flex-1 overflow-auto p-4 space-y-4">
+              {/* Data commissione */}
+              <div>
+                <label className="text-xs font-bold text-gray-500">Data</label>
+                <input
+                  type="date"
+                  className="w-full p-2 border-2 rounded-lg mt-1 font-medium"
+                  style={{ borderColor: '#006B3F' }}
+                  value={editForm.data}
+                  onChange={(e) => setEditForm({ ...editForm, data: e.target.value })}
+                />
+              </div>
+
               {/* Dati cliente e operatore */}
               <div className="space-y-3">
                 <div>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square, Edit2, FileDown } from 'lucide-react';
+import { ArrowLeft, Search, Filter, X, ChevronUp, ChevronDown, Download, FileSpreadsheet, Trash2, AlertTriangle, CheckSquare, Square, FileDown } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import useStore from '../store';
 
@@ -405,7 +405,6 @@ export default function StoricoVendite({ onNavigate }) {
                     </div>
                     {!selectMode && (
                       <div className="flex-none flex flex-col ml-1">
-                        <button onClick={() => onNavigate('archivio')} className="text-blue-400 hover:text-blue-600 p-1" title="Modifica in Archivio"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={() => generateCommPDF(comm)} className="text-green-500 hover:text-green-700 p-1" title="Scarica PDF"><FileDown className="w-4 h-4" /></button>
                         <button onClick={() => setDeleteConfirm(comm)} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button>
                       </div>

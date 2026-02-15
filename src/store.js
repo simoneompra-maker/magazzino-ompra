@@ -774,15 +774,16 @@ const useStore = create((set, get) => ({
     return recovered;
   },
 
-  // Pulisci commissioni duplicate (tiene la più vecchia per ogni cliente+totale)
+  // Pulisci commissioni duplicate (solo tra completate, MAI tocca le pending)
   cleanDuplicateCommissioni: async () => {
     await get().fetchCommissioni();
     const comms = get().commissioni;
     const seen = new Map(); // key → first commission id
     const toDelete = [];
     
-    // Ordina per createdAt ASC (tieni la più vecchia)
-    const sorted = [...comms].sort((a, b) => 
+    // Solo completate, ordinate per createdAt ASC (tieni la più vecchia)
+    const completed = comms.filter(c => c.status === 'completed');
+    const sorted = [...completed].sort((a, b) => 
       (a.createdAt || '').localeCompare(b.createdAt || '')
     );
     

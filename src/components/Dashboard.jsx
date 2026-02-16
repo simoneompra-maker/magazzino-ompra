@@ -6,7 +6,9 @@ export default function Dashboard({ onNavigate }) {
   const inventoryCount = useStore((state) => 
     state.inventory.filter(item => item.status === 'available').length
   );
-  const salesCount = useStore((state) => state.sales.length);
+  const salesCount = useStore((state) => 
+    state.commissioni.filter(c => c.status === 'completed').length
+  );
   const pendingCommissioni = useStore((state) => 
     state.commissioni.filter(c => c.status === 'pending').length
   );

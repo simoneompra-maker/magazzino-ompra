@@ -1,0 +1,57 @@
+name: Supabase Backup
+
+on:
+  schedule:
+    # Ogni 12 ore (mezzanotte e mezzogiorno UTC)
+    - cron: "0 0,12 * * *"
+  # Permette di lanciarlo manualmente dalla tab Actions
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Installa client PostgreSQL compatibile
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client > /dev/null 2>&1
+
+      - name: Backup database
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backups
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          # Dump completo (schema + dati)
+          pg_dump "$DATABASE_URL" \
+            --format=plain \
+            --no-owner \
+            --no-privileges \
+            --clean \
+            --if-exists \
+            > backups/ompra_backup_${TIMESTAMP}.sql
+          
+          # Tieni solo gli ultimi 30 backup (elimina i più vecchi)
+          cd backups
+          ls -t ompra_backup_*.sql | tail -n +31 | xargs -r rm --
+          cd ..
+          
+          echo "✅ Backup completato: ompra_backup_${TIMESTAMP}.sql"
+          echo "📦 Dimensione: $(du -h backups/ompra_backup_${TIMESTAMP}.sql | cut -f1)"
+          echo "📁 Backup totali: $(ls backups/ompra_backup_*.sql | wc -l)"
+
+      - name: Commit e push backup
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🔄 Supabase backup automatico"
+          file_pattern: "backups/*.sql"
+          branch: main

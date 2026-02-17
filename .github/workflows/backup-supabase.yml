@@ -17,12 +17,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Installa client PostgreSQL compatibile
-        env:
-          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - name: Installa client PostgreSQL 17
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client > /dev/null 2>&1
+          sudo apt-get install -y -qq wget ca-certificates lsb-release > /dev/null 2>&1
+          wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - 2>/dev/null
+          echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17 > /dev/null 2>&1
 
       - name: Backup database
         env:
@@ -32,7 +34,7 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           
           # Dump completo (schema + dati)
-          pg_dump "$DATABASE_URL" \
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" \
             --format=plain \
             --no-owner \
             --no-privileges \

@@ -96,6 +96,7 @@ export default function Vendita({ onNavigate }) {
   };
 
   const selezionaDaListino = (prodotto) => {
+    const iva = prodotto.iva != null ? prodotto.iva : 22;
     const fasce = [
       prodotto.prezzo_a != null && { label: `A · €${prodotto.prezzo_a.toFixed(2)}`, valore: prodotto.prezzo_a },
       prodotto.prezzo_b != null && { label: `B · €${prodotto.prezzo_b.toFixed(2)}`, valore: prodotto.prezzo_b },
@@ -107,8 +108,9 @@ export default function Vendita({ onNavigate }) {
       ...newAccessorio,
       nome: `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`,
       prezzo: fasce.length > 0 ? fasce[0].valore.toString() : '',
+      aliquotaIva: iva,
     });
-    setFasceProdotto(fasce.length > 1 ? fasce : null); // mostra selettore solo se ci sono più fasce
+    setFasceProdotto(fasce.length > 1 ? fasce : null);
     setShowListiniDropdown(false);
     setListiniSuggerimenti([]);
   };
@@ -688,9 +690,10 @@ export default function Vendita({ onNavigate }) {
       prezzo: parseFloat(newAccessorio.prezzo) || 0,
       quantita: parseInt(newAccessorio.quantita) || 1,
       matricola: newAccessorio.matricola?.trim() || null,
-      aliquotaIva: 22
+      aliquotaIva: newAccessorio.aliquotaIva || 22
     }]);
     setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '' });
+    setFasceProdotto(null);
   };
 
   const handleRemoveAccessorio = (id) => {

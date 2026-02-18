@@ -73,6 +73,7 @@ export default function Vendita({ onNavigate }) {
   // Autocomplete listini
   const [listiniSuggerimenti, setListiniSuggerimenti] = useState([]);
   const [showListiniDropdown, setShowListiniDropdown] = useState(false);
+  const [fasceProdotto, setFasceProdotto] = useState(null); // fasce prezzo prodotto selezionato
 
   const cercaSuListino = async (testo) => {
     if (testo.trim().length < 2) {
@@ -95,11 +96,19 @@ export default function Vendita({ onNavigate }) {
   };
 
   const selezionaDaListino = (prodotto) => {
+    const fasce = [
+      prodotto.prezzo_a != null && { label: `A · €${prodotto.prezzo_a.toFixed(2)}`, valore: prodotto.prezzo_a },
+      prodotto.prezzo_b != null && { label: `B · €${prodotto.prezzo_b.toFixed(2)}`, valore: prodotto.prezzo_b },
+      prodotto.prezzo_c != null && { label: `C · €${prodotto.prezzo_c.toFixed(2)}`, valore: prodotto.prezzo_c },
+      prodotto.prezzo_d != null && { label: `D · €${prodotto.prezzo_d.toFixed(2)}`, valore: prodotto.prezzo_d },
+    ].filter(Boolean);
+
     setNewAccessorio({
       ...newAccessorio,
       nome: `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`,
-      prezzo: prodotto.prezzo_a ? prodotto.prezzo_a.toString() : '',
+      prezzo: fasce.length > 0 ? fasce[0].valore.toString() : '',
     });
+    setFasceProdotto(fasce.length > 1 ? fasce : null); // mostra selettore solo se ci sono più fasce
     setShowListiniDropdown(false);
     setListiniSuggerimenti([]);
   };
@@ -1364,6 +1373,7 @@ export default function Vendita({ onNavigate }) {
                   value={newAccessorio.nome}
                   onChange={(e) => {
                     setNewAccessorio({ ...newAccessorio, nome: e.target.value });
+                    setFasceProdotto(null);
                     cercaSuListino(e.target.value);
                   }}
                   onBlur={() => setTimeout(() => setShowListiniDropdown(false), 150)}
@@ -1399,6 +1409,17 @@ export default function Vendita({ onNavigate }) {
                 value={newAccessorio.quantita}
                 onChange={(e) => setNewAccessorio({ ...newAccessorio, quantita: e.target.value })}
               />
+              {fasceProdotto ? (
+                <select
+                  className="w-28 p-2 border rounded-lg text-sm text-center bg-green-50 border-green-300 font-medium"
+                  value={newAccessorio.prezzo}
+                  onChange={(e) => setNewAccessorio({ ...newAccessorio, prezzo: e.target.value })}
+                >
+                  {fasceProdotto.map((f, i) => (
+                    <option key={i} value={f.valore}>{f.label}</option>
+                  ))}
+                </select>
+              ) : (
               <input
                 type="number"
                 placeholder="€"
@@ -1406,6 +1427,7 @@ export default function Vendita({ onNavigate }) {
                 value={newAccessorio.prezzo}
                 onChange={(e) => setNewAccessorio({ ...newAccessorio, prezzo: e.target.value })}
               />
+              )}
               <button onClick={handleAddAccessorio} className="p-2 rounded-lg text-white" style={{ backgroundColor: '#006B3F' }}>
                 <Plus className="w-5 h-5" />
               </button>

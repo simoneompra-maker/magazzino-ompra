@@ -6,6 +6,7 @@ import Vendita from './components/Vendita';
 import Giacenze from './components/Giacenze';
 import StoricoVendite from './components/StoricoVendite';
 import ArchivioCommissioni from './components/ArchivioCommissioni';
+import Listini from './components/Listini';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -33,6 +34,8 @@ function App() {
         return <StoricoVendite onNavigate={navigate} />;
       case 'archivio-commissioni':
         return <ArchivioCommissioni onNavigate={navigate} />;
+      case 'listini':
+        return <Listini onNavigate={navigate} />;
       default:
         return <Dashboard onNavigate={navigate} />;
     }

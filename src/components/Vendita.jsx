@@ -4,6 +4,12 @@ import useStore from '../store';
 import CommissioneModal from './CommissioneModal';
 import { scanMatricola, scanCommissione } from '../services/ocrService';
 import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono } from '../services/clientiService';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  'https://eoswkplehhmtxtattsha.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvc3drcGxlaGhtdHh0YXR0c2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTY3NzcsImV4cCI6MjA4MjE5Mjc3N30.cUg61XjJf2fmTi6dAQ2EaBl49pRrtgBTN7A2EyMyvLI'
+);
 
 // Gestione operatori in localStorage
 const OPERATORI_KEY = 'ompra_operatori';
@@ -63,6 +69,40 @@ export default function Vendita({ onNavigate }) {
   const [prodotti, setProdotti] = useState([]);
   const [accessori, setAccessori] = useState([]);
   const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '' });
+
+  // Autocomplete listini
+  const [listiniSuggerimenti, setListiniSuggerimenti] = useState([]);
+  const [showListiniDropdown, setShowListiniDropdown] = useState(false);
+
+  const cercaSuListino = async (testo) => {
+    if (testo.trim().length < 2) {
+      setListiniSuggerimenti([]);
+      setShowListiniDropdown(false);
+      return;
+    }
+    const { data } = await supabase
+      .from('listini')
+      .select('codice, descrizione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, confezione, brand')
+      .or(`descrizione.ilike.%${testo}%,codice.ilike.%${testo}%`)
+      .limit(6);
+    if (data && data.length > 0) {
+      setListiniSuggerimenti(data);
+      setShowListiniDropdown(true);
+    } else {
+      setListiniSuggerimenti([]);
+      setShowListiniDropdown(false);
+    }
+  };
+
+  const selezionaDaListino = (prodotto) => {
+    setNewAccessorio({
+      ...newAccessorio,
+      nome: `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`,
+      prezzo: prodotto.prezzo_a ? prodotto.prezzo_a.toString() : '',
+    });
+    setShowListiniDropdown(false);
+    setListiniSuggerimenti([]);
+  };
   const [totaleManuale, setTotaleManuale] = useState('');
   const [ivaCompresa, setIvaCompresa] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1316,13 +1356,41 @@ export default function Vendita({ onNavigate }) {
           
           <div className="space-y-2">
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Descrizione"
-                className="flex-1 p-2 border rounded-lg text-sm"
-                value={newAccessorio.nome}
-                onChange={(e) => setNewAccessorio({ ...newAccessorio, nome: e.target.value })}
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Descrizione"
+                  className="w-full p-2 border rounded-lg text-sm"
+                  value={newAccessorio.nome}
+                  onChange={(e) => {
+                    setNewAccessorio({ ...newAccessorio, nome: e.target.value });
+                    cercaSuListino(e.target.value);
+                  }}
+                  onBlur={() => setTimeout(() => setShowListiniDropdown(false), 150)}
+                />
+                {showListiniDropdown && listiniSuggerimenti.length > 0 && (
+                  <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                    {listiniSuggerimenti.map((p, i) => (
+                      <button
+                        key={i}
+                        className="w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0"
+                        onMouseDown={() => selezionaDaListino(p)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-xs text-gray-400">{p.brand} · {p.codice}</span>
+                            <p className="text-sm font-medium text-gray-800">{p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}</p>
+                          </div>
+                          <div className="text-right ml-2 shrink-0">
+                            <p className="text-sm font-bold text-green-700">€{p.prezzo_a?.toFixed(2)}</p>
+                            {p.prezzo_b && <p className="text-xs text-gray-400">B: €{p.prezzo_b?.toFixed(2)}</p>}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input
                 type="number"
                 placeholder="Qtà"

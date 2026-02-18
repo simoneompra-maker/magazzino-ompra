@@ -96,7 +96,8 @@ export default function Vendita({ onNavigate }) {
   };
 
   const selezionaDaListino = (prodotto) => {
-    const iva = prodotto.iva != null ? prodotto.iva : 22;
+    const ivaRaw = prodotto.iva;
+    const iva = ivaRaw == null ? 22 : ivaRaw < 1 ? Math.round(ivaRaw * 100) : ivaRaw;
     const fasce = [
       prodotto.prezzo_a != null && { label: `A · €${prodotto.prezzo_a.toFixed(2)}`, valore: prodotto.prezzo_a },
       prodotto.prezzo_b != null && { label: `B · €${prodotto.prezzo_b.toFixed(2)}`, valore: prodotto.prezzo_b },

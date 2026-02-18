@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import * as XLSX from 'xlsx'
-import { supabase } from '../services/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  'https://eoswkplehhmtxtattsha.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvc3drcGxlaGhtdHh0YXR0c2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTY3NzcsImV4cCI6MjA4MjE5Mjc3N30.cUg61XjJf2fmTi6dAQ2EaBl49pRrtgBTN7A2EyMyvLI'
+)
 
 // Legge un foglio Excel e restituisce array di prodotti normalizzati
 function parseFoglio(foglio, categoria) {

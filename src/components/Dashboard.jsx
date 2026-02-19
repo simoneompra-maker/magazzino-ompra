@@ -1,4 +1,4 @@
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, BookOpen } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList } from 'lucide-react';
 import useStore from '../store';
 
 export default function Dashboard({ onNavigate }) {
@@ -22,6 +22,7 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div className="min-h-screen flex flex-col p-4 bg-gray-50">
+      {/* Header OMPRA */}
       <div 
         className="rounded-xl p-4 mb-4 text-white"
         style={{ backgroundColor: '#006B3F' }}
@@ -35,6 +36,7 @@ export default function Dashboard({ onNavigate }) {
         <p className="text-white/80 text-sm">Gestionale Magazzino</p>
       </div>
 
+      {/* Stats rapide */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white rounded-xl p-3 border-l-4" style={{ borderLeftColor: '#006B3F' }}>
           <p className="text-gray-500 text-xs">Giacenze</p>
@@ -46,6 +48,7 @@ export default function Dashboard({ onNavigate }) {
         </div>
       </div>
 
+      {/* Alert commissioni pendenti */}
       {pendingCommissioni > 0 && (
         <button 
           onClick={() => onNavigate('archivio-commissioni')}
@@ -61,7 +64,9 @@ export default function Dashboard({ onNavigate }) {
         </button>
       )}
 
+      {/* Pulsanti Principali */}
       <div className="flex-1 flex flex-col gap-3">
+        {/* CARICO MERCE */}
         <button
           onClick={() => onNavigate('carico')}
           className="flex items-center justify-center gap-3 p-5 rounded-xl text-white font-semibold shadow-lg active:scale-98 transition-transform"
@@ -74,6 +79,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
         </button>
 
+        {/* NUOVA VENDITA */}
         <button
           onClick={() => onNavigate('vendita')}
           className="flex items-center justify-center gap-3 p-5 rounded-xl font-semibold shadow-lg active:scale-98 transition-transform"
@@ -86,41 +92,34 @@ export default function Dashboard({ onNavigate }) {
           </div>
         </button>
 
-        <div className="grid grid-cols-3 gap-3">
+        {/* Riga con 2 pulsanti */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* GIACENZE */}
           <button
             onClick={() => onNavigate('giacenze')}
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-700 text-white font-semibold shadow-lg active:scale-98 transition-transform"
           >
             <Package className="w-6 h-6" />
             <div className="text-center">
-              <div className="text-sm">GIACENZE</div>
+              <div className="text-base">GIACENZE</div>
               <div className="text-xs opacity-70">Magazzino</div>
             </div>
           </button>
           
+          {/* STORICO */}
           <button
             onClick={() => onNavigate('storico')}
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-600 text-white font-semibold shadow-lg active:scale-98 transition-transform"
           >
             <History className="w-6 h-6" />
             <div className="text-center">
-              <div className="text-sm">STORICO</div>
+              <div className="text-base">STORICO</div>
               <div className="text-xs opacity-70">Vendite</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigate('listini')}
-            className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-500 text-white font-semibold shadow-lg active:scale-98 transition-transform"
-          >
-            <BookOpen className="w-6 h-6" />
-            <div className="text-center">
-              <div className="text-sm">LISTINI</div>
-              <div className="text-xs opacity-70">Prezzi</div>
             </div>
           </button>
         </div>
 
+        {/* ARCHIVIO COMMISSIONI */}
         <button
           onClick={() => onNavigate('archivio-commissioni')}
           className="flex items-center justify-center gap-3 p-4 rounded-xl bg-white border-2 font-semibold shadow active:scale-98 transition-transform"
@@ -137,8 +136,21 @@ export default function Dashboard({ onNavigate }) {
             </span>
           )}
         </button>
+
+        {/* LISTINI PREZZI */}
+        <button
+          onClick={() => onNavigate('listini')}
+          className="flex items-center justify-center gap-3 p-4 rounded-xl bg-white border-2 border-gray-300 text-gray-700 font-semibold shadow active:scale-98 transition-transform"
+        >
+          <ClipboardList className="w-6 h-6" />
+          <div className="text-left">
+            <div className="text-base">LISTINI PREZZI</div>
+            <div className="text-xs opacity-70">Cerca e aggiorna prezzi</div>
+          </div>
+        </button>
       </div>
 
+      {/* Footer */}
       <div className="mt-4 text-center text-xs text-gray-400">
         <p>v1.3.0 - OMPRA Gestionale</p>
       </div>

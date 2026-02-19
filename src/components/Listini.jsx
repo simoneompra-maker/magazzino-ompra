@@ -100,7 +100,7 @@ function parseGeogreen(workbook) {
   return prodotti
 }
 
-export default function Listini() {
+export default function Listini({ onNavigate }) {
   const [tab, setTab] = useState('cerca') // 'cerca' | 'upload'
   const [file, setFile] = useState(null)
   const [anteprima, setAnteprima] = useState([])
@@ -180,7 +180,16 @@ export default function Listini() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">📋 Listini Prezzi</h1>
+        {/* Header con bottone indietro */}
+        <div className="flex items-center gap-3 mb-6">
+          <button 
+            onClick={() => onNavigate('home')}
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">📋 Listini Prezzi</h1>
+        </div>
 
         {/* Tab */}
         <div className="flex gap-2 mb-6">

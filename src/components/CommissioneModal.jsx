@@ -63,7 +63,20 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
   // Ottieni telefono
   const getTelefono = () => {
-    return data.telefono || null;
+    return data.telefono || data.clienteInfo?.telefono || null;
+  };
+
+  // Ottieni indirizzo completo
+  const getIndirizzo = () => {
+    const info = data.clienteInfo;
+    if (!info) return null;
+    const parts = [];
+    if (info.indirizzo) parts.push(info.indirizzo);
+    if (info.cap || info.localita) {
+      parts.push(`${info.cap || ''} ${info.localita || ''}`.trim());
+    }
+    if (info.provincia) parts.push(`(${info.provincia})`);
+    return parts.length > 0 ? parts.join(' - ') : null;
   };
 
   // Ottieni operatore
@@ -208,8 +221,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     y += 32;
 
-    // Cliente, Telefono e Operatore con bordino
-    const boxHeight = getTelefono() ? 24 : 18;
+    // Cliente, Telefono, Indirizzo e Operatore con bordino
+    let clientLines = 1; // nome
+    if (getTelefono()) clientLines++;
+    if (getIndirizzo()) clientLines++;
+    const boxHeight = 12 + (clientLines * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
     doc.rect(margin, y, pageWidth - 2 * margin, boxHeight);
@@ -223,12 +239,24 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setFont('helvetica', 'bold');
     doc.text(getCliente(), margin + 3, y + 12);
 
+    let clientY = y + 12;
+
     // Telefono sotto il nome cliente
     if (getTelefono()) {
+      clientY += 6;
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
-      doc.text(`Tel: ${getTelefono()}`, margin + 3, y + 18);
+      doc.text(`Tel: ${getTelefono()}`, margin + 3, clientY);
+    }
+
+    // Indirizzo sotto il telefono
+    if (getIndirizzo()) {
+      clientY += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(getIndirizzo(), margin + 3, clientY);
     }
 
     if (getOperatore()) {
@@ -497,8 +525,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     y += 32;
 
-    // Cliente, Telefono e Operatore
-    const boxHeight = getTelefono() ? 24 : 18;
+    // Cliente, Telefono, Indirizzo e Operatore
+    let clientLines2 = 1;
+    if (getTelefono()) clientLines2++;
+    if (getIndirizzo()) clientLines2++;
+    const boxHeight = 12 + (clientLines2 * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
     doc.rect(margin, y, pageWidth - 2 * margin, boxHeight);
@@ -512,11 +543,22 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setFont('helvetica', 'bold');
     doc.text(getCliente(), margin + 3, y + 12);
 
+    let clientY2 = y + 12;
+
     if (getTelefono()) {
+      clientY2 += 6;
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
-      doc.text(`Tel: ${getTelefono()}`, margin + 3, y + 18);
+      doc.text(`Tel: ${getTelefono()}`, margin + 3, clientY2);
+    }
+
+    if (getIndirizzo()) {
+      clientY2 += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(getIndirizzo(), margin + 3, clientY2);
     }
 
     if (getOperatore()) {
@@ -778,6 +820,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getTelefono()) {
       text += `📱 *Tel:* ${getTelefono()}\n`;
     }
+    if (getIndirizzo()) {
+      text += `📍 *Indirizzo:* ${getIndirizzo()}\n`;
+    }
     if (getOperatore()) {
       text += `👷 *Operatore:* ${getOperatore()}\n`;
     }
@@ -1022,6 +1067,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
                   <Phone className="w-3 h-3" />
                   {getTelefono()}
                 </a>
+              )}
+              {getIndirizzo() && (
+                <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                  📍 {getIndirizzo()}
+                </p>
               )}
             </div>
             {getOperatore() && (

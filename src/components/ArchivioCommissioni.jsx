@@ -99,12 +99,26 @@ export default function ArchivioCommissioni({ onNavigate }) {
   };
 
   // Genera testo commissione per condivisione
+  const getCommIndirizzo = (comm) => {
+    const info = comm.clienteInfo;
+    if (!info) return null;
+    const parts = [];
+    if (info.indirizzo) parts.push(info.indirizzo);
+    if (info.cap || info.localita) parts.push(`${info.cap || ''} ${info.localita || ''}`.trim());
+    if (info.provincia) parts.push(`(${info.provincia})`);
+    return parts.length > 0 ? parts.join(' - ') : null;
+  };
+
   const generateCommissioneText = (comm) => {
     let text = `📋 *COMMISSIONE OMPRA*\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
     text += `👤 *Cliente:* ${comm.cliente}\n`;
     if (comm.telefono) {
       text += `📱 *Tel:* ${comm.telefono}\n`;
+    }
+    const indirizzo = getCommIndirizzo(comm);
+    if (indirizzo) {
+      text += `📍 *Indirizzo:* ${indirizzo}\n`;
     }
     if (comm.operatore) {
       text += `👷 *Operatore:* ${comm.operatore}\n`;
@@ -179,8 +193,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
     y += 32;
 
-    // Cliente, Telefono e Operatore con bordino
-    const boxHeight = comm.telefono ? 24 : 18;
+    // Cliente, Telefono, Indirizzo e Operatore con bordino
+    const commAddr = getCommIndirizzo(comm);
+    let cLines = 1;
+    if (comm.telefono) cLines++;
+    if (commAddr) cLines++;
+    const boxHeight = 12 + (cLines * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
     doc.rect(margin, y, pageWidth - 2 * margin, boxHeight);
@@ -194,12 +212,24 @@ export default function ArchivioCommissioni({ onNavigate }) {
     doc.setFont('helvetica', 'bold');
     doc.text(comm.cliente || '', margin + 3, y + 12);
 
+    let cY = y + 12;
+
     // Telefono sotto il nome cliente
     if (comm.telefono) {
+      cY += 6;
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
-      doc.text(`Tel: ${comm.telefono}`, margin + 3, y + 18);
+      doc.text(`Tel: ${comm.telefono}`, margin + 3, cY);
+    }
+
+    // Indirizzo sotto il telefono
+    if (commAddr) {
+      cY += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(commAddr, margin + 3, cY);
     }
 
     if (comm.operatore) {
@@ -974,6 +1004,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     >
                       <Phone className="w-3 h-3" /> {comm.telefono}
                     </a>
+                  )}
+                  {getCommIndirizzo(comm) && (
+                    <p className="text-xs text-gray-500">📍 {getCommIndirizzo(comm)}</p>
                   )}
                   {comm.operatore && (
                     <p className="text-xs text-gray-500">👷 {comm.operatore}</p>

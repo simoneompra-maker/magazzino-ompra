@@ -79,6 +79,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     return parts.length > 0 ? parts.join(' - ') : null;
   };
 
+  // Ottieni email
+  const getEmail = () => {
+    return data.clienteInfo?.email || null;
+  };
+
   // Ottieni operatore
   const getOperatore = () => {
     return isKit ? data.operatore : (data.saleData?.operatore || data.operatore);
@@ -225,6 +230,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     let clientLines = 1; // nome
     if (getTelefono()) clientLines++;
     if (getIndirizzo()) clientLines++;
+    if (getEmail()) clientLines++;
     const boxHeight = 12 + (clientLines * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
@@ -257,6 +263,15 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
       doc.text(getIndirizzo(), margin + 3, clientY);
+    }
+
+    // Email
+    if (getEmail()) {
+      clientY += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Email: ${getEmail()}`, margin + 3, clientY);
     }
 
     if (getOperatore()) {
@@ -529,6 +544,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     let clientLines2 = 1;
     if (getTelefono()) clientLines2++;
     if (getIndirizzo()) clientLines2++;
+    if (getEmail()) clientLines2++;
     const boxHeight = 12 + (clientLines2 * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
@@ -559,6 +575,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
       doc.text(getIndirizzo(), margin + 3, clientY2);
+    }
+
+    if (getEmail()) {
+      clientY2 += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Email: ${getEmail()}`, margin + 3, clientY2);
     }
 
     if (getOperatore()) {
@@ -823,6 +847,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getIndirizzo()) {
       text += `📍 *Indirizzo:* ${getIndirizzo()}\n`;
     }
+    if (getEmail()) {
+      text += `📧 *Email:* ${getEmail()}\n`;
+    }
     if (getOperatore()) {
       text += `👷 *Operatore:* ${getOperatore()}\n`;
     }
@@ -1071,6 +1098,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
               {getIndirizzo() && (
                 <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                   📍 {getIndirizzo()}
+                </p>
+              )}
+              {getEmail() && (
+                <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
+                  📧 {getEmail()}
                 </p>
               )}
             </div>

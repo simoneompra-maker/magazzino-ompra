@@ -167,7 +167,8 @@ export default function StoricoVendite({ onNavigate }) {
     }
 
     const commAddr = (() => { const i=comm.clienteInfo; if(!i) return null; const p=[]; if(i.indirizzo)p.push(i.indirizzo); if(i.cap||i.localita)p.push(`${i.cap||''} ${i.localita||''}`.trim()); if(i.provincia)p.push(`(${i.provincia})`); return p.length?p.join(' - '):null; })();
-    let cLines = 1; if(comm.telefono) cLines++; if(commAddr) cLines++;
+    const commEmail = comm.clienteInfo?.email || null;
+    let cLines = 1; if(comm.telefono) cLines++; if(commAddr) cLines++; if(commEmail) cLines++;
     const bH = 12 + (cLines * 5);
     doc.setDrawColor(200,200,200); doc.setLineWidth(0.3); doc.rect(m, y, pw-2*m, bH);
     doc.setFontSize(8); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
@@ -177,6 +178,7 @@ export default function StoricoVendite({ onNavigate }) {
     let cY = y+12;
     if (comm.telefono) { cY+=5; doc.setFontSize(8); doc.setTextColor(80,80,80); doc.setFont('helvetica','normal'); doc.text(`Tel: ${comm.telefono}`, m+3, cY); }
     if (commAddr) { cY+=5; doc.setFontSize(8); doc.setTextColor(80,80,80); doc.setFont('helvetica','normal'); doc.text(commAddr, m+3, cY); }
+    if (commEmail) { cY+=5; doc.setFontSize(8); doc.setTextColor(80,80,80); doc.setFont('helvetica','normal'); doc.text(`Email: ${commEmail}`, m+3, cY); }
     if (comm.operatore) {
       doc.setFontSize(8); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
       doc.text('OPERATORE', pw-m-35, y+5);

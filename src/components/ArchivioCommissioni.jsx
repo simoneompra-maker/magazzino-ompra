@@ -109,6 +109,10 @@ export default function ArchivioCommissioni({ onNavigate }) {
     return parts.length > 0 ? parts.join(' - ') : null;
   };
 
+  const getCommEmail = (comm) => {
+    return comm.clienteInfo?.email || null;
+  };
+
   const generateCommissioneText = (comm) => {
     let text = `📋 *COMMISSIONE OMPRA*\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
@@ -119,6 +123,10 @@ export default function ArchivioCommissioni({ onNavigate }) {
     const indirizzo = getCommIndirizzo(comm);
     if (indirizzo) {
       text += `📍 *Indirizzo:* ${indirizzo}\n`;
+    }
+    const email = getCommEmail(comm);
+    if (email) {
+      text += `📧 *Email:* ${email}\n`;
     }
     if (comm.operatore) {
       text += `👷 *Operatore:* ${comm.operatore}\n`;
@@ -195,9 +203,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
     // Cliente, Telefono, Indirizzo e Operatore con bordino
     const commAddr = getCommIndirizzo(comm);
+    const commEmail = getCommEmail(comm);
     let cLines = 1;
     if (comm.telefono) cLines++;
     if (commAddr) cLines++;
+    if (commEmail) cLines++;
     const boxHeight = 12 + (cLines * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
@@ -230,6 +240,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
       doc.text(commAddr, margin + 3, cY);
+    }
+
+    // Email
+    if (commEmail) {
+      cY += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Email: ${commEmail}`, margin + 3, cY);
     }
 
     if (comm.operatore) {
@@ -1007,6 +1026,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   )}
                   {getCommIndirizzo(comm) && (
                     <p className="text-xs text-gray-500">📍 {getCommIndirizzo(comm)}</p>
+                  )}
+                  {getCommEmail(comm) && (
+                    <p className="text-xs text-gray-500">📧 {getCommEmail(comm)}</p>
                   )}
                   {comm.operatore && (
                     <p className="text-xs text-gray-500">👷 {comm.operatore}</p>

@@ -978,7 +978,13 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   {comm.operatore && (
                     <p className="text-xs text-gray-500">👷 {comm.operatore}</p>
                   )}
-                  <p className="text-xs text-gray-500">{formatDate(comm.createdAt)}</p>
+                  <p className="text-xs text-gray-500">
+                    📅 {new Date(comm.createdAt).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                    {' '}
+                    <span className="font-medium text-gray-700">
+                      🕐 {new Date(comm.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold" style={{ color: '#006B3F' }}>

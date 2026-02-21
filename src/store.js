@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://eoswkplehhmtxtattsha.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvc3drcGxlaGhtdHh0YXR0c2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTY3NzcsImV4cCI6MjA4MjE5Mjc3N30.cUg61XjJf2fmTi6dAQ2EaBl49pRrtgBTN7A2EyMyvLI';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const USERNAME = localStorage.getItem('ompra_user') || 'user_' + Date.now();
 const LOCATION = 'main';

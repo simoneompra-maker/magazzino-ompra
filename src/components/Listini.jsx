@@ -1,11 +1,6 @@
 import { useState } from 'react'
 import * as XLSX from 'xlsx'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  'https://eoswkplehhmtxtattsha.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvc3drcGxlaGhtdHh0YXR0c2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTY3NzcsImV4cCI6MjA4MjE5Mjc3N30.cUg61XjJf2fmTi6dAQ2EyMyvLI'
-)
+import { supabase } from '../store'
 
 // ========== CARICAMENTO PDF.JS DA CDN ==========
 let pdfJSLoaded = false
@@ -71,7 +66,7 @@ async function parsePDFListino(arrayBuffer) {
 
   // Rileva il brand dal contenuto
   const fullText = allLines.join('\n')
-  let brand = 'SCONOSCIUTO'
+  let brand = ''
   if (/\bECHO\b/i.test(fullText)) brand = 'ECHO'
   if (/\bWEIBANG\b/i.test(fullText)) brand = 'WEIBANG'
   if (/\bHONDA\b/i.test(fullText)) brand = 'HONDA'
@@ -153,8 +148,16 @@ async function parsePDFListino(arrayBuffer) {
     const prezzoWeb = parsePrezzo(prezzi[1])
 
     if (prezzoListino > 0 && codice.length > 3) {
+      // Se il brand non è stato rilevato dal testo, inferisci dal prefisso codice
+      let prodBrand = brand
+      if (!prodBrand) {
+        if (/^ECM|^ECA|^OFF\d/.test(codice)) prodBrand = 'ECHO'
+        else if (/^WBM|^WBA|^WBR/.test(codice)) prodBrand = 'WEIBANG'
+        else prodBrand = 'SCONOSCIUTO'
+      }
+
       prodotti.push({
-        brand,
+        brand: prodBrand,
         categoria,
         codice,
         descrizione,

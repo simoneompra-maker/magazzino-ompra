@@ -171,7 +171,11 @@ async function parsePDFListino(arrayBuffer) {
     }
   }
 
-  return prodotti
+  // Deduplica per brand+codice (tieni l'ultimo trovato)
+  const unique = Object.values(
+    prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {})
+  )
+  return unique
 }
 
 // ========== PARSER EXCEL GEOGREEN (esistente) ==========
@@ -287,14 +291,18 @@ export default function Listini({ onNavigate }) {
 
       for (let i = 0; i < anteprima.length; i += batchSize) {
         const batch = anteprima.slice(i, i + batchSize)
+        // Deduplica per brand+codice (tieni l'ultimo)
+        const unique = Object.values(
+          batch.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {})
+        )
         const { error } = await supabase
           .from('listini')
           .upsert(
-            batch.map(p => ({ ...p, data_aggiornamento: new Date().toISOString() })),
+            unique.map(p => ({ ...p, data_aggiornamento: new Date().toISOString() })),
             { onConflict: 'brand,codice' }
           )
         if (error) throw error
-        importati += batch.length
+        importati += unique.length
       }
 
       setMessaggio({ tipo: 'ok', testo: `✓ Importati ${importati} prodotti con successo.` })

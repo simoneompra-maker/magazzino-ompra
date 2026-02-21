@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Camera, Search, Plus, Trash2, Package, Clock, Gift, MapPin, User, X, ChevronRight, ChevronDown, UserCircle, Edit2, CreditCard, FileText, Phone, Image as ImageIcon } from 'lucide-react';
 import useStore from '../store';
+import { supabase } from '../store';
 import CommissioneModal from './CommissioneModal';
 import { scanMatricola, scanCommissione } from '../services/ocrService';
 import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono } from '../services/clientiService';
@@ -62,10 +63,15 @@ export default function Vendita({ onNavigate }) {
   const [telefonoCliente, setTelefonoCliente] = useState('');
   const [prodotti, setProdotti] = useState([]);
   const [accessori, setAccessori] = useState([]);
-  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '' });
+  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
   const [totaleManuale, setTotaleManuale] = useState('');
   const [ivaCompresa, setIvaCompresa] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Ricerca listino accessori
+  const [listiniSuggerimenti, setListiniSuggerimenti] = useState([]);
+  const [showListiniDropdown, setShowListiniDropdown] = useState(false);
+  const [listiniLoading, setListiniLoading] = useState(false);
   
   // Caparra e Note
   const [caparra, setCaparra] = useState('');
@@ -628,6 +634,43 @@ export default function Vendita({ onNavigate }) {
     return 'bg-gray-100 text-gray-400 border-gray-200';
   };
 
+  // Cerca prodotto nel listino Supabase
+  const cercaNelListino = async (query) => {
+    if (!query || query.trim().length < 2) {
+      setListiniSuggerimenti([]);
+      setShowListiniDropdown(false);
+      return;
+    }
+    setListiniLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('listini')
+        .select('descrizione, brand, codice, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva')
+        .ilike('descrizione', `%${query.trim()}%`)
+        .limit(8);
+      if (error) throw error;
+      setListiniSuggerimenti(data || []);
+      setShowListiniDropdown((data || []).length > 0);
+    } catch (e) {
+      console.error('Errore ricerca listino:', e);
+      setListiniSuggerimenti([]);
+      setShowListiniDropdown(false);
+    } finally {
+      setListiniLoading(false);
+    }
+  };
+
+  // Compila il form accessorio con i dati dal listino
+  const selezionaDaListino = (prodotto) => {
+    const ivaRaw = prodotto.iva;
+    const iva = ivaRaw == null ? 22 : ivaRaw < 1 ? Math.round(ivaRaw * 100) : Math.round(ivaRaw);
+    const nome = `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`;
+    const prezzo = prodotto.prezzo_a != null ? prodotto.prezzo_a.toString() : '';
+    setNewAccessorio(prev => ({ ...prev, nome, prezzo, aliquotaIva: iva }));
+    setListiniSuggerimenti([]);
+    setShowListiniDropdown(false);
+  };
+
   const handleAddAccessorio = () => {
     if (!newAccessorio.nome) {
       alert('Inserisci la descrizione!');
@@ -639,9 +682,9 @@ export default function Vendita({ onNavigate }) {
       prezzo: parseFloat(newAccessorio.prezzo) || 0,
       quantita: parseInt(newAccessorio.quantita) || 1,
       matricola: newAccessorio.matricola?.trim() || null,
-      aliquotaIva: 22
+      aliquotaIva: newAccessorio.aliquotaIva || 22
     }]);
-    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '' });
+    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
   };
 
   const handleRemoveAccessorio = (id) => {
@@ -1322,13 +1365,52 @@ export default function Vendita({ onNavigate }) {
           
           <div className="space-y-2">
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Descrizione"
-                className="flex-1 p-2 border rounded-lg text-sm"
-                value={newAccessorio.nome}
-                onChange={(e) => setNewAccessorio({ ...newAccessorio, nome: e.target.value })}
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Descrizione"
+                  className="w-full p-2 border rounded-lg text-sm"
+                  value={newAccessorio.nome}
+                  onChange={(e) => {
+                    setNewAccessorio({ ...newAccessorio, nome: e.target.value });
+                    cercaNelListino(e.target.value);
+                  }}
+                  onBlur={() => setTimeout(() => setShowListiniDropdown(false), 150)}
+                  onFocus={() => { if (listiniSuggerimenti.length > 0) setShowListiniDropdown(true); }}
+                />
+                {showListiniDropdown && (
+                  <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                    {listiniLoading && (
+                      <div className="px-3 py-2 text-xs text-gray-400">Ricerca...</div>
+                    )}
+                    {listiniSuggerimenti.map((p, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onMouseDown={() => selezionaDaListino(p)}
+                        className="w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0 border-gray-100"
+                      >
+                        <div className="text-sm font-medium text-gray-800 truncate">
+                          {p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {p.brand && <span className="text-xs text-gray-400">{p.brand}</span>}
+                          {p.prezzo_a != null && <span className="text-xs font-semibold text-green-700">€{p.prezzo_a.toFixed(2)}</span>}
+                          {p.iva != null && (
+                            <span className={`text-xs px-1 py-0.5 rounded border font-medium ${
+                              (p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 4 ? 'bg-green-100 text-green-700 border-green-300' :
+                              (p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 10 ? 'bg-amber-100 text-amber-700 border-amber-300' :
+                              'bg-gray-100 text-gray-400 border-gray-200'
+                            }`}>
+                              IVA {p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)}%
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input
                 type="number"
                 placeholder="Qtà"

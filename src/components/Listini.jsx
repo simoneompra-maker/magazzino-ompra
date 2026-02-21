@@ -416,7 +416,8 @@ export default function Listini({ onNavigate }) {
                         {p.confezione && <p className="text-sm text-gray-500">Conf. {p.confezione}</p>}
                       </div>
                       <div className="text-right space-y-1 ml-4 flex-shrink-0">
-                        {p.prezzo_b ? (
+                        {/* Brand con Listino/Web (ECHO, WEIBANG): mostra Web come prezzo principale */}
+                        {['ECHO', 'WEIBANG'].includes(p.brand) && p.prezzo_b ? (
                           <>
                             <div>
                               <span className="text-xs text-gray-400">Vendita</span>
@@ -426,12 +427,17 @@ export default function Listini({ onNavigate }) {
                               <p className="text-xs text-gray-400 line-through">Listino € {p.prezzo_a.toFixed(2)}</p>
                             )}
                           </>
-                        ) : p.prezzo_a ? (
-                          <div>
-                            <span className="text-xs text-gray-400">Listino</span>
-                            <p className="font-bold text-green-700">€ {p.prezzo_a.toFixed(2)}</p>
-                          </div>
-                        ) : null}
+                        ) : (
+                          <>
+                            {p.prezzo_a && (
+                              <div>
+                                <span className="text-xs text-gray-400">Prezzo A</span>
+                                <p className="font-bold text-lg text-green-700">€ {p.prezzo_a.toFixed(2)}</p>
+                              </div>
+                            )}
+                            {p.prezzo_b && <p className="text-sm text-gray-500">B: € {p.prezzo_b.toFixed(2)}</p>}
+                          </>
+                        )}
                         {p.prezzo_c && <p className="text-sm text-gray-500">C: € {p.prezzo_c.toFixed(2)}</p>}
                         {p.prezzo_d && <p className="text-sm text-gray-500">D: € {p.prezzo_d.toFixed(2)}</p>}
                         {p.iva && <p className="text-xs text-gray-400">IVA {p.iva}%</p>}

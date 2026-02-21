@@ -72,6 +72,7 @@ export default function Vendita({ onNavigate }) {
   const [listiniSuggerimenti, setListiniSuggerimenti] = useState([]);
   const [showListiniDropdown, setShowListiniDropdown] = useState(false);
   const [listiniLoading, setListiniLoading] = useState(false);
+  const [fasceProdottoListino, setFasceProdottoListino] = useState([]); // fasce prezzo da scegliere
   
   // Caparra e Note
   const [caparra, setCaparra] = useState('');
@@ -660,15 +661,32 @@ export default function Vendita({ onNavigate }) {
     }
   };
 
-  // Compila il form accessorio con i dati dal listino
+  // Compila nome e IVA; se più fasce disponibili le mostra per scelta, altrimenti compila prezzo_a direttamente
   const selezionaDaListino = (prodotto) => {
     const ivaRaw = prodotto.iva;
     const iva = ivaRaw == null ? 22 : ivaRaw < 1 ? Math.round(ivaRaw * 100) : Math.round(ivaRaw);
     const nome = `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`;
-    const prezzo = prodotto.prezzo_a != null ? prodotto.prezzo_a.toString() : '';
-    setNewAccessorio(prev => ({ ...prev, nome, prezzo, aliquotaIva: iva }));
+
+    const fasce = [
+      prodotto.prezzo_a != null && { label: 'A', prezzo: prodotto.prezzo_a },
+      prodotto.prezzo_b != null && { label: 'B', prezzo: prodotto.prezzo_b },
+      prodotto.prezzo_c != null && { label: 'C', prezzo: prodotto.prezzo_c },
+      prodotto.prezzo_d != null && { label: 'D', prezzo: prodotto.prezzo_d },
+    ].filter(Boolean);
+
     setListiniSuggerimenti([]);
     setShowListiniDropdown(false);
+
+    if (fasce.length > 1) {
+      // Più fasce: compila nome e IVA, mostra pulsanti scelta prezzo
+      setNewAccessorio(prev => ({ ...prev, nome, prezzo: '', aliquotaIva: iva }));
+      setFasceProdottoListino(fasce);
+    } else {
+      // Fascia unica: compila tutto direttamente
+      const prezzo = fasce.length === 1 ? fasce[0].prezzo.toString() : '';
+      setNewAccessorio(prev => ({ ...prev, nome, prezzo, aliquotaIva: iva }));
+      setFasceProdottoListino([]);
+    }
   };
 
   const handleAddAccessorio = () => {
@@ -685,6 +703,7 @@ export default function Vendita({ onNavigate }) {
       aliquotaIva: newAccessorio.aliquotaIva || 22
     }]);
     setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
+    setFasceProdottoListino([]);
   };
 
   const handleRemoveAccessorio = (id) => {
@@ -1373,6 +1392,7 @@ export default function Vendita({ onNavigate }) {
                   value={newAccessorio.nome}
                   onChange={(e) => {
                     setNewAccessorio({ ...newAccessorio, nome: e.target.value });
+                    setFasceProdottoListino([]);
                     cercaNelListino(e.target.value);
                   }}
                   onBlur={() => setTimeout(() => setShowListiniDropdown(false), 150)}
@@ -1430,6 +1450,25 @@ export default function Vendita({ onNavigate }) {
                 <Plus className="w-5 h-5" />
               </button>
             </div>
+            {/* Pulsanti selezione fascia prezzo */}
+            {fasceProdottoListino.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                <span className="text-xs text-gray-500 self-center">Scegli fascia:</span>
+                {fasceProdottoListino.map((fascia) => (
+                  <button
+                    key={fascia.label}
+                    type="button"
+                    onClick={() => {
+                      setNewAccessorio(prev => ({ ...prev, prezzo: fascia.prezzo.toString() }));
+                      setFasceProdottoListino([]);
+                    }}
+                    className="px-3 py-1.5 rounded-lg border-2 text-sm font-semibold border-green-500 text-green-700 hover:bg-green-50 active:bg-green-100"
+                  >
+                    {fascia.label} · €{fascia.prezzo.toFixed(2)}
+                  </button>
+                ))}
+              </div>
+            )}
             {newAccessorio.nome && (
               <input
                 type="text"

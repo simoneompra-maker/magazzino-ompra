@@ -609,8 +609,14 @@ export default function Giacenze({ onNavigate }) {
                     <div className="font-semibold text-sm truncate">
                       <span style={{ color: '#006B3F' }}>{item.brand}</span> {item.model}
                     </div>
-                    <div className="text-xs text-gray-500 font-mono truncate">
+                    <div className="text-xs text-gray-500 font-mono truncate flex items-center gap-1">
                       {item.serialNumber}
+                      {item.carico_automatico && (
+                        <span className="text-xs font-bold px-1 py-0.5 rounded ml-1"
+                          style={{ backgroundColor: '#FEF08A', color: '#92400E', fontSize: '10px' }}>
+                          AUTO
+                        </span>
+                      )}
                     </div>
                   </div>
                   

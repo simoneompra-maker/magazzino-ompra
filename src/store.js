@@ -266,6 +266,37 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // Auto-carico singola macchina durante una vendita (matricola non trovata)
+  autoAddToInventory: async (product) => {
+    try {
+      const row = {
+        timestamp: new Date().toISOString(),
+        action: 'CARICO',
+        brand: product.brand,
+        model: product.model,
+        serialNumber: product.serialNumber,
+        cliente: null,
+        prezzo: null,
+        totale: null,
+        status: 'available',
+        user: get().user,
+        location: get().location,
+        carico_automatico: true
+      };
+      const { data, error } = await supabase
+        .from('inventory')
+        .insert(row)
+        .select()
+        .single();
+      if (error) throw error;
+      await get().fetchInventory();
+      return data;
+    } catch (error) {
+      console.error('❌ Auto-carico error:', error);
+      return null;
+    }
+  },
+
   // Scarica prodotto da inventario SENZA creare una vendita nello storico
   // Crea record SCARICO (non VENDITA) - serve solo per aggiornare lo stato inventario
   dischargeInventory: async (serialNumber, cliente) => {

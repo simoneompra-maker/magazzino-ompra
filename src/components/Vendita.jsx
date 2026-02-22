@@ -54,6 +54,7 @@ export default function Vendita({ onNavigate }) {
   const inventory = useStore((state) => state.inventory);
   const findBySerialNumber = useStore((state) => state.findBySerialNumber);
   const dischargeInventory = useStore((state) => state.dischargeInventory);
+  const autoAddToInventory = useStore((state) => state.autoAddToInventory);
   const createCommissione = useStore((state) => state.createCommissione);
   const brands = useStore((state) => state.brands);
 
@@ -127,6 +128,10 @@ export default function Vendita({ onNavigate }) {
   // OCR
   const [scanning, setScanning] = useState(false);
   const [ocrError, setOcrError] = useState(null);
+  // Stato popup auto-carico macchina non trovata
+  const [showAutoAdd, setShowAutoAdd] = useState(false);
+  const [autoAddData, setAutoAddData] = useState({ brand: '', model: '', serialNumber: '', tipo: '' });
+  const [autoAdding, setAutoAdding] = useState(false);
   
   // Scansione commissione manuale
   const [scanningCommissione, setScanningCommissione] = useState(false);
@@ -254,7 +259,14 @@ export default function Vendita({ onNavigate }) {
           setSearchQuery(result.matricola);
         } else {
           setSearchQuery(result.matricola);
-          setOcrError('Matricola ' + result.matricola + ' non in magazzino');
+          // Apre popup auto-carico invece di mostrare solo errore
+          setAutoAddData({
+            brand: result.brand || '',
+            model: result.modello || '',
+            serialNumber: result.matricola,
+            tipo: ''
+          });
+          setShowAutoAdd(true);
         }
       } else {
         setOcrError(result.error || 'Non riesco a leggere. Cerca manualmente.');
@@ -267,6 +279,30 @@ export default function Vendita({ onNavigate }) {
       }
     } finally {
       setScanning(false);
+    }
+  };
+
+  // Handler conferma auto-carico macchina non trovata
+  const handleAutoAdd = async () => {
+    if (!autoAddData.brand.trim() || !autoAddData.serialNumber.trim()) return;
+    setAutoAdding(true);
+    const tipoFinale = autoAddData.tipo || 'Altro';
+    const modelCompleto = autoAddData.tipo
+      ? autoAddData.tipo + (autoAddData.model ? ' ' + autoAddData.model : '')
+      : (autoAddData.model || 'N/D');
+    const item = await autoAddToInventory({
+      brand: autoAddData.brand.trim(),
+      model: modelCompleto,
+      serialNumber: autoAddData.serialNumber.trim().toUpperCase()
+    });
+    setAutoAdding(false);
+    if (item) {
+      setShowAutoAdd(false);
+      setSelectedProduct(item);
+      setSearchQuery(item.serialNumber);
+      setOcrError(null);
+    } else {
+      alert('Errore durante il carico automatico. Riprova.');
     }
   };
 
@@ -1742,7 +1778,26 @@ export default function Vendita({ onNavigate }) {
 
                   {ocrError && (
                     <div className="p-2 bg-yellow-50 border border-yellow-300 rounded text-sm text-yellow-800">
-                      ⚠️ {ocrError}
+                      <div className="flex items-center justify-between gap-2">
+                        <span>⚠️ {ocrError}</span>
+                        {ocrError.includes('non in magazzino') && (
+                          <button
+                            onClick={() => {
+                              setAutoAddData({
+                                brand: '',
+                                model: '',
+                                serialNumber: searchQuery.trim().toUpperCase(),
+                                tipo: ''
+                              });
+                              setShowAutoAdd(true);
+                            }}
+                            className="shrink-0 text-xs font-bold px-2 py-1 rounded text-white"
+                            style={{ backgroundColor: '#006B3F' }}
+                          >
+                            + Aggiungi
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -2061,6 +2116,96 @@ export default function Vendita({ onNavigate }) {
                 style={{ backgroundColor: '#3b82f6' }}
               >
                 Conferma e compila
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODALE Auto-carico macchina non trovata */}
+      {showAutoAdd && (
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-bold text-lg">📦 Macchina non in magazzino</h3>
+              <button onClick={() => setShowAutoAdd(false)}>
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800">
+                Questa macchina non risulta caricata. Compila i dati e verrà aggiunta automaticamente al magazzino prima di procedere con la vendita. Sarà segnata come <strong>carico automatico</strong> per un controllo successivo.
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">Matricola</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded-lg mt-1 font-mono bg-gray-50"
+                  value={autoAddData.serialNumber}
+                  onChange={(e) => setAutoAddData(p => ({ ...p, serialNumber: e.target.value.toUpperCase() }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">Brand *</label>
+                <input
+                  type="text"
+                  list="auto-add-brand-list"
+                  placeholder="Es: Stihl, Honda..."
+                  className="w-full p-2 border rounded-lg mt-1"
+                  value={autoAddData.brand}
+                  onChange={(e) => setAutoAddData(p => ({ ...p, brand: e.target.value }))}
+                />
+                <datalist id="auto-add-brand-list">
+                  {brands.filter(b => b !== 'Altro').map(b => (
+                    <option key={b} value={b} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">Tipo macchina</label>
+                <select
+                  className="w-full p-2 border rounded-lg mt-1"
+                  value={autoAddData.tipo}
+                  onChange={(e) => setAutoAddData(p => ({ ...p, tipo: e.target.value }))}
+                >
+                  <option value="">-- Non specificato --</option>
+                  {['Motosega','Decespugliatore','Tagliabordi','Tagliasiepi','Soffiatore',
+                    'Aspiratore','Tosaerba','Robot tosaerba','Trattorino','Biotrituratore',
+                    'Idropulitrice','Motozappa','Arieggiatore','Troncatrice','Atomizzatore',
+                    'Irroratore','Sramatore','Potatore','Trivella','Spazzatrice',
+                    'Motocoltivatore','Forbice elettronica','Motore multifunzione','Altro'
+                  ].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500">Modello</label>
+                <input
+                  type="text"
+                  placeholder="Es: MS 231, HRX 476..."
+                  className="w-full p-2 border rounded-lg mt-1"
+                  value={autoAddData.model}
+                  onChange={(e) => setAutoAddData(p => ({ ...p, model: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t flex gap-2">
+              <button
+                onClick={() => setShowAutoAdd(false)}
+                className="flex-1 py-3 rounded-lg border-2 border-gray-300 text-gray-600 font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleAutoAdd}
+                disabled={!autoAddData.brand.trim() || !autoAddData.serialNumber.trim() || autoAdding}
+                className="flex-[2] py-3 rounded-lg text-white font-bold disabled:opacity-50"
+                style={{ backgroundColor: '#006B3F' }}
+              >
+                {autoAdding ? '⏳ Carico in corso...' : '✓ Aggiungi e continua'}
               </button>
             </div>
           </div>

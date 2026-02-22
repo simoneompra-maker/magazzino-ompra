@@ -7,6 +7,7 @@ import Giacenze from './components/Giacenze';
 import StoricoVendite from './components/StoricoVendite';
 import ArchivioCommissioni from './components/ArchivioCommissioni';
 import Listini from './components/Listini';
+import PoliticheCommerciali from './components/PoliticheCommerciali';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -36,6 +37,8 @@ function App() {
         return <ArchivioCommissioni onNavigate={navigate} />;
       case 'listini':
         return <Listini onNavigate={navigate} />;
+      case 'politiche-commerciali':
+        return <PoliticheCommerciali onNavigate={navigate} />;
       default:
         return <Dashboard onNavigate={navigate} />;
     }

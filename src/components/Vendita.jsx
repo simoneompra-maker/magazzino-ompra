@@ -1968,7 +1968,7 @@ export default function Vendita({ onNavigate }) {
                     </>
                   )}
                 </div>
-              ) : (
+              ) : addMode === 'ordine' ? (
                 <div className="space-y-3">
                   <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                     ⏳ Matricola da aggiungere alla consegna
@@ -2063,7 +2063,7 @@ export default function Vendita({ onNavigate }) {
                     )}
                   </div>
                 </div>
-              ) : addMode === 'diretto' ? (
+              ) : (
                 <div className="space-y-3">
                   <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
                     ✏️ Inserisci i dati a mano. Se la matricola è in magazzino, brand e modello si compilano da soli.

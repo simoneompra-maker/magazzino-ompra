@@ -116,6 +116,14 @@ export default function Vendita({ onNavigate }) {
   const [orderTipoAltro, setOrderTipoAltro] = useState('');
   const [orderModel, setOrderModel] = useState('');
   
+  
+  // Per inserimento diretto
+  const [directSerial, setDirectSerial] = useState('');
+  const [directBrand, setDirectBrand] = useState('');
+  const [directModel, setDirectModel] = useState('');
+  const [directPrice, setDirectPrice] = useState('');
+  const [directAdding, setDirectAdding] = useState(false);
+
   // Lista tipologie macchine
   const tipiMacchina = [
     'Motosega', 'Decespugliatore', 'Tagliabordi', 'Tagliasiepi', 'Soffiatore',
@@ -347,6 +355,73 @@ export default function Vendita({ onNavigate }) {
     setShowAddProduct(false);
   };
 
+  // Auto-compila brand e modello quando la matricola corrisponde a un prodotto in magazzino
+  useEffect(() => {
+    if (!directSerial.trim()) return;
+    const found = findBySerialNumber(directSerial.trim().toUpperCase());
+    if (found) {
+      setDirectBrand(found.brand || '');
+      setDirectModel(found.model || '');
+    }
+  }, [directSerial]);
+
+  const handleAddDirectProduct = async () => {
+    if (!directBrand.trim()) {
+      alert('Inserisci il brand!');
+      return;
+    }
+    setDirectAdding(true);
+    const serialClean = directSerial.trim().toUpperCase();
+    const prezzo = parseFloat(directPrice) || null;
+
+    // Cerca in magazzino
+    let prodotto = serialClean ? findBySerialNumber(serialClean) : null;
+
+    // Non trovato ma matricola presente → carico automatico silenzioso
+    if (!prodotto && serialClean) {
+      prodotto = await autoAddToInventory({
+        brand: directBrand.trim(),
+        model: directModel.trim() || 'N/D',
+        serialNumber: serialClean
+      });
+    }
+
+    if (prodotto) {
+      if (prodotti.find(p => p.serialNumber && p.serialNumber === prodotto.serialNumber)) {
+        alert('Prodotto già aggiunto!');
+        setDirectAdding(false);
+        return;
+      }
+      setProdotti(prev => [...prev, {
+        id: Date.now(),
+        brand: prodotto.brand,
+        model: prodotto.model,
+        serialNumber: prodotto.serialNumber,
+        prezzo,
+        isOmaggio: false,
+        aliquotaIva: 22
+      }]);
+    } else {
+      setProdotti(prev => [...prev, {
+        id: Date.now(),
+        brand: directBrand.trim(),
+        model: directModel.trim() || 'N/D',
+        serialNumber: null,
+        prezzo,
+        isOmaggio: false,
+        aliquotaIva: 22
+      }]);
+    }
+
+    setDirectSerial('');
+    setDirectBrand('');
+    setDirectModel('');
+    setDirectPrice('');
+    setDirectAdding(false);
+    setShowAddProduct(false);
+  };
+
+
   const handleCloseModal = () => {
     resetAddForm();
   };
@@ -406,6 +481,10 @@ export default function Vendita({ onNavigate }) {
     setOrderModel('');
     setOcrError(null);
     setAddMode('magazzino');
+    setDirectSerial('');
+    setDirectBrand('');
+    setDirectModel('');
+    setDirectPrice('');
   };
 
   // Scansione commissione/buono di consegna manuale
@@ -1750,6 +1829,14 @@ export default function Vendita({ onNavigate }) {
               >
                 ⏳ Da Ordinare
               </button>
+              <button
+                onClick={() => setAddMode('diretto')}
+                className={`flex-1 py-3 text-sm font-medium ${
+                  addMode === 'diretto' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'
+                }`}
+              >
+                ✏️ Diretto
+              </button>
             </div>
 
             <div className="flex-1 overflow-auto p-4">
@@ -1976,6 +2063,62 @@ export default function Vendita({ onNavigate }) {
                     )}
                   </div>
                 </div>
+              ) : addMode === 'diretto' ? (
+                <div className="space-y-3">
+                  <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                    ✏️ Inserisci i dati a mano. Se la matricola è in magazzino, brand e modello si compilano da soli.
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-500">Matricola (opzionale)</label>
+                    <input
+                      type="text"
+                      placeholder="Es: EC016812024"
+                      className="w-full p-2 border rounded-lg mt-1 font-mono uppercase"
+                      value={directSerial}
+                      onChange={(e) => setDirectSerial(e.target.value.toUpperCase())}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-500">Brand *</label>
+                    <input
+                      type="text"
+                      list="direct-brand-list"
+                      placeholder="Es: Stihl, Honda..."
+                      className="w-full p-2 border rounded-lg mt-1"
+                      value={directBrand}
+                      onChange={(e) => setDirectBrand(e.target.value)}
+                    />
+                    <datalist id="direct-brand-list">
+                      {brands.filter(b => b !== 'Altro').map(b => (
+                        <option key={b} value={b} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-500">Modello</label>
+                    <input
+                      type="text"
+                      placeholder="Es: MS 231, HRX 476..."
+                      className="w-full p-2 border rounded-lg mt-1"
+                      value={directModel}
+                      onChange={(e) => setDirectModel(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-500">Prezzo (lascia vuoto se fa parte di un KIT)</label>
+                    <input
+                      type="number"
+                      placeholder="Vuoto = parte del kit"
+                      className="w-full p-2 border rounded-lg mt-1"
+                      value={directPrice}
+                      onChange={(e) => setDirectPrice(e.target.value)}
+                    />
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1999,13 +2142,22 @@ export default function Vendita({ onNavigate }) {
                     + AGGIUNGI
                   </button>
                 </div>
-              ) : (
+              ) : addMode === 'ordine' ? (
                 <button
                   onClick={handleAddOrderProduct}
                   disabled={!orderBrand || !orderTipo || (orderTipo === 'Altro' && !orderTipoAltro.trim()) || !orderModel.trim()}
                   className="w-full py-3 rounded-lg font-bold text-white bg-yellow-500 disabled:opacity-50"
                 >
                   + AGGIUNGI IN ORDINE
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddDirectProduct}
+                  disabled={!directBrand.trim() || directAdding}
+                  className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-50"
+                  style={{ backgroundColor: '#3b82f6' }}
+                >
+                  {directAdding ? '⏳ Aggiungo...' : '+ AGGIUNGI'}
                 </button>
               )}
             </div>

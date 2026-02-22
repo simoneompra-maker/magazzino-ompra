@@ -342,6 +342,11 @@ export default function Vendita({ onNavigate }) {
     setShowOmaggioOption(false);
   };
 
+  const handleConfirmProductAndClose = () => {
+    handleConfirmProduct();
+    setShowAddProduct(false);
+  };
+
   const handleCloseModal = () => {
     resetAddForm();
   };
@@ -1976,14 +1981,24 @@ export default function Vendita({ onNavigate }) {
 
             <div className="p-4 border-t">
               {addMode === 'magazzino' ? (
-                <button
-                  onClick={handleConfirmProduct}
-                  disabled={!selectedProduct}
-                  className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-50"
-                  style={{ backgroundColor: '#006B3F' }}
-                >
-                  + AGGIUNGI
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleConfirmProduct}
+                    disabled={!selectedProduct}
+                    className="flex-1 py-3 rounded-lg font-bold border-2 disabled:opacity-50"
+                    style={{ borderColor: '#006B3F', color: '#006B3F' }}
+                  >
+                    + Aggiungi un altro
+                  </button>
+                  <button
+                    onClick={handleConfirmProductAndClose}
+                    disabled={!selectedProduct}
+                    className="flex-1 py-3 rounded-lg font-bold text-white disabled:opacity-50"
+                    style={{ backgroundColor: '#006B3F' }}
+                  >
+                    + AGGIUNGI
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={handleAddOrderProduct}

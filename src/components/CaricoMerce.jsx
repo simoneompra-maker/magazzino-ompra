@@ -172,14 +172,15 @@ export default function CaricoMerce({ onNavigate }) {
       tipo: getTipoFinale()
     }]);
 
-    // Reset form per prossimo inserimento
-    setFormModel('');
-    setFormSerial('');
-    setFormTipo('');
-    setFormTipoAltro('');
+    // Chiudi modal: torna alla schermata principale con OCR e Manuale pronti
+    setShowModal(false);
+    setFormModel("");
+    setFormSerial("");
+    setFormTipo("");
+    setFormTipoAltro("");
     setScanPreview(null);
-    setModalMode('manual');
-    // Tieni il brand per inserimenti multipli dello stesso marchio
+    setOcrError(null);
+    // Il brand NON viene resettato: rimane per inserimenti multipli dello stesso marchio
   };
 
   // Nuova scansione

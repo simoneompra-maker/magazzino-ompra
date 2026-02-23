@@ -8,6 +8,7 @@ import StoricoVendite from './components/StoricoVendite';
 import ArchivioCommissioni from './components/ArchivioCommissioni';
 import Listini from './components/Listini';
 import PoliticheCommerciali from './components/PoliticheCommerciali';
+import BudgetAdmin from './components/BudgetAdmin';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -39,6 +40,8 @@ function App() {
         return <Listini onNavigate={navigate} />;
       case 'politiche-commerciali':
         return <PoliticheCommerciali onNavigate={navigate} />;
+      case 'budget-admin':
+        return <BudgetAdmin onNavigate={navigate} />;
       default:
         return <Dashboard onNavigate={navigate} />;
     }

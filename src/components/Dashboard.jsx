@@ -1,4 +1,4 @@
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2 } from 'lucide-react';
 import useStore from '../store';
 
 export default function Dashboard({ onNavigate }) {
@@ -151,8 +151,15 @@ export default function Dashboard({ onNavigate }) {
       </div>
 
       {/* Footer */}
-      <div className="mt-3 text-center text-xs text-gray-400">
+      <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
         <p>v1.3.1 - OMPRA Gestionale</p>
+        <button
+          onClick={() => onNavigate('budget-admin')}
+          className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-300 hover:text-gray-500 transition-colors"
+          title=""
+        >
+          <BarChart2 className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

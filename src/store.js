@@ -59,9 +59,9 @@ const useStore = create((set, get) => ({
   sales: [],
   commissioni: [], // Loaded from Supabase via fetchCommissioni
   brands: [
-    'Archman', 'Bluebird', 'Captain', 'Cutman', 'Echo', 'Forest', 'GGP', 'Grillo',
+    'Archman', 'Bluebird', 'Captain', 'Cutman', 'Echo', 'Ferris', 'Forest', 'GGP', 'Grillo',
     'Honda', 'Negri', 'Pasquali', 'Segway', 'Snapper', 'Stihl', 'Volpi',
-    'Weibang', 'Wortex', 'Worx', 'Altro'
+    'Weibang', 'Wortex', 'Worx'
   ],
   syncStatus: 'idle',
   lastSync: null,

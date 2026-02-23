@@ -113,7 +113,6 @@ export default function Vendita({ onNavigate }) {
   // Per ordine
   const [orderBrand, setOrderBrand] = useState('');
   const [orderTipo, setOrderTipo] = useState('');
-  const [orderTipoAltro, setOrderTipoAltro] = useState('');
   const [orderModel, setOrderModel] = useState('');
   
   
@@ -435,17 +434,13 @@ export default function Vendita({ onNavigate }) {
       alert('Seleziona un tipo di macchina!');
       return;
     }
-    if (orderTipo === 'Altro' && !orderTipoAltro.trim()) {
-      alert('Inserisci il tipo di macchina!');
-      return;
-    }
     if (!orderModel.trim()) {
       alert('Inserisci il modello!');
       return;
     }
 
     const prezzo = isOmaggio ? 0 : (parseFloat(productPrice) || null);
-    const tipoFinale = orderTipo === 'Altro' ? orderTipoAltro.trim() : orderTipo;
+    const tipoFinale = orderTipo.trim();
     const modelCompleto = `${tipoFinale} ${orderModel.trim()}`;
 
     setProdotti([...prodotti, {
@@ -461,7 +456,6 @@ export default function Vendita({ onNavigate }) {
     
     setOrderBrand('');
     setOrderTipo('');
-    setOrderTipoAltro('');
     setOrderModel('');
     setProductPrice('');
     setIsOmaggio(false);
@@ -477,7 +471,6 @@ export default function Vendita({ onNavigate }) {
     setShowOmaggioOption(false);
     setOrderBrand('');
     setOrderTipo('');
-    setOrderTipoAltro('');
     setOrderModel('');
     setOcrError(null);
     setAddMode('magazzino');
@@ -1976,48 +1969,37 @@ export default function Vendita({ onNavigate }) {
 
                   <div>
                     <label className="text-xs text-gray-500">Brand *</label>
-                    <select
+                    <input
+                      type="text"
+                      list="order-brand-list"
+                      placeholder="Seleziona o digita il brand..."
                       className="w-full p-2 border rounded-lg mt-1"
                       value={orderBrand}
                       onChange={(e) => setOrderBrand(e.target.value)}
-                    >
-                      <option value="">Seleziona...</option>
-                      {brands.filter(b => b !== 'Altro').map(brand => (
-                        <option key={brand} value={brand}>{brand}</option>
+                    />
+                    <datalist id="order-brand-list">
+                      {brands.map(b => (
+                        <option key={b} value={b} />
                       ))}
-                      <option value="Altro">Altro</option>
-                    </select>
+                    </datalist>
                   </div>
 
                   <div>
                     <label className="text-xs text-gray-500">Tipo macchina *</label>
-                    <select
+                    <input
+                      type="text"
+                      list="order-tipo-list"
+                      placeholder="Seleziona o digita il tipo..."
                       className="w-full p-2 border rounded-lg mt-1"
                       value={orderTipo}
-                      onChange={(e) => {
-                        setOrderTipo(e.target.value);
-                        if (e.target.value !== 'Altro') setOrderTipoAltro('');
-                      }}
-                    >
-                      <option value="">Seleziona...</option>
-                      {tipiMacchina.map(tipo => (
-                        <option key={tipo} value={tipo}>{tipo}</option>
+                      onChange={(e) => setOrderTipo(e.target.value)}
+                    />
+                    <datalist id="order-tipo-list">
+                      {tipiMacchina.filter(t => t !== 'Altro').map(tipo => (
+                        <option key={tipo} value={tipo} />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
-
-                  {orderTipo === 'Altro' && (
-                    <div>
-                      <label className="text-xs text-gray-500">Specifica tipo *</label>
-                      <input
-                        type="text"
-                        placeholder="Es: Aspirafoglie"
-                        className="w-full p-2 border rounded-lg mt-1"
-                        value={orderTipoAltro}
-                        onChange={(e) => setOrderTipoAltro(e.target.value)}
-                      />
-                    </div>
-                  )}
 
                   <div>
                     <label className="text-xs text-gray-500">Modello *</label>
@@ -2091,7 +2073,7 @@ export default function Vendita({ onNavigate }) {
                       onChange={(e) => setDirectBrand(e.target.value)}
                     />
                     <datalist id="direct-brand-list">
-                      {brands.filter(b => b !== 'Altro').map(b => (
+                      {brands.map(b => (
                         <option key={b} value={b} />
                       ))}
                     </datalist>
@@ -2145,7 +2127,7 @@ export default function Vendita({ onNavigate }) {
               ) : addMode === 'ordine' ? (
                 <button
                   onClick={handleAddOrderProduct}
-                  disabled={!orderBrand || !orderTipo || (orderTipo === 'Altro' && !orderTipoAltro.trim()) || !orderModel.trim()}
+                  disabled={!orderBrand.trim() || !orderTipo.trim() || !orderModel.trim()}
                   className="w-full py-3 rounded-lg font-bold text-white bg-yellow-500 disabled:opacity-50"
                 >
                   + AGGIUNGI IN ORDINE
@@ -2325,7 +2307,7 @@ export default function Vendita({ onNavigate }) {
                   onChange={(e) => setAutoAddData(p => ({ ...p, brand: e.target.value }))}
                 />
                 <datalist id="auto-add-brand-list">
-                  {brands.filter(b => b !== 'Altro').map(b => (
+                  {brands.map(b => (
                     <option key={b} value={b} />
                   ))}
                 </datalist>

@@ -50,6 +50,15 @@ function addOperatore(nome) {
   saveUltimoOperatore(nomeNorm);
 }
 
+// ========== HELPER PROMO ==========
+const isPromoAttiva = (p) => {
+  if (!p.prezzo_promo) return false;
+  const oggi = new Date().toISOString().split('T')[0];
+  if (p.promo_dal && oggi < p.promo_dal) return false;
+  if (p.promo_al && oggi > p.promo_al) return false;
+  return true;
+};
+
 export default function Vendita({ onNavigate }) {
   const inventory = useStore((state) => state.inventory);
   const findBySerialNumber = useStore((state) => state.findBySerialNumber);
@@ -759,7 +768,7 @@ export default function Vendita({ onNavigate }) {
     try {
       const { data, error } = await supabase
         .from('listini')
-        .select('descrizione, brand, codice, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva')
+        .select('descrizione, brand, codice, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva, prezzo_promo, promo_dal, promo_al')
         .ilike('descrizione', `%${query.trim()}%`)
         .limit(8);
       if (error) throw error;
@@ -780,7 +789,11 @@ export default function Vendita({ onNavigate }) {
     const iva = ivaRaw == null ? 22 : ivaRaw < 1 ? Math.round(ivaRaw * 100) : Math.round(ivaRaw);
     const nome = `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`;
 
+    const promoAttiva = isPromoAttiva(prodotto);
+
     const fasce = [
+      // Se c'è promo attiva, inseriscila come prima voce speciale
+      promoAttiva && { label: '🏷️ PROMO', prezzo: prodotto.prezzo_promo, isPromo: true },
       prodotto.prezzo_a != null && { label: 'A', prezzo: prodotto.prezzo_a },
       prodotto.prezzo_b != null && { label: 'B', prezzo: prodotto.prezzo_b },
       prodotto.prezzo_c != null && { label: 'C', prezzo: prodotto.prezzo_c },
@@ -795,7 +808,7 @@ export default function Vendita({ onNavigate }) {
       setNewAccessorio(prev => ({ ...prev, nome, prezzo: '', aliquotaIva: iva }));
       setFasceProdottoListino(fasce);
     } else {
-      // Fascia unica: compila tutto direttamente
+      // Fascia unica (o promo unica): compila tutto direttamente
       const prezzo = fasce.length === 1 ? fasce[0].prezzo.toString() : '';
       setNewAccessorio(prev => ({ ...prev, nome, prezzo, aliquotaIva: iva }));
       setFasceProdottoListino([]);
@@ -1521,14 +1534,26 @@ export default function Vendita({ onNavigate }) {
                         key={i}
                         type="button"
                         onMouseDown={() => selezionaDaListino(p)}
-                        className="w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0 border-gray-100"
+                        className={`w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0 border-gray-100 ${isPromoAttiva(p) ? 'bg-orange-50 hover:bg-orange-100' : ''}`}
                       >
-                        <div className="text-sm font-medium text-gray-800 truncate">
-                          {p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="text-sm font-medium text-gray-800 truncate">
+                            {p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}
+                          </span>
+                          {isPromoAttiva(p) && (
+                            <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-orange-500 text-white shrink-0">🏷️ PROMO</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {p.brand && <span className="text-xs text-gray-400">{p.brand}</span>}
-                          {p.prezzo_a != null && <span className="text-xs font-semibold text-green-700">€{p.prezzo_a.toFixed(2)}</span>}
+                          {isPromoAttiva(p) ? (
+                            <>
+                              <span className="text-xs font-bold text-orange-600">€{p.prezzo_promo.toFixed(2)}</span>
+                              {p.prezzo_a != null && <span className="text-xs text-gray-400 line-through">€{p.prezzo_a.toFixed(2)}</span>}
+                            </>
+                          ) : (
+                            p.prezzo_a != null && <span className="text-xs font-semibold text-green-700">€{p.prezzo_a.toFixed(2)}</span>
+                          )}
                           {p.iva != null && (
                             <span className={`text-xs px-1 py-0.5 rounded border font-medium ${
                               (p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 4 ? 'bg-green-100 text-green-700 border-green-300' :
@@ -1568,6 +1593,7 @@ export default function Vendita({ onNavigate }) {
               <div className="flex gap-2 flex-wrap">
                 <span className="text-xs text-gray-500 self-center">Scegli fascia:</span>
                 {fasceProdottoListino.map((fascia) => (
+                {fasceProdottoListino.map((fascia) => (
                   <button
                     key={fascia.label}
                     type="button"
@@ -1575,7 +1601,11 @@ export default function Vendita({ onNavigate }) {
                       setNewAccessorio(prev => ({ ...prev, prezzo: fascia.prezzo.toString() }));
                       setFasceProdottoListino([]);
                     }}
-                    className="px-3 py-1.5 rounded-lg border-2 text-sm font-semibold border-green-500 text-green-700 hover:bg-green-50 active:bg-green-100"
+                    className={`px-3 py-1.5 rounded-lg border-2 text-sm font-semibold ${
+                      fascia.isPromo
+                        ? 'border-orange-500 text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200'
+                        : 'border-green-500 text-green-700 hover:bg-green-50 active:bg-green-100'
+                    }`}
                   >
                     {fascia.label} · €{fascia.prezzo.toFixed(2)}
                   </button>

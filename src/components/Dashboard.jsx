@@ -1,5 +1,34 @@
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock } from 'lucide-react';
 import useStore from '../store';
+
+// Footer con accesso nascosto: triplo click rapido sulla versione
+function FooterAdmin({ onNavigate }) {
+  const clickCount = useRef(0);
+  const timer = useRef(null);
+
+  const handleClick = () => {
+    clickCount.current += 1;
+    if (timer.current) clearTimeout(timer.current);
+    if (clickCount.current >= 3) {
+      clickCount.current = 0;
+      onNavigate('budget-admin');
+      return;
+    }
+    timer.current = setTimeout(() => { clickCount.current = 0; }, 600);
+  };
+
+  return (
+    <div className="mt-3 text-center">
+      <p
+        className="text-xs text-gray-400 cursor-default select-none"
+        onClick={handleClick}
+      >
+        v1.3.1 - OMPRA Gestionale
+      </p>
+    </div>
+  );
+}
 
 export default function Dashboard({ onNavigate }) {
   const syncStatus = useStore((state) => state.syncStatus);
@@ -88,7 +117,7 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
 
-        {/* ARCHIVIO COMMISSIONI — pulsante principale di cassa */}
+        {/* ARCHIVIO COMMISSIONI */}
         <button
           onClick={() => onNavigate('archivio-commissioni')}
           className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-md active:scale-95 transition-transform text-white"
@@ -148,20 +177,11 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
 
-
       </div>
 
-      {/* Footer */}
-      <div className="mt-3 flex items-center justify-between px-1">
-        <p className="text-xs text-gray-400">v1.3.1 - OMPRA Gestionale</p>
-        <button
-          onClick={() => onNavigate('budget-admin')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-500 text-xs font-medium active:scale-95 transition-transform"
-        >
-          <BarChart2 className="w-3 h-3" />
-          Report
-        </button>
-      </div>
+      {/* Footer — triplo click sulla versione per Budget Admin */}
+      <FooterAdmin onNavigate={onNavigate} />
+
     </div>
   );
 }

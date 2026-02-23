@@ -1,34 +1,6 @@
-import { useState, useRef } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock } from 'lucide-react';
+
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2 } from 'lucide-react';
 import useStore from '../store';
-
-// Footer con accesso nascosto: triplo click rapido sulla versione
-function FooterAdmin({ onNavigate }) {
-  const clickCount = useRef(0);
-  const timer = useRef(null);
-
-  const handleClick = () => {
-    clickCount.current += 1;
-    if (timer.current) clearTimeout(timer.current);
-    if (clickCount.current >= 3) {
-      clickCount.current = 0;
-      onNavigate('budget-admin');
-      return;
-    }
-    timer.current = setTimeout(() => { clickCount.current = 0; }, 600);
-  };
-
-  return (
-    <div className="mt-3 text-center">
-      <p
-        className="text-xs text-gray-400 cursor-default select-none"
-        onClick={handleClick}
-      >
-        v1.3.1 - OMPRA Gestionale
-      </p>
-    </div>
-  );
-}
 
 export default function Dashboard({ onNavigate }) {
   const syncStatus = useStore((state) => state.syncStatus);
@@ -179,8 +151,17 @@ export default function Dashboard({ onNavigate }) {
 
       </div>
 
-      {/* Footer — triplo click sulla versione per Budget Admin */}
-      <FooterAdmin onNavigate={onNavigate} />
+      {/* Footer */}
+      <div className="mt-3 flex items-center justify-between px-1">
+        <p className="text-xs text-gray-400">v1.3.1 - OMPRA Gestionale</p>
+        <button
+          onClick={() => onNavigate('budget-admin')}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-xs font-semibold active:scale-95 transition-transform"
+        >
+          <BarChart2 className="w-3.5 h-3.5" />
+          Budget
+        </button>
+      </div>
 
     </div>
   );

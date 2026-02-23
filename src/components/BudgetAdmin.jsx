@@ -4,8 +4,16 @@ import { supabase } from '../store';
 import { ArrowLeft, Lock, Download, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ─── PIN ─────────────────────────────────────────────────────────────────────
-const PIN_CORRETTO = '1234'; // ← cambia qui prima del deploy
+const PIN_KEY     = 'ompra_budget_pin';      // localStorage: PIN attivo
 const SESSION_KEY = 'ompra_budget_admin_auth';
+const MASTER_CODE = 'OMPRA2026';             // codice emergenza per reset PIN
+
+const getPin = () => {
+  try { return localStorage.getItem(PIN_KEY) || '1234'; } catch { return '1234'; }
+};
+const savePin = (p) => {
+  try { localStorage.setItem(PIN_KEY, p); } catch {}
+};
 
 // ─── REALIZZATO 2025 (base per obiettivi 2026) ───────────────────────────────
 const REALIZZATO_2025 = {
@@ -76,6 +84,18 @@ export default function BudgetAdmin({ onNavigate }) {
   const [pin, setPin]           = useState('');
   const [pinError, setPinError] = useState(false);
   const [shaking, setShaking]   = useState(false);
+
+  // Cambio PIN
+  const [showCambioPin, setShowCambioPin]   = useState(false);
+  const [vecchioPin, setVecchioPin]         = useState('');
+  const [nuovoPin, setNuovoPin]             = useState('');
+  const [confermaNuovoPin, setConfermaNuovoPin] = useState('');
+  const [cambioPinMsg, setCambioPinMsg]     = useState(null);
+
+  // Reset PIN dimenticato
+  const [showReset, setShowReset]           = useState(false);
+  const [masterCode, setMasterCode]         = useState('');
+  const [resetMsg, setResetMsg]             = useState(null);
 
   // Dati 2026
   const [realizzato2026, setRealizzato2026] = useState({});
@@ -208,31 +228,14 @@ export default function BudgetAdmin({ onNavigate }) {
   };
 
   // ── PIN screen ────────────────────────────────────────────────────────────
-  const handlePin = (digit) => {
-    const nuovo = pin + digit;
-    if (nuovo.length < 4) {
-      setPin(nuovo);
-      return;
-    }
-    // 4 cifre inserite
-    if (nuovo === PIN_CORRETTO) {
-      try { sessionStorage.setItem(SESSION_KEY, 'ok'); } catch {}
-      setAutenticato(true);
-      setPin('');
-    } else {
-      setShaking(true);
-      setPinError(true);
-      setPin('');
-      setTimeout(() => { setShaking(false); setPinError(false); }, 800);
-    }
-  };
+  const verificaPin = (tentativo) => tentativo === getPin();
 
   const handlePinInput = (val) => {
     const clean = val.replace(/\D/g, '').slice(0, 4);
     setPin(clean);
     setPinError(false);
     if (clean.length === 4) {
-      if (clean === PIN_CORRETTO) {
+      if (verificaPin(clean)) {
         try { sessionStorage.setItem(SESSION_KEY, 'ok'); } catch {}
         setAutenticato(true);
         setPin('');
@@ -242,6 +245,41 @@ export default function BudgetAdmin({ onNavigate }) {
         setTimeout(() => { setShaking(false); setPinError(false); setPin(''); }, 800);
       }
     }
+  };
+
+  const handleCambioPin = () => {
+    setCambioPinMsg(null);
+    if (!verificaPin(vecchioPin)) {
+      setCambioPinMsg({ ok: false, testo: 'PIN attuale non corretto' });
+      return;
+    }
+    if (nuovoPin.length < 4) {
+      setCambioPinMsg({ ok: false, testo: 'Il nuovo PIN deve essere di 4 cifre' });
+      return;
+    }
+    if (nuovoPin !== confermaNuovoPin) {
+      setCambioPinMsg({ ok: false, testo: 'I due PIN non coincidono' });
+      return;
+    }
+    savePin(nuovoPin);
+    setCambioPinMsg({ ok: true, testo: '✓ PIN aggiornato con successo' });
+    setVecchioPin(''); setNuovoPin(''); setConfermaNuovoPin('');
+    setTimeout(() => { setShowCambioPin(false); setCambioPinMsg(null); }, 1500);
+  };
+
+  const handleResetPin = () => {
+    setResetMsg(null);
+    if (masterCode.trim() !== MASTER_CODE) {
+      setResetMsg({ ok: false, testo: 'Codice di emergenza non corretto' });
+      return;
+    }
+    savePin('1234');
+    try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+    setResetMsg({ ok: true, testo: '✓ PIN reimpostato a 1234' });
+    setTimeout(() => {
+      setShowReset(false); setMasterCode(''); setResetMsg(null);
+      setAutenticato(false);
+    }, 1800);
   };
 
   // ── Render PIN ────────────────────────────────────────────────────────────
@@ -258,20 +296,16 @@ export default function BudgetAdmin({ onNavigate }) {
           </div>
 
           {/* Indicatori cifre */}
-          <div className={`flex justify-center gap-4 mb-8 transition-all ${shaking ? 'animate-bounce' : ''}`}>
+          <div className={`flex justify-center gap-4 mb-8 ${shaking ? 'animate-bounce' : ''}`}>
             {[0,1,2,3].map(i => (
-              <div
-                key={i}
-                className={`w-4 h-4 rounded-full border-2 transition-all ${
-                  pin.length > i
-                    ? pinError ? 'bg-red-500 border-red-500' : 'bg-white border-white'
-                    : 'border-gray-500 bg-transparent'
-                }`}
-              />
+              <div key={i} className={`w-4 h-4 rounded-full border-2 transition-all ${
+                pin.length > i
+                  ? pinError ? 'bg-red-500 border-red-500' : 'bg-white border-white'
+                  : 'border-gray-500 bg-transparent'
+              }`} />
             ))}
           </div>
 
-          {/* Input numerico (mobile-friendly) */}
           <input
             type="tel"
             inputMode="numeric"
@@ -284,17 +318,60 @@ export default function BudgetAdmin({ onNavigate }) {
             placeholder="• • • •"
           />
 
-          {pinError && (
-            <p className="text-red-400 text-sm text-center mt-3">PIN non corretto</p>
-          )}
+          {pinError && <p className="text-red-400 text-sm text-center mt-3">PIN non corretto</p>}
+
+          <button
+            onClick={() => setShowReset(true)}
+            className="w-full mt-4 text-gray-500 text-xs hover:text-gray-300 underline text-center"
+          >
+            Hai dimenticato il PIN?
+          </button>
 
           <button
             onClick={() => onNavigate('home')}
-            className="w-full mt-6 py-2 text-gray-400 text-sm hover:text-gray-300 flex items-center justify-center gap-2"
+            className="w-full mt-3 py-2 text-gray-400 text-sm hover:text-gray-300 flex items-center justify-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" /> Torna alla home
           </button>
         </div>
+
+        {/* Modale reset PIN */}
+        {showReset && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl">
+              <h2 className="font-bold text-lg mb-1">🔑 Reset PIN</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Inserisci il codice di emergenza per reimpostare il PIN a <strong>1234</strong>.
+              </p>
+              <input
+                type="text"
+                placeholder="Codice di emergenza"
+                className="w-full border-2 rounded-lg p-3 text-sm font-mono focus:outline-none focus:border-blue-400"
+                value={masterCode}
+                onChange={e => { setMasterCode(e.target.value); setResetMsg(null); }}
+              />
+              {resetMsg && (
+                <p className={`text-sm mt-2 ${resetMsg.ok ? 'text-green-600' : 'text-red-500'}`}>
+                  {resetMsg.testo}
+                </p>
+              )}
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => { setShowReset(false); setMasterCode(''); setResetMsg(null); }}
+                  className="flex-1 py-2 rounded-lg border-2 border-gray-300 text-gray-500 text-sm font-medium"
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={handleResetPin}
+                  className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-bold"
+                >
+                  Reimposta
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -315,6 +392,14 @@ export default function BudgetAdmin({ onNavigate }) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowCambioPin(true)}
+            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs text-gray-500 font-medium flex items-center gap-1"
+            title="Cambia PIN"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">PIN</span>
+          </button>
+          <button
             onClick={caricaDati}
             disabled={loading}
             className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
@@ -331,6 +416,67 @@ export default function BudgetAdmin({ onNavigate }) {
           </button>
         </div>
       </div>
+
+      {/* Modale Cambia PIN */}
+      {showCambioPin && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl">
+            <h2 className="font-bold text-lg mb-4">🔑 Cambia PIN</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500">PIN attuale</label>
+                <input
+                  type="tel" inputMode="numeric" maxLength={4}
+                  placeholder="••••"
+                  className="w-full border-2 rounded-lg p-2.5 mt-1 text-center tracking-widest font-mono text-lg focus:outline-none focus:border-blue-400"
+                  value={vecchioPin}
+                  onChange={e => { setVecchioPin(e.target.value.replace(/\D/g,'').slice(0,4)); setCambioPinMsg(null); }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Nuovo PIN (4 cifre)</label>
+                <input
+                  type="tel" inputMode="numeric" maxLength={4}
+                  placeholder="••••"
+                  className="w-full border-2 rounded-lg p-2.5 mt-1 text-center tracking-widest font-mono text-lg focus:outline-none focus:border-blue-400"
+                  value={nuovoPin}
+                  onChange={e => { setNuovoPin(e.target.value.replace(/\D/g,'').slice(0,4)); setCambioPinMsg(null); }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Conferma nuovo PIN</label>
+                <input
+                  type="tel" inputMode="numeric" maxLength={4}
+                  placeholder="••••"
+                  className="w-full border-2 rounded-lg p-2.5 mt-1 text-center tracking-widest font-mono text-lg focus:outline-none focus:border-blue-400"
+                  value={confermaNuovoPin}
+                  onChange={e => { setConfermaNuovoPin(e.target.value.replace(/\D/g,'').slice(0,4)); setCambioPinMsg(null); }}
+                />
+              </div>
+            </div>
+            {cambioPinMsg && (
+              <p className={`text-sm mt-3 ${cambioPinMsg.ok ? 'text-green-600' : 'text-red-500'}`}>
+                {cambioPinMsg.testo}
+              </p>
+            )}
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => { setShowCambioPin(false); setVecchioPin(''); setNuovoPin(''); setConfermaNuovoPin(''); setCambioPinMsg(null); }}
+                className="flex-1 py-2.5 rounded-lg border-2 border-gray-300 text-gray-500 font-medium"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleCambioPin}
+                className="flex-1 py-2.5 rounded-lg font-bold text-white"
+                style={{ backgroundColor: '#006B3F' }}
+              >
+                Salva
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">

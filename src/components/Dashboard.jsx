@@ -148,17 +148,18 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
 
+
       </div>
 
       {/* Footer */}
-      <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
-        <p>v1.3.1 - OMPRA Gestionale</p>
+      <div className="mt-3 flex items-center justify-between px-1">
+        <p className="text-xs text-gray-400">v1.3.1 - OMPRA Gestionale</p>
         <button
           onClick={() => onNavigate('budget-admin')}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-500 hover:text-gray-700 transition-colors text-xs font-medium"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-500 text-xs font-medium active:scale-95 transition-transform"
         >
-          <BarChart2 className="w-3.5 h-3.5" />
-          <span>Report</span>
+          <BarChart2 className="w-3 h-3" />
+          Report
         </button>
       </div>
     </div>

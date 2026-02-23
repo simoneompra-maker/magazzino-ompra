@@ -155,10 +155,10 @@ export default function Dashboard({ onNavigate }) {
         <p>v1.3.1 - OMPRA Gestionale</p>
         <button
           onClick={() => onNavigate('budget-admin')}
-          className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-300 hover:text-gray-500 transition-colors"
-          title=""
+          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-500 hover:text-gray-700 transition-colors text-xs font-medium"
         >
-          <BarChart2 className="w-4 h-4" />
+          <BarChart2 className="w-3.5 h-3.5" />
+          <span>Report</span>
         </button>
       </div>
     </div>

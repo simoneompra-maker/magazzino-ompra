@@ -401,9 +401,12 @@ export default function Listini({ onNavigate }) {
         }
       } else {
         const wb = XLSX.read(buffer, { type: 'array' })
-        // Rileva tipo listino Excel: Honda o Geogreen
-        const sheetText = wb.SheetNames.map(s => s + ' ' + (XLSX.utils.sheet_to_csv(wb.Sheets[s]) || '')).join(' ')
-        const isHonda = /\bHONDA\b/i.test(sheetText)
+        // Rileva tipo listino Excel: Honda (cerca HONDA in qualsiasi cella) o Geogreen
+        const isHonda = wb.SheetNames.some(s => {
+          const sheet = wb.Sheets[s]
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
+          return rows.some(row => row.some(cell => cell && /HONDA/i.test(String(cell))))
+        }) || /honda/i.test(f.name)
         const prodotti = isHonda ? parseHondaExcel(wb) : parseGeogreen(wb)
         setAnteprima(prodotti)
         if (prodotti.length === 0) {

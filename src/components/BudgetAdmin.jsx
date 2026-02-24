@@ -578,7 +578,7 @@ export default function BudgetAdmin({ onNavigate }) {
               <th className="px-2 py-2 text-right">Δ All-In</th>
               <th className="px-2 py-2 text-right font-bold">Realizzato</th>
               <th className="px-2 py-2 text-right">Rolling</th>
-              <th className="px-2 py-2 text-right">% Target</th>
+              <th className="px-2 py-2 text-right">% YoY</th>
             </tr>
           </thead>
           <tbody>
@@ -626,8 +626,8 @@ export default function BudgetAdmin({ onNavigate }) {
                   <td className="px-2 py-1.5 text-right font-mono text-gray-600">
                     {r.rolling != null ? fmt(r.rolling) : ''}
                   </td>
-                  <td className={`px-2 py-1.5 text-right font-mono font-semibold ${r.perc_tgt != null ? (r.perc_tgt >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-300'}`}>
-                    {r.perc_tgt != null ? `${r.perc_tgt >= 0 ? '+' : ''}${r.perc_tgt.toFixed(1)}%` : '—'}
+                  <td className={`px-2 py-1.5 text-right font-mono font-semibold ${r.perc_yoy != null ? (r.perc_yoy >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-300'}`}>
+                    {r.perc_yoy != null ? `${r.perc_yoy >= 0 ? '+' : ''}${r.perc_yoy.toFixed(1)}%` : '—'}
                   </td>
                 </tr>
               );
@@ -650,8 +650,8 @@ export default function BudgetAdmin({ onNavigate }) {
               </td>
               <td className="px-2 py-2 text-right font-mono">{totali.tot_real ? fmt(totali.tot_real) : '—'}</td>
               <td className="px-2 py-2 text-right font-mono">{totali.tot_real ? fmt(totali.tot_real) : '—'}</td>
-              <td className={`px-2 py-2 text-right font-mono font-bold ${totali.tot_real && totali.tot_tgt ? (totali.tot_real >= totali.tot_tgt ? 'text-green-300' : 'text-red-300') : ''}`}>
-                {totali.tot_real && totali.tot_tgt ? `${((totali.tot_real / totali.tot_tgt - 1) * 100) >= 0 ? '+' : ''}${((totali.tot_real / totali.tot_tgt - 1) * 100).toFixed(1)}%` : '—'}
+              <td className={`px-2 py-2 text-right font-mono font-bold ${totali.tot_real && totali.tot_base ? (totali.tot_real >= totali.tot_base ? 'text-green-300' : 'text-red-300') : ''}`}>
+                {totali.tot_real && totali.tot_base ? `${((totali.tot_real / totali.tot_base - 1) * 100) >= 0 ? '+' : ''}${((totali.tot_real / totali.tot_base - 1) * 100).toFixed(1)}%` : '—'}
               </td>
             </tr>
             {/* Riga percentuali */}

@@ -91,25 +91,65 @@ async function parsePDFListino(arrayBuffer) {
     /PERFECTION\s+IS/i,
   ]
 
-  // ── Parser specifico HONDA (un solo prezzo, codici HR*/HH*/DP*/CV*) ──────
+  // ── Parser specifico HONDA (formato: DESCRIZIONE € prezzo) ──────────────
   if (brand === 'HONDA') {
-    const hondaCodePattern = /\b(HR[A-Z]\d[\w\-]+|HH[A-Z]\d[\w\-]+|DP\d[\w\-]+|CV\d[\w\-]+)\b/
-    const hondaSkip = [/^2026/,/^descrizione/i,/^HONDA/i,/MT\/q/i,/SPINTA/i]
     const parseP = (str) => parseFloat(str.replace(/\./g,'').replace(',','.'))
+    const hondaSkip = [/^2026/i, /^descrizione/i, /^HONDA/i, /MT\/q/i, /^SPINTA$/i, /^ex\./i, /^VENDITA$/i]
+    // Pattern prezzo: € 500,00 oppure 500,00 € oppure € 1.050,00
+    const priceRegex = /€\s*(\d{1,3}(?:\.\d{3})*,\d{2})|(\d{1,3}(?:\.\d{3})*,\d{2})\s*€/
+    // Pattern codice modello Honda: HRG, HRX, HHB, HHT, HHC, DP, CV + numeri
+    const modelRegex = /\b((?:HRG|HRX|HRA|HHB|HHT|HHC|HHD|DP|CV)\s*\d[\w\s]*?)\s+(?:\d{2}\s*CM|€|\d+\s*Ah)/i
+
     for (const line of allLines) {
-      if (hondaSkip.some(p => p.test(line.trim()))) continue
-      const priceMatch = line.match(/(\d{1,3}(?:\.\d{3})*,\d{2})\s*€?\s*$/)
-      if (!priceMatch) {
-        const upper = line.trim().toUpperCase()
-        if (upper === line.trim() && upper.length > 3 && /^[A-Z\s\+\-\/&0-9]+$/.test(upper) && !upper.includes('HONDA')) categoria = upper
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      if (hondaSkip.some(p => p.test(trimmed))) continue
+
+      // Cerca prezzo nella riga
+      const pm = trimmed.match(priceRegex)
+      if (!pm) {
+        // Potrebbe essere una categoria (tutto maiuscolo, no prezzi)
+        const upper = trimmed.toUpperCase()
+        if (upper === trimmed && upper.length > 3 && /^[A-ZÀÈÉÌÒÙ\s\+\-\/&0-9]+$/.test(upper) && !['HONDA','BATTERIA HONDA'].includes(upper.trim())) {
+          categoria = upper.trim()
+        }
         continue
       }
-      const prezzo = parseP(priceMatch[1])
-      if (prezzo <= 0) continue
-      const testoRiga = line.substring(0, line.lastIndexOf(priceMatch[0])).trim()
-      const codeMatch = testoRiga.match(hondaCodePattern)
-      if (!codeMatch) continue
-      prodotti.push({ brand: 'HONDA', categoria, codice: codeMatch[1], descrizione: testoRiga.trim(), confezione: null, prezzo_a: prezzo, prezzo_b: null, prezzo_c: null, prezzo_d: null, iva: 22 })
+
+      const prezzo = parseP(pm[1] || pm[2])
+      if (!prezzo || prezzo <= 0) continue
+
+      // Rimuovi il prezzo dalla riga per ottenere la descrizione
+      const descrizione = trimmed.replace(priceRegex, '').replace(/€/g, '').trim()
+      if (!descrizione || descrizione.length < 3) continue
+
+      // Estrai codice modello dalla descrizione
+      // Prima cerca codice compatto (lettere+numeri senza spazi): HHB36AXB, DP3620XA, CV3680XA
+      const compactMatch = descrizione.match(/\b((?:HH[BTCG]|DP|CV|IZY)\d+\w*)\b/i)
+      // Poi cerca codice con spazi tipo HRG 416 XB PE, HRX 476 XB
+      const modelMatch = !compactMatch && descrizione.match(/\b((?:HRG|HRX|HRA)\s+\d+[\w\s]*)(?=\s+\d{2}\s*CM|\s+\+|\s*$)/i)
+      let codice
+      if (compactMatch) {
+        codice = compactMatch[1].toUpperCase()
+      } else if (modelMatch) {
+        codice = modelMatch[1].replace(/\s+/g, '').toUpperCase()
+      } else {
+        // Fallback: prende le prime parole significative
+        codice = descrizione.replace(/\s+/g, '_').toUpperCase().substring(0, 20)
+      }
+
+      prodotti.push({
+        brand: 'HONDA',
+        categoria,
+        codice,
+        descrizione,
+        confezione: null,
+        prezzo_a: prezzo,
+        prezzo_b: null,
+        prezzo_c: null,
+        prezzo_d: null,
+        iva: 22,
+      })
     }
     return Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {}))
   }

@@ -1593,7 +1593,6 @@ export default function Vendita({ onNavigate }) {
               <div className="flex gap-2 flex-wrap">
                 <span className="text-xs text-gray-500 self-center">Scegli fascia:</span>
                 {fasceProdottoListino.map((fascia) => (
-                {fasceProdottoListino.map((fascia) => (
                   <button
                     key={fascia.label}
                     type="button"

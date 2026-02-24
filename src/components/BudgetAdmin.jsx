@@ -97,6 +97,16 @@ export default function BudgetAdmin({ onNavigate }) {
   const [masterCode, setMasterCode]         = useState('');
   const [resetMsg, setResetMsg]             = useState(null);
 
+  // Operatore loggato (da localStorage, stesso meccanismo di Vendita.jsx)
+  const operatoreLoggato = (() => {
+    try { return localStorage.getItem('ompra_ultimo_operatore') || ''; } catch { return ''; }
+  })();
+  const isAdmin = operatoreLoggato.toLowerCase() === 'admin';
+
+  // Filtro venditore (solo per admin)
+  const [venditori, setVenditori] = useState([]);
+  const [filtroVenditore, setFiltroVenditore] = useState('');
+
   // Dati 2026
   const [realizzato2026, setRealizzato2026] = useState({});
   const [loading, setLoading]               = useState(false);
@@ -108,12 +118,33 @@ export default function BudgetAdmin({ onNavigate }) {
   const caricaDati = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Carica lista venditori (solo admin)
+      if (isAdmin && venditori.length === 0) {
+        const { data: vData } = await supabase
+          .from('commissioni')
+          .select('operatore')
+          .not('operatore', 'is', null);
+        if (vData) {
+          const unici = [...new Set(vData.map(r => r.operatore).filter(Boolean))].sort();
+          setVenditori(unici);
+        }
+      }
+
+      // Query con filtro operatore
+      let query = supabase
         .from('commissioni')
         .select('data_vendita, totale')
         .gte('data_vendita', '2026-01-01')
         .lt('data_vendita',  '2027-01-01')
         .not('totale', 'is', null);
+
+      if (isAdmin && filtroVenditore) {
+        query = query.eq('operatore', filtroVenditore);
+      } else if (!isAdmin) {
+        query = query.eq('operatore', operatoreLoggato);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -137,7 +168,7 @@ export default function BudgetAdmin({ onNavigate }) {
 
   useEffect(() => {
     if (autenticato) caricaDati();
-  }, [autenticato]);
+  }, [autenticato, filtroVenditore]);
 
   // ── Righe tabella ─────────────────────────────────────────────────────────
   const righe = useMemo(() => {
@@ -476,6 +507,35 @@ export default function BudgetAdmin({ onNavigate }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Filtro venditore (solo admin) */}
+      {isAdmin && (
+        <div className="px-4 pt-3 pb-1 flex items-center gap-3">
+          <label className="text-sm text-gray-500 font-medium">Venditore:</label>
+          <select
+            value={filtroVenditore}
+            onChange={e => setFiltroVenditore(e.target.value)}
+            className="border-2 border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-green-500 bg-white"
+          >
+            <option value="">— Tutti —</option>
+            {venditori.map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+          {filtroVenditore && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+              {filtroVenditore}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Intestazione venditore (non admin) */}
+      {!isAdmin && operatoreLoggato && (
+        <div className="px-4 pt-3 pb-1">
+          <span className="text-sm text-gray-500">Dati di: <strong className="text-gray-700">{operatoreLoggato}</strong></span>
         </div>
       )}
 

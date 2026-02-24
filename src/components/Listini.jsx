@@ -230,15 +230,6 @@ function parseGeogreen(workbook) {
   return prodotti
 }
 
-// ========== HELPER PROMO ==========
-const isPromoAttiva = (p) => {
-  if (!p.prezzo_promo) return false;
-  const oggi = new Date().toISOString().split('T')[0];
-  if (p.promo_dal && oggi < p.promo_dal) return false;
-  if (p.promo_al && oggi > p.promo_al) return false;
-  return true;
-};
-
 // ========== COMPONENTE PRINCIPALE ==========
 export default function Listini({ onNavigate }) {
   const [tab, setTab] = useState('cerca')
@@ -335,7 +326,7 @@ export default function Listini({ onNavigate }) {
     const { data } = await supabase
       .from('listini')
       .select('*')
-      .or(`codice.ilike.%${valore}%,descrizione.ilike.%${valore}%`)
+      .or(`codice.ilike.%${valore}%,descrizione.ilike.%${valore}%,brand.ilike.%${valore}%,categoria.ilike.%${valore}%`)
       .order('brand')
       .limit(30)
     setRisultati(data || [])
@@ -411,7 +402,7 @@ export default function Listini({ onNavigate }) {
             {risultati.length > 0 && (
               <div className="mt-4 space-y-2">
                 {risultati.map(p => (
-                  <div key={p.id} className={`border rounded-lg p-3 hover:bg-gray-50 ${isPromoAttiva(p) ? 'border-orange-300 bg-orange-50' : ''}`}>
+                  <div key={p.id} className="border rounded-lg p-3 hover:bg-gray-50">
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -419,38 +410,14 @@ export default function Listini({ onNavigate }) {
                             {p.brand}
                           </span>
                           <span className="font-mono text-sm text-gray-500">{p.codice}</span>
-                          {isPromoAttiva(p) && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white">
-                              🏷️ PROMO
-                            </span>
-                          )}
                         </div>
                         <p className="font-medium text-gray-800">{p.descrizione}</p>
                         {p.categoria && <p className="text-xs text-gray-400 mt-0.5">{p.categoria}</p>}
                         {p.confezione && <p className="text-sm text-gray-500">Conf. {p.confezione}</p>}
-                        {isPromoAttiva(p) && (p.promo_dal || p.promo_al) && (
-                          <p className="text-xs text-orange-500 mt-0.5">
-                            {p.promo_dal && `Dal ${new Date(p.promo_dal).toLocaleDateString('it-IT')}`}
-                            {p.promo_dal && p.promo_al && ' '}
-                            {p.promo_al && `al ${new Date(p.promo_al).toLocaleDateString('it-IT')}`}
-                          </p>
-                        )}
                       </div>
                       <div className="text-right space-y-1 ml-4 flex-shrink-0">
-                        {/* Promo attiva: mostra prezzo promo in evidenza, normale barrato */}
-                        {isPromoAttiva(p) ? (
-                          <>
-                            <div>
-                              <span className="text-xs text-orange-500 font-medium">Promo</span>
-                              <p className="font-bold text-lg text-orange-600">€ {p.prezzo_promo.toFixed(2)}</p>
-                            </div>
-                            {/* Prezzo di riferimento barrato */}
-                            {(['ECHO', 'WEIBANG'].includes(p.brand) && p.prezzo_b)
-                              ? <p className="text-xs text-gray-400 line-through">Web € {p.prezzo_b.toFixed(2)}</p>
-                              : p.prezzo_a && <p className="text-xs text-gray-400 line-through">Listino € {p.prezzo_a.toFixed(2)}</p>
-                            }
-                          </>
-                        ) : ['ECHO', 'WEIBANG'].includes(p.brand) && p.prezzo_b ? (
+                        {/* Brand con Listino/Web (ECHO, WEIBANG): mostra Web come prezzo principale */}
+                        {['ECHO', 'WEIBANG'].includes(p.brand) && p.prezzo_b ? (
                           <>
                             <div>
                               <span className="text-xs text-gray-400">Vendita</span>
@@ -471,8 +438,8 @@ export default function Listini({ onNavigate }) {
                             {p.prezzo_b && <p className="text-sm text-gray-500">B: € {p.prezzo_b.toFixed(2)}</p>}
                           </>
                         )}
-                        {!isPromoAttiva(p) && p.prezzo_c && <p className="text-sm text-gray-500">C: € {p.prezzo_c.toFixed(2)}</p>}
-                        {!isPromoAttiva(p) && p.prezzo_d && <p className="text-sm text-gray-500">D: € {p.prezzo_d.toFixed(2)}</p>}
+                        {p.prezzo_c && <p className="text-sm text-gray-500">C: € {p.prezzo_c.toFixed(2)}</p>}
+                        {p.prezzo_d && <p className="text-sm text-gray-500">D: € {p.prezzo_d.toFixed(2)}</p>}
                         {p.iva && <p className="text-xs text-gray-400">IVA {p.iva}%</p>}
                       </div>
                     </div>

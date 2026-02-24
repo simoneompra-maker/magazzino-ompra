@@ -186,28 +186,35 @@ export default function BudgetAdmin({ onNavigate }) {
   // ── Righe tabella ─────────────────────────────────────────────────────────
   const righe = useMemo(() => {
     const tot_semane = 52;
-    let rolling = 0;
+    let rolling2026 = 0;
+    let rolling2025 = 0;
     return Array.from({ length: tot_semane }, (_, i) => {
-      const w     = i + 1;
-      const base  = REALIZZATO_2025[w] || 0;
-      const min   = base * MULT_MINIMO;
-      const tgt   = base * MULT_TARGET;
-      const allin = base * MULT_ALLIN;
-      const real  = realizzato2026[w] || null;
+      const w       = i + 1;
+      const base    = REALIZZATO_2025[w] || 0;
+      const min     = base * MULT_MINIMO;
+      const tgt     = base * MULT_TARGET;
+      const allin   = base * MULT_ALLIN;
+      const real    = realizzato2026[w] || null;
       const passata = w < settimanaCorrente;
       const corrente = w === settimanaCorrente;
 
-      rolling += real || 0;
+      rolling2026 += real || 0;
+      rolling2025 += base;
+
+      const roll26   = (real != null || passata) ? rolling2026 : null;
+      const perc_yoy = roll26 != null && rolling2025 > 0
+        ? ((roll26 / rolling2025 - 1) * 100)
+        : null;
 
       return {
         w,
         base,
         min,   delta_min:   real != null ? real - min   : null,
         tgt,   delta_tgt:   real != null ? real - tgt   : null,
-        perc_tgt: real != null && tgt ? ((real / tgt - 1) * 100) : null,
         allin, delta_allin: real != null ? real - allin : null,
         real,
-        rolling: real != null || passata ? rolling : null,
+        rolling: roll26,
+        perc_yoy,
         passata,
         corrente,
       };

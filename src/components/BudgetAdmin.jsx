@@ -133,9 +133,9 @@ export default function BudgetAdmin({ onNavigate }) {
       // Query con filtro operatore
       let query = supabase
         .from('commissioni')
-        .select('data_vendita, totale')
-        .gte('data_vendita', '2026-01-01')
-        .lt('data_vendita',  '2027-01-01')
+        .select('created_at, totale')
+        .gte('created_at', '2026-01-01')
+        .lt('created_at',  '2027-01-01')
         .not('totale', 'is', null);
 
       if (isAdmin && filtroVenditore) {
@@ -151,8 +151,8 @@ export default function BudgetAdmin({ onNavigate }) {
       // Raggruppa per settimana ISO
       const per_settimana = {};
       for (const c of (data || [])) {
-        const w = isoWeek(c.data_vendita);
-        const y = isoYear(c.data_vendita);
+        const w = isoWeek(c.created_at);
+        const y = isoYear(c.created_at);
         if (!w || y !== 2026) continue;
         per_settimana[w] = (per_settimana[w] || 0) + (parseFloat(c.totale) || 0);
       }

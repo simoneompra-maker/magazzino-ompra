@@ -568,17 +568,17 @@ export default function BudgetAdmin({ onNavigate }) {
         <table className="w-full text-xs bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
           <thead>
             <tr className="bg-gray-800 text-white">
-              <th className="px-2 py-2 text-center w-10">Sett.</th>
-              <th className="px-2 py-2 text-right">2025</th>
-              <th className="px-2 py-2 text-right">Min +10%</th>
-              <th className="px-2 py-2 text-right">Δ Min</th>
-              <th className="px-2 py-2 text-right">Target +15%</th>
-              <th className="px-2 py-2 text-right">Δ Target</th>
-              <th className="px-2 py-2 text-right">All-In +20%</th>
-              <th className="px-2 py-2 text-right">Δ All-In</th>
-              <th className="px-2 py-2 text-right font-bold">Realizzato</th>
-              <th className="px-2 py-2 text-right">Rolling</th>
-              <th className="px-2 py-2 text-right">% YoY</th>
+              <th className="px-1 py-2 text-center w-8">S.</th>
+              <th className="px-1 py-2 text-right">2025</th>
+              <th className="px-1 py-2 text-right">Min</th>
+              <th className="px-1 py-2 text-right">Δ Min</th>
+              <th className="px-1 py-2 text-right">Target</th>
+              <th className="px-1 py-2 text-right">Δ Tgt</th>
+              <th className="px-1 py-2 text-right">All-In</th>
+              <th className="px-1 py-2 text-right">Δ AI</th>
+              <th className="px-1 py-2 text-right font-bold">Reale</th>
+              <th className="px-1 py-2 text-right">Rolling</th>
+              <th className="px-1 py-2 text-right">%YoY</th>
             </tr>
           </thead>
           <tbody>
@@ -604,29 +604,29 @@ export default function BudgetAdmin({ onNavigate }) {
 
               return (
                 <tr key={r.w} className={`border-t border-gray-100 ${rowClass}`}>
-                  <td className="px-2 py-1.5 text-center font-mono text-gray-500">
+                  <td className="px-1 py-1 text-center font-mono text-gray-500 text-xs">
                     {r.corrente ? <span className="bg-yellow-400 text-gray-800 px-1.5 rounded font-bold">{r.w}</span> : r.w}
                   </td>
-                  <td className="px-2 py-1.5 text-right text-gray-500 font-mono">{r.base ? fmt(r.base) : '—'}</td>
-                  <td className="px-2 py-1.5 text-right text-blue-700 font-mono">{r.min ? fmt(r.min) : '—'}</td>
-                  <td className={`px-2 py-1.5 text-right font-mono ${deltaColor(r.delta_min)}`}>
+                  <td className="px-1 py-1 text-right text-gray-500 font-mono text-xs">{r.base ? fmt(r.base) : '—'}</td>
+                  <td className="px-1 py-1 text-right text-blue-700 font-mono text-xs">{r.min ? fmt(r.min) : '—'}</td>
+                  <td className={`px-1 py-1 text-right font-mono text-xs ${deltaColor(r.delta_min)}`}>
                     {r.delta_min != null ? <>{fmtDelta(r.delta_min)}<DeltaIcon v={r.delta_min} /></> : '—'}
                   </td>
-                  <td className="px-2 py-1.5 text-right text-blue-800 font-mono font-medium">{r.tgt ? fmt(r.tgt) : '—'}</td>
-                  <td className={`px-2 py-1.5 text-right font-mono ${deltaColor(r.delta_tgt)}`}>
+                  <td className="px-1 py-1 text-right text-blue-800 font-mono font-medium text-xs">{r.tgt ? fmt(r.tgt) : '—'}</td>
+                  <td className={`px-1 py-1 text-right font-mono text-xs ${deltaColor(r.delta_tgt)}`}>
                     {r.delta_tgt != null ? <>{fmtDelta(r.delta_tgt)}<DeltaIcon v={r.delta_tgt} /></> : '—'}
                   </td>
-                  <td className="px-2 py-1.5 text-right text-indigo-700 font-mono">{r.allin ? fmt(r.allin) : '—'}</td>
-                  <td className={`px-2 py-1.5 text-right font-mono ${deltaColor(r.delta_allin)}`}>
+                  <td className="px-1 py-1 text-right text-indigo-700 font-mono text-xs">{r.allin ? fmt(r.allin) : '—'}</td>
+                  <td className={`px-1 py-1 text-right font-mono text-xs ${deltaColor(r.delta_allin)}`}>
                     {r.delta_allin != null ? <>{fmtDelta(r.delta_allin)}<DeltaIcon v={r.delta_allin} /></> : '—'}
                   </td>
-                  <td className="px-2 py-1.5 text-right font-mono font-bold text-gray-800">
+                  <td className="px-1 py-1 text-right font-mono font-bold text-gray-800 text-xs">
                     {r.real != null ? fmt(r.real) : isFutura ? '' : <span className="text-orange-400 font-normal text-xs">n.d.</span>}
                   </td>
-                  <td className="px-2 py-1.5 text-right font-mono text-gray-600">
+                  <td className="px-1 py-1 text-right font-mono text-gray-600 text-xs">
                     {r.rolling != null ? fmt(r.rolling) : ''}
                   </td>
-                  <td className={`px-2 py-1.5 text-right font-mono font-semibold ${r.perc_yoy != null ? (r.perc_yoy >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-300'}`}>
+                  <td className={`px-1 py-1 text-right font-mono font-semibold text-xs ${r.perc_yoy != null ? (r.perc_yoy >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-300'}`}>
                     {r.perc_yoy != null ? `${r.perc_yoy >= 0 ? '+' : ''}${r.perc_yoy.toFixed(1)}%` : '—'}
                   </td>
                 </tr>
@@ -634,37 +634,37 @@ export default function BudgetAdmin({ onNavigate }) {
             })}
             {/* Riga totali */}
             <tr className="bg-gray-800 text-white font-bold border-t-2 border-gray-600">
-              <td className="px-2 py-2 text-center">TOT</td>
-              <td className="px-2 py-2 text-right font-mono">{fmt(totali.tot_base)}</td>
-              <td className="px-2 py-2 text-right font-mono">{fmt(totali.tot_min)}</td>
-              <td className="px-2 py-2 text-right font-mono">
+              <td className="px-1 py-1.5 text-center text-xs">TOT</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">{fmt(totali.tot_base)}</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">{fmt(totali.tot_min)}</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">
                 {totali.tot_real ? <span className={totali.tot_real >= totali.tot_min ? 'text-green-300' : 'text-red-300'}>{fmtDelta(totali.tot_real - totali.tot_min)}</span> : '—'}
               </td>
-              <td className="px-2 py-2 text-right font-mono">{fmt(totali.tot_tgt)}</td>
-              <td className="px-2 py-2 text-right font-mono">
+              <td className="px-1 py-1.5 text-right font-mono text-xs">{fmt(totali.tot_tgt)}</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">
                 {totali.tot_real ? <span className={totali.tot_real >= totali.tot_tgt ? 'text-green-300' : 'text-red-300'}>{fmtDelta(totali.tot_real - totali.tot_tgt)}</span> : '—'}
               </td>
-              <td className="px-2 py-2 text-right font-mono">{fmt(totali.tot_allin)}</td>
-              <td className="px-2 py-2 text-right font-mono">
+              <td className="px-1 py-1.5 text-right font-mono text-xs">{fmt(totali.tot_allin)}</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">
                 {totali.tot_real ? <span className={totali.tot_real >= totali.tot_allin ? 'text-green-300' : 'text-red-300'}>{fmtDelta(totali.tot_real - totali.tot_allin)}</span> : '—'}
               </td>
-              <td className="px-2 py-2 text-right font-mono">{totali.tot_real ? fmt(totali.tot_real) : '—'}</td>
-              <td className="px-2 py-2 text-right font-mono">{totali.tot_real ? fmt(totali.tot_real) : '—'}</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">{totali.tot_real ? fmt(totali.tot_real) : '—'}</td>
+              <td className="px-1 py-1.5 text-right font-mono text-xs">{totali.tot_real ? fmt(totali.tot_real) : '—'}</td>
               <td className={`px-2 py-2 text-right font-mono font-bold ${totali.tot_real && totali.tot_base ? (totali.tot_real >= totali.tot_base ? 'text-green-300' : 'text-red-300') : ''}`}>
                 {totali.tot_real && totali.tot_base ? `${((totali.tot_real / totali.tot_base - 1) * 100) >= 0 ? '+' : ''}${((totali.tot_real / totali.tot_base - 1) * 100).toFixed(1)}%` : '—'}
               </td>
             </tr>
             {/* Riga percentuali */}
             <tr className="bg-gray-700 text-gray-300 text-xs">
-              <td className="px-2 py-1.5 text-center">%</td>
-              <td className="px-2 py-1.5 text-right">2025</td>
-              <td className="px-2 py-1.5 text-right">+10,0%</td>
+              <td className="px-1 py-1.5 text-center text-xs">%</td>
+              <td className="px-1 py-1.5 text-right text-xs">2025</td>
+              <td className="px-1 py-1.5 text-right text-xs">+10,0%</td>
               <td></td>
-              <td className="px-2 py-1.5 text-right">+15,0%</td>
+              <td className="px-1 py-1.5 text-right text-xs">+15,0%</td>
               <td></td>
-              <td className="px-2 py-1.5 text-right">+20,0%</td>
+              <td className="px-1 py-1.5 text-right text-xs">+20,0%</td>
               <td></td>
-              <td className="px-2 py-1.5 text-right font-mono text-white">
+              <td className="px-1 py-1.5 text-right font-mono text-white text-xs">
                 {totali.tot_real && totali.tot_base
                   ? `${((totali.tot_real / totali.tot_base - 1) * 100).toFixed(2)}%`
                   : '—'}

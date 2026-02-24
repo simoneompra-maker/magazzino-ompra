@@ -12,6 +12,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const recoverMissingCommissioni = useStore((state) => state.recoverMissingCommissioni);
   const cleanDuplicateCommissioni = useStore((state) => state.cleanDuplicateCommissioni);
   
+  // Operatore loggato
+  const operatoreLoggato = (() => {
+    try { return localStorage.getItem('ompra_ultimo_operatore') || ''; } catch { return ''; }
+  })();
+  const isAdmin = operatoreLoggato.toLowerCase() === 'admin';
+
+  // Filtro venditore (solo admin)
+  const [filtroVenditore, setFiltroVenditore] = useState('');
+
   // Default a "Chiuse"
   const [filterStatus, setFilterStatus] = useState('completed');
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,10 +56,24 @@ export default function ArchivioCommissioni({ onNavigate }) {
     completed: commissioni.filter(c => c.status === 'completed').length
   }), [commissioni]);
 
+  // Lista venditori unici (solo admin)
+  const venditori = useMemo(() => {
+    if (!isAdmin) return [];
+    return [...new Set(commissioni.map(c => c.operatore).filter(Boolean))].sort();
+  }, [commissioni, isAdmin]);
+
   // Filtra commissioni
   const filteredCommissioni = useMemo(() => {
     return commissioni
       .filter(c => {
+        // Filtro per operatore: venditore vede solo le sue, admin filtra per scelta
+        if (!isAdmin && operatoreLoggato) {
+          if (c.operatore !== operatoreLoggato) return false;
+        }
+        if (isAdmin && filtroVenditore) {
+          if (c.operatore !== filtroVenditore) return false;
+        }
+
         if (filterStatus === 'pending' && c.status !== 'pending') return false;
         if (filterStatus === 'completed' && c.status !== 'completed') return false;
         
@@ -67,7 +90,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
         return true;
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [commissioni, filterStatus, searchTerm]);
+  }, [commissioni, filterStatus, searchTerm, isAdmin, operatoreLoggato, filtroVenditore]);
 
   // Formatta data
   const formatDate = (dateString) => {
@@ -945,6 +968,29 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
       {/* Filtri */}
       <div className="p-4 bg-white border-b space-y-3">
+          {/* Filtro venditore (solo admin) */}
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Venditore:</span>
+              <select
+                value={filtroVenditore}
+                onChange={e => setFiltroVenditore(e.target.value)}
+                className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">— Tutti —</option>
+                {venditori.map(v => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {/* Badge venditore (non admin) */}
+          {!isAdmin && operatoreLoggato && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Le tue commissioni:</span>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">{operatoreLoggato}</span>
+            </div>
+          )}
         {/* Ricerca */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

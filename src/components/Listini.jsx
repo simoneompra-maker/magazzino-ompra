@@ -333,17 +333,19 @@ export default function Listini({ onNavigate }) {
   // Ricerca prodotti
   const handleCerca = async (valore) => {
     setQuery(valore)
-    if (valore.trim().length < 2) {
+    const parole = valore.trim().toLowerCase().split(/\s+/).filter(p => p.length >= 1)
+    if (parole.length === 0 || (parole.length === 1 && parole[0].length < 2)) {
       setRisultati([])
       return
     }
     setCercando(true)
-    const { data } = await supabase
-      .from('listini')
-      .select('*')
-      .or(`codice.ilike.%${valore}%,descrizione.ilike.%${valore}%,brand.ilike.%${valore}%,categoria.ilike.%${valore}%`)
-      .order('brand')
-      .limit(30)
+
+    // Ogni parola deve matchare in almeno uno dei campi (AND tra parole)
+    let query = supabase.from('listini').select('*')
+    for (const parola of parole) {
+      query = query.or(`codice.ilike.%${parola}%,descrizione.ilike.%${parola}%,brand.ilike.%${parola}%,categoria.ilike.%${parola}%`)
+    }
+    const { data } = await query.order('brand').limit(50)
     setRisultati(data || [])
     setCercando(false)
   }

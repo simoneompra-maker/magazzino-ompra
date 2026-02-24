@@ -294,6 +294,73 @@ function parseGeogreen(workbook) {
   return prodotti
 }
 
+function parseHondaExcel(workbook) {
+  const prodotti = []
+  const parsePrezzo = (val) => {
+    if (val == null) return 0
+    const s = String(val).replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.')
+    return parseFloat(s) || 0
+  }
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName]
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
+    let brand = 'HONDA'
+    let categoria = ''
+
+    for (const row of rows) {
+      // Cerca brand nella riga
+      const rowText = row.filter(Boolean).join(' ').toUpperCase()
+      if (/\bHONDA\b/.test(rowText) && !row[4]) continue  // riga header brand
+      if (/^descrizione/i.test(String(row[1] || ''))) continue  // riga intestazione colonne
+
+      const descrizione = String(row[1] || '').trim()
+      const dimensione = String(row[2] || '').trim()
+      const prezzoRaw = row[4]
+
+      // Riga categoria (testo senza prezzo, tutto maiuscolo)
+      if (!prezzoRaw && descrizione && descrizione === descrizione.toUpperCase() && descrizione.length > 3) {
+        categoria = descrizione
+        continue
+      }
+
+      const prezzo = parsePrezzo(prezzoRaw)
+      if (!prezzo || !descrizione || descrizione.length < 3) continue
+
+      // Descrizione completa = descrizione + dimensione
+      const descCompleta = dimensione ? `${descrizione} ${dimensione}`.trim() : descrizione
+
+      // Estrai codice: prima cerca codice compatto (HHB36AXB, DP3620XA...)
+      const compactMatch = descCompleta.match(/\b((?:HH[BTCGH]|DP|CV)\d+\w*)\b/i)
+      const modelMatch = !compactMatch && descCompleta.match(/\b((?:HRG|HRX|HRA)\s+\d+[\w\s]*)(?=\s+\d{2}\s*CM|\s+\+|$)/i)
+      let codice
+      if (compactMatch) {
+        codice = compactMatch[1].toUpperCase()
+      } else if (modelMatch) {
+        codice = modelMatch[1].trim().replace(/\s*(\d{2}\s*CM.*)$/i,'').replace(/\s+/g,'').toUpperCase()
+      } else {
+        codice = descCompleta.replace(/\s+/g,'_').toUpperCase().substring(0, 25)
+      }
+
+      prodotti.push({
+        brand,
+        categoria,
+        codice,
+        descrizione: descCompleta,
+        confezione: null,
+        prezzo_a: prezzo,
+        prezzo_b: null,
+        prezzo_c: null,
+        prezzo_d: null,
+        iva: 22,
+      })
+    }
+  }
+
+  return Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {}))
+}
+
+
 // ========== COMPONENTE PRINCIPALE ==========
 export default function Listini({ onNavigate }) {
   const [tab, setTab] = useState('cerca')
@@ -334,10 +401,14 @@ export default function Listini({ onNavigate }) {
         }
       } else {
         const wb = XLSX.read(buffer, { type: 'array' })
-        const prodotti = parseGeogreen(wb)
+        // Rileva tipo listino Excel: Honda o Geogreen
+        const sheetText = wb.SheetNames.map(s => s + ' ' + (XLSX.utils.sheet_to_csv(wb.Sheets[s]) || '')).join(' ')
+        const isHonda = /\bHONDA\b/i.test(sheetText)
+        const prodotti = isHonda ? parseHondaExcel(wb) : parseGeogreen(wb)
         setAnteprima(prodotti)
         if (prodotti.length === 0) {
-          setMessaggio({ tipo: 'errore', testo: 'Nessun prodotto trovato. Verifica che il file sia il listino Geogreen corretto.' })
+          const hint = isHonda ? 'Verifica che il file contenga le colonne descrizione e prezzo.' : 'Verifica che il file sia il listino Geogreen corretto (fogli STAMPA SEME / STAMPA CONCIMI).'
+          setMessaggio({ tipo: 'errore', testo: `Nessun prodotto trovato. ${hint}` })
         }
       }
     } catch (err) {

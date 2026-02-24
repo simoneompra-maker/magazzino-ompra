@@ -91,6 +91,30 @@ async function parsePDFListino(arrayBuffer) {
     /PERFECTION\s+IS/i,
   ]
 
+  // ── Parser specifico HONDA (un solo prezzo, codici HR*/HH*/DP*/CV*) ──────
+  if (brand === 'HONDA') {
+    const hondaCodePattern = /\b(HR[A-Z]\d[\w\-]+|HH[A-Z]\d[\w\-]+|DP\d[\w\-]+|CV\d[\w\-]+)\b/
+    const hondaSkip = [/^2026/,/^descrizione/i,/^HONDA/i,/MT\/q/i,/SPINTA/i]
+    const parseP = (str) => parseFloat(str.replace(/\./g,'').replace(',','.'))
+    for (const line of allLines) {
+      if (hondaSkip.some(p => p.test(line.trim()))) continue
+      const priceMatch = line.match(/(\d{1,3}(?:\.\d{3})*,\d{2})\s*€?\s*$/)
+      if (!priceMatch) {
+        const upper = line.trim().toUpperCase()
+        if (upper === line.trim() && upper.length > 3 && /^[A-Z\s\+\-\/&0-9]+$/.test(upper) && !upper.includes('HONDA')) categoria = upper
+        continue
+      }
+      const prezzo = parseP(priceMatch[1])
+      if (prezzo <= 0) continue
+      const testoRiga = line.substring(0, line.lastIndexOf(priceMatch[0])).trim()
+      const codeMatch = testoRiga.match(hondaCodePattern)
+      if (!codeMatch) continue
+      prodotti.push({ brand: 'HONDA', categoria, codice: codeMatch[1], descrizione: testoRiga.trim(), confezione: null, prezzo_a: prezzo, prezzo_b: null, prezzo_c: null, prezzo_d: null, iva: 22 })
+    }
+    return Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {}))
+  }
+  // ── Fine parser HONDA ────────────────────────────────────────────────────
+
   for (const line of allLines) {
     // Salta righe header/intestazione
     if (skipPatterns.some(p => p.test(line))) continue
@@ -243,6 +267,8 @@ export default function Listini({ onNavigate }) {
   const [parsing, setParsing] = useState(false)
   const [cronologia, setCronologia] = useState([])
   const [loadingCronologia, setLoadingCronologia] = useState(false)
+  const [cronologia, setCronologia] = useState([])
+  const [loadingCronologia, setLoadingCronologia] = useState(false)
 
   // Gestione file (Excel o PDF)
   const handleFile = async (e) => {
@@ -320,6 +346,17 @@ export default function Listini({ onNavigate }) {
         })
       }
 
+      const brandsImportati = [...new Set(anteprima.map(p => p.brand).filter(Boolean))]
+      const operatore = (() => { try { return localStorage.getItem('ompra_ultimo_operatore') || 'N/D' } catch { return 'N/D' } })()
+      for (const brand of brandsImportati) {
+        const nProdotti = anteprima.filter(p => p.brand === brand).length
+        await supabase.from('listini_log').insert({
+          nome_file: file?.name || 'N/D',
+          brand,
+          n_prodotti: nProdotti,
+          caricato_da: operatore,
+        })
+      }
       setMessaggio({ tipo: 'ok', testo: `✓ Importati ${importati} prodotti con successo.` })
       setAnteprima([])
       setFile(null)
@@ -348,6 +385,17 @@ export default function Listini({ onNavigate }) {
     const { data } = await query.order('brand').limit(50)
     setRisultati(data || [])
     setCercando(false)
+  }
+
+  const caricaCronologia = async () => {
+    setLoadingCronologia(true)
+    const { data } = await supabase
+      .from('listini_log')
+      .select('*')
+      .order('caricato_il', { ascending: false })
+      .limit(50)
+    setCronologia(data || [])
+    setLoadingCronologia(false)
   }
 
   // Carica cronologia upload
@@ -542,6 +590,48 @@ export default function Listini({ onNavigate }) {
                         <td className="px-3 py-2 text-gray-400 text-xs">
                           {new Date(log.caricato_il).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB CRONOLOGIA */}
+        {tab === 'cronologia' && (
+          <div className="bg-white rounded-xl shadow p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-gray-700">Storico caricamenti listini</h2>
+              <button onClick={caricaCronologia} disabled={loadingCronologia} className="text-xs text-gray-500 hover:text-gray-700">
+                {loadingCronologia ? '⏳' : '🔄 Aggiorna'}
+              </button>
+            </div>
+            {loadingCronologia && <p className="text-gray-400 text-sm">Caricamento...</p>}
+            {!loadingCronologia && cronologia.length === 0 && (
+              <p className="text-gray-400 text-sm text-center py-6">Nessun caricamento registrato.<br/>I prossimi upload appariranno qui.</p>
+            )}
+            {cronologia.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+                      <th className="px-3 py-2 text-left">File</th>
+                      <th className="px-3 py-2 text-left">Brand</th>
+                      <th className="px-3 py-2 text-center">Prodotti</th>
+                      <th className="px-3 py-2 text-left">Caricato da</th>
+                      <th className="px-3 py-2 text-left">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cronologia.map((log, i) => (
+                      <tr key={log.id} className={`border-t ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                        <td className="px-3 py-2 text-gray-700 font-mono text-xs max-w-[200px] truncate" title={log.nome_file}>📄 {log.nome_file}</td>
+                        <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${brandColor(log.brand)}`}>{log.brand}</span></td>
+                        <td className="px-3 py-2 text-center font-semibold text-gray-700">{log.n_prodotti}</td>
+                        <td className="px-3 py-2 text-gray-500 text-xs">{log.caricato_da}</td>
+                        <td className="px-3 py-2 text-gray-400 text-xs">{new Date(log.caricato_il).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                       </tr>
                     ))}
                   </tbody>

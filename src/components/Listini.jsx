@@ -378,6 +378,7 @@ export default function Listini({ onNavigate }) {
   const [risultati, setRisultati] = useState([])
   const [cercando, setCercando] = useState(false)
   const [parsing, setParsing] = useState(false)
+  const [versioneListino, setVersioneListino] = useState('')
   const [cronologia, setCronologia] = useState([])
   const [loadingCronologia, setLoadingCronologia] = useState(false)
 
@@ -413,7 +414,7 @@ export default function Listini({ onNavigate }) {
         }) || /honda/i.test(file?.name || '')
         const hondaResult = isHonda ? parseHondaExcel(wb) : null
         const prodotti = isHonda ? hondaResult.prodotti : parseGeogreen(wb)
-        const versioneListino = isHonda ? hondaResult.versione : ''
+        setVersioneListino(isHonda ? (hondaResult.versione || '') : '')
         setAnteprima(prodotti)
         if (prodotti.length === 0) {
           const hint = isHonda ? 'Verifica che il file contenga le colonne descrizione e prezzo.' : 'Verifica che il file sia il listino Geogreen corretto (fogli STAMPA SEME / STAMPA CONCIMI).'

@@ -38,12 +38,16 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
   const inventoryCount = useStore((state) =>
     state.inventory.filter(item => item.status === 'available').length
   );
-  const salesCount = useStore((state) =>
-    state.commissioni.filter(c => c.status === 'completed').length
-  );
-  const pendingCommissioni = useStore((state) =>
-    state.commissioni.filter(c => c.status === 'pending').length
-  );
+  const salesCount = useStore((state) => {
+    const commissioni = state.commissioni;
+    if (isAdmin) return commissioni.filter(c => c.status === 'completed').length;
+    return commissioni.filter(c => c.status === 'completed' && c.operatore === operatoreLoggato).length;
+  });
+  const pendingCommissioni = useStore((state) => {
+    const commissioni = state.commissioni;
+    if (isAdmin) return commissioni.filter(c => c.status === 'pending').length;
+    return commissioni.filter(c => c.status === 'pending' && c.operatore === operatoreLoggato).length;
+  });
 
   const getSyncIcon = () => {
     if (syncStatus === 'success') return <Wifi className="w-4 h-4" style={{ color: '#006B3F' }} />;

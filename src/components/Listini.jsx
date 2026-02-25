@@ -302,6 +302,7 @@ function parseHondaExcel(workbook) {
     return parseFloat(s) || 0
   }
 
+  let versione = ''
   for (const sheetName of workbook.SheetNames) {
     const sheet = workbook.Sheets[sheetName]
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
@@ -318,6 +319,11 @@ function parseHondaExcel(workbook) {
       const dimensione = String(row[2] || '').trim()
       const prezzoRaw = row[4]
 
+      // Skip righe header tipo '2026/2' nella colonna prezzo — ma salva la versione
+      if (prezzoRaw && /^\d{4}[\//\d]*$/.test(String(prezzoRaw).trim())) {
+        versione = String(prezzoRaw).trim()
+        continue
+      }
       // Riga categoria (testo senza prezzo, tutto maiuscolo)
       if (!prezzoRaw && descrizione && descrizione === descrizione.toUpperCase() && descrizione.length > 3) {
         categoria = descrizione
@@ -325,7 +331,7 @@ function parseHondaExcel(workbook) {
       }
 
       const prezzo = parsePrezzo(prezzoRaw)
-      if (!prezzo || !descrizione || descrizione.length < 3) continue
+      if (!prezzo || prezzo > 99000 || prezzo < 1 || !descrizione || descrizione.length < 3) continue
 
       // Descrizione completa = descrizione + dimensione
       const descCompleta = dimensione ? `${descrizione} ${dimensione}`.trim() : descrizione
@@ -357,7 +363,7 @@ function parseHondaExcel(workbook) {
     }
   }
 
-  return Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {}))
+  return { prodotti: Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {})), versione }
 }
 
 
@@ -405,7 +411,9 @@ export default function Listini({ onNavigate }) {
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
           return rows.some(row => row.some(cell => cell && /HONDA/i.test(String(cell))))
         }) || /honda/i.test(file?.name || '')
-        const prodotti = isHonda ? parseHondaExcel(wb) : parseGeogreen(wb)
+        const hondaResult = isHonda ? parseHondaExcel(wb) : null
+        const prodotti = isHonda ? hondaResult.prodotti : parseGeogreen(wb)
+        const versioneListino = isHonda ? hondaResult.versione : ''
         setAnteprima(prodotti)
         if (prodotti.length === 0) {
           const hint = isHonda ? 'Verifica che il file contenga le colonne descrizione e prezzo.' : 'Verifica che il file sia il listino Geogreen corretto (fogli STAMPA SEME / STAMPA CONCIMI).'
@@ -455,6 +463,7 @@ export default function Listini({ onNavigate }) {
           brand,
           n_prodotti: nProdotti,
           caricato_da: operatore,
+          versione: versioneListino || null,
         })
       }
 
@@ -656,6 +665,7 @@ export default function Listini({ onNavigate }) {
                       <th className="px-3 py-2 text-center">Prodotti</th>
                       <th className="px-3 py-2 text-left">Caricato da</th>
                       <th className="px-3 py-2 text-left">Data</th>
+                      <th className="px-3 py-2 text-left">Ver.</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -666,6 +676,7 @@ export default function Listini({ onNavigate }) {
                         <td className="px-3 py-2 text-center font-semibold text-gray-700">{log.n_prodotti}</td>
                         <td className="px-3 py-2 text-gray-500 text-xs">{log.caricato_da}</td>
                         <td className="px-3 py-2 text-gray-400 text-xs">{new Date(log.caricato_il).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                        <td className="px-3 py-2 text-gray-500 text-xs font-mono">{log.versione || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

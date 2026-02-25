@@ -30,7 +30,7 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
 
   const eliminaOperatore = async (nome) => {
     if (nome === 'Admin') return;
-    if (!confirm(\`Eliminare l'operatore "\${nome}"?\`)) return;
+    if (!confirm(`Eliminare l'operatore "${nome}"?`)) return;
     await supabase.from('operatori').delete().eq('nome', nome);
     caricaOperatori();
   };

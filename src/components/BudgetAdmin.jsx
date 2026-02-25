@@ -4,7 +4,8 @@ import { supabase } from '../store';
 import { ArrowLeft, Lock, Download, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ─── PIN ─────────────────────────────────────────────────────────────────────
-const PIN_KEY     = 'ompra_budget_pin';      // localStorage: PIN attivo
+const getOperatore = () => { try { return localStorage.getItem('ompra_ultimo_operatore') || 'default'; } catch { return 'default'; } }
+const getPinKey = () => `ompra_budget_pin_${getOperatore()}`;  // PIN per operatore
 const SESSION_KEY = 'ompra_budget_admin_auth';
 const MASTER_CODE = 'OMPRA2026';             // codice emergenza per reset PIN
 

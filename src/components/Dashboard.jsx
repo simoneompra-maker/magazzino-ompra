@@ -1,8 +1,39 @@
-
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2 } from 'lucide-react';
+import { useState } from 'react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2 } from 'lucide-react';
 import useStore from '../store';
+import { supabase } from '../store';
 
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, onCambiaOperatore }) {
+  const operatoreLoggato = (() => { try { return localStorage.getItem('ompra_ultimo_operatore') || ''; } catch { return ''; } })();
+  const isAdmin = operatoreLoggato.toLowerCase() === 'admin';
+
+  // Gestione operatori (solo Admin)
+  const [showGestioneOp, setShowGestioneOp] = useState(false);
+  const [operatori, setOperatori] = useState([]);
+  const [nuovoOp, setNuovoOp] = useState('');
+  const [loadingOp, setLoadingOp] = useState(false);
+
+  const caricaOperatori = async () => {
+    setLoadingOp(true);
+    const { data } = await supabase.from('operatori').select('nome').order('nome');
+    setOperatori(data || []);
+    setLoadingOp(false);
+  };
+
+  const aggiungiOperatore = async () => {
+    const nome = nuovoOp.trim();
+    if (!nome) return;
+    await supabase.from('operatori').insert({ nome });
+    setNuovoOp('');
+    caricaOperatori();
+  };
+
+  const eliminaOperatore = async (nome) => {
+    if (nome === 'Admin') return;
+    if (!confirm(\`Eliminare l'operatore "\${nome}"?\`)) return;
+    await supabase.from('operatori').delete().eq('nome', nome);
+    caricaOperatori();
+  };
   const syncStatus = useStore((state) => state.syncStatus);
   const inventoryCount = useStore((state) =>
     state.inventory.filter(item => item.status === 'available').length
@@ -44,6 +75,14 @@ export default function Dashboard({ onNavigate }) {
           <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full">
             {getSyncIcon()}
           </div>
+          <button
+            onClick={onCambiaOperatore}
+            className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2 py-1 rounded-full text-xs text-white/80 active:scale-95 transition-transform"
+            title="Cambia operatore"
+          >
+            <UserCircle className="w-3.5 h-3.5" />
+            <span className="max-w-[60px] truncate">{operatoreLoggato}</span>
+          </button>
         </div>
       </div>
 
@@ -89,7 +128,7 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
 
-        {/* ARCHIVIO COMMISSIONI */}
+        {/* ARCHIVIO COMMISSIONI — pulsante principale di cassa */}
         <button
           onClick={() => onNavigate('archivio-commissioni')}
           className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-md active:scale-95 transition-transform text-white"
@@ -151,9 +190,67 @@ export default function Dashboard({ onNavigate }) {
 
       </div>
 
+      {/* Sezione Admin */}
+      {isAdmin && (
+        <div className="mt-2">
+          <button
+            onClick={() => { setShowGestioneOp(!showGestioneOp); if (!showGestioneOp) caricaOperatori(); }}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-gray-100 text-gray-500 text-xs font-medium active:scale-95 transition-transform"
+          >
+            <span>👥 Gestione Operatori</span>
+            <span>{showGestioneOp ? '▲' : '▼'}</span>
+          </button>
+
+          {showGestioneOp && (
+            <div className="mt-2 bg-white rounded-xl border border-gray-200 p-3">
+              {loadingOp ? (
+                <p className="text-gray-400 text-xs text-center py-2">Caricamento...</p>
+              ) : (
+                <div className="space-y-1.5 mb-3">
+                  {operatori.map(({ nome }) => (
+                    <div key={nome} className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-gray-50">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                          style={{ backgroundColor: nome === 'Admin' ? '#374151' : '#006B3F' }}>
+                          {nome.charAt(0)}
+                        </div>
+                        <span className="text-sm text-gray-700">{nome}</span>
+                      </div>
+                      {nome !== 'Admin' && (
+                        <button onClick={() => eliminaOperatore(nome)} className="text-red-400 hover:text-red-600 p-1">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={nuovoOp}
+                  onChange={e => setNuovoOp(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && aggiungiOperatore()}
+                  placeholder="Nome operatore..."
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-green-500"
+                />
+                <button
+                  onClick={aggiungiOperatore}
+                  disabled={!nuovoOp.trim()}
+                  className="px-3 py-1.5 rounded-lg text-white text-sm font-medium disabled:opacity-40"
+                  style={{ backgroundColor: '#006B3F' }}
+                >
+                  <UserPlus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Footer */}
       <div className="mt-3 flex items-center justify-between px-1">
-        <p className="text-xs text-gray-400">v1.3.1 - OMPRA Gestionale</p>
+        <p className="text-xs text-gray-400">v1.3.2 - OMPRA Gestionale</p>
         <button
           onClick={() => onNavigate('budget-admin')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-xs font-semibold active:scale-95 transition-transform"
@@ -162,7 +259,6 @@ export default function Dashboard({ onNavigate }) {
           Budget
         </button>
       </div>
-
     </div>
   );
 }

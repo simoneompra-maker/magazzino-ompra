@@ -9,9 +9,15 @@ import ArchivioCommissioni from './components/ArchivioCommissioni';
 import Listini from './components/Listini';
 import PoliticheCommerciali from './components/PoliticheCommerciali';
 import BudgetAdmin from './components/BudgetAdmin';
+import SelezionaOperatore from './components/SelezionaOperatore';
+
+const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
+  const [operatore, setOperatore] = useState(() => {
+    try { return localStorage.getItem(OPERATORE_KEY) || ''; } catch { return ''; }
+  });
   const init = useStore((state) => state.init);
   const cleanup = useStore((state) => state.cleanup);
 
@@ -20,9 +26,27 @@ function App() {
     return () => cleanup();
   }, []);
 
-  const navigate = (page) => {
-    setCurrentPage(page);
+  const navigate = (page) => setCurrentPage(page);
+
+  const handleSelezionaOperatore = (nome) => {
+    setOperatore(nome);
+    setCurrentPage('home');
   };
+
+  const handleCambiaOperatore = () => {
+    try { localStorage.removeItem(OPERATORE_KEY); } catch {}
+    setOperatore('');
+    setCurrentPage('home');
+  };
+
+  // Mostra selezione operatore se non loggato
+  if (!operatore) {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <SelezionaOperatore onSelezionato={handleSelezionaOperatore} />
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (currentPage) {
@@ -43,7 +67,7 @@ function App() {
       case 'budget-admin':
         return <BudgetAdmin onNavigate={navigate} />;
       default:
-        return <Dashboard onNavigate={navigate} />;
+        return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }
   };
 

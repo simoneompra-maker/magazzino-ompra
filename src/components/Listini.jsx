@@ -32,12 +32,10 @@ async function parsePDFListino(arrayBuffer) {
     const tc = await page.getTextContent()
     const items = tc.items.filter(i => i.str.trim())
 
-    // Raggruppa per riga (stessa Y con tolleranza 4px)
     const rows = []
     let currentRow = []
     let currentY = null
 
-    // Ordina: dall'alto al basso, poi da sinistra a destra
     const sorted = [...items].sort((a, b) => {
       const dy = b.transform[5] - a.transform[5]
       if (Math.abs(dy) > 4) return dy
@@ -56,7 +54,6 @@ async function parsePDFListino(arrayBuffer) {
     }
     if (currentRow.length > 0) rows.push(currentRow)
 
-    // Unisci ogni riga in una stringa
     for (const row of rows) {
       row.sort((a, b) => a.transform[4] - b.transform[4])
       const line = row.map(i => i.str).join(' ').trim()
@@ -64,7 +61,6 @@ async function parsePDFListino(arrayBuffer) {
     }
   }
 
-  // Rileva il brand dal contenuto
   const fullText = allLines.join('\n')
   let brand = ''
   if (/\bECHO\b/i.test(fullText)) brand = 'ECHO'
@@ -77,10 +73,8 @@ async function parsePDFListino(arrayBuffer) {
   const prodotti = []
   let categoria = ''
 
-  // Pattern per codici noti
   const codicePatterns = /\b(ECM\S+|ECA\S+|OFF\d+\S*|WBM\S+|WBA\S+|WBR\S+)\b/
 
-  // Righe da ignorare
   const skipPatterns = [
     /ARTICOLO.*CODICE/i,
     /PREZZO\s+LISTINO/i,
@@ -91,13 +85,10 @@ async function parsePDFListino(arrayBuffer) {
     /PERFECTION\s+IS/i,
   ]
 
-  // ── Parser specifico HONDA (formato: DESCRIZIONE € prezzo) ──────────────
   if (brand === 'HONDA') {
     const parseP = (str) => parseFloat(str.replace(/\./g,'').replace(',','.'))
     const hondaSkip = [/^2026/i, /^descrizione/i, /^HONDA/i, /MT\/q/i, /^SPINTA$/i, /^ex\./i, /^VENDITA$/i]
-    // Pattern prezzo: € 500,00 oppure 500,00 € oppure € 1.050,00
     const priceRegex = /€\s*(\d{1,3}(?:\.\d{3})*,\d{2})|(\d{1,3}(?:\.\d{3})*,\d{2})\s*€/
-    // Pattern codice modello Honda: HRG, HRX, HHB, HHT, HHC, DP, CV + numeri
     const modelRegex = /\b((?:HRG|HRX|HRA|HHB|HHT|HHC|HHD|DP|CV)\s*\d[\w\s]*?)\s+(?:\d{2}\s*CM|€|\d+\s*Ah)/i
 
     for (const line of allLines) {
@@ -105,10 +96,8 @@ async function parsePDFListino(arrayBuffer) {
       if (!trimmed) continue
       if (hondaSkip.some(p => p.test(trimmed))) continue
 
-      // Cerca prezzo nella riga
       const pm = trimmed.match(priceRegex)
       if (!pm) {
-        // Potrebbe essere una categoria (tutto maiuscolo, no prezzi)
         const upper = trimmed.toUpperCase()
         if (upper === trimmed && upper.length > 3 && /^[A-ZÀÈÉÌÒÙ\s\+\-\/&0-9]+$/.test(upper) && !['HONDA','BATTERIA HONDA'].includes(upper.trim())) {
           categoria = upper.trim()
@@ -119,14 +108,10 @@ async function parsePDFListino(arrayBuffer) {
       const prezzo = parseP(pm[1] || pm[2])
       if (!prezzo || prezzo <= 0) continue
 
-      // Rimuovi il prezzo dalla riga per ottenere la descrizione
       const descrizione = trimmed.replace(priceRegex, '').replace(/€/g, '').trim()
       if (!descrizione || descrizione.length < 3) continue
 
-      // Estrai codice modello dalla descrizione
-      // Prima cerca codice compatto (lettere+numeri senza spazi): HHB36AXB, DP3620XA, CV3680XA
       const compactMatch = descrizione.match(/\b((?:HH[BTCG]|DP|CV|IZY)\d+\w*)\b/i)
-      // Poi cerca codice con spazi tipo HRG 416 XB PE, HRX 476 XB
       const modelMatch = !compactMatch && descrizione.match(/\b((?:HRG|HRX|HRA)\s+\d+[\w\s]*)(?=\s+\d{2}\s*CM|\s+\+|\s*$)/i)
       let codice
       if (compactMatch) {
@@ -134,7 +119,6 @@ async function parsePDFListino(arrayBuffer) {
       } else if (modelMatch) {
         codice = modelMatch[1].replace(/\s+/g, '').toUpperCase()
       } else {
-        // Fallback: prende le prime parole significative
         codice = descrizione.replace(/\s+/g, '_').toUpperCase().substring(0, 20)
       }
 
@@ -153,13 +137,10 @@ async function parsePDFListino(arrayBuffer) {
     }
     return Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {}))
   }
-  // ── Fine parser HONDA ────────────────────────────────────────────────────
 
   for (const line of allLines) {
-    // Salta righe header/intestazione
     if (skipPatterns.some(p => p.test(line))) continue
 
-    // Trova prezzi nella riga (formato: 1.234,56 o 234,56 seguite opzionalmente da €)
     const prezzi = []
     const priceRegexLocal = /(\d{1,3}(?:\.\d{3})*,\d{2})\s*€?/g
     let m
@@ -167,15 +148,12 @@ async function parsePDFListino(arrayBuffer) {
       prezzi.push(m[1])
     }
 
-    // Rileva categorie: righe tutto maiuscolo senza prezzi e senza codice
     if (prezzi.length === 0) {
       const upper = line.trim().toUpperCase()
       if (upper === line.trim() && upper.length > 3 && /^[A-Z\s\+\-\/&0-9]+$/.test(upper)) {
-        // Escludi brand headers e titoli generici
         if (!upper.includes('ECHO') && !upper.includes('WEIBANG') && !upper.includes('GARDEN')) {
           categoria = upper
         }
-        // Gestisci "GAMMA A BATTERIA..." come categoria
         if (upper.startsWith('GAMMA A BATTERIA')) {
           categoria = upper
         }
@@ -183,43 +161,30 @@ async function parsePDFListino(arrayBuffer) {
       continue
     }
 
-    // Una riga prodotto deve avere almeno 2 prezzi e un codice riconosciuto
     if (prezzi.length < 2) continue
 
     const codiceMatch = line.match(codicePatterns)
     if (!codiceMatch) continue
 
     const codice = codiceMatch[1]
-
-    // Estrai articolo (prima del codice) e descrizione (dopo codice, prima dei prezzi)
     const codiceIdx = line.indexOf(codice)
     const articolo = line.substring(0, codiceIdx).trim()
-
-    // Trova dove inizia il primo prezzo
     const firstPriceStr = prezzi[0]
     const priceStartIdx = line.indexOf(firstPriceStr)
     let descrizione = line.substring(codiceIdx + codice.length, priceStartIdx).trim()
-
-    // Se la descrizione e vuota, usa l'articolo
     if (!descrizione) descrizione = articolo
 
-    // Parsa i prezzi
-    const parsePrezzo = (str) => {
-      return parseFloat(str.replace(/\./g, '').replace(',', '.'))
-    }
-
+    const parsePrezzo = (str) => parseFloat(str.replace(/\./g, '').replace(',', '.'))
     const prezzoListino = parsePrezzo(prezzi[0])
     const prezzoWeb = parsePrezzo(prezzi[1])
 
     if (prezzoListino > 0 && codice.length > 3) {
-      // Se il brand non è stato rilevato dal testo, inferisci dal prefisso codice
       let prodBrand = brand
       if (!prodBrand) {
         if (/^ECM|^ECA|^OFF\d/.test(codice)) prodBrand = 'ECHO'
         else if (/^WBM|^WBA|^WBR/.test(codice)) prodBrand = 'WEIBANG'
         else prodBrand = 'SCONOSCIUTO'
       }
-
       prodotti.push({
         brand: prodBrand,
         categoria,
@@ -235,14 +200,13 @@ async function parsePDFListino(arrayBuffer) {
     }
   }
 
-  // Deduplica per brand+codice (tieni l'ultimo trovato)
   const unique = Object.values(
     prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {})
   )
   return unique
 }
 
-// ========== PARSER EXCEL GEOGREEN (esistente) ==========
+// ========== PARSER EXCEL GEOGREEN ==========
 function parseGeogreen(workbook) {
   const prodotti = []
   const fogli = [
@@ -253,9 +217,7 @@ function parseGeogreen(workbook) {
   for (const { nome, categoria } of fogli) {
     const foglio = workbook.Sheets[nome]
     if (!foglio) continue
-
     const righe = XLSX.utils.sheet_to_json(foglio, { header: 1 })
-
     let headerRow = -1
     for (let i = 0; i < Math.min(5, righe.length); i++) {
       const r = righe[i]
@@ -264,18 +226,14 @@ function parseGeogreen(workbook) {
         break
       }
     }
-
     for (let i = (headerRow >= 0 ? headerRow + 2 : 2); i < righe.length; i++) {
       const r = righe[i]
       if (!r) continue
-
       const codice = r[0]
       const descrizione = r[1]
       const prezzoA = r[3]
-
       if (!codice || typeof codice !== 'string' || codice.trim() === '') continue
       if (typeof prezzoA !== 'number') continue
-
       prodotti.push({
         brand: 'GEOGREEN',
         categoria,
@@ -290,10 +248,10 @@ function parseGeogreen(workbook) {
       })
     }
   }
-
   return prodotti
 }
 
+// ========== PARSER EXCEL HONDA ==========
 function parseHondaExcel(workbook) {
   const prodotti = []
   const parsePrezzo = (val) => {
@@ -310,21 +268,18 @@ function parseHondaExcel(workbook) {
     let categoria = ''
 
     for (const row of rows) {
-      // Cerca brand nella riga
       const rowText = row.filter(Boolean).join(' ').toUpperCase()
-      if (/\bHONDA\b/.test(rowText) && !row[4]) continue  // riga header brand
-      if (/^descrizione/i.test(String(row[1] || ''))) continue  // riga intestazione colonne
+      if (/\bHONDA\b/.test(rowText) && !row[4]) continue
+      if (/^descrizione/i.test(String(row[1] || ''))) continue
 
       const descrizione = String(row[1] || '').trim()
       const dimensione = String(row[2] || '').trim()
       const prezzoRaw = row[4]
 
-      // Skip righe header tipo '2026/2' nella colonna prezzo — ma salva la versione
-      if (prezzoRaw && /^\d{4}[\//\d]*$/.test(String(prezzoRaw).trim())) {
+      if (prezzoRaw && /^\d{4}[\/\d]*$/.test(String(prezzoRaw).trim())) {
         versione = String(prezzoRaw).trim()
         continue
       }
-      // Riga categoria (testo senza prezzo, tutto maiuscolo)
       if (!prezzoRaw && descrizione && descrizione === descrizione.toUpperCase() && descrizione.length > 3) {
         categoria = descrizione
         continue
@@ -333,10 +288,7 @@ function parseHondaExcel(workbook) {
       const prezzo = parsePrezzo(prezzoRaw)
       if (!prezzo || prezzo > 99000 || prezzo < 1 || !descrizione || descrizione.length < 3) continue
 
-      // Descrizione completa = descrizione + dimensione
       const descCompleta = dimensione ? `${descrizione} ${dimensione}`.trim() : descrizione
-
-      // Estrai codice: prima cerca codice compatto (HHB36AXB, DP3620XA...)
       const compactMatch = descCompleta.match(/\b((?:HH[BTCGH]|DP|CV)\d+\w*)\b/i)
       const modelMatch = !compactMatch && descCompleta.match(/\b((?:HRG|HRX|HRA)\s+\d+[\w\s]*)(?=\s+\d{2}\s*CM|\s+\+|$)/i)
       let codice
@@ -366,7 +318,6 @@ function parseHondaExcel(workbook) {
   return { prodotti: Object.values(prodotti.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {})), versione }
 }
 
-
 // ========== COMPONENTE PRINCIPALE ==========
 export default function Listini({ onNavigate }) {
   const [tab, setTab] = useState('cerca')
@@ -382,7 +333,6 @@ export default function Listini({ onNavigate }) {
   const [cronologia, setCronologia] = useState([])
   const [loadingCronologia, setLoadingCronologia] = useState(false)
 
-  // Gestione file (Excel o PDF)
   const handleFile = async (e) => {
     const f = e.target.files[0]
     if (!f) return
@@ -402,16 +352,15 @@ export default function Listini({ onNavigate }) {
         if (prodotti.length === 0) {
           setMessaggio({ tipo: 'errore', testo: 'Nessun prodotto trovato nel PDF. Verifica che il formato sia corretto (colonne: Articolo, Codice, Descrizione, Prezzo Listino, Listino Web).' })
         } else {
-          setMessaggio({ tipo: 'ok', testo: `Trovati ${prodotti.length} prodotti ${prodotti[0]?.brand || ''} dal PDF. Controlla l'anteprima e premi Importa.` })
+          setMessaggio({ tipo: 'ok', testo: `Trovati ${prodotti.length} prodotti ${prodotti[0]?.brand || ''} dal PDF. Controlla l\'anteprima e premi Importa.` })
         }
       } else {
         const wb = XLSX.read(buffer, { type: 'array' })
-        // Rileva tipo listino Excel: Honda (cerca HONDA in qualsiasi cella) o Geogreen
         const isHonda = wb.SheetNames.some(s => {
           const sheet = wb.Sheets[s]
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
           return rows.some(row => row.some(cell => cell && /HONDA/i.test(String(cell))))
-        }) || /honda/i.test(file?.name || '')
+        }) || /honda/i.test(f.name || '')
         const hondaResult = isHonda ? parseHondaExcel(wb) : null
         const prodotti = isHonda ? hondaResult.prodotti : parseGeogreen(wb)
         setVersioneListino(isHonda ? (hondaResult.versione || '') : '')
@@ -428,7 +377,6 @@ export default function Listini({ onNavigate }) {
     }
   }
 
-  // Importa i prodotti su Supabase
   const handleImporta = async () => {
     if (anteprima.length === 0) return
     setLoading(true)
@@ -440,7 +388,6 @@ export default function Listini({ onNavigate }) {
 
       for (let i = 0; i < anteprima.length; i += batchSize) {
         const batch = anteprima.slice(i, i + batchSize)
-        // Deduplica per brand+codice (tieni l'ultimo)
         const unique = Object.values(
           batch.reduce((acc, p) => { acc[`${p.brand}__${p.codice}`] = p; return acc; }, {})
         )
@@ -454,7 +401,6 @@ export default function Listini({ onNavigate }) {
         importati += unique.length
       }
 
-      // Salva log per brand
       const brandsImportati = [...new Set(anteprima.map(p => p.brand).filter(Boolean))]
       const operatore = (() => { try { return localStorage.getItem('ompra_ultimo_operatore') || 'N/D' } catch { return 'N/D' } })()
       for (const brand of brandsImportati) {
@@ -478,7 +424,6 @@ export default function Listini({ onNavigate }) {
     }
   }
 
-  // Ricerca prodotti
   const handleCerca = async (valore) => {
     setQuery(valore)
     const parole = valore.trim().toLowerCase().split(/\s+/).filter(p => p.length >= 1)
@@ -487,13 +432,11 @@ export default function Listini({ onNavigate }) {
       return
     }
     setCercando(true)
-
-    // Ogni parola deve matchare in almeno uno dei campi (AND tra parole)
-    let query = supabase.from('listini').select('*')
+    let queryBuilder = supabase.from('listini').select('*')
     for (const parola of parole) {
-      query = query.or(`codice.ilike.%${parola}%,descrizione.ilike.%${parola}%,brand.ilike.%${parola}%,categoria.ilike.%${parola}%`)
+      queryBuilder = queryBuilder.or(`codice.ilike.%${parola}%,descrizione.ilike.%${parola}%,brand.ilike.%${parola}%,categoria.ilike.%${parola}%`)
     }
-    const { data } = await query.order('brand').limit(50)
+    const { data } = await queryBuilder.order('brand').limit(50)
     setRisultati(data || [])
     setCercando(false)
   }
@@ -509,9 +452,6 @@ export default function Listini({ onNavigate }) {
     setLoadingCronologia(false)
   }
 
-  // Carica cronologia upload
-
-  // Colore badge brand
   const brandColor = (brand) => {
     const colors = {
       'ECHO': 'bg-orange-100 text-orange-800',
@@ -525,7 +465,6 @@ export default function Listini({ onNavigate }) {
     return colors[brand] || 'bg-gray-100 text-gray-800'
   }
 
-  // Raggruppa anteprima per categoria
   const categorieAnteprima = anteprima.reduce((acc, p) => {
     const cat = p.categoria || 'Senza categoria'
     if (!acc[cat]) acc[cat] = []
@@ -537,35 +476,21 @@ export default function Listini({ onNavigate }) {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
 
-        {/* Header con bottone indietro */}
         <div className="flex items-center gap-3 mb-6">
-          <button 
-            onClick={() => onNavigate('home')}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-          >
+          <button onClick={() => onNavigate('home')} className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
           <h1 className="text-2xl font-bold text-gray-800">📋 Listini Prezzi</h1>
         </div>
 
-        {/* Tab */}
         <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setTab('cerca')}
-            className={`px-4 py-2 rounded-lg font-medium ${tab === 'cerca' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border'}`}
-          >
+          <button onClick={() => setTab('cerca')} className={`px-4 py-2 rounded-lg font-medium ${tab === 'cerca' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border'}`}>
             🔍 Cerca Prodotto
           </button>
-          <button
-            onClick={() => setTab('upload')}
-            className={`px-4 py-2 rounded-lg font-medium ${tab === 'upload' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border'}`}
-          >
+          <button onClick={() => setTab('upload')} className={`px-4 py-2 rounded-lg font-medium ${tab === 'upload' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border'}`}>
             📤 Aggiorna Listino
           </button>
-          <button
-            onClick={() => { setTab('cronologia'); caricaCronologia(); }}
-            className={`px-4 py-2 rounded-lg font-medium ${tab === 'cronologia' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border'}`}
-          >
+          <button onClick={() => { setTab('cronologia'); caricaCronologia(); }} className={`px-4 py-2 rounded-lg font-medium ${tab === 'cronologia' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border'}`}>
             🕓 Cronologia
           </button>
         </div>
@@ -580,9 +505,7 @@ export default function Listini({ onNavigate }) {
               onChange={e => handleCerca(e.target.value)}
               className="w-full border rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-
             {cercando && <p className="text-gray-400 mt-3 text-sm">Ricerca in corso...</p>}
-
             {risultati.length > 0 && (
               <div className="mt-4 space-y-2">
                 {risultati.map(p => (
@@ -590,9 +513,7 @@ export default function Listini({ onNavigate }) {
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${brandColor(p.brand)}`}>
-                            {p.brand}
-                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${brandColor(p.brand)}`}>{p.brand}</span>
                           <span className="font-mono text-sm text-gray-500">{p.codice}</span>
                         </div>
                         <p className="font-medium text-gray-800">{p.descrizione}</p>
@@ -600,16 +521,13 @@ export default function Listini({ onNavigate }) {
                         {p.confezione && <p className="text-sm text-gray-500">Conf. {p.confezione}</p>}
                       </div>
                       <div className="text-right space-y-1 ml-4 flex-shrink-0">
-                        {/* Brand con Listino/Web (ECHO, WEIBANG): mostra Web come prezzo principale */}
                         {['ECHO', 'WEIBANG'].includes(p.brand) && p.prezzo_b ? (
                           <>
                             <div>
                               <span className="text-xs text-gray-400">Vendita</span>
                               <p className="font-bold text-lg text-green-700">€ {p.prezzo_b.toFixed(2)}</p>
                             </div>
-                            {p.prezzo_a && (
-                              <p className="text-xs text-gray-400 line-through">Listino € {p.prezzo_a.toFixed(2)}</p>
-                            )}
+                            {p.prezzo_a && <p className="text-xs text-gray-400 line-through">Listino € {p.prezzo_a.toFixed(2)}</p>}
                           </>
                         ) : (
                           <>
@@ -628,15 +546,12 @@ export default function Listini({ onNavigate }) {
                       </div>
                     </div>
                     {p.data_aggiornamento && (
-                      <p className="text-xs text-gray-300 mt-1">
-                        Aggiornato: {new Date(p.data_aggiornamento).toLocaleDateString('it-IT')}
-                      </p>
+                      <p className="text-xs text-gray-300 mt-1">Aggiornato: {new Date(p.data_aggiornamento).toLocaleDateString('it-IT')}</p>
                     )}
                   </div>
                 ))}
               </div>
             )}
-
             {query.length >= 2 && !cercando && risultati.length === 0 && (
               <p className="text-gray-400 mt-4 text-center">Nessun prodotto trovato per "{query}"</p>
             )}
@@ -691,9 +606,7 @@ export default function Listini({ onNavigate }) {
         {tab === 'upload' && (
           <div className="bg-white rounded-xl shadow p-4 space-y-4">
             <div>
-              <p className="text-gray-600 mb-3">
-                Carica un file listino prezzi. Formati supportati:
-              </p>
+              <p className="text-gray-600 mb-3">Carica un file listino prezzi. Formati supportati:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-sm">
                 <div className="bg-orange-50 p-2 rounded-lg">
                   <span className="font-bold text-orange-800">📄 PDF</span>
@@ -704,7 +617,6 @@ export default function Listini({ onNavigate }) {
                   <p className="text-green-700 text-xs">Geogreen (fogli STAMPA SEME e STAMPA CONCIMI)</p>
                 </div>
               </div>
-
               <label className="block w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-green-400 transition-colors">
                 <input type="file" accept=".xlsx,.xls,.pdf" onChange={handleFile} className="hidden" />
                 <div className="text-4xl mb-2">📁</div>
@@ -734,9 +646,7 @@ export default function Listini({ onNavigate }) {
                     </p>
                     {Object.keys(categorieAnteprima).length > 1 && (
                       <p className="text-xs text-gray-500 truncate">
-                        {Object.entries(categorieAnteprima).map(([cat, items]) => 
-                          `${cat}: ${items.length}`
-                        ).join(' · ')}
+                        {Object.entries(categorieAnteprima).map(([cat, items]) => `${cat}: ${items.length}`).join(' · ')}
                       </p>
                     )}
                   </div>
@@ -748,8 +658,6 @@ export default function Listini({ onNavigate }) {
                     {loading ? 'Importazione...' : '✓ Importa tutti'}
                   </button>
                 </div>
-
-                {/* Anteprima prime 15 righe */}
                 <div className="border rounded-lg overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
@@ -776,9 +684,7 @@ export default function Listini({ onNavigate }) {
                     </tbody>
                   </table>
                   {anteprima.length > 15 && (
-                    <p className="text-center text-gray-400 text-xs py-2">
-                      ... e altri {anteprima.length - 15} prodotti
-                    </p>
+                    <p className="text-center text-gray-400 text-xs py-2">... e altri {anteprima.length - 15} prodotti</p>
                   )}
                 </div>
               </div>

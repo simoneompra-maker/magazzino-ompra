@@ -23,6 +23,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
   // Default a "Chiuse"
   const [filterStatus, setFilterStatus] = useState('completed');
+  const [filtroTipoOperazione, setFiltroTipoOperazione] = useState(''); // '' | 'vendita' | 'reso' | 'cambio'
   const [searchTerm, setSearchTerm] = useState('');
   const [recovering, setRecovering] = useState(false);
   const [editingCommissione, setEditingCommissione] = useState(null);
@@ -46,7 +47,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
     caparra: '',
     metodoPagamento: '',
     note: '',
-    tipoDocumento: 'scontrino'
+    tipoDocumento: 'scontrino',
+    tipoOperazione: 'vendita'
   });
 
   // Statistiche
@@ -76,6 +78,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
         if (filterStatus === 'pending' && c.status !== 'pending') return false;
         if (filterStatus === 'completed' && c.status !== 'completed') return false;
+
+        if (filtroTipoOperazione) {
+          const tipo = c.tipoOperazione || 'vendita';
+          if (tipo !== filtroTipoOperazione) return false;
+        }
         
         if (searchTerm.trim()) {
           const term = searchTerm.toLowerCase();
@@ -90,7 +97,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
         return true;
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [commissioni, filterStatus, searchTerm, isAdmin, operatoreLoggato, filtroVenditore]);
+  }, [commissioni, filterStatus, filtroTipoOperazione, searchTerm, isAdmin, operatoreLoggato, filtroVenditore]);
 
   // Formatta data
   const formatDate = (dateString) => {
@@ -603,7 +610,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
       caparra: comm.caparra?.toString() || '',
       metodoPagamento: comm.metodoPagamento || '',
       note: comm.note || '',
-      tipoDocumento: comm.tipoDocumento || 'scontrino'
+      tipoDocumento: comm.tipoDocumento || 'scontrino',
+      tipoOperazione: comm.tipoOperazione || 'vendita'
     });
   };
 
@@ -656,7 +664,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
       return;
     }
     const totale = parseFloat(editForm.totale);
-    if (isNaN(totale) || totale <= 0) {
+    if (isNaN(totale) || (totale <= 0 && editForm.tipoOperazione === 'vendita')) {
       alert('Inserisci un totale valido!');
       return;
     }
@@ -685,11 +693,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
       caparra: caparra > 0 ? caparra : null,
       metodoPagamento: caparra > 0 ? editForm.metodoPagamento : null,
       note: editForm.note.trim() || null,
-      tipoDocumento: editForm.tipoDocumento
+      tipoDocumento: editForm.tipoDocumento,
+      tipoOperazione: editForm.tipoOperazione || 'vendita'
     });
 
     setEditingFullCommissione(null);
-    setEditForm({ data: '', cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino' });
+    setEditForm({ data: '', cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino', tipoOperazione: 'vendita' });
   };
 
   // Formatta prezzo per visualizzazione
@@ -1023,6 +1032,28 @@ export default function ArchivioCommissioni({ onNavigate }) {
             <CheckCircle className="w-4 h-4" /> Chiuse ({stats.completed})
           </button>
         </div>
+
+        {/* Filtro tipo operazione */}
+        <div className="flex gap-2">
+          {[
+            { value: '', label: 'Tutte', style: 'bg-gray-600' },
+            { value: 'vendita', label: '✓ Vendite', style: 'bg-green-600' },
+            { value: 'reso', label: '🔄 Resi', style: 'bg-red-600' },
+            { value: 'cambio', label: '🔃 Cambi', style: 'bg-orange-500' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setFiltroTipoOperazione(opt.value)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                filtroTipoOperazione === opt.value
+                  ? `${opt.style} text-white`
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Lista commissioni */}
@@ -1060,6 +1091,17 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     }`}>
                       {comm.tipoDocumento === 'fattura' ? '📄 Fattura' : '🧾 Scontrino'}
                     </span>
+                    {/* Badge tipo operazione */}
+                    {comm.tipoOperazione === 'reso' && (
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                        🔄 Reso
+                      </span>
+                    )}
+                    {comm.tipoOperazione === 'cambio' && (
+                      <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+                        🔃 Cambio
+                      </span>
+                    )}
                   </div>
                   <p className="font-bold text-lg mt-1">{comm.cliente}</p>
                   {comm.telefono && (
@@ -1113,6 +1155,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     </div>
                     <div className="flex items-center gap-2">
                       {formatPrezzo(prod)}
+                      {/* Bottone modifica più visibile - GIALLO */}
+                      {comm.status === 'pending' && (
+                        <button 
+                          onClick={() => handleEditProduct(comm, idx)}
+                          className="px-2 py-1 bg-yellow-400 text-yellow-900 rounded text-xs font-medium flex items-center gap-1 hover:bg-yellow-500"
+                        >
+                          <Edit2 className="w-3 h-3" /> Modifica
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1149,13 +1200,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   </button>
                 )}
                 
-                {/* GIALLO - Modifica (per tutte le commissioni) */}
-                <button
-                  onClick={() => handleOpenEditFull(comm)}
-                  className="py-2 px-3 rounded-lg text-sm font-medium bg-yellow-400 text-yellow-900 flex items-center gap-1 hover:bg-yellow-500"
-                >
-                  <Edit2 className="w-4 h-4" /> Modifica
-                </button>
+                {/* GIALLO - Modifica (per commissioni completate) */}
+                {comm.status === 'completed' && (
+                  <button
+                    onClick={() => handleOpenEditFull(comm)}
+                    className="py-2 px-3 rounded-lg text-sm font-medium bg-yellow-400 text-yellow-900 flex items-center gap-1 hover:bg-yellow-500"
+                  >
+                    <Edit2 className="w-4 h-4" /> Modifica
+                  </button>
+                )}
                 
                 {/* VERDE CHIARO - Invia/Condividi */}
                 <button
@@ -1686,6 +1739,30 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   >
                     📄 Fattura
                   </button>
+                </div>
+              </div>
+
+              {/* Tipo Operazione */}
+              <div>
+                <label className="text-sm font-bold text-gray-700">Tipo operazione</label>
+                <div className="flex gap-2 mt-2">
+                  {[
+                    { value: 'vendita', label: '✓ Vendita', active: 'bg-green-600' },
+                    { value: 'reso', label: '🔄 Reso', active: 'bg-red-600' },
+                    { value: 'cambio', label: '🔃 Cambio', active: 'bg-orange-500' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setEditForm({ ...editForm, tipoOperazione: opt.value })}
+                      className={`flex-1 py-2 rounded-lg font-medium text-sm ${
+                        editForm.tipoOperazione === opt.value
+                          ? `${opt.active} text-white`
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

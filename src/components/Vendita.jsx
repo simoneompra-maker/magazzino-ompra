@@ -90,6 +90,7 @@ export default function Vendita({ onNavigate }) {
   const [note, setNote] = useState('');
   const [tipoDocumento, setTipoDocumento] = useState('scontrino'); // 'scontrino' | 'fattura'
   const [isPreventivo, setIsPreventivo] = useState(false);
+  const [tipoOperazione, setTipoOperazione] = useState('vendita'); // 'vendita' | 'reso' | 'cambio'
   const [dataVendita, setDataVendita] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
   
   // Modifica accessorio
@@ -876,7 +877,7 @@ export default function Vendita({ onNavigate }) {
     }
     
     const totale = getTotaleFinale();
-    if (totale <= 0 && !prodotti.every(p => p.isOmaggio)) {
+    if (totale <= 0 && !prodotti.every(p => p.isOmaggio) && tipoOperazione === 'vendita') {
       alert('Inserisci il totale della vendita!');
       return;
     }
@@ -917,6 +918,7 @@ export default function Vendita({ onNavigate }) {
       metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
       note: note.trim() || null,
       tipoDocumento: tipoDocumento,
+      tipoOperazione: tipoOperazione,
       dataVendita: dataVendita,
       isPending: hasOrderedProducts,
       isPreventivo: isPreventivo,
@@ -1738,6 +1740,46 @@ export default function Vendita({ onNavigate }) {
               <p className="text-xs text-orange-600">Non registra la vendita, genera solo il documento</p>
             </div>
           </label>
+
+          {/* Checkbox Reso / Cambio */}
+          <label className="flex items-center gap-3 mt-2 p-3 bg-red-50 rounded-lg cursor-pointer border-2 border-transparent hover:border-red-300 transition-all">
+            <input
+              type="checkbox"
+              checked={tipoOperazione !== 'vendita'}
+              onChange={(e) => setTipoOperazione(e.target.checked ? 'reso' : 'vendita')}
+              className="w-5 h-5 accent-red-500"
+            />
+            <div className="flex-1">
+              <span className="font-medium text-red-800">Reso / Cambio merce</span>
+              <p className="text-xs text-red-600">Permette importi a zero o negativi</p>
+            </div>
+          </label>
+
+          {/* Toggle Reso / Cambio */}
+          {tipoOperazione !== 'vendita' && (
+            <div className="flex gap-2 mt-1 px-1">
+              <button
+                onClick={() => setTipoOperazione('reso')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
+                  tipoOperazione === 'reso'
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-white text-red-600 border-red-300'
+                }`}
+              >
+                🔄 Reso
+              </button>
+              <button
+                onClick={() => setTipoOperazione('cambio')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
+                  tipoOperazione === 'cambio'
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'bg-white text-orange-500 border-orange-300'
+                }`}
+              >
+                🔃 Cambio
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1761,15 +1803,19 @@ export default function Vendita({ onNavigate }) {
           disabled={(prodotti.length === 0 && accessori.length === 0 && !note.trim()) || !cliente.trim() || !operatore.trim()}
           className="w-full py-4 rounded-lg font-bold text-lg disabled:opacity-50"
           style={{ 
-            backgroundColor: isPreventivo ? '#F97316' : '#FFDD00', 
-            color: isPreventivo ? 'white' : '#006B3F' 
+            backgroundColor: isPreventivo ? '#F97316' : tipoOperazione !== 'vendita' ? '#DC2626' : '#FFDD00', 
+            color: isPreventivo || tipoOperazione !== 'vendita' ? 'white' : '#006B3F' 
           }}
         >
           {isPreventivo 
-            ? '📝 ANTEPRIMA PREVENTIVO' 
-            : hasOrderedProducts 
-              ? '📋 ANTEPRIMA COMMISSIONE' 
-              : '✓ ANTEPRIMA VENDITA'}
+            ? '📝 ANTEPRIMA PREVENTIVO'
+            : tipoOperazione === 'reso'
+              ? '🔄 ANTEPRIMA RESO'
+              : tipoOperazione === 'cambio'
+                ? '🔃 ANTEPRIMA CAMBIO'
+                : hasOrderedProducts 
+                  ? '📋 ANTEPRIMA COMMISSIONE' 
+                  : '✓ ANTEPRIMA VENDITA'}
         </button>
       </div>
 

@@ -405,9 +405,9 @@ export default function StoricoVendite({ onNavigate }) {
                       {comm.telefono && <div className="text-xs text-blue-500">{comm.telefono}</div>}
                     </div>
                     <div className="flex-none w-20 text-right">
-                      <span className="font-bold block" style={{ color: '#006B3F' }}>€{(comm.totale||0).toFixed(0)}</span>
-                      <span className="text-xs text-gray-400 block">imp. €{getCommImponibile(comm).toFixed(0)}</span>
-                      {comm.caparra > 0 && <span className="text-xs text-yellow-600 block">cap. €{comm.caparra.toFixed(0)}</span>}
+                      <span className="font-bold block" style={{ color: '#006B3F' }}>€{(comm.totale||0).toFixed(2)}</span>
+                      <span className="text-xs text-gray-400 block">imp. €{getCommImponibile(comm).toFixed(2)}</span>
+                      {comm.caparra > 0 && <span className="text-xs text-yellow-600 block">cap. €{comm.caparra.toFixed(2)}</span>}
                     </div>
                     {!selectMode && (
                       <div className="flex-none flex flex-col ml-1">
@@ -420,6 +420,8 @@ export default function StoricoVendite({ onNavigate }) {
                     <span>Op: {comm.operatore || 'N/D'}</span>
                     <div className="flex items-center gap-2">
                       {comm.tipoDocumento === 'fattura' && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs">Fattura</span>}
+                      {comm.tipoOperazione === 'reso' && <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs">🔄 Reso</span>}
+                      {comm.tipoOperazione === 'cambio' && <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-xs">🔃 Cambio</span>}
                       <span>{commDate.getFullYear()}</span>
                     </div>
                   </div>

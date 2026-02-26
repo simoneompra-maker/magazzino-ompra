@@ -1113,15 +1113,6 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     </div>
                     <div className="flex items-center gap-2">
                       {formatPrezzo(prod)}
-                      {/* Bottone modifica più visibile - GIALLO */}
-                      {comm.status === 'pending' && (
-                        <button 
-                          onClick={() => handleEditProduct(comm, idx)}
-                          className="px-2 py-1 bg-yellow-400 text-yellow-900 rounded text-xs font-medium flex items-center gap-1 hover:bg-yellow-500"
-                        >
-                          <Edit2 className="w-3 h-3" /> Modifica
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -1158,15 +1149,13 @@ export default function ArchivioCommissioni({ onNavigate }) {
                   </button>
                 )}
                 
-                {/* GIALLO - Modifica (per commissioni completate) */}
-                {comm.status === 'completed' && (
-                  <button
-                    onClick={() => handleOpenEditFull(comm)}
-                    className="py-2 px-3 rounded-lg text-sm font-medium bg-yellow-400 text-yellow-900 flex items-center gap-1 hover:bg-yellow-500"
-                  >
-                    <Edit2 className="w-4 h-4" /> Modifica
-                  </button>
-                )}
+                {/* GIALLO - Modifica (per tutte le commissioni) */}
+                <button
+                  onClick={() => handleOpenEditFull(comm)}
+                  className="py-2 px-3 rounded-lg text-sm font-medium bg-yellow-400 text-yellow-900 flex items-center gap-1 hover:bg-yellow-500"
+                >
+                  <Edit2 className="w-4 h-4" /> Modifica
+                </button>
                 
                 {/* VERDE CHIARO - Invia/Condividi */}
                 <button

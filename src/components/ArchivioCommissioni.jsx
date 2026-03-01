@@ -2,7 +2,9 @@ import { useState, useMemo } from 'react';
 import { ArrowLeft, Clock, CheckCircle, Search, Trash2, Edit2, X, Camera, Send, Mail, MessageCircle, FileDown, Phone, Download, Printer } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import useStore from '../store';
+import { supabase } from '../store';
 import { scanMatricola } from '../services/ocrService';
+import PrivacyModal from './PrivacyModal';
 
 export default function ArchivioCommissioni({ onNavigate }) {
   const commissioni = useStore((state) => state.commissioni);
@@ -36,6 +38,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
   
   // Modal anteprima dopo completamento
   const [previewCommissione, setPreviewCommissione] = useState(null);
+  
+  // Modal privacy GDPR bloccante
+  const [privacyCommissione, setPrivacyCommissione] = useState(null);
   
   // Modal modifica commissione completa
   const [editingFullCommissione, setEditingFullCommissione] = useState(null);
@@ -1102,6 +1107,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
                         🔃 Cambio
                       </span>
                     )}
+                    {/* Badge PRIVACY — visibile finché non confermata */}
+                    {comm.privacy_required && !comm.privacy_acknowledged && (
+                      <span className="px-2 py-0.5 bg-red-600 text-white text-xs rounded-full font-bold animate-pulse">
+                        ⚠️ PRIVACY
+                      </span>
+                    )}
                   </div>
                   <p className="font-bold text-lg mt-1">{comm.cliente}</p>
                   {comm.telefono && (
@@ -1191,7 +1202,13 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 {/* VERDE OMPRA - Conferma */}
                 {comm.status === 'pending' && (
                   <button
-                    onClick={() => handleComplete(comm)}
+                    onClick={() => {
+                      if (comm.privacy_required && !comm.privacy_acknowledged) {
+                        setPrivacyCommissione({ id: comm.id, cliente: comm.cliente });
+                      } else {
+                        handleComplete(comm);
+                      }
+                    }}
                     disabled={comm.prodotti.some(p => !p.serialNumber)}
                     className="flex-1 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50"
                     style={{ backgroundColor: '#006B3F' }}
@@ -1785,6 +1802,19 @@ export default function ArchivioCommissioni({ onNavigate }) {
           </div>
         </div>
       )}
+      {/* Modal privacy GDPR bloccante */}
+      {privacyCommissione && (
+        <PrivacyModal
+          commissioneId={privacyCommissione.id}
+          nomeCliente={privacyCommissione.cliente}
+          onConfirmed={() => {
+            // Aggiorna lo stato locale senza ricaricare tutto
+            updateCommissione(privacyCommissione.id, { privacy_acknowledged: true });
+            setPrivacyCommissione(null);
+          }}
+        />
+      )}
+
     </div>
   );
 }

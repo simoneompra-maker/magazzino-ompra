@@ -1071,7 +1071,8 @@ export default function Vendita({ onNavigate }) {
           prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
           accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
           metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-          note: note.trim() || null, tipoDocumento
+          note: note.trim() || null, tipoDocumento,
+          privacy_required: !clienteSelezionato?.id // true se cliente nuovo (id null)
         });
         setCommissioneData({ ...commissione, isPending: true, confirmed: true });
         await checkEsalvaCliente(clienteSelezionato);
@@ -1108,7 +1109,8 @@ export default function Vendita({ onNavigate }) {
         accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
         metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
         note: note.trim() || null, tipoDocumento, ivaCompresa,
-        dataVendita: dataISO
+        dataVendita: dataISO,
+        privacy_required: !clienteSelezionato?.id // true se cliente nuovo (id null)
       });
       setCommissioneData({ ...commissione, confirmed: true, ivaCompresa });
       await checkEsalvaCliente(clienteSelezionato);

@@ -163,6 +163,13 @@ export default function Vendita({ onNavigate }) {
   const [showCommissione, setShowCommissione] = useState(false);
   const [commissioneData, setCommissioneData] = useState(null);
 
+  // Modal Nuovo Cliente manuale
+  const [showNuovoCliente, setShowNuovoCliente] = useState(false);
+  const [nuovoClienteForm, setNuovoClienteForm] = useState({
+    nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: ''
+  });
+  const [scanningDocumento, setScanningDocumento] = useState(false);
+
   // Carica operatori e ultimo operatore
   useEffect(() => {
     setOperatoriList(getOperatori());
@@ -217,6 +224,88 @@ export default function Vendita({ onNavigate }) {
     if (clienteSelezionato && value.trim()) {
       salvaTelefono(clienteSelezionato.id, value.trim());
     }
+  };
+
+  // Apri modal nuovo cliente
+  const handleAprirNuovoCliente = () => {
+    setNuovoClienteForm({ nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '' });
+    setShowNuovoCliente(true);
+  };
+
+  // Scansiona documento identità con Gemini
+  const handleScanDocumento = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScanningDocumento(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const mimeType = file.type || 'image/jpeg';
+      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [
+              { inline_data: { mime_type: mimeType, data: base64 } },
+              { text: 'Sei un sistema OCR per documenti d\'identità italiani (carta d\'identità, patente, permesso di soggiorno). Estrai i dati anagrafici e restituisci SOLO un JSON valido con questi campi (stringa vuota se non presente): {"cognome":"","nome":"","indirizzo":"","cap":"","localita":"","provincia":"","telefono":"","email":""}. Cognome e nome devono essere separati. Non aggiungere nulla al di fuori del JSON.' }
+            ]}],
+            generationConfig: { temperature: 0 }
+          })
+        }
+      );
+      const data = await response.json();
+      const testo = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const jsonMatch = testo.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        setNuovoClienteForm(prev => ({
+          nome: parsed.nome || prev.nome,
+          cognome: parsed.cognome || prev.cognome,
+          indirizzo: parsed.indirizzo || prev.indirizzo,
+          cap: parsed.cap || prev.cap,
+          localita: parsed.localita || prev.localita,
+          provincia: parsed.provincia || prev.provincia,
+          telefono: parsed.telefono || prev.telefono,
+          email: parsed.email || prev.email,
+        }));
+      }
+    } catch (err) {
+      console.error('Errore scan documento:', err);
+      alert('Errore nella lettura del documento. Inserisci i dati manualmente.');
+    } finally {
+      setScanningDocumento(false);
+    }
+  };
+
+  // Conferma nuovo cliente dal form manuale
+  const handleConfermaClienteManuale = () => {
+    const f = nuovoClienteForm;
+    const nomeCompleto = [f.cognome.trim(), f.nome.trim()].filter(Boolean).join(' ');
+    if (!nomeCompleto) {
+      alert('Inserisci almeno nome o cognome!');
+      return;
+    }
+    const clienteVirtuale = {
+      id: null,
+      nome: nomeCompleto,
+      indirizzo: f.indirizzo.trim() || null,
+      cap: f.cap.trim() || null,
+      localita: f.localita.trim() || null,
+      provincia: f.provincia.trim() || null,
+      telefono: f.telefono.trim() || null,
+      email: f.email.trim() || null,
+    };
+    setCliente(nomeCompleto);
+    setClienteSelezionato(clienteVirtuale);
+    setTelefonoCliente(f.telefono.trim() || '');
+    setShowNuovoCliente(false);
   };
 
   // Gestione operatore
@@ -1286,9 +1375,19 @@ export default function Vendita({ onNavigate }) {
 
         {/* Cliente */}
         <div className="bg-white rounded-lg p-3 relative">
-          <label className="text-xs text-gray-500 flex items-center gap-1">
-            <User className="w-3 h-3" /> Cliente
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-gray-500 flex items-center gap-1">
+              <User className="w-3 h-3" /> Cliente
+            </label>
+            <button
+              onClick={handleAprirNuovoCliente}
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-white font-medium"
+              style={{ backgroundColor: '#006B3F' }}
+              title="Inserisci cliente manualmente o scansiona documento"
+            >
+              <Plus className="w-3 h-3" /> Nuovo
+            </button>
+          </div>
           <input
             type="text"
             placeholder="Cerca cliente..."
@@ -2431,6 +2530,208 @@ export default function Vendita({ onNavigate }) {
               >
                 {autoAdding ? '⏳ Carico in corso...' : '✓ Aggiungi e continua'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODALE Nuovo Cliente */}
+      {showNuovoCliente && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <User className="w-5 h-5" style={{ color: '#006B3F' }} />
+                Nuovo Cliente
+              </h3>
+              <button onClick={() => setShowNuovoCliente(false)}>
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {/* Pulsante scansione documento */}
+              <div className="flex gap-2">
+                <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed cursor-pointer font-medium text-sm transition-colors ${
+                  scanningDocumento
+                    ? 'border-gray-300 text-gray-400 bg-gray-50'
+                    : 'border-green-400 text-green-700 bg-green-50 hover:bg-green-100'
+                }`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleScanDocumento}
+                    disabled={scanningDocumento}
+                    className="hidden"
+                  />
+                  {scanningDocumento ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                      Lettura documento...
+                    </>
+                  ) : (
+                    <>📷 Scansiona Documento</>
+                  )}
+                </label>
+                <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm transition-colors ${
+                  scanningDocumento
+                    ? 'border-gray-300 text-gray-400'
+                    : 'border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100'
+                }`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleScanDocumento}
+                    disabled={scanningDocumento}
+                    className="hidden"
+                  />
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="text-xs">Gallery</span>
+                </label>
+              </div>
+
+              <p className="text-xs text-gray-400 text-center -mt-1">
+                Scansiona carta d'identità, patente o permesso di soggiorno per compilare automaticamente
+              </p>
+
+              {/* Divider */}
+              <div className="flex items-center gap-2 py-1">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400">oppure inserisci manualmente</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              {/* Form campi */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Cognome *</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2 mt-1 text-sm"
+                    placeholder="Rossi"
+                    value={nuovoClienteForm.cognome}
+                    onChange={e => setNuovoClienteForm(p => ({ ...p, cognome: e.target.value }))}
+                    autoCapitalize="words"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Nome *</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2 mt-1 text-sm"
+                    placeholder="Mario"
+                    value={nuovoClienteForm.nome}
+                    onChange={e => setNuovoClienteForm(p => ({ ...p, nome: e.target.value }))}
+                    autoCapitalize="words"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Indirizzo</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2 mt-1 text-sm"
+                  placeholder="Via Roma 10"
+                  value={nuovoClienteForm.indirizzo}
+                  onChange={e => setNuovoClienteForm(p => ({ ...p, indirizzo: e.target.value }))}
+                  autoCapitalize="words"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">CAP</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full border rounded-lg p-2 mt-1 text-sm"
+                    placeholder="31100"
+                    maxLength={5}
+                    value={nuovoClienteForm.cap}
+                    onChange={e => setNuovoClienteForm(p => ({ ...p, cap: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-xs text-gray-500 font-medium">Città</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2 mt-1 text-sm"
+                    placeholder="Treviso"
+                    value={nuovoClienteForm.localita}
+                    onChange={e => setNuovoClienteForm(p => ({ ...p, localita: e.target.value }))}
+                    autoCapitalize="words"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Provincia</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2 mt-1 text-sm uppercase"
+                  placeholder="TV"
+                  maxLength={2}
+                  value={nuovoClienteForm.provincia}
+                  onChange={e => setNuovoClienteForm(p => ({ ...p, provincia: e.target.value.toUpperCase() }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                  <Phone className="w-3 h-3" /> Telefono
+                </label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  className="w-full border rounded-lg p-2 mt-1 text-sm"
+                  placeholder="340 1234567"
+                  value={nuovoClienteForm.telefono}
+                  onChange={e => setNuovoClienteForm(p => ({ ...p, telefono: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Email</label>
+                <input
+                  type="email"
+                  inputMode="email"
+                  className="w-full border rounded-lg p-2 mt-1 text-sm"
+                  placeholder="mario@email.com"
+                  value={nuovoClienteForm.email}
+                  onChange={e => setNuovoClienteForm(p => ({ ...p, email: e.target.value }))}
+                  autoCapitalize="none"
+                />
+              </div>
+
+              {/* Anteprima nome che verrà usato */}
+              {(nuovoClienteForm.cognome || nuovoClienteForm.nome) && (
+                <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-sm">
+                  <span className="text-gray-500 text-xs">Verrà salvato come: </span>
+                  <span className="font-bold text-green-800">
+                    {[nuovoClienteForm.cognome, nuovoClienteForm.nome].filter(Boolean).join(' ')}
+                  </span>
+                </div>
+              )}
+
+              {/* Azioni */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setShowNuovoCliente(false)}
+                  className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium text-sm"
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={handleConfermaClienteManuale}
+                  className="flex-[2] py-3 rounded-xl text-white font-bold text-sm"
+                  style={{ backgroundColor: '#006B3F' }}
+                >
+                  ✓ Conferma Cliente
+                </button>
+              </div>
             </div>
           </div>
         </div>

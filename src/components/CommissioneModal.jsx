@@ -227,7 +227,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     y += 32;
 
     // Cliente, Telefono, Indirizzo e Operatore con bordino
-    let clientLines = 1; // nome
+    // La colonna cliente occupa max metà pagina per non invadere OPERATORE
+    const clientMaxWidth = (pageWidth / 2) - margin - 5;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const clienteLines = doc.splitTextToSize(getCliente(), clientMaxWidth);
+    const nomeRighe = clienteLines.length;
+
+    let clientLines = nomeRighe;
     if (getTelefono()) clientLines++;
     if (getIndirizzo()) clientLines++;
     if (getEmail()) clientLines++;
@@ -238,16 +245,19 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'normal');
     doc.text('CLIENTE', margin + 3, y + 5);
     
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
-    doc.text(getCliente(), margin + 3, y + 12);
+    clienteLines.forEach((line, i) => {
+      doc.text(line, margin + 3, y + 12 + (i * 6));
+    });
 
-    let clientY = y + 12;
+    let clientY = y + 12 + ((nomeRighe - 1) * 6);
 
-    // Telefono sotto il nome cliente
+    // Telefono
     if (getTelefono()) {
       clientY += 6;
       doc.setFontSize(9);
@@ -256,7 +266,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.text(`Tel: ${getTelefono()}`, margin + 3, clientY);
     }
 
-    // Indirizzo sotto il telefono
+    // Indirizzo
     if (getIndirizzo()) {
       clientY += 6;
       doc.setFontSize(9);
@@ -282,6 +292,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
+      doc.setFont('helvetica', 'normal');
       doc.text(getOperatore(), pageWidth - margin - 35, y + 12);
     }
 
@@ -541,7 +552,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     y += 32;
 
     // Cliente, Telefono, Indirizzo e Operatore
-    let clientLines2 = 1;
+    // La colonna cliente occupa max metà pagina per non invadere OPERATORE
+    const clientMaxWidth2 = (pageWidth / 2) - margin - 5;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const clienteLines2 = doc.splitTextToSize(getCliente(), clientMaxWidth2);
+    const nomeRighe2 = clienteLines2.length;
+
+    let clientLines2 = nomeRighe2;
     if (getTelefono()) clientLines2++;
     if (getIndirizzo()) clientLines2++;
     if (getEmail()) clientLines2++;
@@ -552,14 +570,17 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'normal');
     doc.text('CLIENTE', margin + 3, y + 5);
     
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
-    doc.text(getCliente(), margin + 3, y + 12);
+    clienteLines2.forEach((line, i) => {
+      doc.text(line, margin + 3, y + 12 + (i * 6));
+    });
 
-    let clientY2 = y + 12;
+    let clientY2 = y + 12 + ((nomeRighe2 - 1) * 6);
 
     if (getTelefono()) {
       clientY2 += 6;
@@ -593,6 +614,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
+      doc.setFont('helvetica', 'normal');
       doc.text(getOperatore(), pageWidth - margin - 35, y + 12);
     }
 

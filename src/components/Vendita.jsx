@@ -1375,27 +1375,27 @@ export default function Vendita({ onNavigate }) {
 
         {/* Cliente */}
         <div className="bg-white rounded-lg p-3 relative">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs text-gray-500 flex items-center gap-1">
-              <User className="w-3 h-3" /> Cliente
-            </label>
+          <label className="text-xs text-gray-500 flex items-center gap-1">
+            <User className="w-3 h-3" /> Cliente
+          </label>
+          <div className="relative mt-1">
+            <input
+              type="text"
+              placeholder="Cerca cliente..."
+              className="w-full p-2 pr-20 border rounded-lg"
+              value={cliente}
+              onChange={(e) => handleClienteChange(e.target.value)}
+              onFocus={() => suggerimenti.length > 0 && setShowSuggerimenti(true)}
+            />
             <button
               onClick={handleAprirNuovoCliente}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-white font-medium"
+              className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs px-2 py-1.5 rounded-md text-white font-medium"
               style={{ backgroundColor: '#006B3F' }}
               title="Inserisci cliente manualmente o scansiona documento"
             >
               <Plus className="w-3 h-3" /> Nuovo
             </button>
           </div>
-          <input
-            type="text"
-            placeholder="Cerca cliente..."
-            className="w-full p-2 border rounded-lg mt-1"
-            value={cliente}
-            onChange={(e) => handleClienteChange(e.target.value)}
-            onFocus={() => suggerimenti.length > 0 && setShowSuggerimenti(true)}
-          />
           
           {clienteSelezionato && (
             <div className="mt-2 space-y-2">

@@ -169,6 +169,8 @@ export default function Vendita({ onNavigate }) {
     nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: ''
   });
   const [scanningDocumento, setScanningDocumento] = useState(false);
+  const [scanStep, setScanStep] = useState('idle'); // 'idle' | 'fronte_done'
+  const [scanLato, setScanLato] = useState(''); // 'fronte' | 'retro' - per feedback UI
 
   // Carica operatori e ultimo operatore
   useEffect(() => {
@@ -229,29 +231,35 @@ export default function Vendita({ onNavigate }) {
   // Apri modal nuovo cliente
   const handleAprirNuovoCliente = () => {
     setNuovoClienteForm({ nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '' });
+    setScanStep('idle');
+    setScanLato('');
     setShowNuovoCliente(true);
   };
 
-  // Scansiona documento identità con Gemini
-  const handleScanDocumento = async (e) => {
+  // Scansiona documento identità con Gemini (fronte o retro)
+  const handleScanDocumento = async (e, lato) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = ''; // reset input per permettere riscan
     setScanningDocumento(true);
+    setScanLato(lato);
     try {
       const result = await scanDocumentoIdentita(file);
       if (result.success && result.data) {
         const d = result.data;
         setNuovoClienteForm(prev => ({
-          nome:      d.nome      || prev.nome,
-          cognome:   d.cognome   || prev.cognome,
-          indirizzo: d.indirizzo || prev.indirizzo,
-          cap:       d.cap       || prev.cap,
-          localita:  d.localita  || prev.localita,
-          provincia: d.provincia || prev.provincia,
-          telefono:  d.telefono  || prev.telefono,
-          email:     d.email     || prev.email,
+          // Merge intelligente: il nuovo valore vince solo se il campo era vuoto
+          // Eccezione: il fronte sovrascrive sempre (è il lato principale)
+          nome:      lato === 'fronte' ? (d.nome || prev.nome)           : (prev.nome || d.nome),
+          cognome:   lato === 'fronte' ? (d.cognome || prev.cognome)     : (prev.cognome || d.cognome),
+          indirizzo: lato === 'fronte' ? (d.indirizzo || prev.indirizzo) : (prev.indirizzo || d.indirizzo),
+          cap:       lato === 'fronte' ? (d.cap || prev.cap)             : (prev.cap || d.cap),
+          localita:  lato === 'fronte' ? (d.localita || prev.localita)   : (prev.localita || d.localita),
+          provincia: lato === 'fronte' ? (d.provincia || prev.provincia) : (prev.provincia || d.provincia),
+          telefono:  lato === 'fronte' ? (d.telefono || prev.telefono)   : (prev.telefono || d.telefono),
+          email:     lato === 'fronte' ? (d.email || prev.email)         : (prev.email || d.email),
         }));
+        setScanStep(lato === 'fronte' ? 'fronte_done' : 'idle');
       } else {
         alert(result.error || 'Errore nella lettura del documento. Inserisci i dati manualmente.');
       }
@@ -260,6 +268,7 @@ export default function Vendita({ onNavigate }) {
       alert('Errore imprevisto. Inserisci i dati manualmente.');
     } finally {
       setScanningDocumento(false);
+      setScanLato('');
     }
   };
 
@@ -2530,50 +2539,88 @@ export default function Vendita({ onNavigate }) {
             </div>
 
             <div className="p-4 space-y-3">
-              {/* Pulsante scansione documento */}
-              <div className="flex gap-2">
-                <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed cursor-pointer font-medium text-sm transition-colors ${
-                  scanningDocumento
-                    ? 'border-gray-300 text-gray-400 bg-gray-50'
-                    : 'border-green-400 text-green-700 bg-green-50 hover:bg-green-100'
-                }`}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleScanDocumento}
-                    disabled={scanningDocumento}
-                    className="hidden"
-                  />
-                  {scanningDocumento ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                      Lettura documento...
-                    </>
-                  ) : (
-                    <>📷 Scansiona Documento</>
-                  )}
-                </label>
-                <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm transition-colors ${
-                  scanningDocumento
-                    ? 'border-gray-300 text-gray-400'
-                    : 'border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100'
-                }`}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleScanDocumento}
-                    disabled={scanningDocumento}
-                    className="hidden"
-                  />
-                  <ImageIcon className="w-4 h-4" />
-                  <span className="text-xs">Gallery</span>
-                </label>
-              </div>
+              {/* Sezione scansione documento */}
+              <div className="space-y-2">
 
-              <p className="text-xs text-gray-400 text-center -mt-1">
-                Scansiona carta d'identità, patente o permesso di soggiorno per compilare automaticamente
-              </p>
+                {/* Indicatore step fronte/retro */}
+                <div className="flex items-center gap-2 text-xs font-medium">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                    scanStep === 'idle' && !scanningDocumento ? 'bg-green-100 text-green-700' :
+                    scanStep === 'fronte_done' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {scanStep === 'fronte_done' ? '✓' : '1'} Fronte
+                  </div>
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                    scanStep === 'fronte_done' && !scanningDocumento ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    2 Retro
+                  </div>
+                </div>
+
+                {/* Pulsanti FRONTE */}
+                <div className="flex gap-2">
+                  <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 cursor-pointer font-medium text-sm transition-colors ${
+                    scanningDocumento && scanLato === 'fronte'
+                      ? 'border-gray-300 text-gray-400 bg-gray-50'
+                      : scanStep === 'fronte_done'
+                        ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
+                        : 'border-green-400 border-dashed text-green-700 bg-green-50 hover:bg-green-100'
+                  }`}>
+                    <input type="file" accept="image/*" capture="environment"
+                      onChange={e => handleScanDocumento(e, 'fronte')}
+                      disabled={scanningDocumento} className="hidden" />
+                    {scanningDocumento && scanLato === 'fronte' ? (
+                      <><div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />Lettura fronte...</>
+                    ) : scanStep === 'fronte_done' ? (
+                      <>✓ Fronte acquisito</>
+                    ) : (
+                      <>📷 Scansiona Fronte</>
+                    )}
+                  </label>
+                  <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm transition-colors ${
+                    scanningDocumento ? 'border-gray-300 text-gray-400' : 'border-green-300 text-green-600 bg-green-50 hover:bg-green-100'
+                  }`}>
+                    <input type="file" accept="image/*"
+                      onChange={e => handleScanDocumento(e, 'fronte')}
+                      disabled={scanningDocumento} className="hidden" />
+                    <ImageIcon className="w-4 h-4" />
+                  </label>
+                </div>
+
+                {/* Pulsanti RETRO — sempre visibili ma evidenziati dopo il fronte */}
+                <div className="flex gap-2">
+                  <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 cursor-pointer font-medium text-sm transition-colors ${
+                    scanningDocumento && scanLato === 'retro'
+                      ? 'border-gray-300 text-gray-400 bg-gray-50'
+                      : scanStep === 'fronte_done'
+                        ? 'border-blue-400 border-dashed text-blue-700 bg-blue-50 hover:bg-blue-100'
+                        : 'border-gray-200 border-dashed text-gray-400 bg-gray-50'
+                  }`}>
+                    <input type="file" accept="image/*" capture="environment"
+                      onChange={e => handleScanDocumento(e, 'retro')}
+                      disabled={scanningDocumento} className="hidden" />
+                    {scanningDocumento && scanLato === 'retro' ? (
+                      <><div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />Lettura retro...</>
+                    ) : (
+                      <>📷 Scansiona Retro</>
+                    )}
+                  </label>
+                  <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm transition-colors ${
+                    scanningDocumento ? 'border-gray-300 text-gray-400' :
+                    scanStep === 'fronte_done' ? 'border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100' : 'border-gray-200 text-gray-400 bg-gray-50'
+                  }`}>
+                    <input type="file" accept="image/*"
+                      onChange={e => handleScanDocumento(e, 'retro')}
+                      disabled={scanningDocumento} className="hidden" />
+                    <ImageIcon className="w-4 h-4" />
+                  </label>
+                </div>
+
+                <p className="text-xs text-gray-400 text-center">
+                  Carta d'identità, patente, permesso di soggiorno
+                </p>
+              </div>
 
               {/* Divider */}
               <div className="flex items-center gap-2 py-1">

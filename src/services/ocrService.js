@@ -555,13 +555,15 @@ Estrai i dati anagrafici e restituisci SOLO un JSON valido con questi campi (str
   "localita": "",
   "provincia": "",
   "telefono": "",
-  "email": ""
+  "email": "",
+  "cf": ""
 }
 REGOLE:
 - Cognome e nome SEMPRE separati
 - Per carta d'identità: il cognome è solitamente scritto per primo in maiuscolo
 - Per permesso di soggiorno: cerca COGNOME/SURNAME e NOME/NAME
 - Indirizzo: solo via/piazza/corso con numero civico, senza CAP e città
+- Codice fiscale (cf): 16 caratteri alfanumerici, presente sul retro della carta d'identità sotto "Codice fiscale"
 - Non aggiungere nulla al di fuori del JSON`;
 
     const result = await callGemini([

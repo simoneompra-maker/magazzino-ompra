@@ -84,6 +84,21 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     return data.clienteInfo?.email || null;
   };
 
+  // Ottieni codice fiscale
+  const getCF = () => {
+    return data.clienteInfo?.cf || null;
+  };
+
+  // Ottieni partita IVA
+  const getPiva = () => {
+    return data.clienteInfo?.piva || null;
+  };
+
+  // Ottieni codice SDI
+  const getSdi = () => {
+    return data.clienteInfo?.sdi || null;
+  };
+
   // Ottieni operatore
   const getOperatore = () => {
     return isKit ? data.operatore : (data.saleData?.operatore || data.operatore);
@@ -238,6 +253,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getTelefono()) clientLines++;
     if (getIndirizzo()) clientLines++;
     if (getEmail()) clientLines++;
+    if (getCF()) clientLines++;
+    if (getPiva()) clientLines++;
+    if (getSdi()) clientLines++;
     const boxHeight = 12 + (clientLines * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
@@ -282,6 +300,33 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
       doc.text(`Email: ${getEmail()}`, margin + 3, clientY);
+    }
+
+    // Codice Fiscale
+    if (getCF()) {
+      clientY += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`CF: ${getCF()}`, margin + 3, clientY);
+    }
+
+    // Partita IVA
+    if (getPiva()) {
+      clientY += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`P.IVA: ${getPiva()}`, margin + 3, clientY);
+    }
+
+    // Codice SDI
+    if (getSdi()) {
+      clientY += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`SDI: ${getSdi()}`, margin + 3, clientY);
     }
 
     if (getOperatore()) {
@@ -563,6 +608,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getTelefono()) clientLines2++;
     if (getIndirizzo()) clientLines2++;
     if (getEmail()) clientLines2++;
+    if (getCF()) clientLines2++;
+    if (getPiva()) clientLines2++;
+    if (getSdi()) clientLines2++;
     const boxHeight = 12 + (clientLines2 * 6);
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
@@ -604,6 +652,30 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
       doc.text(`Email: ${getEmail()}`, margin + 3, clientY2);
+    }
+
+    if (getCF()) {
+      clientY2 += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`CF: ${getCF()}`, margin + 3, clientY2);
+    }
+
+    if (getPiva()) {
+      clientY2 += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`P.IVA: ${getPiva()}`, margin + 3, clientY2);
+    }
+
+    if (getSdi()) {
+      clientY2 += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(`SDI: ${getSdi()}`, margin + 3, clientY2);
     }
 
     if (getOperatore()) {
@@ -872,6 +944,15 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getEmail()) {
       text += `📧 *Email:* ${getEmail()}\n`;
     }
+    if (getCF()) {
+      text += `🪪 *CF:* ${getCF()}\n`;
+    }
+    if (getPiva()) {
+      text += `🏢 *P.IVA:* ${getPiva()}\n`;
+    }
+    if (getSdi()) {
+      text += `📨 *SDI:* ${getSdi()}\n`;
+    }
     if (getOperatore()) {
       text += `👷 *Operatore:* ${getOperatore()}\n`;
     }
@@ -1125,6 +1206,21 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
               {getEmail() && (
                 <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
                   📧 {getEmail()}
+                </p>
+              )}
+              {getCF() && (
+                <p className="text-xs text-gray-500 font-mono mt-0.5">
+                  🪪 CF: {getCF()}
+                </p>
+              )}
+              {getPiva() && (
+                <p className="text-xs text-gray-500 font-mono mt-0.5">
+                  🏢 P.IVA: {getPiva()}
+                </p>
+              )}
+              {getSdi() && (
+                <p className="text-xs text-gray-500 font-mono mt-0.5">
+                  📨 SDI: {getSdi()}
                 </p>
               )}
             </div>

@@ -166,7 +166,7 @@ export default function Vendita({ onNavigate }) {
   // Modal Nuovo Cliente manuale
   const [showNuovoCliente, setShowNuovoCliente] = useState(false);
   const [nuovoClienteForm, setNuovoClienteForm] = useState({
-    nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: ''
+    nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '', cf: '', piva: '', sdi: ''
   });
   const [scanningDocumento, setScanningDocumento] = useState(false);
   const [scanStep, setScanStep] = useState('idle'); // 'idle' | 'fronte_done'
@@ -258,6 +258,7 @@ export default function Vendita({ onNavigate }) {
           provincia: lato === 'fronte' ? (d.provincia || prev.provincia) : (prev.provincia || d.provincia),
           telefono:  lato === 'fronte' ? (d.telefono || prev.telefono)   : (prev.telefono || d.telefono),
           email:     lato === 'fronte' ? (d.email || prev.email)         : (prev.email || d.email),
+          cf:        lato === 'fronte' ? (d.cf || prev.cf)               : (prev.cf || d.cf),
         }));
         setScanStep(lato === 'fronte' ? 'fronte_done' : 'idle');
       } else {
@@ -289,6 +290,9 @@ export default function Vendita({ onNavigate }) {
       provincia: f.provincia.trim() || null,
       telefono: f.telefono.trim() || null,
       email: f.email.trim() || null,
+      cf: f.cf.trim() || null,
+      piva: f.piva.trim() || null,
+      sdi: f.sdi.trim() || null,
     };
     setCliente(nomeCompleto);
     setClienteSelezionato(clienteVirtuale);
@@ -2730,6 +2734,54 @@ export default function Vendita({ onNavigate }) {
                   onChange={e => setNuovoClienteForm(p => ({ ...p, email: e.target.value }))}
                   autoCapitalize="none"
                 />
+              </div>
+
+              {/* Divider fatturazione */}
+              <div className="flex items-center gap-2 pt-1">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400">Dati fatturazione (opzionale)</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium">Codice Fiscale</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2 mt-1 text-sm uppercase font-mono tracking-wider"
+                  placeholder="RSSMRA80A01H501Z"
+                  maxLength={16}
+                  value={nuovoClienteForm.cf}
+                  onChange={e => setNuovoClienteForm(p => ({ ...p, cf: e.target.value.toUpperCase() }))}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Partita IVA</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full border rounded-lg p-2 mt-1 text-sm font-mono"
+                    placeholder="12345678901"
+                    maxLength={11}
+                    value={nuovoClienteForm.piva}
+                    onChange={e => setNuovoClienteForm(p => ({ ...p, piva: e.target.value.replace(/\D/g,'') }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Codice SDI</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2 mt-1 text-sm uppercase font-mono"
+                    placeholder="XXXXXXX"
+                    maxLength={7}
+                    value={nuovoClienteForm.sdi}
+                    onChange={e => setNuovoClienteForm(p => ({ ...p, sdi: e.target.value.toUpperCase() }))}
+                    autoCorrect="off"
+                  />
+                </div>
               </div>
 
               {/* Anteprima nome che verrà usato */}

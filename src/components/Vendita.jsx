@@ -3,6 +3,7 @@ import { ArrowLeft, Camera, Search, Plus, Trash2, Package, Clock, Gift, MapPin, 
 import useStore from '../store';
 import { supabase } from '../store';
 import CommissioneModal from './CommissioneModal';
+import SalvaClienteBanner from './SalvaClienteBanner';
 import { scanMatricola, scanCommissione, scanDocumentoIdentita } from '../services/ocrService';
 import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono } from '../services/clientiService';
 
@@ -162,6 +163,10 @@ export default function Vendita({ onNavigate }) {
   // Commissione
   const [showCommissione, setShowCommissione] = useState(false);
   const [commissioneData, setCommissioneData] = useState(null);
+
+  // Banner salva cliente in rubrica
+  const [showSalvaClienteBanner, setShowSalvaClienteBanner] = useState(false);
+  const [pendingCliente, setPendingCliente] = useState(null);
 
   // Modal Nuovo Cliente manuale
   const [showNuovoCliente, setShowNuovoCliente] = useState(false);
@@ -941,6 +946,34 @@ export default function Vendita({ onNavigate }) {
     setEditAccessorioData({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   };
 
+  // Controlla se il cliente è già in rubrica e mostra banner se è nuovo
+  const checkEsalvaCliente = async (clienteInfo) => {
+    // Salta se il cliente è già in rubrica (ha un id valido dal DB)
+    if (!clienteInfo || clienteInfo.id) return;
+
+    // Costruisci chiave di ricerca
+    const chiave = clienteInfo.searchText ||
+      `${clienteInfo.nome || ''}${clienteInfo.cognome || ''}`.trim();
+
+    if (!chiave) return;
+
+    try {
+      const { data: esistente } = await supabase
+        .from('clienti')
+        .select('id')
+        .eq('search_text', chiave)
+        .maybeSingle();
+
+      if (!esistente) {
+        setPendingCliente(clienteInfo);
+        setShowSalvaClienteBanner(true);
+      }
+    } catch (err) {
+      // Errore silenzioso — non bloccare il flusso principale
+      console.warn('checkEsalvaCliente:', err);
+    }
+  };
+
   const hasOrderedProducts = prodotti.some(p => p.isOrdered === true);
 
   const handleConcludi = async () => {
@@ -1041,6 +1074,7 @@ export default function Vendita({ onNavigate }) {
           note: note.trim() || null, tipoDocumento
         });
         setCommissioneData({ ...commissione, isPending: true, confirmed: true });
+        await checkEsalvaCliente(clienteSelezionato);
         return;
       }
 
@@ -1077,6 +1111,7 @@ export default function Vendita({ onNavigate }) {
         dataVendita: dataISO
       });
       setCommissioneData({ ...commissione, confirmed: true, ivaCompresa });
+      await checkEsalvaCliente(clienteSelezionato);
     } catch (error) {
       console.error('Errore conferma commissione:', error);
       alert('⚠️ Errore durante il salvataggio della vendita. Riprova.');
@@ -2890,6 +2925,17 @@ export default function Vendita({ onNavigate }) {
           </div>
         </div>
       )}
+      {/* Banner salva cliente in rubrica */}
+      {showSalvaClienteBanner && pendingCliente && (
+        <SalvaClienteBanner
+          clienteInfo={pendingCliente}
+          onClose={() => {
+            setShowSalvaClienteBanner(false);
+            setPendingCliente(null);
+          }}
+        />
+      )}
+
     </div>
   );
 }

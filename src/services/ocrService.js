@@ -531,6 +531,77 @@ REGOLE:
   }
 }
 
+// OCR Documento Identità - estrae dati anagrafici da carta d'identità, patente, permesso di soggiorno
+export async function scanDocumentoIdentita(imageFile) {
+  try {
+    const rateInfo = getRateLimitInfo();
+    if (rateInfo.blocked && rateInfo.blockedUntil) {
+      const remainingSec = Math.ceil((rateInfo.blockedUntil - Date.now()) / 1000);
+      if (remainingSec > 0) {
+        return { success: false, error: `Attendi ${remainingSec} secondi prima di riprovare.` };
+      }
+    }
+
+    const compressed = await compressImage(imageFile);
+    const base64Data = await fileToBase64(compressed);
+
+    const prompt = `Sei un sistema OCR per documenti d'identità italiani (carta d'identità, patente, permesso di soggiorno, passaporto).
+Estrai i dati anagrafici e restituisci SOLO un JSON valido con questi campi (stringa vuota se non presente o non leggibile):
+{
+  "cognome": "",
+  "nome": "",
+  "indirizzo": "",
+  "cap": "",
+  "localita": "",
+  "provincia": "",
+  "telefono": "",
+  "email": ""
+}
+REGOLE:
+- Cognome e nome SEMPRE separati
+- Per carta d'identità: il cognome è solitamente scritto per primo in maiuscolo
+- Per permesso di soggiorno: cerca COGNOME/SURNAME e NOME/NAME
+- Indirizzo: solo via/piazza/corso con numero civico, senza CAP e città
+- Non aggiungere nulla al di fuori del JSON`;
+
+    const result = await callGemini([
+      prompt,
+      { inlineData: { data: base64Data, mimeType: 'image/jpeg' } }
+    ]);
+
+    rateInfo.count++;
+    rateInfo.consecutive429 = 0;
+    rateInfo.last429Time = null;
+    saveRateLimitInfo(rateInfo);
+
+    const text = result.response.text().trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { success: false, error: 'Nessun dato riconosciuto. Inserisci manualmente.' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return { success: true, data: parsed };
+
+  } catch (error) {
+    console.error('Errore OCR documento:', error);
+
+    const rateInfo = getRateLimitInfo();
+    if (error.message?.includes('429') || error.message?.includes('quota') ||
+        error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('503')) {
+      rateInfo.consecutive429 = (rateInfo.consecutive429 || 0) + 1;
+      rateInfo.last429Time = Date.now();
+      const waitMs = getBackoffMs(rateInfo.consecutive429);
+      rateInfo.blocked = true;
+      rateInfo.blockedUntil = Date.now() + waitMs;
+      saveRateLimitInfo(rateInfo);
+      return { success: false, error: `Limite API. Riprova tra ${Math.ceil(waitMs / 1000)} secondi.` };
+    }
+
+    return { success: false, error: `Errore scansione: ${error.message?.substring(0, 80) || 'sconosciuto'}` };
+  }
+}
+
 // Reset manuale rate limit (per debug)
 export function resetRateLimit() {
   localStorage.removeItem(STORAGE_KEY);

@@ -3,7 +3,7 @@ import { ArrowLeft, Camera, Search, Plus, Trash2, Package, Clock, Gift, MapPin, 
 import useStore from '../store';
 import { supabase } from '../store';
 import CommissioneModal from './CommissioneModal';
-import { scanMatricola, scanCommissione } from '../services/ocrService';
+import { scanMatricola, scanCommissione, scanDocumentoIdentita } from '../services/ocrService';
 import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono } from '../services/clientiService';
 
 // Gestione operatori in localStorage
@@ -236,49 +236,28 @@ export default function Vendita({ onNavigate }) {
   const handleScanDocumento = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = ''; // reset input per permettere riscan
     setScanningDocumento(true);
     try {
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const mimeType = file.type || 'image/jpeg';
-      const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { inline_data: { mime_type: mimeType, data: base64 } },
-              { text: 'Sei un sistema OCR per documenti d\'identità italiani (carta d\'identità, patente, permesso di soggiorno). Estrai i dati anagrafici e restituisci SOLO un JSON valido con questi campi (stringa vuota se non presente): {"cognome":"","nome":"","indirizzo":"","cap":"","localita":"","provincia":"","telefono":"","email":""}. Cognome e nome devono essere separati. Non aggiungere nulla al di fuori del JSON.' }
-            ]}],
-            generationConfig: { temperature: 0 }
-          })
-        }
-      );
-      const data = await response.json();
-      const testo = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const jsonMatch = testo.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      const result = await scanDocumentoIdentita(file);
+      if (result.success && result.data) {
+        const d = result.data;
         setNuovoClienteForm(prev => ({
-          nome: parsed.nome || prev.nome,
-          cognome: parsed.cognome || prev.cognome,
-          indirizzo: parsed.indirizzo || prev.indirizzo,
-          cap: parsed.cap || prev.cap,
-          localita: parsed.localita || prev.localita,
-          provincia: parsed.provincia || prev.provincia,
-          telefono: parsed.telefono || prev.telefono,
-          email: parsed.email || prev.email,
+          nome:      d.nome      || prev.nome,
+          cognome:   d.cognome   || prev.cognome,
+          indirizzo: d.indirizzo || prev.indirizzo,
+          cap:       d.cap       || prev.cap,
+          localita:  d.localita  || prev.localita,
+          provincia: d.provincia || prev.provincia,
+          telefono:  d.telefono  || prev.telefono,
+          email:     d.email     || prev.email,
         }));
+      } else {
+        alert(result.error || 'Errore nella lettura del documento. Inserisci i dati manualmente.');
       }
     } catch (err) {
       console.error('Errore scan documento:', err);
-      alert('Errore nella lettura del documento. Inserisci i dati manualmente.');
+      alert('Errore imprevisto. Inserisci i dati manualmente.');
     } finally {
       setScanningDocumento(false);
     }

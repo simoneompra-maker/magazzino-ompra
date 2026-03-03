@@ -356,17 +356,46 @@ export default function Vendita({ onNavigate }) {
       const result = await scanMatricola(file);
       
       if (result.success && result.matricola) {
-        const found = findBySerialNumber(result.matricola);
+        const matricola = result.matricola.trim().toUpperCase();
+        const found = findBySerialNumber(matricola);
+
         if (found) {
           setSelectedProduct(found);
-          setSearchQuery(result.matricola);
+          setSearchQuery(matricola);
         } else {
-          setSearchQuery(result.matricola);
-          // Apre popup auto-carico invece di mostrare solo errore
+          // Controlla se è una matricola completa Honda: 4 lettere + 6-7 cifre
+          // Es: MZBB1234567 — cerca in inventory per i soli numeri finali
+          const hondaCompleta = /^[A-Z]{4}\d{6,7}$/.test(matricola);
+          if (hondaCompleta) {
+            const suffixNumerico = matricola.slice(4); // gli ultimi 6-7 numeri
+            const { data: itemParziale, error } = await supabase
+              .from('inventory')
+              .select('*')
+              .eq('serialNumber', suffixNumerico)
+              .eq('status', 'available')
+              .maybeSingle();
+
+            if (!error && itemParziale) {
+              // Trovato! Aggiorna la matricola con quella completa
+              await supabase
+                .from('inventory')
+                .update({ serialNumber: matricola })
+                .eq('id', itemParziale.id);
+
+              const itemCompleto = { ...itemParziale, serialNumber: matricola };
+              setSelectedProduct(itemCompleto);
+              setSearchQuery(matricola);
+              setOcrError(null);
+              return; // esce — non apre auto-carico
+            }
+          }
+
+          // Non trovato neanche come Honda parziale → auto-carico normale
+          setSearchQuery(matricola);
           setAutoAddData({
             brand: result.brand || '',
             model: result.modello || '',
-            serialNumber: result.matricola,
+            serialNumber: matricola,
             tipo: ''
           });
           setShowAutoAdd(true);

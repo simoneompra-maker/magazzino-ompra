@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -34,7 +34,92 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
     await supabase.from('operatori').delete().eq('nome', nome);
     caricaOperatori();
   };
-  const syncStatus = useStore((state) => state.syncStatus);
+  // Stock alerts (solo Admin)
+  const [stockAlertsEnabled, setStockAlertsEnabled] = useState(false);
+  const [stockAlerts, setStockAlerts] = useState([]);
+  const [allThresholds, setAllThresholds] = useState([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  const [showStockAlerts, setShowStockAlerts] = useState(false);
+  const [showAllThresholds, setShowAllThresholds] = useState(false);
+  const [editingThreshold, setEditingThreshold] = useState(null); // { brand, model }
+  const [editingValue, setEditingValue] = useState('');
+
+  const loadStockAlerts = useCallback(async () => {
+    if (!isAdmin) return;
+    setLoadingAlerts(true);
+    try {
+      // Leggi toggle
+      const { data: cfg } = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('key', 'stock_alerts_enabled')
+        .single();
+      const enabled = cfg?.value === 'true';
+      setStockAlertsEnabled(enabled);
+
+      if (!enabled) { setLoadingAlerts(false); return; }
+
+      // Carica tutte le soglie con giacenze correnti
+      const { data: thresholds } = await supabase
+        .from('stock_thresholds')
+        .select('brand, model, min_quantity')
+        .order('brand').order('model');
+
+      if (!thresholds?.length) { setLoadingAlerts(false); return; }
+
+      // Carica giacenze available
+      const { data: available } = await supabase
+        .from('inventory')
+        .select('brand, model')
+        .eq('status', 'available');
+
+      // Conta per brand+model
+      const counts = {};
+      (available || []).forEach(({ brand, model }) => {
+        const key = `${brand}||${model}`;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+
+      const enriched = thresholds.map(t => ({
+        ...t,
+        giacenza: counts[`${t.brand}||${t.model}`] || 0
+      }));
+
+      setAllThresholds(enriched);
+      setStockAlerts(enriched.filter(t => t.giacenza < t.min_quantity));
+    } catch (err) {
+      console.error('loadStockAlerts:', err);
+    } finally {
+      setLoadingAlerts(false);
+    }
+  }, [isAdmin]);
+
+  const toggleStockAlerts = async () => {
+    const newVal = (!stockAlertsEnabled).toString();
+    await supabase.from('app_config')
+      .update({ value: newVal })
+      .eq('key', 'stock_alerts_enabled');
+    setStockAlertsEnabled(!stockAlertsEnabled);
+    if (newVal === 'true') loadStockAlerts();
+    else { setStockAlerts([]); setAllThresholds([]); }
+  };
+
+  const saveThreshold = async (brand, model, qty) => {
+    const val = parseInt(qty);
+    if (isNaN(val) || val < 0) return;
+    await supabase.from('stock_thresholds')
+      .update({ min_quantity: val })
+      .eq('brand', brand).eq('model', model);
+    setEditingThreshold(null);
+    setEditingValue('');
+    loadStockAlerts();
+  };
+
+  useEffect(() => {
+    if (isAdmin) loadStockAlerts();
+  }, [isAdmin, loadStockAlerts]);
+
+
   const inventoryCount = useStore((state) =>
     state.inventory.filter(item => item.status === 'available').length
   );
@@ -89,6 +174,22 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
           </button>
         </div>
       </div>
+
+      {/* Alert scorte sotto minimo — solo Admin, solo se attivo */}
+      {isAdmin && stockAlertsEnabled && stockAlerts.length > 0 && (
+        <button
+          onClick={() => { setShowStockAlerts(true); document.querySelector('#stock-alerts-section')?.scrollIntoView({ behavior: 'smooth' }); }}
+          className="mb-3 px-3 py-2 bg-red-50 border border-red-300 rounded-xl flex items-center gap-2"
+        >
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          <p className="font-semibold text-red-800 text-sm flex-1 text-left">
+            {stockAlerts.length} modell{stockAlerts.length > 1 ? 'i' : 'o'} sotto scorta minima
+          </p>
+          <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+            {stockAlerts.length}
+          </span>
+        </button>
+      )}
 
       {/* Alert commissioni pendenti */}
       {pendingCommissioni > 0 && (
@@ -197,6 +298,162 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
       {/* Sezione Admin */}
       {isAdmin && (
         <div className="mt-2">
+          {/* ── STOCK ALERTS ── */}
+          <div className="mt-2">
+            {/* Header toggle */}
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gray-100">
+              <button
+                onClick={() => { setShowStockAlerts(!showStockAlerts); }}
+                className="flex items-center gap-2 flex-1 text-left"
+              >
+                <AlertTriangle className={`w-4 h-4 ${stockAlerts.length > 0 && stockAlertsEnabled ? 'text-red-500' : 'text-gray-400'}`} />
+                <span className="text-xs font-medium text-gray-500">Scorte Minime</span>
+                {stockAlertsEnabled && stockAlerts.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    {stockAlerts.length}
+                  </span>
+                )}
+              </button>
+              {/* Toggle on/off */}
+              <button
+                onClick={toggleStockAlerts}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                title={stockAlertsEnabled ? 'Disattiva alert' : 'Attiva alert'}
+              >
+                {stockAlertsEnabled
+                  ? <ToggleRight className="w-5 h-5 text-green-600" />
+                  : <ToggleLeft className="w-5 h-5 text-gray-400" />}
+              </button>
+              <button onClick={() => setShowStockAlerts(!showStockAlerts)} className="ml-1 text-gray-400">
+                {showStockAlerts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {showStockAlerts && (
+              <div className="mt-2 bg-white rounded-xl border border-gray-200 overflow-hidden">
+                {!stockAlertsEnabled ? (
+                  <div className="p-4 text-center text-gray-400 text-xs">
+                    <ToggleLeft className="w-6 h-6 mx-auto mb-1 text-gray-300" />
+                    Alert disattivati — attiva il toggle per monitorare le scorte
+                  </div>
+                ) : loadingAlerts ? (
+                  <div className="p-3 text-center text-gray-400 text-xs">Caricamento...</div>
+                ) : (
+                  <>
+                    {/* Prodotti sotto soglia */}
+                    {stockAlerts.length > 0 && (
+                      <div className="p-3 border-b border-gray-100">
+                        <p className="text-xs font-bold text-red-600 mb-2 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> SOTTO SCORTA MINIMA
+                        </p>
+                        <div className="space-y-1.5">
+                          {stockAlerts.map(t => (
+                            <div key={`${t.brand}||${t.model}`}
+                              className="flex items-center justify-between px-2 py-1.5 bg-red-50 rounded-lg border border-red-100">
+                              <div>
+                                <span className="text-xs font-semibold text-gray-800">{t.brand} {t.model}</span>
+                                <span className="ml-2 text-xs text-red-600 font-bold">
+                                  {t.giacenza} pz
+                                </span>
+                                <span className="text-xs text-gray-400"> / min {t.min_quantity}</span>
+                              </div>
+                              {/* Modifica soglia inline */}
+                              {editingThreshold?.brand === t.brand && editingThreshold?.model === t.model ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-12 border rounded px-1 py-0.5 text-xs text-center"
+                                    value={editingValue}
+                                    onChange={e => setEditingValue(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && saveThreshold(t.brand, t.model, editingValue)}
+                                    autoFocus
+                                  />
+                                  <button onClick={() => saveThreshold(t.brand, t.model, editingValue)}
+                                    className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">✓</button>
+                                  <button onClick={() => setEditingThreshold(null)}
+                                    className="text-xs text-gray-400">✕</button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => { setEditingThreshold({ brand: t.brand, model: t.model }); setEditingValue(t.min_quantity.toString()); }}
+                                  className="text-xs text-blue-500 underline"
+                                >
+                                  modifica soglia
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {stockAlerts.length === 0 && (
+                      <div className="p-3 text-center text-xs text-green-600 font-medium border-b border-gray-100">
+                        ✓ Tutte le scorte sono sopra la soglia minima
+                      </div>
+                    )}
+
+                    {/* Tutte le soglie — espandibile */}
+                    <div className="p-3">
+                      <button
+                        onClick={() => setShowAllThresholds(!showAllThresholds)}
+                        className="text-xs text-gray-400 flex items-center gap-1"
+                      >
+                        {showAllThresholds ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {showAllThresholds ? 'Nascondi' : 'Vedi tutte le soglie'}
+                        {allThresholds.length > 0 && ` (${allThresholds.length})`}
+                      </button>
+
+                      {showAllThresholds && (
+                        <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                          {allThresholds.map(t => (
+                            <div key={`${t.brand}||${t.model}`}
+                              className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-xs ${
+                                t.giacenza < t.min_quantity ? 'bg-red-50' : 'bg-gray-50'
+                              }`}>
+                              <div>
+                                <span className="font-medium text-gray-700">{t.brand} {t.model}</span>
+                                <span className={`ml-2 font-bold ${t.giacenza < t.min_quantity ? 'text-red-600' : 'text-green-600'}`}>
+                                  {t.giacenza} pz
+                                </span>
+                                <span className="text-gray-400"> / min {t.min_quantity}</span>
+                              </div>
+                              {editingThreshold?.brand === t.brand && editingThreshold?.model === t.model ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-12 border rounded px-1 py-0.5 text-xs text-center"
+                                    value={editingValue}
+                                    onChange={e => setEditingValue(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && saveThreshold(t.brand, t.model, editingValue)}
+                                    autoFocus
+                                  />
+                                  <button onClick={() => saveThreshold(t.brand, t.model, editingValue)}
+                                    className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">✓</button>
+                                  <button onClick={() => setEditingThreshold(null)}
+                                    className="text-xs text-gray-400">✕</button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => { setEditingThreshold({ brand: t.brand, model: t.model }); setEditingValue(t.min_quantity.toString()); }}
+                                  className="text-gray-400 hover:text-blue-500"
+                                >
+                                  ✎
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => { setShowGestioneOp(!showGestioneOp); if (!showGestioneOp) caricaOperatori(); }}
             className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-gray-100 text-gray-500 text-xs font-medium active:scale-95 transition-transform"

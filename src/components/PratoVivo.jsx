@@ -598,11 +598,19 @@ function ProPiano({ pianoId, mq }) {
                             <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-gray-700 truncate">{p.label}</p>
-                              <p className="text-xs text-gray-400">{ip.dose_gm2} g/m²</p>
+                              <p className="text-xs text-gray-400">
+                                {ip.dose_fissa ? 'dose fissa' : `${ip.dose_gm2} g/m²`}
+                              </p>
                             </div>
                             <div className="text-right shrink-0">
-                              <p className="text-sm font-bold text-gray-800">{totale_kg} {unita}</p>
-                              <p className="text-xs text-gray-400">{confezioni} × {peso}{unita}</p>
+                              {ip.dose_fissa ? (
+                                <p className="text-sm font-bold text-amber-700">{ip.dose_fissa_label}</p>
+                              ) : (
+                                <>
+                                  <p className="text-sm font-bold text-gray-800">{totale_kg} {unita}</p>
+                                  <p className="text-xs text-gray-400">{confezioni} × {peso}{unita}</p>
+                                </>
+                              )}
                             </div>
                           </div>
                         );

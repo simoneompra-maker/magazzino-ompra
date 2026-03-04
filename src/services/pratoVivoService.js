@@ -67,7 +67,7 @@ export async function getPianoCompleto(pianoId) {
     .select(`
       id, label, timing, tipo, nota, sort_order,
       pv_intervento_prodotti (
-        id, dose_gm2, sort_order,
+        id, dose_gm2, dose_fissa, dose_fissa_label, sort_order,
         pv_prodotti ( id, slug, listino_codice, listino_brand )
       )
     `)
@@ -117,6 +117,7 @@ export function getRiepilogoProdotti(interventi, mq) {
     (intervento.pv_intervento_prodotti || []).forEach(ip => {
       const p = ip.pv_prodotti;
       if (!p) return;
+      if (ip.dose_fissa) return; // dosi fisse a campo: non calcolabili per m²
       const slug = p.slug;
       if (!map[slug]) {
         map[slug] = {

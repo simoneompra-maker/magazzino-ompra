@@ -1,23 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, Leaf, Zap, BarChart2, ChevronRight, ChevronDown, ChevronUp,
-  Sprout, Sun, Snowflake, Droplets, FlaskConical, Package, AlertCircle, Loader2
+  Package, AlertCircle, Loader2
 } from 'lucide-react';
 import { getPiani, getPianoCompleto, getRiepilogoProdotti, calcolaQuantita, getUnita } from '../services/pratoVivoService';
 
 // ─────────────────────────────────────────────────────────────
 // Costanti UI
 // ─────────────────────────────────────────────────────────────
-const VERDE = '#006B3F';
+const VERDE       = '#006B3F';
 const VERDE_SCURO = '#004d2e';
-const GIALLO = '#FFDD00';
+const GIALLO      = '#FFDD00';
 
 const TIPO_COLORS = {
-  granulare:    { bg: 'bg-green-100', text: 'text-green-800', label: '🌱 Granulare' },
-  fogliare:     { bg: 'bg-blue-100',  text: 'text-blue-800',  label: '💧 Fogliare' },
-  preparazione: { bg: 'bg-amber-100', text: 'text-amber-800', label: '🔧 Preparazione' },
-  semina:       { bg: 'bg-yellow-100',text: 'text-yellow-800',label: '🌾 Semina' },
-  trattamento:  { bg: 'bg-purple-100',text: 'text-purple-800',label: '⚗️ Trattamento' },
+  granulare:    { bg: 'bg-green-100',  text: 'text-green-800',  label: '🌱 Granulare' },
+  fogliare:     { bg: 'bg-blue-100',   text: 'text-blue-800',   label: '💧 Fogliare' },
+  preparazione: { bg: 'bg-amber-100',  text: 'text-amber-800',  label: '🔧 Preparazione' },
+  semina:       { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '🌾 Semina' },
+  trattamento:  { bg: 'bg-purple-100', text: 'text-purple-800', label: '⚗️ Trattamento' },
 };
 
 const LIVELLO_COLORS = {
@@ -26,26 +26,19 @@ const LIVELLO_COLORS = {
   premium:  'bg-amber-100 text-amber-800',
 };
 
-const FASE_ICONS = {
-  impianto:       <Sprout className="w-4 h-4" />,
-  costruzione:    <BarChart2 className="w-4 h-4" />,
-  mantenimento:   <Leaf className="w-4 h-4" />,
-  rigenerazione:  <Zap className="w-4 h-4" />,
-};
-
 const MQ_PRESETS = [50, 100, 200, 300, 500, 1000];
 
 // ─────────────────────────────────────────────────────────────
 // Componente principale
 // ─────────────────────────────────────────────────────────────
 export default function PratoVivo({ onNavigate }) {
-  const [view, setView]           = useState('home'); // home | pro-scelta | pro-piano | express
+  const [view, setView] = useState('home');
   const [pianoSelezionato, setPianoSelezionato] = useState(null); // { id, mq }
 
   const goBack = () => {
-    if (view === 'pro-piano') return setView('pro-scelta');
+    if (view === 'pro-piano')  return setView('pro-scelta');
     if (view === 'pro-scelta') return setView('home');
-    if (view === 'express') return setView('home');
+    if (view === 'express')    return setView('home');
     onNavigate('home');
   };
 
@@ -76,7 +69,7 @@ export default function PratoVivo({ onNavigate }) {
       <div className="flex-1 p-3">
         {view === 'home'       && <HomeScreen onExpress={() => setView('express')} onPro={() => setView('pro-scelta')} />}
         {view === 'express'    && <ExpressPlaceholder />}
-        {view === 'pro-scelta' && <ProScelta  onPianoSelected={handlePianoSelected} />}
+        {view === 'pro-scelta' && <ProScelta onPianoSelected={handlePianoSelected} />}
         {view === 'pro-piano'  && pianoSelezionato && (
           <ProPiano pianoId={pianoSelezionato.id} mq={pianoSelezionato.mq} />
         )}
@@ -111,7 +104,7 @@ function HomeScreen({ onExpress, onPro }) {
         <div className="flex-1 text-left">
           <div className="text-lg font-bold">Modalità EXPRESS</div>
           <div className="text-sm opacity-70">Kit pronti per il banco</div>
-          <div className="text-xs opacity-60 mt-0.5">Wizard 7 passi → Kit prodotti + quantità</div>
+          <div className="text-xs opacity-60 mt-0.5">Wizard rapido → prodotti + quantità</div>
         </div>
         <ChevronRight className="w-5 h-5 opacity-60" />
       </button>
@@ -135,13 +128,12 @@ function HomeScreen({ onExpress, onPro }) {
 
       {/* Info fasi */}
       <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Le 4 fasi del prato</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Le 3 situazioni</p>
         <div className="space-y-2">
           {[
-            { icon: '🌱', fase: 'Impianto', desc: 'Anno 0 — semina e attecchimento' },
-            { icon: '🏗️', fase: 'Costruzione', desc: 'Anni 1-3 — formazione flora batterica' },
-            { icon: '🌿', fase: 'Mantenimento', desc: 'Anni 4+ — nutrire il sistema vivo' },
-            { icon: '🔄', fase: 'Rigenerazione', desc: '4-8 sett. — recupero prato degradato' },
+            { icon: '🌱', fase: 'Nuova semina',  desc: 'Terreno nudo — parto da zero' },
+            { icon: '🌿', fase: 'Mantenimento',  desc: 'Prato formato — lo nutro e lo mantengo' },
+            { icon: '🔄', fase: 'Rigenerazione', desc: 'Prato degradato — lo recupero' },
           ].map(f => (
             <div key={f.fase} className="flex items-center gap-3">
               <span className="text-lg">{f.icon}</span>
@@ -171,9 +163,75 @@ function ExpressPlaceholder() {
         <p className="text-sm text-gray-500 mt-1">In arrivo — Step 5</p>
       </div>
       <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
-        Il wizard in 7 passi per il banco: genera kit Starter, Naturale o PratoVivo Completo
-        con quantità calcolate e prezzo listino.
+        Il wizard rapido per il banco: genera kit con quantità calcolate e prezzo listino.
       </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BANNER CONSIGLIO PREMIUM — nuova semina base/standard
+// ─────────────────────────────────────────────────────────────
+function BannerConsiglioPremiun({ piano, piani, onSwitchPremium }) {
+  const [visible, setVisible] = useState(true);
+
+  // Mostro solo se fase = nuova_semina e livello != premium
+  if (!piano) return null;
+  if (piano.fase !== 'nuova_semina') return null;
+  if (piano.livello === 'premium') return null;
+  if (!visible) return null;
+
+  // Trova il piano premium equivalente (stesso tipo_prato, stessa fase)
+  const premiumEquivalente = piani.find(
+    p => p.tipo_prato === piano.tipo_prato && p.fase === 'nuova_semina' && p.livello === 'premium'
+  );
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-bold text-amber-800">
+          💡 Nuova semina: vale la pena considerare il piano Premium
+        </p>
+        <button
+          onClick={() => setVisible(false)}
+          className="text-amber-400 text-lg leading-none shrink-0"
+        >×</button>
+      </div>
+
+      <p className="text-xs text-amber-700 leading-relaxed">
+        Il suolo è vergine — è il momento in cui si imposta il sistema biologico per i prossimi anni.
+        In questa fase il Premium tende a fare la differenza su:
+      </p>
+
+      <div className="space-y-1">
+        {[
+          'Velocità di attecchimento',
+          'Profondità di radicamento',
+          'Riduzione delle fallanze',
+          'Resistenza alla siccità nei mesi estivi',
+          'Minor bisogno di concime negli anni successivi',
+        ].map(v => (
+          <div key={v} className="flex items-center gap-2">
+            <span className="text-amber-500 text-xs">→</span>
+            <span className="text-xs text-amber-700">{v}</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-xs text-amber-600 italic leading-relaxed">
+        Non è indispensabile, ma se il cliente vuole partire con il piede giusto
+        è la scelta che raccomandiamo. A prato formato si può sempre scendere di livello.
+      </p>
+
+      {premiumEquivalente && (
+        <button
+          onClick={() => { onSwitchPremium(premiumEquivalente); setVisible(false); }}
+          className="w-full py-2.5 rounded-lg text-white text-sm font-bold active:scale-95 transition-transform"
+          style={{ backgroundColor: '#92400e' }}
+        >
+          ⭐ Mostra piano Premium
+        </button>
+      )}
     </div>
   );
 }
@@ -182,14 +240,14 @@ function ExpressPlaceholder() {
 // PRO — SELEZIONE PIANO
 // ─────────────────────────────────────────────────────────────
 function ProScelta({ onPianoSelected }) {
-  const [piani, setPiani] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filtroTipo, setFiltroTipo]     = useState('');
-  const [filtroFase, setFiltroFase]     = useState('');
-  const [filtroLiv,  setFiltroLiv]      = useState('');
-  const [mq, setMq] = useState('');
-  const [pianoScelto, setPianoScelto]   = useState(null);
+  const [piani, setPiani]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
+  const [filtroTipo, setFiltroTipo]   = useState('');
+  const [filtroFase, setFiltroFase]   = useState('');
+  const [filtroLiv, setFiltroLiv]     = useState('');
+  const [mq, setMq]                   = useState('');
+  const [pianoScelto, setPianoScelto] = useState(null);
 
   const caricaPiani = useCallback(async () => {
     setLoading(true);
@@ -208,18 +266,22 @@ function ProScelta({ onPianoSelected }) {
 
   const pianiFiltrati = piani.filter(p => {
     if (filtroTipo && p.tipo_prato !== filtroTipo) return false;
-    if (filtroFase && p.fase !== filtroFase)         return false;
-    if (filtroLiv  && p.livello !== filtroLiv)       return false;
+    if (filtroFase && p.fase !== filtroFase)       return false;
+    if (filtroLiv  && p.livello !== filtroLiv)     return false;
     return true;
   });
 
-  const fasi     = [...new Set(piani.map(p => p.fase))];
-  const tipi     = [...new Set(piani.map(p => p.tipo_prato))];
-  const livelli  = [...new Set(piani.filter(p => p.livello).map(p => p.livello))];
+  const fasi    = [...new Set(piani.map(p => p.fase))];
+  const tipi    = [...new Set(piani.map(p => p.tipo_prato))];
+  const livelli = [...new Set(piani.filter(p => p.livello).map(p => p.livello))];
 
   const procedi = () => {
     if (!pianoScelto || !mq || isNaN(parseFloat(mq))) return;
     onPianoSelected(pianoScelto.id, parseFloat(mq));
+  };
+
+  const handleSwitchPremium = (pianoPremium) => {
+    setPianoScelto(pianoPremium);
   };
 
   if (loading) return <LoadingSpinner label="Caricamento piani..." />;
@@ -234,14 +296,14 @@ function ProScelta({ onPianoSelected }) {
         <FilterRow
           label="Tipo prato"
           options={tipi}
-          labels={{ ornamentale: '🌸 Ornamentale', sportivo: '⚽ Sportivo', universale: '🌍 Universale' }}
+          labels={{ ornamentale: '🌸 Ornamentale', sportivo: '⚽ Sportivo' }}
           value={filtroTipo}
           onChange={v => { setFiltroTipo(v); setPianoScelto(null); }}
         />
         <FilterRow
-          label="Fase"
+          label="Situazione"
           options={fasi}
-          labels={{ impianto: '🌱 Impianto', costruzione: '🏗️ Costruzione', mantenimento: '🌿 Mantenimento', rigenerazione: '🔄 Rigenerazione' }}
+          labels={{ nuova_semina: '🌱 Nuova semina', mantenimento: '🌿 Mantenimento', rigenerazione: '🔄 Rigenerazione' }}
           value={filtroFase}
           onChange={v => { setFiltroFase(v); setPianoScelto(null); }}
         />
@@ -289,6 +351,15 @@ function ProScelta({ onPianoSelected }) {
         ))}
       </div>
 
+      {/* Banner consiglio Premium */}
+      {pianoScelto && (
+        <BannerConsiglioPremiun
+          piano={pianoScelto}
+          piani={piani}
+          onSwitchPremium={handleSwitchPremium}
+        />
+      )}
+
       {/* Input m² */}
       {pianoScelto && (
         <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 shadow-sm">
@@ -299,9 +370,7 @@ function ProScelta({ onPianoSelected }) {
                 key={v}
                 onClick={() => setMq(String(v))}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
-                  mq === String(v)
-                    ? 'border-green-500 text-white'
-                    : 'border-gray-200 bg-gray-50 text-gray-600'
+                  mq === String(v) ? 'border-green-500 text-white' : 'border-gray-200 bg-gray-50 text-gray-600'
                 }`}
                 style={mq === String(v) ? { backgroundColor: VERDE, borderColor: VERDE } : {}}
               >
@@ -337,13 +406,83 @@ function ProScelta({ onPianoSelected }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// BANNER TERRENO SABBIOSO
+// ─────────────────────────────────────────────────────────────
+function BannerTerenoSabbioso() {
+  const [aperto, setAperto] = useState(false);
+
+  return (
+    <div className="rounded-xl border overflow-hidden"
+      style={{ borderColor: aperto ? '#d97706' : '#e5e7eb', backgroundColor: aperto ? '#fffbeb' : '#fff' }}>
+      <button
+        onClick={() => setAperto(!aperto)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-base">🏖️</span>
+          <span className="text-sm font-semibold text-gray-700">Terreno sabbioso?</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${aperto ? 'bg-amber-200 text-amber-800' : 'bg-gray-100 text-gray-500'}`}>
+            {aperto ? 'Sì' : 'No'}
+          </span>
+          {aperto ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </div>
+      </button>
+
+      {aperto && (
+        <div className="px-4 pb-4 space-y-3 border-t border-amber-100">
+          <p className="text-xs text-amber-800 leading-relaxed pt-3">
+            La sabbia drena velocemente: i nutrienti si dilavano prima di essere assorbiti
+            e l'acqua non viene trattenuta. Alcune accortezze per adattare questo piano:
+          </p>
+
+          <div className="space-y-2.5">
+            {[
+              {
+                titolo: 'Sostituire Green 7 con AllRound CRF',
+                desc: 'Il rilascio controllato resiste al dilavamento — Green 7 in suolo sabbioso viene perso con le irrigazioni.',
+              },
+              {
+                titolo: 'Raddoppiare la dose di Humifitos (40 g/m²) + Micosat F PG',
+                desc: 'La sabbia ha poca sostanza organica e quasi nessuna vita batterica. Humifitos costruisce la CEC, Micosat F PG colonizza la materia organica e la rende disponibile alle radici. Vanno sempre in coppia.',
+              },
+              {
+                titolo: 'Aggiungere Wet Turf ad ogni irrigazione',
+                desc: 'Migliora la ritenzione idrica nel suolo sabbioso e riduce la frequenza delle irrigazioni necessarie.',
+              },
+              {
+                titolo: 'Frazionare i granulari',
+                desc: 'Dosi più piccole ogni 4-5 settimane invece di dosi grandi: la sabbia non tampona e non trattiene i nutrienti a lungo termine.',
+              },
+            ].map(item => (
+              <div key={item.titolo} className="flex gap-2.5">
+                <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+                <div>
+                  <p className="text-xs font-semibold text-amber-800">{item.titolo}</p>
+                  <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-amber-500 italic">
+            Questi adattamenti non cambiano i prodotti del piano — modificano dosi e frequenze.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // PRO — VISUALIZZA PIANO
 // ─────────────────────────────────────────────────────────────
 function ProPiano({ pianoId, mq }) {
-  const [dati, setDati] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showRiepilogo, setShowRiepilogo] = useState(false);
+  const [dati, setDati]                         = useState(null);
+  const [loading, setLoading]                   = useState(true);
+  const [error, setError]                       = useState(null);
+  const [showRiepilogo, setShowRiepilogo]       = useState(false);
   const [expandedInterventi, setExpandedInterventi] = useState({});
 
   const carica = useCallback(async () => {
@@ -388,12 +527,12 @@ function ProPiano({ pianoId, mq }) {
         <div className="flex flex-wrap gap-1.5 mt-3">
           {piano.tipo_prato && (
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
-              {piano.tipo_prato === 'ornamentale' ? '🌸' : piano.tipo_prato === 'sportivo' ? '⚽' : '🌍'} {piano.tipo_prato}
+              {piano.tipo_prato === 'ornamentale' ? '🌸' : '⚽'} {piano.tipo_prato}
             </span>
           )}
           {piano.fase && (
-            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
-              {piano.fase}
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              {piano.fase === 'nuova_semina' ? '🌱 Nuova semina' : piano.fase === 'mantenimento' ? '🌿 Mantenimento' : '🔄 Rigenerazione'}
             </span>
           )}
           {piano.livello && (
@@ -404,6 +543,9 @@ function ProPiano({ pianoId, mq }) {
         </div>
       </div>
 
+      {/* Banner terreno sabbioso */}
+      <BannerTerenoSabbioso />
+
       {/* Interventi */}
       <div className="space-y-2">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide px-1">
@@ -412,7 +554,7 @@ function ProPiano({ pianoId, mq }) {
 
         {interventi.map((intervento, idx) => {
           const tipo = TIPO_COLORS[intervento.tipo] || { bg: 'bg-gray-100', text: 'text-gray-700', label: intervento.tipo };
-          const isExpanded = expandedInterventi[intervento.id] ?? true; // aperto di default
+          const isExpanded = expandedInterventi[intervento.id] ?? true;
 
           return (
             <div key={intervento.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -433,7 +575,9 @@ function ProPiano({ pianoId, mq }) {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipo.bg} ${tipo.text}`}>
                     {tipo.label}
                   </span>
-                  {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  {isExpanded
+                    ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                    : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </div>
               </button>
 
@@ -465,7 +609,6 @@ function ProPiano({ pianoId, mq }) {
                       })}
                     </div>
                   )}
-
                   {/* Nota agronomica */}
                   {intervento.nota && (
                     <div className="px-4 py-3 bg-amber-50 border-t border-amber-100">
@@ -495,7 +638,9 @@ function ProPiano({ pianoId, mq }) {
             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
               {riepilogo.length} prodotti
             </span>
-            {showRiepilogo ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            {showRiepilogo
+              ? <ChevronUp className="w-4 h-4 text-gray-400" />
+              : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </div>
         </button>
 
@@ -506,7 +651,9 @@ function ProPiano({ pianoId, mq }) {
                 <div key={p.slug} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-700 truncate">{p.label}</p>
-                    <p className="text-xs text-gray-400">{p.n_applicazioni} applicazion{p.n_applicazioni > 1 ? 'i' : 'e'} · {p.peso_confezione}{p.unita}/conf.</p>
+                    <p className="text-xs text-gray-400">
+                      {p.n_applicazioni} applicazion{p.n_applicazioni > 1 ? 'i' : 'e'} · {p.peso_confezione}{p.unita}/conf.
+                    </p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold" style={{ color: VERDE }}>{p.confezioni} conf.</p>
@@ -517,14 +664,13 @@ function ProPiano({ pianoId, mq }) {
             </div>
             <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
               <p className="text-xs text-gray-400 italic">
-                Le quantità sono calcolate per {mq} m². Arrotondate alla confezione intera superiore.
+                Quantità calcolate per {mq} m². Arrotondate alla confezione intera superiore.
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Spazio fondo */}
       <div className="h-4" />
     </div>
   );

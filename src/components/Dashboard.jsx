@@ -121,6 +121,8 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
   }, [isAdmin, loadStockAlerts]);
 
 
+  const syncStatus = useStore((state) => state.syncStatus);
+
   const inventoryCount = useStore((state) =>
     state.inventory.filter(item => item.status === 'available').length
   );

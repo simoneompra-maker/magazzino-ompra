@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState } from 'react';
-import { supabase } from '../supabaseClient'; // aggiusta il path se necessario
+import { supabase } from '../store'; // aggiusta il path se necessario
 
 /**
  * Banner che appare dopo la conferma commissione se il cliente non è in rubrica.

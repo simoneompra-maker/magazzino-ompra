@@ -1,47 +1,37 @@
 import { supabase } from '../store';
 
 // ─────────────────────────────────────────────────────────────
-// PESO PER CONFEZIONE (kg o L) — usato per calcolo n° sacchi
+// PESO PER CONFEZIONE (kg o L)
 // ─────────────────────────────────────────────────────────────
 export const PESO_CONFEZIONE = {
-  green7:       25,
-  green8:       25,
-  vigor_active: 25,
-  allround:     20,
-  pro_starter:  20,
-  pro_slow:     20,
-  universal_top:20,
-  iron_power:   20,
-  granustar:    20,
-  humifitos:    25,
-  leokare:      5,
-  algapark:     5,
-  root_speed:   5,
-  fe_ulk:       1,
-  amino_k:      1,
-  wet_turf:     1,
-  micosat_pg:   1,
-  micosat_mo:   5,
-  micosat_tab:  1,
-  micosat_len:  1,
+  green7:        25,
+  green8:        25,
+  vigor_active:  25,
+  allround:      20,
+  pro_starter:   20,
+  pro_slow:      20,
+  universal_top: 20,
+  iron_power:    20,
+  granustar:     20,
+  humifitos:     25,
+  leokare:       5,
+  algapark:      5,
+  root_speed:    5,
+  fe_ulk:        1,
+  amino_k:       1,
+  wet_turf:      1,
+  micosat_pg:    1,
+  micosat_mo:    5,
+  micosat_tab:   1,
+  micosat_len:   1,
 };
 
-// Unità di misura per prodotto
-export const UNITA = {
-  leokare:     'L',
-  humifitos:   'L',
-  wet_turf:    'L',
-  algapark:    'L',
-  root_speed:  'L',
-};
+export const UNITA_LIQUIDO = new Set(['leokare', 'humifitos', 'wet_turf', 'algapark', 'root_speed']);
 
 export function getUnita(slug) {
-  return UNITA[slug] || 'kg';
+  return UNITA_LIQUIDO.has(slug) ? 'L' : 'kg';
 }
 
-// ─────────────────────────────────────────────────────────────
-// Calcola quantità e confezioni necessarie
-// ─────────────────────────────────────────────────────────────
 export function calcolaQuantita(slug, dose_gm2, mq) {
   const totale_kg = (dose_gm2 * mq) / 1000;
   const peso = PESO_CONFEZIONE[slug] || 1;
@@ -49,14 +39,6 @@ export function calcolaQuantita(slug, dose_gm2, mq) {
   return { totale_kg: Math.round(totale_kg * 100) / 100, confezioni, peso };
 }
 
-// ─────────────────────────────────────────────────────────────
-// QUERY
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Carica tutti i piani attivi, con filtri opzionali.
- * @param {Object} filters — { tipo_prato, fase, livello }
- */
 export async function getPiani(filters = {}) {
   let query = supabase
     .from('pv_piani')
@@ -72,10 +54,6 @@ export async function getPiani(filters = {}) {
   return data || [];
 }
 
-/**
- * Carica piano + interventi + prodotti per ogni intervento.
- * @param {string} pianoId — UUID del piano
- */
 export async function getPianoCompleto(pianoId) {
   const { data: piano, error: e1 } = await supabase
     .from('pv_piani')
@@ -89,31 +67,49 @@ export async function getPianoCompleto(pianoId) {
     .select(`
       id, label, timing, tipo, nota, sort_order,
       pv_intervento_prodotti (
-        dose_gm2, sort_order,
-        pv_prodotti ( id, slug, label, codice_listino )
+        id, dose_gm2, sort_order,
+        pv_prodotti ( id, slug, listino_codice, listino_brand )
       )
     `)
     .eq('piano_id', pianoId)
     .order('sort_order');
   if (e2) throw e2;
 
-  // Ordina i prodotti per sort_order all'interno di ogni intervento
-  const interventiOrdinati = (interventi || []).map(i => ({
+  // Raccogli codici prodotto
+  const codici = new Set();
+  (interventi || []).forEach(i =>
+    (i.pv_intervento_prodotti || []).forEach(ip => {
+      if (ip.pv_prodotti?.listino_codice) codici.add(ip.pv_prodotti.listino_codice);
+    })
+  );
+
+  // Fetch nomi da listini
+  let nomiMap = {};
+  if (codici.size > 0) {
+    const { data: listiniData } = await supabase
+      .from('listini')
+      .select('codice, descrizione')
+      .in('codice', [...codici]);
+    (listiniData || []).forEach(r => { nomiMap[r.codice] = r.descrizione; });
+  }
+
+  // Arricchisci con nome
+  const interventiArricchiti = (interventi || []).map(i => ({
     ...i,
-    pv_intervento_prodotti: [...(i.pv_intervento_prodotti || [])].sort(
-      (a, b) => a.sort_order - b.sort_order
-    ),
+    pv_intervento_prodotti: [...(i.pv_intervento_prodotti || [])]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(ip => ({
+        ...ip,
+        pv_prodotti: ip.pv_prodotti ? {
+          ...ip.pv_prodotti,
+          label: nomiMap[ip.pv_prodotti.listino_codice] || ip.pv_prodotti.slug,
+        } : null,
+      })),
   }));
 
-  return { piano, interventi: interventiOrdinati };
+  return { piano, interventi: interventiArricchiti };
 }
 
-/**
- * Riepilogo aggregato di tutti i prodotti di un piano per una data superficie.
- * Raggruppa per prodotto e somma le dosi/confezioni.
- * @param {Array}  interventi — da getPianoCompleto()
- * @param {number} mq         — superficie in m²
- */
 export function getRiepilogoProdotti(interventi, mq) {
   const map = {};
 
@@ -125,8 +121,8 @@ export function getRiepilogoProdotti(interventi, mq) {
       if (!map[slug]) {
         map[slug] = {
           slug,
-          label: p.label,
-          codice: p.codice_listino,
+          label: p.label || p.slug,
+          codice: p.listino_codice,
           dose_totale_g: 0,
           n_applicazioni: 0,
         };

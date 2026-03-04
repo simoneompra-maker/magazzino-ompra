@@ -10,6 +10,7 @@ import Listini from './components/Listini';
 import PoliticheCommerciali from './components/PoliticheCommerciali';
 import BudgetAdmin from './components/BudgetAdmin';
 import SelezionaOperatore from './components/SelezionaOperatore';
+import PratoVivo from './components/PratoVivo';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
@@ -97,6 +98,8 @@ function App() {
         return <PoliticheCommerciali onNavigate={navigate} />;
       case 'budget-admin':
         return <BudgetAdmin onNavigate={navigate} />;
+      case 'pratovivo':
+        return <PratoVivo onNavigate={navigate} />;
       default:
         return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }

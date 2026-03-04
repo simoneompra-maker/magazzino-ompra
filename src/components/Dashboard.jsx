@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -34,6 +34,7 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
     await supabase.from('operatori').delete().eq('nome', nome);
     caricaOperatori();
   };
+
   // Stock alerts (solo Admin)
   const [stockAlertsEnabled, setStockAlertsEnabled] = useState(false);
   const [stockAlerts, setStockAlerts] = useState([]);
@@ -292,6 +293,22 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <div className="text-xs opacity-60">Scontistiche</div>
           </button>
         </div>
+
+        {/* PRATOVIVO */}
+        <button
+          onClick={() => onNavigate('pratovivo')}
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+          style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
+        >
+          <Leaf className="w-6 h-6 shrink-0" />
+          <div className="flex-1 text-left">
+            <div className="text-base font-bold">PRATOVIVO</div>
+            <div className="text-xs opacity-60">Piani concimazione · Kit Express</div>
+          </div>
+          <span className="text-xs bg-green-700 text-white px-2 py-0.5 rounded-full font-medium">
+            NUOVO
+          </span>
+        </button>
 
       </div>
 

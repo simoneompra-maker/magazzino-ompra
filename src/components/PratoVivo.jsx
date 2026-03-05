@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, Leaf, Zap, BarChart2, ChevronRight, ChevronDown, ChevronUp,
-  Package, AlertCircle, Loader2
+  Package, AlertCircle, Loader2, AlertTriangle
 } from 'lucide-react';
 import { getPiani, getPianoCompleto, getRiepilogoProdotti, calcolaQuantita, getUnita } from '../services/pratoVivoService';
 
 // ─────────────────────────────────────────────────────────────
 // Costanti UI
 // ─────────────────────────────────────────────────────────────
-const VERDE       = '#006B3F';
-const VERDE_SCURO = '#004d2e';
-const GIALLO      = '#FFDD00';
+const VERDE  = '#006B3F';
+const GIALLO = '#FFDD00';
 
 const TIPO_COLORS = {
   granulare:    { bg: 'bg-green-100',  text: 'text-green-800',  label: '🌱 Granulare' },
@@ -28,12 +27,32 @@ const LIVELLO_COLORS = {
 
 const MQ_PRESETS = [50, 100, 200, 300, 500, 1000];
 
+// ── Periodi di semina per rigenerazione ──────────────────────
+const PERIODI_SEMINA = [
+  { value: 'mar',      label: 'Marzo',                doseVigor: 50, alert: 'ok' },
+  { value: 'apr1',     label: 'Prima metà aprile',    doseVigor: 50, alert: 'ok' },
+  { value: 'apr2',     label: 'Seconda metà aprile',  doseVigor: 40, alert: 'ridotta' },
+  { value: 'mag_ini',  label: 'Inizio maggio (1-5)',   doseVigor: 30, alert: 'rischio' },
+  { value: 'mag_oltre',label: 'Dopo 5 maggio',         doseVigor: 0,  alert: 'sconsigliato' },
+];
+
+// ── Preset % degradazione ────────────────────────────────────
+const PERC_PRESETS = [10, 25, 50, 75, 100];
+
+// ── Calcola dose seme da % ────────────────────────────────────
+function doseSemeDaPerc(perc) {
+  if (perc <= 20) return { min: 15, max: 20, label: 'Ritocchi puntuali' };
+  if (perc <= 60) return { min: 25, max: 30, label: 'Diradamento medio' };
+  return { min: 35, max: 40, label: 'Diradamento grave' };
+}
+
 // ─────────────────────────────────────────────────────────────
 // Componente principale
 // ─────────────────────────────────────────────────────────────
 export default function PratoVivo({ onNavigate }) {
   const [view, setView] = useState('home');
-  const [pianoSelezionato, setPianoSelezionato] = useState(null); // { id, mq }
+  // pianoSelezionato: { id, mq, percDegrado?, periodoSemina? }
+  const [pianoSelezionato, setPianoSelezionato] = useState(null);
 
   const goBack = () => {
     if (view === 'pro-piano')  return setView('pro-scelta');
@@ -42,20 +61,16 @@ export default function PratoVivo({ onNavigate }) {
     onNavigate('home');
   };
 
-  const handlePianoSelected = (id, mq) => {
-    setPianoSelezionato({ id, mq });
+  const handlePianoSelected = (id, mq, percDegrado, periodoSemina) => {
+    setPianoSelezionato({ id, mq, percDegrado, periodoSemina });
     setView('pro-piano');
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Header */}
       <div className="px-4 py-3 text-white flex items-center gap-3 sticky top-0 z-10"
         style={{ backgroundColor: VERDE }}>
-        <button
-          onClick={goBack}
-          className="p-1.5 rounded-lg bg-white/20 active:scale-95 transition-transform"
-        >
+        <button onClick={goBack} className="p-1.5 rounded-lg bg-white/20 active:scale-95 transition-transform">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
@@ -65,13 +80,17 @@ export default function PratoVivo({ onNavigate }) {
         <Leaf className="w-6 h-6 text-white/40" />
       </div>
 
-      {/* Contenuto */}
       <div className="flex-1 p-3">
         {view === 'home'       && <HomeScreen onExpress={() => setView('express')} onPro={() => setView('pro-scelta')} />}
         {view === 'express'    && <ExpressPlaceholder />}
         {view === 'pro-scelta' && <ProScelta onPianoSelected={handlePianoSelected} />}
         {view === 'pro-piano'  && pianoSelezionato && (
-          <ProPiano pianoId={pianoSelezionato.id} mq={pianoSelezionato.mq} />
+          <ProPiano
+            pianoId={pianoSelezionato.id}
+            mq={pianoSelezionato.mq}
+            percDegrado={pianoSelezionato.percDegrado}
+            periodoSemina={pianoSelezionato.periodoSemina}
+          />
         )}
       </div>
     </div>
@@ -84,7 +103,6 @@ export default function PratoVivo({ onNavigate }) {
 function HomeScreen({ onExpress, onPro }) {
   return (
     <div className="space-y-4">
-      {/* Intro */}
       <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
         <p className="text-xs text-gray-500 italic leading-relaxed">
           "Prima il terreno, poi l'erba." — Il tappeto erboso è la parte visibile di un sistema.
@@ -92,15 +110,10 @@ function HomeScreen({ onExpress, onPro }) {
         </p>
       </div>
 
-      {/* EXPRESS */}
-      <button
-        onClick={onExpress}
+      <button onClick={onExpress}
         className="w-full flex items-center gap-4 p-5 rounded-xl font-semibold shadow-md active:scale-95 transition-transform"
-        style={{ backgroundColor: GIALLO, color: VERDE }}
-      >
-        <div className="p-2.5 bg-white/40 rounded-xl">
-          <Zap className="w-7 h-7" />
-        </div>
+        style={{ backgroundColor: GIALLO, color: VERDE }}>
+        <div className="p-2.5 bg-white/40 rounded-xl"><Zap className="w-7 h-7" /></div>
         <div className="flex-1 text-left">
           <div className="text-lg font-bold">Modalità EXPRESS</div>
           <div className="text-sm opacity-70">Kit pronti per il banco</div>
@@ -109,15 +122,10 @@ function HomeScreen({ onExpress, onPro }) {
         <ChevronRight className="w-5 h-5 opacity-60" />
       </button>
 
-      {/* PRO */}
-      <button
-        onClick={onPro}
+      <button onClick={onPro}
         className="w-full flex items-center gap-4 p-5 rounded-xl font-semibold shadow-md active:scale-95 transition-transform text-white"
-        style={{ backgroundColor: VERDE }}
-      >
-        <div className="p-2.5 bg-white/20 rounded-xl">
-          <BarChart2 className="w-7 h-7" />
-        </div>
+        style={{ backgroundColor: VERDE }}>
+        <div className="p-2.5 bg-white/20 rounded-xl"><BarChart2 className="w-7 h-7" /></div>
         <div className="flex-1 text-left">
           <div className="text-lg font-bold">Modalità PRO</div>
           <div className="text-sm opacity-70">Piano annuale completo</div>
@@ -126,7 +134,6 @@ function HomeScreen({ onExpress, onPro }) {
         <ChevronRight className="w-5 h-5 opacity-60" />
       </button>
 
-      {/* Info fasi */}
       <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Le 3 situazioni</p>
         <div className="space-y-2">
@@ -150,7 +157,7 @@ function HomeScreen({ onExpress, onPro }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// EXPRESS — PLACEHOLDER (Step 5)
+// EXPRESS PLACEHOLDER
 // ─────────────────────────────────────────────────────────────
 function ExpressPlaceholder() {
   return (
@@ -170,46 +177,29 @@ function ExpressPlaceholder() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// BANNER CONSIGLIO PREMIUM — nuova semina base/standard
+// BANNER CONSIGLIO PREMIUM
 // ─────────────────────────────────────────────────────────────
-function BannerConsiglioPremiun({ piano, piani, onSwitchPremium }) {
+function BannerConsiglioPremium({ piano, piani, onSwitchPremium }) {
   const [visible, setVisible] = useState(true);
+  if (!piano || piano.fase !== 'nuova_semina' || piano.livello === 'premium' || !visible) return null;
 
-  // Mostro solo se fase = nuova_semina e livello != premium
-  if (!piano) return null;
-  if (piano.fase !== 'nuova_semina') return null;
-  if (piano.livello === 'premium') return null;
-  if (!visible) return null;
-
-  // Trova il piano premium equivalente (stesso tipo_prato, stessa fase)
-  const premiumEquivalente = piani.find(
+  const premiumEq = piani.find(
     p => p.tipo_prato === piano.tipo_prato && p.fase === 'nuova_semina' && p.livello === 'premium'
   );
 
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-bold text-amber-800">
-          💡 Nuova semina: vale la pena considerare il piano Premium
-        </p>
-        <button
-          onClick={() => setVisible(false)}
-          className="text-amber-400 text-lg leading-none shrink-0"
-        >×</button>
+        <p className="text-sm font-bold text-amber-800">💡 Nuova semina: vale la pena il piano Premium</p>
+        <button onClick={() => setVisible(false)} className="text-amber-400 text-lg leading-none shrink-0">×</button>
       </div>
-
       <p className="text-xs text-amber-700 leading-relaxed">
         Il suolo è vergine — è il momento in cui si imposta il sistema biologico per i prossimi anni.
         In questa fase il Premium tende a fare la differenza su:
       </p>
-
       <div className="space-y-1">
-        {[
-          'Velocità di attecchimento',
-          'Profondità di radicamento',
-          'Riduzione delle fallanze',
-          'Resistenza alla siccità nei mesi estivi',
-          'Minor bisogno di concime negli anni successivi',
+        {['Velocità di attecchimento','Profondità di radicamento','Riduzione delle fallanze',
+          'Resistenza alla siccità estiva','Minor bisogno di concime negli anni successivi'
         ].map(v => (
           <div key={v} className="flex items-center gap-2">
             <span className="text-amber-500 text-xs">→</span>
@@ -217,21 +207,122 @@ function BannerConsiglioPremiun({ piano, piani, onSwitchPremium }) {
           </div>
         ))}
       </div>
-
       <p className="text-xs text-amber-600 italic leading-relaxed">
-        Non è indispensabile, ma se il cliente vuole partire con il piede giusto
-        è la scelta che raccomandiamo. A prato formato si può sempre scendere di livello.
+        Non è indispensabile, ma se il cliente vuole partire con il piede giusto è la scelta che raccomandiamo.
       </p>
-
-      {premiumEquivalente && (
-        <button
-          onClick={() => { onSwitchPremium(premiumEquivalente); setVisible(false); }}
+      {premiumEq && (
+        <button onClick={() => { onSwitchPremium(premiumEq); setVisible(false); }}
           className="w-full py-2.5 rounded-lg text-white text-sm font-bold active:scale-95 transition-transform"
-          style={{ backgroundColor: '#92400e' }}
-        >
+          style={{ backgroundColor: '#92400e' }}>
           ⭐ Mostra piano Premium
         </button>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PANNELLO DIRADAMENTO — solo per rigenerazione
+// ─────────────────────────────────────────────────────────────
+function PannelloDiradamento({ mq, percDegrado, setPercDegrado, periodoSemina, setPeriodoSemina }) {
+  const mqTot = parseFloat(mq) || 0;
+  const mqDeg = Math.round(mqTot * percDegrado / 100);
+  const seme  = doseSemeDaPerc(percDegrado);
+  const periodo = PERIODI_SEMINA.find(p => p.value === periodoSemina) || PERIODI_SEMINA[0];
+
+  const alertConfig = {
+    ok:           { bg: 'bg-green-50',  border: 'border-green-200', text: 'text-green-800',  icon: '✓', msg: 'Periodo ideale per la rigenerazione.' },
+    ridotta:      { bg: 'bg-amber-50',  border: 'border-amber-200', text: 'text-amber-800',  icon: '⚡', msg: 'Periodo accettabile. Vigor Active a dose ridotta (40 g/m²) per non accumulare troppo azoto.' },
+    rischio:      { bg: 'bg-orange-50', border: 'border-orange-200',text: 'text-orange-800', icon: '⚠️', msg: 'Periodo rischioso. Le temperature in aumento non lasciano tempo alle radici di consolidarsi. Vigor Active a 30 g/m². Procedere solo se non è possibile rimandare.' },
+    sconsigliato: { bg: 'bg-red-50',    border: 'border-red-200',   text: 'text-red-800',    icon: '🔴', msg: 'SCONSIGLIATO. Le temperature alte non permettono un attecchimento stabile. Se il cliente vuole procedere, lo fa a suo rischio e pericolo — informalo chiaramente.' },
+  };
+  const ac = alertConfig[periodo.alert];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4 shadow-sm">
+      <p className="text-sm font-bold text-gray-700">🔄 Valutazione diradamento</p>
+
+      {/* Percentuale degradazione */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500 font-medium">Superficie degradata</p>
+          <span className="text-sm font-bold" style={{ color: VERDE }}>{percDegrado}%</span>
+        </div>
+
+        {/* Slider */}
+        <input
+          type="range" min="5" max="100" step="5"
+          value={percDegrado}
+          onChange={e => setPercDegrado(Number(e.target.value))}
+          className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+          style={{ accentColor: VERDE }}
+        />
+
+        {/* Preset rapidi */}
+        <div className="flex gap-1.5 flex-wrap">
+          {PERC_PRESETS.map(v => (
+            <button key={v}
+              onClick={() => setPercDegrado(v)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                percDegrado === v ? 'text-white border-transparent' : 'bg-gray-50 border-gray-200 text-gray-600'
+              }`}
+              style={percDegrado === v ? { backgroundColor: VERDE } : {}}>
+              {v}%
+            </button>
+          ))}
+        </div>
+
+        {/* Riepilogo m² */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="bg-gray-50 rounded-lg p-2.5 text-center">
+            <p className="text-xs text-gray-400">Zona degradata</p>
+            <p className="text-base font-bold text-gray-800">{mqDeg} m²</p>
+            <p className="text-xs text-gray-400">{seme.label}</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-2.5 text-center">
+            <p className="text-xs text-gray-400">Dose seme</p>
+            <p className="text-base font-bold" style={{ color: VERDE }}>{seme.min}-{seme.max} g/m²</p>
+            <p className="text-xs text-gray-400">su {mqDeg} m²</p>
+          </div>
+        </div>
+
+        {/* Seme totale stimato */}
+        {mqDeg > 0 && (
+          <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 flex items-center justify-between">
+            <span className="text-xs text-green-700">🌾 Seme stimato</span>
+            <span className="text-sm font-bold text-green-800">
+              {(mqDeg * seme.min / 1000).toFixed(1)}–{(mqDeg * seme.max / 1000).toFixed(1)} kg
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Periodo semina */}
+      <div className="space-y-2">
+        <p className="text-xs text-gray-500 font-medium">Periodo previsto di semina</p>
+        <div className="flex flex-wrap gap-1.5">
+          {PERIODI_SEMINA.map(p => (
+            <button key={p.value}
+              onClick={() => setPeriodoSemina(p.value)}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                periodoSemina === p.value ? 'text-white border-transparent' : 'bg-gray-50 border-gray-200 text-gray-600'
+              }`}
+              style={periodoSemina === p.value ? { backgroundColor: VERDE } : {}}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Alert periodo */}
+        <div className={`rounded-lg border p-3 ${ac.bg} ${ac.border}`}>
+          <p className={`text-xs font-semibold ${ac.text}`}>{ac.icon} {ac.msg}</p>
+          {periodo.doseVigor > 0 && (
+            <p className={`text-xs mt-1 ${ac.text} opacity-80`}>
+              Vigor Active: <strong>{periodo.doseVigor} g/m²</strong> su tutta la superficie ({mq} m²)
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -248,21 +339,24 @@ function ProScelta({ onPianoSelected }) {
   const [filtroLiv, setFiltroLiv]     = useState('');
   const [mq, setMq]                   = useState('');
   const [pianoScelto, setPianoScelto] = useState(null);
+  // Diradamento — solo per rigenerazione
+  const [percDegrado, setPercDegrado]     = useState(50);
+  const [periodoSemina, setPeriodoSemina] = useState('mar');
 
   const caricaPiani = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getPiani();
-      setPiani(data);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError(null);
+    try { setPiani(await getPiani()); }
+    catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { caricaPiani(); }, [caricaPiani]);
+
+  const isRigen = pianoScelto?.fase === 'rigenerazione';
+  const mqNum   = parseFloat(mq);
+  const canProceed = pianoScelto && mq && !isNaN(mqNum) && mqNum > 0;
+
+  const periodoSel = PERIODI_SEMINA.find(p => p.value === periodoSemina);
 
   const pianiFiltrati = piani.filter(p => {
     if (filtroTipo && p.tipo_prato !== filtroTipo) return false;
@@ -276,12 +370,13 @@ function ProScelta({ onPianoSelected }) {
   const livelli = [...new Set(piani.filter(p => p.livello).map(p => p.livello))];
 
   const procedi = () => {
-    if (!pianoScelto || !mq || isNaN(parseFloat(mq))) return;
-    onPianoSelected(pianoScelto.id, parseFloat(mq));
-  };
-
-  const handleSwitchPremium = (pianoPremium) => {
-    setPianoScelto(pianoPremium);
+    if (!canProceed) return;
+    onPianoSelected(
+      pianoScelto.id,
+      mqNum,
+      isRigen ? percDegrado  : undefined,
+      isRigen ? periodoSemina : undefined
+    );
   };
 
   if (loading) return <LoadingSpinner label="Caricamento piani..." />;
@@ -293,27 +388,15 @@ function ProScelta({ onPianoSelected }) {
 
       {/* Filtri */}
       <div className="space-y-2">
-        <FilterRow
-          label="Tipo prato"
-          options={tipi}
+        <FilterRow label="Tipo prato" options={tipi}
           labels={{ ornamentale: '🌸 Ornamentale', sportivo: '⚽ Sportivo' }}
-          value={filtroTipo}
-          onChange={v => { setFiltroTipo(v); setPianoScelto(null); }}
-        />
-        <FilterRow
-          label="Situazione"
-          options={fasi}
+          value={filtroTipo} onChange={v => { setFiltroTipo(v); setPianoScelto(null); }} />
+        <FilterRow label="Situazione" options={fasi}
           labels={{ nuova_semina: '🌱 Nuova semina', mantenimento: '🌿 Mantenimento', rigenerazione: '🔄 Rigenerazione' }}
-          value={filtroFase}
-          onChange={v => { setFiltroFase(v); setPianoScelto(null); }}
-        />
-        <FilterRow
-          label="Livello"
-          options={livelli}
+          value={filtroFase} onChange={v => { setFiltroFase(v); setPianoScelto(null); }} />
+        <FilterRow label="Livello" options={livelli}
           labels={{ base: 'Base', standard: 'Standard', premium: '⭐ Premium' }}
-          value={filtroLiv}
-          onChange={v => { setFiltroLiv(v); setPianoScelto(null); }}
-        />
+          value={filtroLiv} onChange={v => { setFiltroLiv(v); setPianoScelto(null); }} />
       </div>
 
       {/* Lista piani */}
@@ -322,15 +405,10 @@ function ProScelta({ onPianoSelected }) {
           <p className="text-center text-gray-400 text-sm py-4">Nessun piano corrisponde ai filtri</p>
         )}
         {pianiFiltrati.map(piano => (
-          <button
-            key={piano.id}
-            onClick={() => setPianoScelto(piano)}
+          <button key={piano.id} onClick={() => setPianoScelto(piano)}
             className={`w-full text-left p-3.5 rounded-xl border-2 transition-all active:scale-95 ${
-              pianoScelto?.id === piano.id
-                ? 'border-green-500 bg-green-50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
-            }`}
-          >
+              pianoScelto?.id === piano.id ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}>
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -343,63 +421,71 @@ function ProScelta({ onPianoSelected }) {
                 </div>
                 <p className="text-xs text-gray-500 mt-1 leading-relaxed">{piano.descrizione}</p>
               </div>
-              {pianoScelto?.id === piano.id && (
-                <span className="text-green-500 font-bold text-lg shrink-0">✓</span>
-              )}
+              {pianoScelto?.id === piano.id && <span className="text-green-500 font-bold text-lg shrink-0">✓</span>}
             </div>
           </button>
         ))}
       </div>
 
-      {/* Banner consiglio Premium */}
+      {/* Banner Premium */}
       {pianoScelto && (
-        <BannerConsiglioPremiun
-          piano={pianoScelto}
-          piani={piani}
-          onSwitchPremium={handleSwitchPremium}
-        />
+        <BannerConsiglioPremium piano={pianoScelto} piani={piani} onSwitchPremium={setPianoScelto} />
       )}
 
       {/* Input m² */}
       {pianoScelto && (
         <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 shadow-sm">
-          <p className="text-sm font-bold text-gray-700">📐 Superficie del prato</p>
+          <p className="text-sm font-bold text-gray-700">📐 Superficie totale del prato</p>
           <div className="flex flex-wrap gap-2">
             {MQ_PRESETS.map(v => (
-              <button
-                key={v}
-                onClick={() => setMq(String(v))}
+              <button key={v} onClick={() => setMq(String(v))}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
                   mq === String(v) ? 'border-green-500 text-white' : 'border-gray-200 bg-gray-50 text-gray-600'
                 }`}
-                style={mq === String(v) ? { backgroundColor: VERDE, borderColor: VERDE } : {}}
-              >
+                style={mq === String(v) ? { backgroundColor: VERDE, borderColor: VERDE } : {}}>
                 {v} m²
               </button>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={mq}
-              onChange={e => setMq(e.target.value)}
+            <input type="number" value={mq} onChange={e => setMq(e.target.value)}
               placeholder="Inserisci m²"
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500"
-            />
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500" />
             <span className="text-sm text-gray-500 font-medium">m²</span>
           </div>
         </div>
       )}
 
-      {/* CTA */}
-      {pianoScelto && mq && !isNaN(parseFloat(mq)) && parseFloat(mq) > 0 && (
-        <button
-          onClick={procedi}
-          className="w-full py-4 rounded-xl text-white font-bold text-base shadow-md active:scale-95 transition-transform"
-          style={{ backgroundColor: VERDE }}
-        >
-          Vedi piano per {parseFloat(mq)} m² →
-        </button>
+      {/* Pannello diradamento — solo rigenerazione con m² inseriti */}
+      {isRigen && mq && !isNaN(mqNum) && mqNum > 0 && (
+        <PannelloDiradamento
+          mq={mq}
+          percDegrado={percDegrado}
+          setPercDegrado={setPercDegrado}
+          periodoSemina={periodoSemina}
+          setPeriodoSemina={setPeriodoSemina}
+        />
+      )}
+
+      {/* CTA — blocca se periodo sconsigliato e mostra warning */}
+      {canProceed && (
+        <>
+          {isRigen && periodoSel?.alert === 'sconsigliato' && (
+            <div className="bg-red-50 border border-red-300 rounded-xl p-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-700 font-medium">
+                Periodo sconsigliato. Il cliente procede a suo rischio e pericolo — assicurati di averlo informato.
+              </p>
+            </div>
+          )}
+          <button onClick={procedi}
+            className="w-full py-4 rounded-xl text-white font-bold text-base shadow-md active:scale-95 transition-transform"
+            style={{ backgroundColor: isRigen && periodoSel?.alert === 'sconsigliato' ? '#dc2626' : VERDE }}>
+            {isRigen && periodoSel?.alert === 'sconsigliato'
+              ? '⚠️ Procedi a rischio del cliente →'
+              : `Vedi piano per ${mqNum} m² →`}
+          </button>
+        </>
       )}
     </div>
   );
@@ -410,14 +496,11 @@ function ProScelta({ onPianoSelected }) {
 // ─────────────────────────────────────────────────────────────
 function BannerTerenoSabbioso() {
   const [aperto, setAperto] = useState(false);
-
   return (
     <div className="rounded-xl border overflow-hidden"
       style={{ borderColor: aperto ? '#d97706' : '#e5e7eb', backgroundColor: aperto ? '#fffbeb' : '#fff' }}>
-      <button
-        onClick={() => setAperto(!aperto)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
-      >
+      <button onClick={() => setAperto(!aperto)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left">
         <div className="flex items-center gap-2">
           <span className="text-base">🏖️</span>
           <span className="text-sm font-semibold text-gray-700">Terreno sabbioso?</span>
@@ -429,32 +512,18 @@ function BannerTerenoSabbioso() {
           {aperto ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
         </div>
       </button>
-
       {aperto && (
         <div className="px-4 pb-4 space-y-3 border-t border-amber-100">
           <p className="text-xs text-amber-800 leading-relaxed pt-3">
-            La sabbia drena velocemente: i nutrienti si dilavano prima di essere assorbiti
-            e l'acqua non viene trattenuta. Alcune accortezze per adattare questo piano:
+            La sabbia drena velocemente: i nutrienti si dilavano prima di essere assorbiti.
+            Alcune accortezze per adattare questo piano:
           </p>
-
           <div className="space-y-2.5">
             {[
-              {
-                titolo: 'Sostituire Green 7 con AllRound CRF',
-                desc: 'Il rilascio controllato resiste al dilavamento — Green 7 in suolo sabbioso viene perso con le irrigazioni.',
-              },
-              {
-                titolo: 'Raddoppiare la dose di Humifitos (40 g/m²) + Micosat F PG',
-                desc: 'La sabbia ha poca sostanza organica e quasi nessuna vita batterica. Humifitos costruisce la CEC, Micosat F PG colonizza la materia organica e la rende disponibile alle radici. Vanno sempre in coppia.',
-              },
-              {
-                titolo: 'Aggiungere Wet Turf ad ogni irrigazione',
-                desc: 'Migliora la ritenzione idrica nel suolo sabbioso e riduce la frequenza delle irrigazioni necessarie.',
-              },
-              {
-                titolo: 'Frazionare i granulari',
-                desc: 'Dosi più piccole ogni 4-5 settimane invece di dosi grandi: la sabbia non tampona e non trattiene i nutrienti a lungo termine.',
-              },
+              { titolo: 'Sostituire Green 7 con AllRound CRF', desc: 'Il rilascio controllato resiste al dilavamento.' },
+              { titolo: 'Raddoppiare la dose di Humifitos (40 g/m²) + Micosat F PG', desc: 'Costruisce CEC e flora batterica — vanno sempre in coppia.' },
+              { titolo: 'Aggiungere Wet Turf ad ogni irrigazione', desc: 'Migliora la ritenzione idrica.' },
+              { titolo: 'Frazionare i granulari', desc: 'Dosi più piccole ogni 4-5 settimane invece di dosi grandi.' },
             ].map(item => (
               <div key={item.titolo} className="flex gap-2.5">
                 <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
@@ -465,9 +534,65 @@ function BannerTerenoSabbioso() {
               </div>
             ))}
           </div>
+          <p className="text-xs text-amber-500 italic">Questi adattamenti non cambiano i prodotti del piano — modificano dosi e frequenze.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
-          <p className="text-xs text-amber-500 italic">
-            Questi adattamenti non cambiano i prodotti del piano — modificano dosi e frequenze.
+// ─────────────────────────────────────────────────────────────
+// BANNER RIEPILOGO RIGENERAZIONE — mostrato in ProPiano
+// ─────────────────────────────────────────────────────────────
+function BannerRigenerazione({ mq, percDegrado, periodoSemina }) {
+  const mqDeg    = Math.round(mq * percDegrado / 100);
+  const seme     = doseSemeDaPerc(percDegrado);
+  const periodo  = PERIODI_SEMINA.find(p => p.value === periodoSemina) || PERIODI_SEMINA[0];
+
+  const alertConfig = {
+    ok:           { bg: 'bg-green-50',  border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-100 text-green-800' },
+    ridotta:      { bg: 'bg-amber-50',  border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-800' },
+    rischio:      { bg: 'bg-orange-50', border: 'border-orange-200',text: 'text-orange-700',badge: 'bg-orange-100 text-orange-800' },
+    sconsigliato: { bg: 'bg-red-50',    border: 'border-red-200',   text: 'text-red-700',   badge: 'bg-red-100 text-red-800' },
+  };
+  const ac = alertConfig[periodo.alert];
+
+  return (
+    <div className={`rounded-xl border p-4 space-y-3 ${ac.bg} ${ac.border}`}>
+      <div className="flex items-center justify-between">
+        <p className={`text-sm font-bold ${ac.text}`}>🔄 Riepilogo rigenerazione</p>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ac.badge}`}>{periodo.label}</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white/60 rounded-lg p-2 text-center">
+          <p className="text-xs text-gray-400">Totale prato</p>
+          <p className="text-sm font-bold text-gray-800">{mq} m²</p>
+        </div>
+        <div className="bg-white/60 rounded-lg p-2 text-center">
+          <p className="text-xs text-gray-400">Da trattare</p>
+          <p className="text-sm font-bold text-gray-800">{mqDeg} m²</p>
+          <p className="text-xs text-gray-400">{percDegrado}%</p>
+        </div>
+        <div className="bg-white/60 rounded-lg p-2 text-center">
+          <p className="text-xs text-gray-400">Seme</p>
+          <p className="text-sm font-bold" style={{ color: VERDE }}>{seme.min}-{seme.max} g/m²</p>
+          <p className="text-xs text-gray-400">su {mqDeg} m²</p>
+        </div>
+      </div>
+
+      <div className={`text-xs ${ac.text} leading-relaxed`}>
+        <span className="font-semibold">Vigor Active:</span>{' '}
+        {periodo.doseVigor > 0
+          ? `${periodo.doseVigor} g/m² su tutta la superficie (${mq} m²) — tutti gli altri prodotti su ${mq} m²`
+          : '⛔ Non applicare — periodo sconsigliato per le temperature'}
+      </div>
+
+      {periodo.alert === 'sconsigliato' && (
+        <div className="flex items-start gap-2 bg-red-100 border border-red-300 rounded-lg p-2">
+          <AlertTriangle className="w-4 h-4 text-red-700 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-800 font-semibold">
+            PROCEDURA A RISCHIO DEL CLIENTE — temperature troppo alte per un attecchimento stabile.
           </p>
         </div>
       )}
@@ -478,24 +603,18 @@ function BannerTerenoSabbioso() {
 // ─────────────────────────────────────────────────────────────
 // PRO — VISUALIZZA PIANO
 // ─────────────────────────────────────────────────────────────
-function ProPiano({ pianoId, mq }) {
-  const [dati, setDati]                         = useState(null);
-  const [loading, setLoading]                   = useState(true);
-  const [error, setError]                       = useState(null);
-  const [showRiepilogo, setShowRiepilogo]       = useState(false);
+function ProPiano({ pianoId, mq, percDegrado, periodoSemina }) {
+  const [dati, setDati]                             = useState(null);
+  const [loading, setLoading]                       = useState(true);
+  const [error, setError]                           = useState(null);
+  const [showRiepilogo, setShowRiepilogo]           = useState(false);
   const [expandedInterventi, setExpandedInterventi] = useState({});
 
   const carica = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const d = await getPianoCompleto(pianoId);
-      setDati(d);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError(null);
+    try { setDati(await getPianoCompleto(pianoId)); }
+    catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   }, [pianoId]);
 
   useEffect(() => { carica(); }, [carica]);
@@ -505,14 +624,28 @@ function ProPiano({ pianoId, mq }) {
   if (!dati)   return null;
 
   const { piano, interventi } = dati;
+  const isRigen = piano.fase === 'rigenerazione';
   const riepilogo = getRiepilogoProdotti(interventi, mq);
+
+  // Dose vigor override per rigenerazione
+  const periodo    = PERIODI_SEMINA.find(p => p.value === periodoSemina);
+  const doseVigor  = periodo?.doseVigor ?? 50;
+  const mqDeg      = isRigen && percDegrado ? Math.round(mq * percDegrado / 100) : null;
 
   const toggleIntervento = (id) =>
     setExpandedInterventi(prev => ({ ...prev, [id]: !prev[id] }));
 
+  // Calcola quantità prodotto — con override per vigor in rigenerazione
+  const calcolaConOverride = (slug, doseBase, mqSurface) => {
+    if (isRigen && slug === 'vigor_active' && doseVigor > 0) {
+      return calcolaQuantita(slug, doseVigor, mq); // vigor su tutto il prato
+    }
+    return calcolaQuantita(slug, doseBase, mqSurface);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Piano header */}
+      {/* Header piano */}
       <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -543,6 +676,11 @@ function ProPiano({ pianoId, mq }) {
         </div>
       </div>
 
+      {/* Banner rigenerazione */}
+      {isRigen && percDegrado != null && periodoSemina && (
+        <BannerRigenerazione mq={mq} percDegrado={percDegrado} periodoSemina={periodoSemina} />
+      )}
+
       {/* Banner terreno sabbioso */}
       <BannerTerenoSabbioso />
 
@@ -555,35 +693,49 @@ function ProPiano({ pianoId, mq }) {
         {interventi.map((intervento, idx) => {
           const tipo = TIPO_COLORS[intervento.tipo] || { bg: 'bg-gray-100', text: 'text-gray-700', label: intervento.tipo };
           const isExpanded = expandedInterventi[intervento.id] ?? true;
+          // Per rigenerazione: semina usa mqDeg per info, preparazione usa mq intero
+          const isSemina = intervento.tipo === 'semina';
 
           return (
             <div key={intervento.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              {/* Header intervento */}
-              <button
-                onClick={() => toggleIntervento(intervento.id)}
-                className="w-full flex items-center gap-3 p-3.5 text-left"
-              >
+              <button onClick={() => toggleIntervento(intervento.id)}
+                className="w-full flex items-center gap-3 p-3.5 text-left">
                 <div className="flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold shrink-0"
-                  style={{ backgroundColor: VERDE }}>
-                  {idx + 1}
-                </div>
+                  style={{ backgroundColor: VERDE }}>{idx + 1}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800 text-sm">{intervento.label}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{intervento.timing}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipo.bg} ${tipo.text}`}>
-                    {tipo.label}
-                  </span>
-                  {isExpanded
-                    ? <ChevronUp className="w-4 h-4 text-gray-400" />
-                    : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tipo.bg} ${tipo.text}`}>{tipo.label}</span>
+                  {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </div>
               </button>
 
-              {/* Prodotti */}
               {isExpanded && (
                 <div className="border-t border-gray-100">
+                  {/* Info seme per rigenerazione */}
+                  {isRigen && isSemina && mqDeg != null && (
+                    <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-100">
+                      {(() => {
+                        const s = doseSemeDaPerc(percDegrado);
+                        return (
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-semibold text-yellow-800">🌾 Quantità seme</p>
+                              <p className="text-xs text-yellow-600">{s.min}-{s.max} g/m² su {mqDeg} m² degradati</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-bold text-yellow-800">
+                                {(mqDeg * s.min / 1000).toFixed(1)}–{(mqDeg * s.max / 1000).toFixed(1)} kg
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {(intervento.pv_intervento_prodotti || []).length === 0 ? (
                     <p className="px-4 py-3 text-xs text-gray-400 italic">Nessun prodotto — intervento meccanico</p>
                   ) : (
@@ -591,20 +743,28 @@ function ProPiano({ pianoId, mq }) {
                       {(intervento.pv_intervento_prodotti || []).map(ip => {
                         const p = ip.pv_prodotti;
                         if (!p) return null;
-                        const { totale_kg, confezioni, peso } = calcolaQuantita(p.slug, ip.dose_gm2, mq);
+
+                        // Override dose vigor per rigenerazione
+                        const isVigor = isRigen && p.slug === 'vigor_active';
+                        const doseDisplay = isVigor ? doseVigor : ip.dose_gm2;
+                        const { totale_kg, confezioni, peso } = calcolaConOverride(p.slug, ip.dose_gm2, mq);
                         const unita = getUnita(p.slug);
+
                         return (
                           <div key={p.id} className="flex items-center gap-3 px-4 py-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isVigor ? 'bg-amber-400' : 'bg-green-400'}`} />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-gray-700 truncate">{p.label}</p>
                               <p className="text-xs text-gray-400">
-                                {ip.dose_fissa ? 'dose fissa' : `${ip.dose_gm2} g/m²`}
+                                {ip.dose_fissa ? 'dose fissa' : `${doseDisplay} g/m²`}
+                                {isVigor && <span className="text-amber-600 ml-1">(adattata al periodo)</span>}
                               </p>
                             </div>
                             <div className="text-right shrink-0">
                               {ip.dose_fissa ? (
                                 <p className="text-sm font-bold text-amber-700">{ip.dose_fissa_label}</p>
+                              ) : isVigor && doseVigor === 0 ? (
+                                <p className="text-xs text-red-600 font-semibold">⛔ Non usare</p>
                               ) : (
                                 <>
                                   <p className="text-sm font-bold text-gray-800">{totale_kg} {unita}</p>
@@ -617,12 +777,10 @@ function ProPiano({ pianoId, mq }) {
                       })}
                     </div>
                   )}
-                  {/* Nota agronomica */}
+
                   {intervento.nota && (
                     <div className="px-4 py-3 bg-amber-50 border-t border-amber-100">
-                      <p className="text-xs text-amber-800 leading-relaxed">
-                        💡 {intervento.nota}
-                      </p>
+                      <p className="text-xs text-amber-800 leading-relaxed">💡 {intervento.nota}</p>
                     </div>
                   )}
                 </div>
@@ -632,12 +790,10 @@ function ProPiano({ pianoId, mq }) {
         })}
       </div>
 
-      {/* Riepilogo totale */}
+      {/* Lista acquisti */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <button
-          onClick={() => setShowRiepilogo(!showRiepilogo)}
-          className="w-full flex items-center justify-between p-4 text-left"
-        >
+        <button onClick={() => setShowRiepilogo(!showRiepilogo)}
+          className="w-full flex items-center justify-between p-4 text-left">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5" style={{ color: VERDE }} />
             <span className="font-bold text-gray-800">Lista acquisti annuale</span>
@@ -646,12 +802,9 @@ function ProPiano({ pianoId, mq }) {
             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
               {riepilogo.length} prodotti
             </span>
-            {showRiepilogo
-              ? <ChevronUp className="w-4 h-4 text-gray-400" />
-              : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            {showRiepilogo ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </div>
         </button>
-
         {showRiepilogo && (
           <div className="border-t border-gray-100">
             <div className="divide-y divide-gray-50">
@@ -673,6 +826,7 @@ function ProPiano({ pianoId, mq }) {
             <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
               <p className="text-xs text-gray-400 italic">
                 Quantità calcolate per {mq} m². Arrotondate alla confezione intera superiore.
+                {isRigen && mqDeg && ` Seme calcolato su ${mqDeg} m² (${percDegrado}% degradato).`}
               </p>
             </div>
           </div>
@@ -692,24 +846,19 @@ function FilterRow({ label, options, labels, value, onChange }) {
     <div>
       <p className="text-xs text-gray-400 mb-1.5 font-medium">{label}</p>
       <div className="flex flex-wrap gap-1.5">
-        <button
-          onClick={() => onChange('')}
+        <button onClick={() => onChange('')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
             value === '' ? 'text-white border-transparent' : 'bg-white border-gray-200 text-gray-500'
           }`}
-          style={value === '' ? { backgroundColor: VERDE } : {}}
-        >
+          style={value === '' ? { backgroundColor: VERDE } : {}}>
           Tutti
         </button>
         {options.map(opt => (
-          <button
-            key={opt}
-            onClick={() => onChange(opt === value ? '' : opt)}
+          <button key={opt} onClick={() => onChange(opt === value ? '' : opt)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all capitalize ${
               value === opt ? 'text-white border-transparent' : 'bg-white border-gray-200 text-gray-500'
             }`}
-            style={value === opt ? { backgroundColor: VERDE } : {}}
-          >
+            style={value === opt ? { backgroundColor: VERDE } : {}}>
             {labels?.[opt] || opt}
           </button>
         ))}
@@ -732,11 +881,8 @@ function ErrorCard({ msg, onRetry }) {
     <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col items-center gap-3">
       <AlertCircle className="w-8 h-8 text-red-500" />
       <p className="text-sm text-red-700 text-center">{msg}</p>
-      <button
-        onClick={onRetry}
-        className="px-4 py-2 rounded-lg text-white text-sm font-semibold"
-        style={{ backgroundColor: VERDE }}
-      >
+      <button onClick={onRetry} className="px-4 py-2 rounded-lg text-white text-sm font-semibold"
+        style={{ backgroundColor: VERDE }}>
         Riprova
       </button>
     </div>

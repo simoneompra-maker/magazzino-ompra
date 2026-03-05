@@ -39,11 +39,13 @@ const PERIODI_SEMINA = [
 // ── Preset % degradazione ────────────────────────────────────
 const PERC_PRESETS = [10, 25, 50, 75, 100];
 
-// ── Calcola dose seme da % ────────────────────────────────────
-function doseSemeDaPerc(perc) {
-  if (perc <= 20) return { min: 15, max: 20, label: 'Ritocchi puntuali' };
-  if (perc <= 60) return { min: 25, max: 30, label: 'Diradamento medio' };
-  return { min: 35, max: 40, label: 'Diradamento grave' };
+// ── Dose seme: sempre 40 g/m² sull'area degradata ───────────
+const DOSE_SEME = 40; // g/m² — fisso
+
+function descrizioneDiradamento(perc) {
+  if (perc <= 20) return 'Ritocchi puntuali';
+  if (perc <= 60) return 'Diradamento medio';
+  return 'Diradamento grave';
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -227,7 +229,7 @@ function BannerConsiglioPremium({ piano, piani, onSwitchPremium }) {
 function PannelloDiradamento({ mq, percDegrado, setPercDegrado, periodoSemina, setPeriodoSemina }) {
   const mqTot = parseFloat(mq) || 0;
   const mqDeg = Math.round(mqTot * percDegrado / 100);
-  const seme  = doseSemeDaPerc(percDegrado);
+  const desc  = descrizioneDiradamento(percDegrado);
   const periodo = PERIODI_SEMINA.find(p => p.value === periodoSemina) || PERIODI_SEMINA[0];
 
   const alertConfig = {
@@ -277,11 +279,11 @@ function PannelloDiradamento({ mq, percDegrado, setPercDegrado, periodoSemina, s
           <div className="bg-gray-50 rounded-lg p-2.5 text-center">
             <p className="text-xs text-gray-400">Zona degradata</p>
             <p className="text-base font-bold text-gray-800">{mqDeg} m²</p>
-            <p className="text-xs text-gray-400">{seme.label}</p>
+            <p className="text-xs text-gray-400">{desc}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-2.5 text-center">
             <p className="text-xs text-gray-400">Dose seme</p>
-            <p className="text-base font-bold" style={{ color: VERDE }}>{seme.min}-{seme.max} g/m²</p>
+            <p className="text-base font-bold" style={{ color: VERDE }}>{DOSE_SEME} g/m²</p>
             <p className="text-xs text-gray-400">su {mqDeg} m²</p>
           </div>
         </div>
@@ -289,9 +291,9 @@ function PannelloDiradamento({ mq, percDegrado, setPercDegrado, periodoSemina, s
         {/* Seme totale stimato */}
         {mqDeg > 0 && (
           <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 flex items-center justify-between">
-            <span className="text-xs text-green-700">🌾 Seme stimato</span>
+            <span className="text-xs text-green-700">🌾 Seme da acquistare</span>
             <span className="text-sm font-bold text-green-800">
-              {(mqDeg * seme.min / 1000).toFixed(1)}–{(mqDeg * seme.max / 1000).toFixed(1)} kg
+              {(mqDeg * DOSE_SEME / 1000).toFixed(1)} kg
             </span>
           </div>
         )}
@@ -546,7 +548,7 @@ function BannerTerenoSabbioso() {
 // ─────────────────────────────────────────────────────────────
 function BannerRigenerazione({ mq, percDegrado, periodoSemina }) {
   const mqDeg    = Math.round(mq * percDegrado / 100);
-  const seme     = doseSemeDaPerc(percDegrado);
+  const desc     = descrizioneDiradamento(percDegrado);
   const periodo  = PERIODI_SEMINA.find(p => p.value === periodoSemina) || PERIODI_SEMINA[0];
 
   const alertConfig = {
@@ -572,12 +574,12 @@ function BannerRigenerazione({ mq, percDegrado, periodoSemina }) {
         <div className="bg-white/60 rounded-lg p-2 text-center">
           <p className="text-xs text-gray-400">Da trattare</p>
           <p className="text-sm font-bold text-gray-800">{mqDeg} m²</p>
-          <p className="text-xs text-gray-400">{percDegrado}%</p>
+          <p className="text-xs text-gray-400">{percDegrado}% — {desc}</p>
         </div>
         <div className="bg-white/60 rounded-lg p-2 text-center">
           <p className="text-xs text-gray-400">Seme</p>
-          <p className="text-sm font-bold" style={{ color: VERDE }}>{seme.min}-{seme.max} g/m²</p>
-          <p className="text-xs text-gray-400">su {mqDeg} m²</p>
+          <p className="text-sm font-bold" style={{ color: VERDE }}>{DOSE_SEME} g/m²</p>
+          <p className="text-xs text-gray-400">{(mqDeg * DOSE_SEME / 1000).toFixed(1)} kg totali</p>
         </div>
       </div>
 
@@ -717,22 +719,17 @@ function ProPiano({ pianoId, mq, percDegrado, periodoSemina }) {
                   {/* Info seme per rigenerazione */}
                   {isRigen && isSemina && mqDeg != null && (
                     <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-100">
-                      {(() => {
-                        const s = doseSemeDaPerc(percDegrado);
-                        return (
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-xs font-semibold text-yellow-800">🌾 Quantità seme</p>
-                              <p className="text-xs text-yellow-600">{s.min}-{s.max} g/m² su {mqDeg} m² degradati</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-bold text-yellow-800">
-                                {(mqDeg * s.min / 1000).toFixed(1)}–{(mqDeg * s.max / 1000).toFixed(1)} kg
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold text-yellow-800">🌾 Quantità seme</p>
+                          <p className="text-xs text-yellow-600">{DOSE_SEME} g/m² su {mqDeg} m² degradati ({percDegrado}%)</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-yellow-800">
+                            {(mqDeg * DOSE_SEME / 1000).toFixed(1)} kg
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -826,7 +823,7 @@ function ProPiano({ pianoId, mq, percDegrado, periodoSemina }) {
             <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
               <p className="text-xs text-gray-400 italic">
                 Quantità calcolate per {mq} m². Arrotondate alla confezione intera superiore.
-                {isRigen && mqDeg && ` Seme calcolato su ${mqDeg} m² (${percDegrado}% degradato).`}
+                {isRigen && mqDeg && ` Seme: ${DOSE_SEME} g/m² su ${mqDeg} m² (${percDegrado}% degradato) = ${(mqDeg * DOSE_SEME / 1000).toFixed(1)} kg.`}
               </p>
             </div>
           </div>

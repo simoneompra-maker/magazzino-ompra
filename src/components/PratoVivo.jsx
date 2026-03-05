@@ -496,8 +496,10 @@ function ProScelta({ onPianoSelected }) {
 // ─────────────────────────────────────────────────────────────
 // BANNER TERRENO SABBIOSO
 // ─────────────────────────────────────────────────────────────
-function BannerTerenoSabbioso() {
+function BannerTerenoSabbioso({ livello }) {
   const [aperto, setAperto] = useState(false);
+  const isPremium = livello === 'premium';
+
   return (
     <div className="rounded-xl border overflow-hidden"
       style={{ borderColor: aperto ? '#d97706' : '#e5e7eb', backgroundColor: aperto ? '#fffbeb' : '#fff' }}>
@@ -514,29 +516,99 @@ function BannerTerenoSabbioso() {
           {aperto ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
         </div>
       </button>
+
       {aperto && (
-        <div className="px-4 pb-4 space-y-3 border-t border-amber-100">
-          <p className="text-xs text-amber-800 leading-relaxed pt-3">
-            La sabbia drena velocemente: i nutrienti si dilavano prima di essere assorbiti.
+        <div className="px-4 pb-4 space-y-4 border-t border-amber-100 pt-3">
+          <p className="text-xs text-amber-800 leading-relaxed">
+            La sabbia drena velocemente: i nutrienti si dilavano e l'acqua non viene trattenuta.
             Alcune accortezze per adattare questo piano:
           </p>
-          <div className="space-y-2.5">
-            {[
-              { titolo: 'Sostituire Green 7 con AllRound CRF', desc: 'Il rilascio controllato resiste al dilavamento.' },
-              { titolo: 'Raddoppiare la dose di Humifitos (40 g/m²) + Micosat F PG', desc: 'Costruisce CEC e flora batterica — vanno sempre in coppia.' },
-              { titolo: 'Aggiungere Wet Turf ad ogni irrigazione', desc: 'Migliora la ritenzione idrica.' },
-              { titolo: 'Frazionare i granulari', desc: 'Dosi più piccole ogni 4-5 settimane invece di dosi grandi.' },
-            ].map(item => (
-              <div key={item.titolo} className="flex gap-2.5">
-                <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
-                <div>
-                  <p className="text-xs font-semibold text-amber-800">{item.titolo}</p>
-                  <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">{item.desc}</p>
-                </div>
+
+          {/* Granulari */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Granulari</p>
+            <div className="flex gap-2.5">
+              <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+              <div>
+                <p className="text-xs font-semibold text-amber-800">
+                  Allround CRF ogni 3-4 mesi &nbsp;—&nbsp; oppure &nbsp;—&nbsp; Proslow ogni 5-6 mesi
+                </p>
+                <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                  A scelta del cliente. Il rilascio controllato resiste al dilavamento: in suolo sabbioso i granulari standard vengono persi con le irrigazioni prima di essere assorbiti.
+                </p>
               </div>
-            ))}
+            </div>
           </div>
-          <p className="text-xs text-amber-500 italic">Questi adattamenti non cambiano i prodotti del piano — modificano dosi e frequenze.</p>
+
+          {/* Biostimolanti */}
+          <div className="space-y-2.5">
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+              Biostimolanti
+              {isPremium && <span className="text-amber-500 font-normal normal-case ml-1">(piano Premium)</span>}
+            </p>
+
+            {isPremium ? (
+              <>
+                <div className="flex gap-2.5">
+                  <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">🌿 Ogni 20-30 giorni: Humifitos + Micosat F PG + Algapark + Root Speed</p>
+                    <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                      La sabbia ha poca vita biologica: il ciclo breve è indispensabile. Root Speed stimola l'approfondimento radicale, Algapark sostiene la pianta sotto stress idrico e termico.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2.5">
+                  <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">💧 Da giugno — 3 trattamenti mensili: Wet Turf</p>
+                    <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                      Migliora la ritenzione idrica. In piano Premium l'Algapark è già incluso nei trattamenti biostimolanti mensili, non va duplicato.
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex gap-2.5">
+                  <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">🌿 Ogni 20-30 giorni: Humifitos + Micosat F PG</p>
+                    <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                      La sabbia ha poca vita biologica: il ciclo breve è indispensabile. Humifitos costruisce la CEC, Micosat F PG colonizza la materia organica e la rende disponibile alle radici. Vanno sempre in coppia.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2.5">
+                  <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">💧 Da giugno — 3 trattamenti mensili: Wet Turf + Algapark</p>
+                    <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                      Abbinare sempre Algapark al Wet Turf: il tensioattivo migliora la penetrazione, Algapark fornisce betaine e citochinine per la resistenza allo stress idrico estivo.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Intervento annuale */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Intervento annuale</p>
+            <div className="flex gap-2.5">
+              <span className="text-amber-500 text-xs mt-0.5 shrink-0">→</span>
+              <div>
+                <p className="text-xs font-semibold text-amber-800">🪵 Carotatura + compost vegetale maturo inodore</p>
+                <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                  1 volta all'anno. Il compost vegetale maturo migliora la struttura del suolo sabbioso e aumenta la capacità di ritenzione idrica. <span className="font-semibold">Assolutamente vietato lo stallatico</span>: su sabbia il rilascio è incontrollato e brucia le radici.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-amber-500 italic">
+            Questi adattamenti non cambiano i prodotti del piano — modificano dosi, frequenze e abbinamenti.
+          </p>
         </div>
       )}
     </div>
@@ -684,7 +756,7 @@ function ProPiano({ pianoId, mq, percDegrado, periodoSemina }) {
       )}
 
       {/* Banner terreno sabbioso */}
-      <BannerTerenoSabbioso />
+      <BannerTerenoSabbioso livello={piano.livello} />
 
       {/* Interventi */}
       <div className="space-y-2">

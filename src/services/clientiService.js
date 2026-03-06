@@ -1,4 +1,7 @@
-// Servizio per gestione clienti da CSV
+// Servizio per gestione clienti da CSV + Supabase
+// Merge automatico: CSV (storico) + tabella clienti (nuovi aggiunti in app)
+
+import { supabase } from '../store';
 
 let clientiCache = null;
 
@@ -29,31 +32,74 @@ export const getTelefonoSalvato = (clienteId) => {
   return telefoni[clienteId] || null;
 };
 
-// Carica e parsa il CSV dei clienti
-export const loadClienti = async () => {
-  if (clientiCache) {
+// Carica clienti da CSV + Supabase (merge, deduplicato per searchText)
+export const loadClienti = async (forceRefresh = false) => {
+  if (clientiCache && !forceRefresh) {
     return clientiCache;
   }
 
+  // ── 1. Carica CSV ──────────────────────────────────────────
+  let clientiCSV = [];
   try {
-    // Carica il file CSV dalla cartella public
     const response = await fetch('/database_clienti.csv');
-    if (!response.ok) {
-      console.warn('File clienti non trovato, autocompletamento disabilitato');
-      return [];
+    if (response.ok) {
+      const csvText = await response.text();
+      clientiCSV = parseCSV(csvText);
+    } else {
+      console.warn('File clienti CSV non trovato');
     }
-    
-    const csvText = await response.text();
-    const clienti = parseCSV(csvText);
-    
-    clientiCache = clienti;
-    console.log(`✅ Caricati ${clienti.length} clienti`);
-    
-    return clienti;
-  } catch (error) {
-    console.error('Errore caricamento clienti:', error);
-    return [];
+  } catch (e) {
+    console.warn('Errore caricamento CSV clienti:', e);
   }
+
+  // ── 2. Carica da Supabase (escludi soft-deleted) ───────────
+  let clientiDB = [];
+  try {
+    const { data, error } = await supabase
+      .from('clienti')
+      .select('id, nome, cognome, nome_completo, indirizzo, cap, localita, provincia, telefono, email, contatto, cf, piva, search_text, fonte, created_at')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      clientiDB = data.map(c => ({
+        id:         c.id,
+        nome:       c.nome_completo || `${c.cognome || ''} ${c.nome || ''}`.trim() || '',
+        cognome:    c.cognome    || '',
+        nomeP:      c.nome       || '',
+        indirizzo:  c.indirizzo  || '',
+        cap:        c.cap        || '',
+        localita:   c.localita   || '',
+        provincia:  c.provincia  || '',
+        telefono:   c.telefono   || '',
+        email:      c.email      || '',
+        contatto:   c.contatto   || '',
+        cf:         c.cf         || '',
+        searchText: (c.search_text || c.nome_completo || '').toLowerCase(),
+        _fonte:     'db',
+      }));
+    }
+  } catch (e) {
+    console.warn('Errore caricamento clienti DB:', e);
+  }
+
+  // ── 3. Merge: DB ha priorità su CSV per evitare duplicati ──
+  const chiavi = new Set(clientiDB.map(c => c.searchText).filter(Boolean));
+  const csvNonDuplicati = clientiCSV.filter(c => {
+    const key = (c.searchText || c.nome || '').toLowerCase().trim();
+    return !chiavi.has(key);
+  });
+
+  const merged = [...clientiDB, ...csvNonDuplicati];
+  clientiCache = merged;
+  console.log(`✅ Clienti caricati: ${clientiDB.length} da DB + ${csvNonDuplicati.length} da CSV = ${merged.length} totali`);
+
+  return merged;
+};
+
+// Invalida la cache (chiamare dopo salvataggio nuovo cliente)
+export const invalidaClienteCache = () => {
+  clientiCache = null;
 };
 
 // Parser CSV con separatore ; (punto e virgola)

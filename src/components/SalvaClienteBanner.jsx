@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { supabase } from '../store';
+import { invalidaClienteCache } from '../services/clientiService';
 
 export default function SalvaClienteBanner({ clienteInfo, onClose }) {
   const [loading, setLoading]   = useState(false);
@@ -76,6 +77,7 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
 
       if (errInsert) throw errInsert;
 
+      invalidaClienteCache(); // forza ricaricamento autocompletamento
       setSalvato(true);
       setTimeout(() => onClose(), 2000);
     } catch (err) {

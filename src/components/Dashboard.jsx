@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -311,6 +311,21 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             NUOVO
           </span>
         </button>
+
+        {/* RUBRICA CLIENTI — solo Admin */}
+        {isAdmin && (
+          <button
+            onClick={() => onNavigate('rubrica-clienti')}
+            className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#1d4ed8', backgroundColor: '#eff6ff', color: '#1d4ed8' }}
+          >
+            <Users className="w-6 h-6 shrink-0" />
+            <div className="flex-1 text-left">
+              <div className="text-base font-bold">RUBRICA CLIENTI</div>
+              <div className="text-xs opacity-60">Cerca · Gestisci · Rimuovi</div>
+            </div>
+          </button>
+        )}
 
       </div>
 

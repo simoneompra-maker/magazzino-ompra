@@ -1108,9 +1108,22 @@ export default function Vendita({ onNavigate }) {
       const totale = getTotaleFinale();
       const caparraValue = parseFloat(caparra) || 0;
       
-      // Se è un preventivo, non salva nulla
+      // Se è un preventivo — salva su DB con is_preventivo:true e salva cliente
       if (isPreventivo) {
-        setCommissioneData({ ...commissioneData, confirmed: true, isPreventivo: true });
+        const dataISO = new Date().toISOString();
+        const commissione = await createCommissione({
+          cliente: nomeCliente, clienteInfo: clienteSelezionato,
+          telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
+          prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
+          accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
+          metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
+          note: note.trim() || null, tipoDocumento, ivaCompresa,
+          dataVendita: dataISO,
+          is_preventivo: true,
+          privacy_required: false
+        });
+        setCommissioneData({ ...commissione, confirmed: true, isPreventivo: true, ivaCompresa });
+        await checkEsalvaCliente(clienteSelezionato);
         return;
       }
       

@@ -26,6 +26,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
   // Default a "Chiuse"
   const [filterStatus, setFilterStatus] = useState('completed');
   const [filtroTipoOperazione, setFiltroTipoOperazione] = useState(''); // '' | 'vendita' | 'reso' | 'cambio'
+  const [mostraPreventivi, setMostraPreventivi] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [recovering, setRecovering] = useState(false);
   const [editingCommissione, setEditingCommissione] = useState(null);
@@ -84,7 +85,14 @@ export default function ArchivioCommissioni({ onNavigate }) {
         if (filterStatus === 'pending' && c.status !== 'pending') return false;
         if (filterStatus === 'completed' && c.status !== 'completed') return false;
 
-        if (filtroTipoOperazione) {
+        // Preventivi separati da tutto il resto
+        if (mostraPreventivi) {
+          if (!c.is_preventivo) return false;
+        } else {
+          if (c.is_preventivo) return false; // nasconde preventivi nelle altre viste
+        }
+
+        if (!mostraPreventivi && filtroTipoOperazione) {
           const tipo = c.tipoOperazione || 'vendita';
           if (tipo !== filtroTipoOperazione) return false;
         }
@@ -102,7 +110,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
         return true;
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [commissioni, filterStatus, filtroTipoOperazione, searchTerm, isAdmin, operatoreLoggato, filtroVenditore]);
+  }, [commissioni, filterStatus, filtroTipoOperazione, mostraPreventivi, searchTerm, isAdmin, operatoreLoggato, filtroVenditore]);
 
   // Formatta data
   const formatDate = (dateString) => {
@@ -1039,7 +1047,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
         </div>
 
         {/* Filtro tipo operazione */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {[
             { value: '', label: 'Tutte', style: 'bg-gray-600' },
             { value: 'vendita', label: '✓ Vendite', style: 'bg-green-600' },
@@ -1048,9 +1056,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
           ].map(opt => (
             <button
               key={opt.value}
-              onClick={() => setFiltroTipoOperazione(opt.value)}
+              onClick={() => { setFiltroTipoOperazione(opt.value); setMostraPreventivi(false); }}
               className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filtroTipoOperazione === opt.value
+                !mostraPreventivi && filtroTipoOperazione === opt.value
                   ? `${opt.style} text-white`
                   : 'bg-gray-100 text-gray-600'
               }`}
@@ -1058,6 +1066,14 @@ export default function ArchivioCommissioni({ onNavigate }) {
               {opt.label}
             </button>
           ))}
+          <button
+            onClick={() => { setMostraPreventivi(true); setFiltroTipoOperazione(''); }}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              mostraPreventivi ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            📋 Preventivi
+          </button>
         </div>
       </div>
 
@@ -1111,6 +1127,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     {comm.privacy_required && !comm.privacy_acknowledged && (
                       <span className="px-2 py-0.5 bg-red-600 text-white text-xs rounded-full font-bold animate-pulse">
                         ⚠️ PRIVACY
+                      </span>
+                    )}
+                    {/* Badge PREVENTIVO */}
+                    {comm.is_preventivo && (
+                      <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-bold">
+                        📋 Preventivo
                       </span>
                     )}
                   </div>

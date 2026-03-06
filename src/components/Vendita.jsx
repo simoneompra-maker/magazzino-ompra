@@ -136,11 +136,32 @@ export default function Vendita({ onNavigate }) {
 
   // Lista tipologie macchine
   const tipiMacchina = [
-    'Motosega', 'Decespugliatore', 'Tagliabordi', 'Tagliasiepi', 'Soffiatore',
-    'Aspiratore', 'Tosaerba', 'Robot tosaerba', 'Trattorino', 'Biotrituratore',
-    'Idropulitrice', 'Motozappa', 'Arieggiatore', 'Troncatrice', 'Atomizzatore',
-    'Irroratore', 'Sramatore', 'Potatore', 'Trivella', 'Spazzatrice', 'Pompa acqua',
-    'Motocoltivatore', 'Forbice elettronica', 'Motore multifunzione', 'Altro'
+    'Arieggiatore',
+    'Aspiratore',
+    'Atomizzatore',
+    'Batteria',
+    'Biotrituratore',
+    'Caricabatteria',
+    'Decespugliatore',
+    'Forbice elettronica',
+    'Idropulitrice',
+    'Irroratore',
+    'Motocoltivatore',
+    'Motore multifunzione',
+    'Motosega',
+    'Pompa acqua',
+    'Potatore',
+    'Rasaerba',
+    'Robot tosaerba',
+    'Soffiatore',
+    'Spazzatrice',
+    'Sramatore',
+    'Tagliabordi',
+    'Tagliasiepi',
+    'Trivella',
+    'Trattorino rasaerba',
+    'Troncatrice',
+    'Altro'
   ];
   
   // OCR
@@ -418,8 +439,8 @@ export default function Vendita({ onNavigate }) {
   const handleAutoAdd = async () => {
     if (!autoAddData.brand.trim() || !autoAddData.serialNumber.trim()) return;
     setAutoAdding(true);
-    const tipoFinale = autoAddData.tipo || 'Altro';
-    const modelCompleto = autoAddData.tipo
+    const tipoFinale = autoAddData.tipo === 'Altro' && autoAddData.tipoCustom?.trim() ? autoAddData.tipoCustom.trim() : (autoAddData.tipo || 'Altro');
+    const modelCompleto = tipoFinale
       ? autoAddData.tipo + (autoAddData.model ? ' ' + autoAddData.model : '')
       : (autoAddData.model || 'N/D');
     const item = await autoAddToInventory({
@@ -2553,13 +2574,17 @@ export default function Vendita({ onNavigate }) {
                   onChange={(e) => setAutoAddData(p => ({ ...p, tipo: e.target.value }))}
                 >
                   <option value="">-- Non specificato --</option>
-                  {['Motosega','Decespugliatore','Tagliabordi','Tagliasiepi','Soffiatore',
-                    'Aspiratore','Tosaerba','Robot tosaerba','Trattorino','Biotrituratore',
-                    'Idropulitrice','Motozappa','Arieggiatore','Troncatrice','Atomizzatore',
-                    'Irroratore','Sramatore','Potatore','Trivella','Spazzatrice',
-                    'Motocoltivatore','Forbice elettronica','Motore multifunzione','Altro'
-                  ].map(t => <option key={t} value={t}>{t}</option>)}
+                  {tipiMacchina.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+                {autoAddData.tipo === 'Altro' && (
+                  <input
+                    type="text"
+                    placeholder="Specifica tipo macchina..."
+                    className="w-full p-2 border rounded-lg mt-2"
+                    value={autoAddData.tipoCustom || ''}
+                    onChange={(e) => setAutoAddData(p => ({ ...p, tipoCustom: e.target.value }))}
+                  />
+                )}
               </div>
 
               <div>

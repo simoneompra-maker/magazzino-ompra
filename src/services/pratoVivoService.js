@@ -110,19 +110,44 @@ export async function getPianoCompleto(pianoId) {
   return { piano, interventi: interventiArricchiti };
 }
 
+// Soglia m² per scelta Micosat MO vs PG
+// ≤ 300 m² → PG (più pratico in piccole quantità)
+// >  300 m² → MO (5 kg dura 2 stagioni, si diluisce con Humifitos)
+export const MICOSAT_SOGLIA_MQ = 300;
+
+export function getMicosatSlug(mq) {
+  return mq <= MICOSAT_SOGLIA_MQ ? 'micosat_pg' : 'micosat_mo';
+}
+
+export function getMicosatNota(mq) {
+  if (mq <= MICOSAT_SOGLIA_MQ) {
+    return 'Micosat F PG — microgranulare, si distribuisce a secco con spandiconcime. Consigliato per questa superficie (≤ 300 m²): una confezione è sufficiente senza acquistare 5 kg.';
+  }
+  return 'Micosat F MO — si diluisce in acqua insieme a Humifitos in un solo passaggio. Confezione da 5 kg: stabile per 2 stagioni, conveniente su questa superficie.';
+}
+
 export function getRiepilogoProdotti(interventi, mq) {
   const map = {};
+  const micosatSlug = getMicosatSlug(mq);
 
   interventi.forEach(intervento => {
     (intervento.pv_intervento_prodotti || []).forEach(ip => {
       const p = ip.pv_prodotti;
       if (!p) return;
       if (ip.dose_fissa) return; // dosi fisse a campo: non calcolabili per m²
-      const slug = p.slug;
+
+      // Auto-swap Micosat MO ↔ PG in base agli m²
+      let slug = p.slug;
+      let label = p.label || p.slug;
+      if (slug === 'micosat_mo' || slug === 'micosat_pg') {
+        slug = micosatSlug;
+        label = micosatSlug === 'micosat_pg' ? 'Micosat F PG' : 'Micosat F MO';
+      }
+
       if (!map[slug]) {
         map[slug] = {
           slug,
-          label: p.label || p.slug,
+          label,
           codice: p.listino_codice,
           dose_totale_g: 0,
           n_applicazioni: 0,

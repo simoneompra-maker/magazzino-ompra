@@ -3,7 +3,7 @@ import {
   ArrowLeft, Leaf, Zap, BarChart2, ChevronRight, ChevronDown, ChevronUp,
   Package, AlertCircle, Loader2, AlertTriangle
 } from 'lucide-react';
-import { getPiani, getPianoCompleto, getRiepilogoProdotti, calcolaQuantita, getUnita } from '../services/pratoVivoService';
+import { getPiani, getPianoCompleto, getRiepilogoProdotti, calcolaQuantita, getUnita, getMicosatNota, MICOSAT_SOGLIA_MQ } from '../services/pratoVivoService';
 
 // ─────────────────────────────────────────────────────────────
 // Costanti UI
@@ -892,11 +892,16 @@ function ProPiano({ pianoId, mq, percDegrado, periodoSemina }) {
                 </div>
               ))}
             </div>
-            <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 space-y-1.5">
               <p className="text-xs text-gray-400 italic">
                 Quantità calcolate per {mq} m². Arrotondate alla confezione intera superiore.
                 {isRigen && mqDeg && ` Seme: ${DOSE_SEME} g/m² su ${mqDeg} m² (${percDegrado}% degradato) = ${(mqDeg * DOSE_SEME / 1000).toFixed(1)} kg.`}
               </p>
+              {riepilogo.some(p => p.slug === 'micosat_mo' || p.slug === 'micosat_pg') && (
+                <p className="text-xs text-amber-600 italic">
+                  💡 {getMicosatNota(mq)}
+                </p>
+              )}
             </div>
           </div>
         )}

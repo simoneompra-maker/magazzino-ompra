@@ -5,7 +5,7 @@ import { supabase } from '../store';
 import CommissioneModal from './CommissioneModal';
 import SalvaClienteBanner from './SalvaClienteBanner';
 import { scanMatricola, scanCommissione, scanDocumentoIdentita } from '../services/ocrService';
-import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono } from '../services/clientiService';
+import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono, invalidaClienteCache } from '../services/clientiService';
 
 // Gestione operatori in localStorage
 const OPERATORI_KEY = 'ompra_operatori';
@@ -299,26 +299,70 @@ export default function Vendita({ onNavigate }) {
     }
   };
 
-  // Conferma nuovo cliente dal form manuale
-  const handleConfermaClienteManuale = () => {
+  // Conferma nuovo cliente dal form manuale — salva subito su Supabase
+  const handleConfermaClienteManuale = async () => {
     const f = nuovoClienteForm;
     const nomeCompleto = [f.cognome.trim(), f.nome.trim()].filter(Boolean).join(' ');
     if (!nomeCompleto) {
       alert('Inserisci almeno nome o cognome!');
       return;
     }
+
+    // Salva subito in DB (silenzioso, non blocca il flusso)
+    let idSalvato = null;
+    try {
+      const searchKey = nomeCompleto;
+      // Controlla se esiste già
+      const { data: esistente } = await supabase
+        .from('clienti')
+        .select('id')
+        .eq('search_text', searchKey)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (esistente) {
+        idSalvato = esistente.id;
+      } else {
+        const { data: inserted, error } = await supabase.from('clienti').insert({
+          nome:          f.nome.trim()      || null,
+          cognome:       f.cognome.trim()   || null,
+          nome_completo: nomeCompleto,
+          indirizzo:     f.indirizzo.trim() || null,
+          cap:           f.cap.trim()       || null,
+          localita:      f.localita.trim()  || null,
+          provincia:     f.provincia.trim() || null,
+          telefono:      f.telefono.trim()  || null,
+          email:         f.email.trim()     || null,
+          cf:            f.cf.trim()        || null,
+          piva:          f.piva.trim()      || null,
+          sdi:           f.sdi.trim()       || null,
+          search_text:   searchKey,
+          fonte:         'manuale',
+        }).select('id').single();
+        if (!error && inserted) {
+          idSalvato = inserted.id;
+          invalidaClienteCache(); // aggiorna autocompletamento
+        }
+      }
+    } catch (err) {
+      console.warn('Salvataggio cliente silenzioso fallito:', err);
+      // Non bloccare — il cliente viene usato in memoria per la commissione
+    }
+
     const clienteVirtuale = {
-      id: null,
+      id: idSalvato, // se salvato, ha l'id reale — evita il banner ridondante
       nome: nomeCompleto,
+      nomeP: nomeCompleto,
+      searchText: nomeCompleto,
       indirizzo: f.indirizzo.trim() || null,
-      cap: f.cap.trim() || null,
-      localita: f.localita.trim() || null,
+      cap:       f.cap.trim()       || null,
+      localita:  f.localita.trim()  || null,
       provincia: f.provincia.trim() || null,
-      telefono: f.telefono.trim() || null,
-      email: f.email.trim() || null,
-      cf: f.cf.trim() || null,
-      piva: f.piva.trim() || null,
-      sdi: f.sdi.trim() || null,
+      telefono:  f.telefono.trim()  || null,
+      email:     f.email.trim()     || null,
+      cf:        f.cf.trim()        || null,
+      piva:      f.piva.trim()      || null,
+      sdi:       f.sdi.trim()       || null,
     };
     setCliente(nomeCompleto);
     setClienteSelezionato(clienteVirtuale);

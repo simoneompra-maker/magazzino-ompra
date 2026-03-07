@@ -25,12 +25,7 @@ const PIANO_SEMINA = {
   base: {
     label: 'Base',
     granulari: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Green 7', npk: '15-5-6', dose: 35, unita: 'g/m²', quando: 'Al momento della semina', note: 'Albatros — 6 sett. di durata' },
-    ],
-    granulari_mivena: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Al momento della semina', note: 'Mivena — alto P per germinazione' },
+      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [],
     seme: { dose: '25–40 g/m²', note: 'Varia per specie — vedi confezione' },
@@ -38,36 +33,26 @@ const PIANO_SEMINA = {
   standard: {
     label: 'Standard',
     granulari: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Green 7', npk: '15-5-6', dose: 35, unita: 'g/m²', quando: 'Al momento della semina', note: 'Albatros — 6 sett. di durata' },
-    ],
-    granulari_mivena: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Al momento della semina', note: 'Mivena — alto P per germinazione' },
+      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Dopo semina, ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
-      { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Al momento della semina', note: 'Favorisce radicazione precoce e uniforme' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Ogni 20–30 gg dopo semina', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
     seme: { dose: '25–40 g/m²', note: 'Varia per specie — vedi confezione' },
   },
   premium: {
     label: 'Premium',
     granulari: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Green 7', npk: '15-5-6', dose: 35, unita: 'g/m²', quando: 'Al momento della semina', note: 'Albatros — 6 sett. di durata' },
-    ],
-    granulari_mivena: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Al momento della semina', note: 'Mivena — alto P per germinazione' },
+      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Dopo semina, ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
-      { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
-      { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da giugno', note: 'Migliora ritenzione idrica' },
-      { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Root Speed' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Al momento della semina', note: 'Favorisce radicazione precoce e uniforme' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Ogni 20–30 gg dopo semina', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
+      { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da giugno', note: 'Migliora ritenzione idrica del substrato' },
+      { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Root Speed e Humifitos' },
     ],
     seme: { dose: '25–40 g/m²', note: 'Varia per specie — vedi confezione' },
   },
@@ -77,51 +62,36 @@ const PIANO_RIGENERAZIONE = {
   base: {
     label: 'Base',
     granulari: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Green 7', npk: '15-5-6', dose: 35, unita: 'g/m²', quando: 'Alla trasemina', note: 'Albatros — 6 sett. di durata' },
-    ],
-    granulari_mivena: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis' },
-      { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Alla trasemina', note: 'Mivena — alto P' },
+      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-trasemina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [],
-    seme: { dose_spelacchiato: '30–35 g/m²', dose_normale: '15–20 g/m²', note: 'Dose maggiore se prato spelacchiato >40%' },
+    seme: { dose_ritocchi: '15–20 g/m²', dose_medio: '25–30 g/m²', dose_grave: '30–35 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
   },
   standard: {
     label: 'Standard',
     granulari: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Green 7', npk: '15-5-6', dose: 35, unita: 'g/m²', quando: 'Alla trasemina', note: 'Albatros — 6 sett. di durata' },
-    ],
-    granulari_mivena: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis' },
-      { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Alla trasemina', note: 'Mivena — alto P' },
+      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-trasemina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Dopo trasemina, ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
-      { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Al momento della trasemina', note: 'Favorisce radicazione precoce e uniforme' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Ogni 20–30 gg dopo trasemina', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
-    seme: { dose_spelacchiato: '30–35 g/m²', dose_normale: '15–20 g/m²', note: 'Dose maggiore se prato spelacchiato >40%' },
+    seme: { dose_ritocchi: '15–20 g/m²', dose_medio: '25–30 g/m²', dose_grave: '30–35 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
   },
   premium: {
     label: 'Premium',
     granulari: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis — stimola radicazione' },
-      { prodotto: 'Green 7', npk: '15-5-6', dose: 35, unita: 'g/m²', quando: 'Alla trasemina', note: 'Albatros — 6 sett. di durata' },
-    ],
-    granulari_mivena: [
-      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina (incorporare)', note: 'Bacillus subtilis' },
-      { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Alla trasemina', note: 'Mivena — alto P' },
+      { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-trasemina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
-      { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
-      { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da giugno', note: 'Migliora ritenzione idrica' },
-      { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Root Speed' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Al momento della trasemina', note: 'Favorisce radicazione precoce e uniforme' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Ogni 20–30 gg dopo trasemina', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
+      { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da giugno', note: 'Migliora ritenzione idrica del substrato' },
+      { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Root Speed e Humifitos' },
     ],
-    seme: { dose_spelacchiato: '30–35 g/m²', dose_normale: '15–20 g/m²', note: 'Dose maggiore se prato spelacchiato >40%' },
+    seme: { dose_ritocchi: '15–20 g/m²', dose_medio: '25–30 g/m²', dose_grave: '30–35 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
   },
 };
 
@@ -209,6 +179,7 @@ const LISTINO = {
   'Algapark 5kg':               { formato: '5 kg',   kg: 5,   prezzoA: 140.00, prezzoB: 126.00 },
   'Wet Turf 1lt':               { formato: '1 lt',   kg: 1,   prezzoA: 65.90,  prezzoB: 62.60  },
   'Wet Turf 5lt':               { formato: '5 lt',   kg: 5,   prezzoA: 230.60, prezzoB: 219.00 },
+  'Micosat F MO 5kg':           { formato: '5 kg',   kg: 5,   prezzoA: 140.40, prezzoB: 133.00 },
   'Micosat F PG 1kg':           { formato: '1 kg',   kg: 1,   prezzoA: 31.20,  prezzoB: 31.20  },
   'Micosat F Uno 200g':         { formato: '200 g',  kg: 0.2, prezzoA: 10.00,  prezzoB: 10.00  },
   'Micosat Tab Plus Mini 100g': { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  prezzoB: 10.00  },
@@ -245,6 +216,8 @@ const PRODOTTO_CONFIG = {
   'Wet Turf':                 { piccolo: 'Wet Turf 1lt',       kgP: 1,  grande: 'Wet Turf 5lt',     kgG: 5  },
   'Root Speed':               { piccolo: 'Root Speed 5kg', kgP: 5, grande: null, kgG: null },
   'Micosat F PG':             { tipo: 'micosat_pg' },
+  'Micosat F MO':             { tipo: 'micosat_mo' },
+  'Micosat F MO/PG':          { tipo: 'micosat_dinamico' },
   'Micosat Tab Plus':         { tipo: 'micosat_mini', sku: 'Micosat Tab Plus Mini 100g', kgP: 0.1 },
   'Micosat Len':              { tipo: 'micosat_mini', sku: 'Micosat Len Mini 100g',      kgP: 0.1 },
 };
@@ -258,6 +231,28 @@ function getBimestreCorrente() {
 }
 function getBimestreIdx(id) { return BIMESTRI.findIndex(b => b.id === id); }
 function isPassato(id) { return id && getBimestreIdx(id) < getBimestreIdx(getBimestreCorrente()); }
+
+// Vigor Active: dose dinamica per rigenerazione in base al mese
+function getVigorActiveDoseRig() {
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  const g = now.getDate();
+  if (m < 3 || m > 10) return { dose: 50, alert: null };
+  if (m < 4 || (m === 4 && g <= 15)) return { dose: 50, alert: null };
+  if (m === 4) return { dose: 40, alert: null };
+  if (m === 5 && g <= 5) return { dose: 30, alert: 'warning' };
+  if (m === 5 || (m >= 6 && m <= 8)) return { dose: null, alert: 'danger' };
+  return { dose: 50, alert: null }; // settembre-ottobre: sicuro
+}
+
+// Sceglie Micosat F MO o PG in base agli m²
+function getMicosatProduct(mq) {
+  return parseFloat(mq) > 300 ? 'Micosat F MO' : 'Micosat F PG';
+}
+
+// Percentuale degradazione dal tipo selezionato
+const DEGRADAZIONE_PCT = { ritocchi: 0.15, medio: 0.40, grave: 0.70 };
+const DEGRADAZIONE_DOSE = { ritocchi: 18, medio: 28, grave: 33 }; // g/m² centro fascia
 
 function calcolaPianoAnnuo(linea, terreno, livello, colore) {
   if (terreno === 'sabbioso') {
@@ -322,7 +317,9 @@ function calcolaPreventivoConKgSeme(inputItems, miscuglioSku, miscuglioKg, mq) {
   const righe = [];
 
   for (const [nomeProd, kgTot] of Object.entries(accumulo)) {
-    const cfg = PRODOTTO_CONFIG[nomeProd];
+    // Risolvi Micosat F MO/PG dinamicamente
+    const nomeProdResolve = nomeProd === 'Micosat F MO/PG' ? getMicosatProduct(mq) : nomeProd;
+    const cfg = PRODOTTO_CONFIG[nomeProdResolve];
     if (!cfg) continue;
 
     if (cfg.tipo === 'micosat_mini') {
@@ -336,31 +333,63 @@ function calcolaPreventivoConKgSeme(inputItems, miscuglioSku, miscuglioKg, mq) {
       const entry = LISTINO['Micosat F PG 1kg'];
       if (!entry) continue;
       const confezioni = Math.ceil(kgTot);
-      const listino = confezioni > 5 ? 'B' : 'A';
-      const pu = listino === 'B' ? entry.prezzoB : entry.prezzoA;
-      righe.push({ prodotto: nomeProd, sku: 'Micosat F PG 1kg', formato: entry.formato, qtaConf: confezioni, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confezioni).toFixed(2), listino, upgrade: false });
+      const lt = confezioni > 5 ? 'B' : 'A';
+      const pu = lt === 'B' ? entry.prezzoB : entry.prezzoA;
+      righe.push({ prodotto: nomeProd, sku: 'Micosat F PG 1kg', formato: entry.formato, qtaConf: confezioni, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confezioni).toFixed(2), listino: lt, upgrade: false });
+      continue;
+    }
+    if (cfg.tipo === 'micosat_mo') {
+      const entry = LISTINO['Micosat F MO 5kg'];
+      if (!entry) continue;
+      const confezioni = Math.ceil(kgTot / entry.kg);
+      const lt = confezioni > 3 ? 'B' : 'A';
+      const pu = lt === 'B' ? entry.prezzoB : entry.prezzoA;
+      righe.push({ prodotto: nomeProd, sku: 'Micosat F MO 5kg', formato: entry.formato, qtaConf: confezioni, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confezioni).toFixed(2), listino: lt, upgrade: false, noteMicosat: 'Si diluisce con Humifitos — dura ~2 stagioni' });
       continue;
     }
 
-    const kgP = cfg.kgP;
-    const piccolo = LISTINO[cfg.piccolo];
-    if (!piccolo) continue;
-    const confPiccole = Math.ceil(kgTot / kgP);
-    const useGrande = !!(cfg.grande && cfg.soglia && confPiccole > cfg.soglia);
-
-    if (useGrande) {
-      const grande = LISTINO[cfg.grande];
-      const kgG = cfg.kgG;
-      const confGrandi = Math.ceil(kgTot / kgG);
-      const lt = confGrandi > 5 ? 'B' : 'A';
-      const pu = lt === 'B' ? grande.prezzoB : grande.prezzoA;
-      const risparmio = +(piccolo.prezzoA * confPiccole - pu * confGrandi).toFixed(2);
-      righe.push({ prodotto: nomeProd, sku: cfg.grande, formato: grande.formato, qtaConf: confGrandi, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confGrandi).toFixed(2), listino: lt, upgrade: true, upgradeMsgRisparmio: risparmio > 0 ? risparmio : null, altSku: cfg.piccolo, altQta: confPiccole, altPrezzoTot: +(piccolo.prezzoA * confPiccole).toFixed(2) });
-    } else {
-      const lt = confPiccole > 5 ? 'B' : 'A';
-      const pu = lt === 'B' ? piccolo.prezzoB : piccolo.prezzoA;
-      righe.push({ prodotto: nomeProd, sku: cfg.piccolo, formato: piccolo.formato, qtaConf: confPiccole, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confPiccole).toFixed(2), listino: lt, upgrade: false });
+    // Logica ottimale €/kg per tutti gli altri prodotti
+    const formati = [];
+    if (cfg.piccolo && LISTINO[cfg.piccolo]) {
+      const e = LISTINO[cfg.piccolo];
+      const n = Math.ceil(kgTot / cfg.kgP);
+      const lt = n > 5 ? 'B' : 'A';
+      const pu = lt === 'B' ? e.prezzoB : e.prezzoA;
+      formati.push({ sku: cfg.piccolo, formato: e.formato, kg: cfg.kgP, qtaConf: n, prezzoUnit: pu, prezzoTot: +(pu * n).toFixed(2), eurKg: +(pu / e.kg).toFixed(3), listino: lt });
     }
+    if (cfg.grande && LISTINO[cfg.grande]) {
+      const e = LISTINO[cfg.grande];
+      const kgG = cfg.kgG;
+      const n = Math.ceil(kgTot / kgG);
+      const lt = n > 5 ? 'B' : 'A';
+      const pu = lt === 'B' ? e.prezzoB : e.prezzoA;
+      formati.push({ sku: cfg.grande, formato: e.formato, kg: kgG, qtaConf: n, prezzoUnit: pu, prezzoTot: +(pu * n).toFixed(2), eurKg: +(pu / e.kg).toFixed(3), listino: lt });
+    }
+    if (formati.length === 0) continue;
+
+    // Ordina per €/kg (più conveniente prima)
+    formati.sort((a, b) => a.eurKg - b.eurKg);
+    const ottimale = formati[0];
+    const alternativa = formati[1] || null;
+
+    righe.push({
+      prodotto: nomeProd,
+      sku: ottimale.sku,
+      formato: ottimale.formato,
+      qtaConf: ottimale.qtaConf,
+      kgTot: +kgTot.toFixed(2),
+      prezzoUnit: ottimale.prezzoUnit,
+      prezzoTot: ottimale.prezzoTot,
+      listino: ottimale.listino,
+      upgrade: false,
+      isOttimale: formati.length > 1,
+      alt: alternativa ? {
+        sku: alternativa.sku,
+        qtaConf: alternativa.qtaConf,
+        prezzoTot: alternativa.prezzoTot,
+        differenza: +(alternativa.prezzoTot - ottimale.prezzoTot).toFixed(2),
+      } : null,
+    });
   }
 
   if (miscuglioSku && miscuglioKg > 0) {
@@ -404,7 +433,7 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
         <td style="padding:8px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">€ ${r.prezzoUnit.toFixed(2)}</td>
         <td style="padding:8px 12px;text-align:right;font-weight:bold;border-bottom:1px solid #e5e7eb;">€ ${r.prezzoTot.toFixed(2)}</td>
       </tr>
-      ${r.upgrade && r.upgradeMsgRisparmio ? `<tr><td colspan="5" style="padding:2px 12px 6px;font-size:10px;color:#16a34a;border-bottom:1px solid #e5e7eb;">💡 Risparmio rispetto a ${r.altQta}× ${r.altSku}: € ${r.upgradeMsgRisparmio.toFixed ? r.upgradeMsgRisparmio.toFixed(2) : r.upgradeMsgRisparmio}</td></tr>` : ''}
+      ${r.isOttimale && r.alt && r.alt.differenza > 0 ? `<tr><td colspan="5" style="padding:2px 12px 6px;font-size:10px;color:#6b7280;border-bottom:1px solid #e5e7eb;">Alt: ${r.alt.sku} (${r.alt.qtaConf} pz) = € ${r.alt.prezzoTot.toFixed(2)} (+€ ${r.alt.differenza.toFixed(2)})</td></tr>` : ''}
     `).join('');
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Preventivo PratoVivo</title>
@@ -469,18 +498,19 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
         {/* Tabella prodotti */}
         <div className="p-4 space-y-2">
           {righe.map((r, i) => (
-            <div key={i} className={`rounded-xl border p-3 ${r.upgrade ? 'border-green-400 bg-green-50' : r.isSeme ? 'border-emerald-300 bg-emerald-50' : 'border-gray-100 bg-gray-50'}`}>
+            <div key={i} className={`rounded-xl border p-3 ${r.isSeme ? 'border-emerald-300 bg-emerald-50' : r.isOttimale ? 'border-green-400 bg-green-50' : 'border-gray-100 bg-gray-50'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 flex-wrap">
                     <span className="font-bold text-gray-900 text-sm">{r.prodotto}</span>
-                    {r.upgrade && <span className="text-xs bg-green-200 text-green-800 rounded-full px-1.5 py-0.5 font-bold">★ Convenienza</span>}
+                    {r.isOttimale && <span className="text-xs bg-green-200 text-green-800 rounded-full px-1.5 py-0.5 font-bold">✓ Formato ottimale</span>}
                     {r.listino === 'B' && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-bold">Listino B</span>}
                     {r.isSeme && <span className="text-xs bg-emerald-200 text-emerald-800 rounded-full px-1.5 py-0.5 font-bold">🌾 Seme IVA 10%</span>}
                   </div>
                   <span className="text-xs text-gray-500">{r.sku} · {r.formato}</span>
-                  {r.upgrade && r.upgradeMsgRisparmio && (
-                    <p className="text-xs text-green-700 mt-0.5">💡 Risparmio vs {r.altQta}× {r.altSku}: <strong>€ {typeof r.upgradeMsgRisparmio === 'number' ? r.upgradeMsgRisparmio.toFixed(2) : r.upgradeMsgRisparmio}</strong></p>
+                  {r.noteMicosat && <p className="text-xs text-blue-600 mt-0.5">💧 {r.noteMicosat}</p>}
+                  {r.alt && r.alt.differenza > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5">Se preferisci {r.alt.sku} ({r.alt.qtaConf} pz): € {r.alt.prezzoTot.toFixed(2)} <span className="text-amber-600 font-semibold">(+€ {r.alt.differenza.toFixed(2)})</span></p>
                   )}
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -568,7 +598,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
 
   if (tipo === 'semina' || tipo === 'rigenerazione') {
     const datiPiano = tipo === 'semina' ? PIANO_SEMINA[livello] : PIANO_RIGENERAZIONE[livello];
-    const granulari = linea === 'mivena' ? datiPiano.granulari_mivena : datiPiano.granulari;
+    const granulari = datiPiano.granulari || [];
     sezioneGranulari = `
       <h2>Granulari</h2>
       <table>
@@ -584,7 +614,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         </table>`;
     }
     const s = datiPiano.seme;
-    const doseS = tipo === 'rigenerazione' ? (spelacchiato ? s.dose_spelacchiato : s.dose_normale) : s.dose;
+    const doseS = tipo === 'rigenerazione' ? (s.dose_grave || s.dose) : s.dose;
     sezioneSeme = `
       <h2>Seme</h2>
       <table>
@@ -721,7 +751,7 @@ export default function PratoVivo() {
   const [colore, setColore] = useState(null);
   const [estendi12, setEstendi12] = useState(null);
   const [liquidiSab, setLiquidiSab] = useState(true);
-  const [spelacchiato, setSpelacchiato] = useState(null); // per rigenerazione
+  const [degradazione, setDegradazione] = useState(null); // 'ritocchi' | 'medio' | 'grave'
   const [miscuglio, setMiscuglio] = useState(null);       // { id, nome, sku } selezionato
   const [showPreventivo, setShowPreventivo] = useState(false);
 
@@ -737,7 +767,7 @@ export default function PratoVivo() {
     setTipoPrato(null); setTipoIntervento(null); setLivello(null);
     setMq(''); setIrrigazione(null); setNomeCliente('');
     setLinea('albatros'); setTerreno(null); setColore(null);
-    setEstendi12(null); setLiquidiSab(true); setSpelacchiato(null);
+    setEstendi12(null); setLiquidiSab(true); setDegradazione(null);
     setMiscuglio(null); setShowPreventivo(false);
   };
 
@@ -748,7 +778,7 @@ export default function PratoVivo() {
       if (colore !== null) { setColore(null); return; }
       if (terreno !== null) { setTerreno(null); return; }
     }
-    if (tipoIntervento === 'rigenerazione' && spelacchiato !== null) { setSpelacchiato(null); return; }
+    if (tipoIntervento === 'rigenerazione' && degradazione !== null) { setDegradazione(null); return; }
     if (irrigazione !== null) { setIrrigazione(null); setMq(''); return; }
     if (livello !== null) { setLivello(null); return; }
     if (tipoIntervento !== null) { setTipoIntervento(null); return; }
@@ -758,12 +788,12 @@ export default function PratoVivo() {
   // Determina step corrente
   const hasCommonConfig = tipoPrato && tipoIntervento && livello && irrigazione;
   const showPianoSemina = hasCommonConfig && tipoIntervento === 'semina';
-  const showPianoRig = hasCommonConfig && tipoIntervento === 'rigenerazione' && spelacchiato !== null;
+  const showPianoRig = hasCommonConfig && tipoIntervento === 'rigenerazione' && degradazione !== null;
   const showPianoAnnuo = hasCommonConfig && tipoIntervento === 'piano_annuo' && terreno && colore && estendi12 !== null;
   const showSingolo = tipoIntervento === 'singolo';
 
   const datiPianoAttivo = tipoIntervento === 'semina' ? PIANO_SEMINA[livello] : tipoIntervento === 'rigenerazione' ? PIANO_RIGENERAZIONE[livello] : null;
-  const granulariAttivi = datiPianoAttivo ? (linea === 'mivena' ? datiPianoAttivo.granulari_mivena : datiPianoAttivo.granulari) : [];
+  const granulariAttivi = datiPianoAttivo ? datiPianoAttivo.granulari : [];
 
   // Calcola preventivo in base al percorso attivo
   const preventivoData = useMemo(() => {
@@ -772,7 +802,7 @@ export default function PratoVivo() {
     const items = [];
 
     if ((tipoIntervento === 'semina' || tipoIntervento === 'rigenerazione') && datiPianoAttivo) {
-      const gran = linea === 'mivena' ? (datiPianoAttivo.granulari_mivena || []) : (datiPianoAttivo.granulari || []);
+      const gran = datiPianoAttivo.granulari || [];
       for (const g of gran) {
         const dose = parseFloat(String(g.dose).split('–')[0]);
         if (!isNaN(dose)) items.push({ prodotto: g.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
@@ -781,10 +811,17 @@ export default function PratoVivo() {
         const dose = parseFloat(String(l.dose).split('–')[0].replace(/[^\d.]/g,''));
         if (!isNaN(dose) && dose > 0) items.push({ prodotto: l.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
       }
-      const doseS = tipoIntervento === 'rigenerazione'
-        ? parseFloat((spelacchiato ? datiPianoAttivo.seme?.dose_spelacchiato : datiPianoAttivo.seme?.dose_normale)?.split('–')[0] || '0')
-        : parseFloat(datiPianoAttivo.seme?.dose?.split('–')[0] || '0');
-      const kgSeme = doseS > 0 ? (doseS * mqN) / 1000 : 0;
+      // Calcolo seme: per rigenerazione usa m² degradati
+      let kgSeme = 0;
+      if (tipoIntervento === 'rigenerazione' && degradazione) {
+        const pct = DEGRADAZIONE_PCT[degradazione] || 0;
+        const doseS = DEGRADAZIONE_DOSE[degradazione] || 0;
+        const mqDeg = pct * mqN;
+        kgSeme = doseS > 0 ? (doseS * mqDeg) / 1000 : 0;
+      } else if (tipoIntervento === 'semina') {
+        const doseS = parseFloat(datiPianoAttivo.seme?.dose?.split('–')[0] || '0');
+        kgSeme = doseS > 0 ? (doseS * mqN) / 1000 : 0;
+      }
       const miscuglioSku = miscuglio?.sku || null;
       return calcolaPreventivoConKgSeme(items, miscuglioSku, kgSeme, mq);
     }
@@ -825,7 +862,7 @@ export default function PratoVivo() {
     }
 
     return null;
-  }, [tipoIntervento, datiPianoAttivo, linea, mq, spelacchiato, miscuglio, pianoAnnuo, terreno, colore, livello, liquidiSab]);
+  }, [tipoIntervento, datiPianoAttivo, linea, mq, degradazione, miscuglio, pianoAnnuo, terreno, colore, livello, liquidiSab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4 pb-8">
@@ -914,7 +951,7 @@ export default function PratoVivo() {
             granulari={granulariAttivi}
             liquidi={datiPianoAttivo.liquidi}
             seme={datiPianoAttivo.seme}
-            spelacchiato={null}
+            degradazione={null}
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
             terreno={terreno} setTerreno={setTerreno}
@@ -925,23 +962,55 @@ export default function PratoVivo() {
         )}
 
         {/* ── RIGENERAZIONE ───────────────────────────────────── */}
-        {tipoIntervento === 'rigenerazione' && livello && irrigazione && spelacchiato === null && (
-          <Card title="Stato del prato">
-            <p className="text-xs text-gray-400 mb-3">Influenza la dose di seme consigliata</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setSpelacchiato(true)}
-                className="rounded-xl p-4 text-center font-bold text-sm transition-all hover:scale-105"
-                style={{ background: 'linear-gradient(135deg,#d97706,#f59e0b)', color:'#fff', border:'3px solid #92400e' }}>
-                🪣 Spelacchiato<div className="text-xs font-normal mt-1 opacity-80">Chiazze estese, >40%</div>
-              </button>
-              <button onClick={() => setSpelacchiato(false)}
-                className="rounded-xl p-4 text-center font-bold text-sm transition-all hover:scale-105"
-                style={{ background: 'linear-gradient(135deg,#15803d,#16a34a)', color:'#fff', border:'3px solid #14532d' }}>
-                🌿 Diradato<div className="text-xs font-normal mt-1 opacity-80">Poco denso ma uniforme</div>
-              </button>
-            </div>
-          </Card>
-        )}
+        {/* ── RIGENERAZIONE: Stato del prato ──────────────── */}
+        {tipoIntervento === 'rigenerazione' && livello && irrigazione && degradazione === null && (() => {
+          const va = getVigorActiveDoseRig();
+          return (
+            <Card title="Stato del prato">
+              <p className="text-xs text-gray-400 mb-3">Determina la superficie e la dose di seme da usare</p>
+
+              {/* Vigor Active alert stagionale */}
+              {va.alert === 'danger' && (
+                <div className="mb-3 rounded-xl bg-red-50 border border-red-300 p-3">
+                  <p className="text-red-700 font-bold text-sm">🔴 Attenzione — periodo non ottimale</p>
+                  <p className="text-red-600 text-xs mt-1">Siamo oltre i primi giorni di maggio. Le temperature in aumento possono compromettere l'attecchimento delle nuove piantine prima che abbiano radicato. Procedere <strong>a rischio del cliente</strong>.</p>
+                </div>
+              )}
+              {va.alert === 'warning' && (
+                <div className="mb-3 rounded-xl bg-amber-50 border border-amber-300 p-3">
+                  <p className="text-amber-700 font-bold text-sm">⚠️ Periodo limite — usare con cautela</p>
+                  <p className="text-amber-600 text-xs mt-1">Vigor Active ridotto a <strong>30 g/m²</strong>. Siamo agli ultimi giorni utili per la rigenerazione. Assicurarsi di irrigare frequentemente nelle prime settimane.</p>
+                </div>
+              )}
+              {va.alert === null && va.dose === 40 && (
+                <div className="mb-3 rounded-xl bg-blue-50 border border-blue-200 p-3">
+                  <p className="text-blue-700 text-xs">💧 Vigor Active ridotto a <strong>40 g/m²</strong> (seconda metà di aprile — dosi decrescenti verso maggio).</p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <button onClick={() => setDegradazione('ritocchi')}
+                  className="w-full rounded-xl p-4 text-left font-bold text-sm transition-all hover:scale-[1.01] border-2"
+                  style={{ background: 'linear-gradient(135deg,#ecfdf5,#d1fae5)', color:'#065f46', borderColor:'#6ee7b7' }}>
+                  🔧 Ritocchi puntuali
+                  <div className="text-xs font-normal mt-1 text-emerald-700">Aree danneggiate &lt;20% della superficie — seme su ~15% m²</div>
+                </button>
+                <button onClick={() => setDegradazione('medio')}
+                  className="w-full rounded-xl p-4 text-left font-bold text-sm transition-all hover:scale-[1.01] border-2"
+                  style={{ background: 'linear-gradient(135deg,#fffbeb,#fef3c7)', color:'#92400e', borderColor:'#fcd34d' }}>
+                  🌿 Diradamento medio
+                  <div className="text-xs font-normal mt-1 text-amber-700">Prato poco denso, 20–60% superficie da riempire — seme su ~40% m²</div>
+                </button>
+                <button onClick={() => setDegradazione('grave')}
+                  className="w-full rounded-xl p-4 text-left font-bold text-sm transition-all hover:scale-[1.01] border-2"
+                  style={{ background: 'linear-gradient(135deg,#fff7ed,#fed7aa)', color:'#7c2d12', borderColor:'#fb923c' }}>
+                  🪣 Diradamento grave
+                  <div className="text-xs font-normal mt-1 text-orange-700">Muschio, chiazze estese, &gt;60% da ricostruire — seme su ~70% m²</div>
+                </button>
+              </div>
+            </Card>
+          );
+        })()}
 
         {showPianoRig && !showPreventivo && (
           <PianoSeminaRig
@@ -952,13 +1021,13 @@ export default function PratoVivo() {
             granulari={granulariAttivi}
             liquidi={datiPianoAttivo.liquidi}
             seme={datiPianoAttivo.seme}
-            spelacchiato={spelacchiato}
+            degradazione={degradazione}
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
             terreno={terreno} setTerreno={setTerreno}
             miscuglio={miscuglio} setMiscuglio={setMiscuglio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={() => generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente })}
+            onStampa={() => generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente })}
           />
         )}
 
@@ -1002,11 +1071,30 @@ export default function PratoVivo() {
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi, seme, spelacchiato, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, onPreventivo, onStampa }) {
+function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, onPreventivo, onStampa }) {
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
-  const doseS = tipo === 'rigenerazione'
-    ? (spelacchiato ? seme.dose_spelacchiato : seme.dose_normale)
-    : seme.dose;
+
+  const degradazioneLabel = { ritocchi: 'Ritocchi puntuali', medio: 'Diradamento medio', grave: 'Diradamento grave' };
+  const pct = degradazione ? DEGRADAZIONE_PCT[degradazione] : 0;
+  const mqDeg = degradazione && mq ? Math.round(parseFloat(mq) * pct) : 0;
+
+  // Dose e label seme
+  let doseS;
+  if (tipo === 'rigenerazione' && degradazione) {
+    doseS = seme['dose_' + degradazione];
+  } else {
+    doseS = seme?.dose;
+  }
+
+  // Vigor Active alert (solo rigenerazione)
+  const vaInfo = tipo === 'rigenerazione' ? getVigorActiveDoseRig() : null;
+
+  // Risolvi Micosat F MO/PG per display
+  const micosatLabel = parseFloat(mq) > 300 ? 'Micosat F MO' : 'Micosat F PG';
+  const micosatNote = parseFloat(mq) > 300
+    ? 'Si diluisce con Humifitos in un solo passaggio (5 kg, dura ~2 stagioni)'
+    : 'Microgranulare a secco — distribuire separatamente o con piccolo spandiconcime';
 
   const kg = (dose) => mq && dose && !isNaN(parseFloat(dose.toString().split('–')[0]))
     ? ` ≈ ${(parseFloat(mq) * parseFloat(dose.toString().split('–')[0]) / 1000).toFixed(1)} kg`
@@ -1032,11 +1120,57 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         </div>
       </div>
 
+      {/* Banner upgrade Premium — solo per base e standard */}
+      {(livello === 'base' || livello === 'standard') && showUpgradeBanner && (
+        <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+          <div className="bg-amber-50 px-4 py-3 flex items-center justify-between">
+            <p className="text-amber-800 font-bold text-sm">💡 Vale la pena considerare il piano Premium</p>
+            <button onClick={() => setShowUpgradeBanner(false)} className="text-amber-400 text-lg leading-none">×</button>
+          </div>
+          <div className="p-4 text-sm text-gray-600 space-y-2">
+            <p>{tipo === 'semina' ? 'Il suolo è vergine — è il momento in cui si imposta il sistema biologico per i prossimi anni.' : 'Il terreno è da ricostruire — è il momento in cui il ciclo biologico riparte.'} In questa fase il Premium tende a fare la differenza su:</p>
+            <ul className="space-y-0.5 text-xs text-gray-500 pl-2">
+              <li>→ Velocità di attecchimento e uniformità</li>
+              <li>→ Profondità di radicamento (Wet Turf + Algapark)</li>
+              <li>→ Riduzione delle fallanze nelle prime settimane</li>
+              <li>→ Resistenza alla siccità nei mesi estivi</li>
+            </ul>
+            <p className="text-xs text-gray-400 italic">Non è indispensabile, ma se il cliente vuole partire con il piede giusto è la scelta che raccomandiamo.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Vigor Active alert stagionale (solo rigenerazione) */}
+      {vaInfo?.alert === 'warning' && (
+        <div className="rounded-xl bg-amber-50 border border-amber-300 p-3">
+          <p className="text-amber-700 font-bold text-sm">⚠️ Periodo limite — Vigor Active ridotto a 30 g/m²</p>
+          <p className="text-amber-600 text-xs mt-1">Siamo agli ultimi giorni utili. Irrigare frequentemente nelle prime 2 settimane.</p>
+        </div>
+      )}
+      {vaInfo?.alert === 'danger' && (
+        <div className="rounded-xl bg-red-50 border border-red-300 p-3">
+          <p className="text-red-700 font-bold text-sm">🔴 Rigenerazione a rischio in questo periodo</p>
+          <p className="text-red-600 text-xs mt-1">Le alte temperature imminenti non lasciano tempo sufficiente alle piantine per radicare. Procedere solo se il cliente è consapevole del rischio.</p>
+        </div>
+      )}
+
+      {/* Info degradazione (solo rigenerazione) */}
+      {tipo === 'rigenerazione' && degradazione && (
+        <div className="bg-blue-50 rounded-xl border border-blue-200 p-3">
+          <p className="text-blue-800 font-bold text-sm">📐 {degradazioneLabel[degradazione]}</p>
+          <p className="text-blue-600 text-xs mt-1">
+            Seme calcolato su <strong>{mqDeg} m²</strong> ({Math.round(pct * 100)}% di {mq} m²) · Vigor Active e concimi su intera superficie ({mq} m²)
+          </p>
+        </div>
+      )}
+
       {/* Granulari */}
       <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">
-        <div className="bg-green-700 px-4 py-3"><h2 className="text-white font-bold text-sm">📋 {titoloTipo} — {livello.charAt(0).toUpperCase()+livello.slice(1)} ({linea === 'mivena' ? 'Mivena' : 'Albatros'})</h2></div>
+        <div className="bg-green-700 px-4 py-3"><h2 className="text-white font-bold text-sm">📋 {titoloTipo} — {livello.charAt(0).toUpperCase()+livello.slice(1)}</h2></div>
         <div className="p-4 space-y-2">
-          {granulari.map((p, i) => (
+          {granulari.map((p, i) => {
+            const doseDisplay = tipo === 'rigenerazione' && vaInfo?.dose && p.prodotto === 'Vigor Active' ? vaInfo.dose : p.dose;
+            return (
             <div key={i} className="rounded-xl p-3 bg-green-50 border-l-4 border-green-500">
               <div className="flex justify-between items-start">
                 <div>
@@ -1044,25 +1178,31 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
                   <p className="text-xs text-gray-500">{p.quando}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-green-700">{p.dose} g/m²</p>
-                  {mq && <p className="text-xs text-gray-400">{kg(p.dose)}</p>}
+                  <p className="font-bold text-green-700">{doseDisplay} g/m²</p>
+                  {mq && <p className="text-xs text-gray-400">≈ {(parseFloat(mq) * doseDisplay / 1000).toFixed(1)} kg</p>}
                 </div>
               </div>
               {p.note && <p className="text-xs text-gray-400 mt-1 italic">{p.note}</p>}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* Seme */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-emerald-200">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">🌾 Seme</p>
-        <div className="flex justify-between items-center bg-emerald-50 rounded-xl p-3">
-          <div>
-            <p className="font-bold text-emerald-800">{doseS}</p>
-            <p className="text-xs text-gray-500">{seme.note}</p>
+        <div className="bg-emerald-50 rounded-xl p-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-emerald-800">{doseS}</p>
+              <p className="text-xs text-gray-500">{seme.note}</p>
+            </div>
+            {tipo === 'rigenerazione' && degradazione && mq
+              ? <p className="text-xs text-emerald-700 font-semibold text-right">≈ {(DEGRADAZIONE_DOSE[degradazione] * mqDeg / 1000).toFixed(1)} kg<br/><span className="text-gray-400 font-normal">su {mqDeg} m²</span></p>
+              : mq && doseS && <p className="text-xs text-gray-400">≈ {(parseFloat(mq) * parseFloat(doseS.split('–')[0]) / 1000).toFixed(1)} kg min.</p>
+            }
           </div>
-          {mq && <p className="text-xs text-gray-400">≈ {(parseFloat(mq) * parseFloat(doseS.split('–')[0]) / 1000).toFixed(1)} kg min.</p>}
         </div>
       </div>
 
@@ -1071,34 +1211,39 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-blue-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">💧 Liquidi / Biostimolanti</p>
           <div className="space-y-2">
-            {liquidi.map((p, i) => (
+            {liquidi.map((p, i) => {
+              const isMicosat = p.prodotto === 'Micosat F MO/PG';
+              const labelProdotto = isMicosat ? micosatLabel : p.prodotto;
+              const noteProdotto = isMicosat ? micosatNote : p.note;
+              return (
               <div key={i} className="rounded-xl p-3 bg-blue-50 border-l-4 border-blue-400">
                 <div className="flex justify-between">
-                  <p className="font-bold text-blue-800 text-sm">{p.prodotto}</p>
+                  <p className="font-bold text-blue-800 text-sm">{labelProdotto}</p>
                   <p className="font-bold text-blue-700 text-sm">{p.dose}</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">{p.quando}</p>
-                {p.note && <p className="text-xs text-blue-600 mt-0.5">{p.note}</p>}
+                {noteProdotto && <p className="text-xs text-blue-600 mt-0.5">{noteProdotto}</p>}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Banner sabbioso — solo per linea Mivena (Modifica 10) */}
+      {/* Banner sabbioso — solo per linea Mivena */}
       {terreno === 'sabbioso' && linea === 'mivena' && (
         <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4">
           <p className="font-bold text-amber-800 text-sm mb-2">🏖️ Adattamenti terreno sabbioso — Mivena</p>
           {livello === 'premium' ? (
             <ul className="text-xs text-amber-700 space-y-1">
-              <li>• <strong>Liquidi ogni 20–30 gg:</strong> Humifitos + Micosat F PG + Root Speed (20 g/m²) + Algapark</li>
+              <li>• <strong>Liquidi ogni 20–30 gg:</strong> Humifitos + {micosatLabel} + Root Speed (20 g/m²) + Algapark</li>
               <li>• <strong>Wet Turf:</strong> 3 trattamenti mensili da giugno</li>
               <li>• <strong>Granulari (a scelta):</strong> AllRound CRF ogni 3–4 mesi <em>oppure</em> ProSlow ogni 5–6 mesi</li>
               <li>• Carotatura + compost vegetale maturo inodore 1×anno (NO stallatico)</li>
             </ul>
           ) : (
             <ul className="text-xs text-amber-700 space-y-1">
-              <li>• <strong>Liquidi ogni 20–30 gg:</strong> Humifitos + Micosat F PG</li>
+              <li>• <strong>Liquidi ogni 20–30 gg:</strong> Humifitos + {micosatLabel}</li>
               <li>• <strong>Wet Turf + Algapark:</strong> 3 trattamenti mensili da giugno</li>
               <li>• <strong>Granulari (a scelta):</strong> AllRound CRF ogni 3–4 mesi <em>oppure</em> ProSlow ogni 5–6 mesi</li>
               <li>• Carotatura + compost vegetale maturo inodore 1×anno (NO stallatico)</li>

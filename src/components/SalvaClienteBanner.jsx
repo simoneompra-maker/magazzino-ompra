@@ -56,8 +56,8 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
         return;
       }
 
-      // ── INSERT semplice (no upsert — evita problema UNIQUE) ──
-      const { error: errInsert } = await supabase.from('clienti').insert({
+      // ── UPSERT con ignoreDuplicates — safe se già esiste ──
+      const { error: errInsert } = await supabase.from('clienti').upsert({
         nome:          clienteInfo.nome       || null,
         cognome:       clienteInfo.cognome    || null,
         nome_completo: clienteInfo.nomeP      || clienteInfo.nome || null,
@@ -73,7 +73,7 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
         contatto:      clienteInfo.contatto   || null,
         search_text:   searchKey,
         fonte:         'commissione',
-      });
+      }, { onConflict: 'search_text', ignoreDuplicates: true });
 
       if (errInsert) throw errInsert;
 

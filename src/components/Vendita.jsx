@@ -1049,17 +1049,21 @@ export default function Vendita({ onNavigate }) {
     // Salta se il cliente è già in rubrica (ha un id valido dal DB)
     if (!clienteInfo || clienteInfo.id) return;
 
-    // Costruisci chiave di ricerca
-    const chiave = clienteInfo.searchText ||
-      `${clienteInfo.nome || ''}${clienteInfo.cognome || ''}`.trim();
+    // Costruisci chiave di ricerca — usa solo nome/cognome, non searchText esteso
+    const nomeChiave = (
+      clienteInfo.nomeP ||
+      clienteInfo.nome  ||
+      `${clienteInfo.cognome || ''} ${clienteInfo.nome || ''}`.trim()
+    ).trim();
 
-    if (!chiave) return;
+    if (!nomeChiave) return;
 
     try {
       const { data: esistente } = await supabase
         .from('clienti')
         .select('id')
-        .ilike('search_text', chiave)
+        .ilike('nome_completo', nomeChiave)
+        .is('deleted_at', null)
         .maybeSingle();
 
       if (!esistente) {

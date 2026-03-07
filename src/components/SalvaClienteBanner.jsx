@@ -28,10 +28,9 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
       // clienteVirtuale da Vendita ha nome già unito (es. "Rossi Mario")
       // clienteInfo da OCR diretto può avere nome+cognome separati
       const searchKey = (
-        clienteInfo.searchText ||
-        clienteInfo.nomeP      ||
-        clienteInfo.nome       ||
-        ''
+        clienteInfo.nomeP ||
+        clienteInfo.nome  ||
+        `${clienteInfo.cognome || ''} ${clienteInfo.nome || ''}`.trim()
       ).trim();
 
       if (!searchKey) {
@@ -44,7 +43,8 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
       const { data: esistente, error: errCheck } = await supabase
         .from('clienti')
         .select('id')
-        .ilike('search_text', searchKey)
+        .ilike('nome_completo', searchKey)
+        .is('deleted_at', null)
         .maybeSingle();
 
       if (errCheck) throw errCheck;

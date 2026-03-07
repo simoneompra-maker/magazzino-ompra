@@ -333,11 +333,11 @@ export default function Vendita({ onNavigate }) {
           provincia:     f.provincia.trim() || null,
           telefono:      f.telefono.trim()  || null,
           email:         f.email.trim()     || null,
-          cf:            f.cf.trim()        || null,
-          piva:          f.piva.trim()      || null,
-          sdi:           f.sdi.trim()       || null,
-          search_text:   searchKey,
-          fonte:         'manuale',
+          codice_fiscale: f.cf.trim()        || null,
+          partita_iva:    f.piva.trim()      || null,
+          sdi:            f.sdi.trim()       || null,
+          search_text:    searchKey,
+          fonte:          'manuale',
         }).select('id').single();
         if (!error && inserted) {
           idSalvato = inserted.id;

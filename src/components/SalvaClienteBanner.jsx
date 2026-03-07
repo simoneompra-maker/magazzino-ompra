@@ -44,7 +44,7 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
       const { data: esistente, error: errCheck } = await supabase
         .from('clienti')
         .select('id')
-        .eq('search_text', searchKey)
+        .ilike('search_text', searchKey)
         .maybeSingle();
 
       if (errCheck) throw errCheck;
@@ -67,8 +67,8 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
         provincia:     clienteInfo.provincia  || null,
         telefono:      clienteInfo.telefono   || null,
         email:         clienteInfo.email      || null,
-        cf:            clienteInfo.cf         || null,
-        piva:          clienteInfo.piva       || null,
+        codice_fiscale: clienteInfo.cf         || null,
+        partita_iva:   clienteInfo.piva       || null,
         sdi:           clienteInfo.sdi        || null,
         contatto:      clienteInfo.contatto   || null,
         search_text:   searchKey,

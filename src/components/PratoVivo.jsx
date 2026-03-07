@@ -46,7 +46,7 @@ const PIANO_SEMINA = {
       { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Al momento della semina', note: 'Mivena — alto P per germinazione' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: 'secondo scheda', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
       { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Dopo semina, ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
       { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
     ],
@@ -63,7 +63,7 @@ const PIANO_SEMINA = {
       { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Al momento della semina', note: 'Mivena — alto P per germinazione' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: 'secondo scheda', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
       { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Dopo semina, ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
       { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da giugno', note: 'Migliora ritenzione idrica' },
@@ -98,7 +98,7 @@ const PIANO_RIGENERAZIONE = {
       { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Alla trasemina', note: 'Mivena — alto P' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: 'secondo scheda', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
       { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Dopo trasemina, ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
       { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
     ],
@@ -115,7 +115,7 @@ const PIANO_RIGENERAZIONE = {
       { prodotto: 'Pro Starter', npk: '16-25-12', dose: 30, unita: 'g/m²', quando: 'Alla trasemina', note: 'Mivena — alto P' },
     ],
     liquidi: [
-      { prodotto: 'Root Speed', dose: 'secondo scheda', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
+      { prodotto: 'Root Speed', dose: '20 g/m²', quando: 'Alla semina + approfondimento radici', note: 'Compatibile con Wet Turf e Algapark' },
       { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Ogni 20–30 gg', note: '⚠️ Irrigare subito 5–10 min dopo' },
       { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos', note: 'Terreno umido 3–5 gg dopo' },
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da giugno', note: 'Migliora ritenzione idrica' },
@@ -177,16 +177,16 @@ const INTERVENTI_ANNUI = [
 ];
 
 const INTERVENTI_SABBIOSO = [
-  { numero: 1, funzione: 'Nutrizione primaverile', bimestre_target: 'mar_1', bimestre_label: '1ª metà Marzo', prodotto: 'Pro Slow', npk: '23-5-12', dose: 40 },
-  { numero: 2, funzione: 'Nutrizione autunnale', bimestre_target: 'set_1', bimestre_label: '1ª metà Settembre', prodotto: 'Pro Slow', npk: '23-5-12', dose: 40 },
-  { numero: 'B', funzione: 'Ponte estivo (se piano parte da giugno–agosto)', bimestre_target: null, bimestre_label: 'Solo se fuori periodo', prodotto: 'AllRound', npk: '—', dose: 25, bridge: true },
+  { numero: 1, funzione: 'Nutrizione primaverile', bimestre_target: 'mar_1', bimestre_label: '1ª metà Marzo', prodotto: 'Pro Slow', npk: '23-5-12', dose: 60 },
+  { numero: 2, funzione: 'Nutrizione autunnale', bimestre_target: 'set_1', bimestre_label: '1ª metà Settembre', prodotto: 'Pro Slow', npk: '23-5-12', dose: 50 },
+  { numero: 'B', funzione: 'Ponte estivo di transizione', bimestre_target: null, bimestre_label: 'Solo se fuori periodo', prodotto: 'AllRound', npk: '—', dose: 25, bridge: true },
 ];
 
 const LIQUIDI_SABBIOSO = [
   { prodotto: 'Humifitos', dose: '20 g/m²' },
   { prodotto: 'Micosat F PG', dose: '1 g/m²' },
   { prodotto: 'Algapark', dose: '1 g/m²' },
-  { prodotto: 'Root Speed', dose: 'sec. scheda' },
+  { prodotto: 'Root Speed', dose: '20 g/m²' },
   { prodotto: 'Wet Turf', dose: '1 g/m²', note: '3x/mese da giugno' },
 ];
 
@@ -243,7 +243,7 @@ const PRODOTTO_CONFIG = {
   'Universal Top':            { piccolo: 'Universal Top 20kg', kgP: 20, grande: null },
   'Algapark':                 { piccolo: 'Algapark 1kg',       kgP: 1,  grande: 'Algapark 5kg',     kgG: 5  },
   'Wet Turf':                 { piccolo: 'Wet Turf 1lt',       kgP: 1,  grande: 'Wet Turf 5lt',     kgG: 5  },
-  'Root Speed':               null,
+  'Root Speed':               { piccolo: 'Root Speed 5kg', kgP: 5, grande: null, kgG: null },
   'Micosat F PG':             { tipo: 'micosat_pg' },
   'Micosat Tab Plus':         { tipo: 'micosat_mini', sku: 'Micosat Tab Plus Mini 100g', kgP: 0.1 },
   'Micosat Len':              { tipo: 'micosat_mini', sku: 'Micosat Len Mini 100g',      kgP: 0.1 },
@@ -261,7 +261,41 @@ function isPassato(id) { return id && getBimestreIdx(id) < getBimestreIdx(getBim
 
 function calcolaPianoAnnuo(linea, terreno, livello, colore) {
   if (terreno === 'sabbioso') {
-    return INTERVENTI_SABBIOSO.map(iv => ({ ...iv, passato: isPassato(iv.bimestre_target) }));
+    // Logica stagionale: il bridge è visibile solo tra fine maggio e fine giugno
+    // Da luglio in poi: dose ridotta a max 20 g/m²
+    const now = new Date();
+    const m = now.getMonth() + 1; // 1-12
+    const g = now.getDate();
+    const isBridgePeriod = (m === 5 && g >= 20) || m === 6; // fine maggio - fine giugno
+    const isBridgeRidotto = m >= 7 && m <= 8; // luglio-agosto: bridge con dose ridotta
+
+    const base = INTERVENTI_SABBIOSO.map(iv => {
+      if (iv.bridge) {
+        if (!isBridgePeriod && !isBridgeRidotto) return null; // fuori periodo: non mostrare
+        const doseB = isBridgeRidotto ? 20 : iv.dose;
+        const noteB = isBridgeRidotto ? 'Luglio/Agosto — dose ridotta max 20 g/m²' : 'Maggio/Giugno — periodo ottimale';
+        return { ...iv, dose: doseB, note: noteB, passato: false };
+      }
+      return { ...iv, passato: isPassato(iv.bimestre_target) };
+    }).filter(Boolean);
+
+    // Modifica 2: se prato pallido, aggiungere Green 7 come primo intervento
+    if (colore === 'pallido') {
+      const green7 = {
+        numero: '▲',
+        funzione: 'Rinforzo colore — prato pallido',
+        bimestre_target: null,
+        bimestre_label: 'Prima dell\'intervento principale',
+        prodotto: 'Green 7',
+        npk: '15-5-6',
+        dose: 20,
+        note: 'Applicare 15–20 gg prima del ProSlow primaverile',
+        verde: true,
+        passato: false,
+      };
+      return [green7, ...base];
+    }
+    return base;
   }
   return INTERVENTI_ANNUI.map(iv => {
     const saltato = linea === 'mivena' && iv.mivena === null;
@@ -563,8 +597,8 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <h2>Interventi Granulari</h2>
         <table>
           <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th></tr>
-          ${pianoAnnuo.map(iv => `<tr class="${iv.bridge ? 'bridge' : iv.passato ? 'passato' : ''}">
-            <td>${iv.bridge ? '⚑' : iv.numero}</td><td>${iv.bimestre_label}</td><td>${iv.funzione}</td>
+          ${pianoAnnuo.map(iv => `<tr class="${iv.bridge ? 'bridge' : iv.verde ? 'verde' : iv.passato ? 'passato' : ''}">
+            <td>${iv.bridge ? '⚑' : iv.verde ? '▲' : iv.numero}</td><td>${iv.bimestre_label}</td><td>${iv.funzione}${iv.note ? `<br><small>${iv.note}</small>` : ''}</td>
             <td><strong>${iv.prodotto}</strong> <span class="npk">${iv.npk}</span></td>
             <td>${iv.dose} g/m²${kg(iv.dose)}</td>
           </tr>`).join('')}
@@ -598,7 +632,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
           <tr><td>Micosat F PG</td><td>1 g/m²</td><td>Con Humifitos</td></tr>
           ${livello === 'premium' ? `
           <tr><td>Algapark</td><td>1 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
-          <tr><td>Root Speed</td><td>sec. scheda</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
+          <tr><td>Root Speed</td><td>20 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
           <tr><td>Micosat Tab Plus</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago (entro 1ª metà Maggio)</td></tr>
           <tr><td>Micosat Len</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>` : ''}
         </table>`;
@@ -630,6 +664,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
     td{padding:5px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
     tr.passato td{color:#9ca3af;background:#f9fafb}
     tr.bridge td{background:#fefce8;color:#713f12}
+    tr.verde td{background:#ecfdf5;color:#065f46}
     .npk{font-size:9px;color:#6b7280}
     small{font-size:9px;color:#6b7280}
     .alert{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:10px;color:#7f1d1d}
@@ -704,6 +739,20 @@ export default function PratoVivo() {
     setLinea('albatros'); setTerreno(null); setColore(null);
     setEstendi12(null); setLiquidiSab(true); setSpelacchiato(null);
     setMiscuglio(null); setShowPreventivo(false);
+  };
+
+  const goBack = () => {
+    if (showPreventivo) { setShowPreventivo(false); return; }
+    if (tipoIntervento === 'piano_annuo') {
+      if (estendi12 !== null) { setEstendi12(null); return; }
+      if (colore !== null) { setColore(null); return; }
+      if (terreno !== null) { setTerreno(null); return; }
+    }
+    if (tipoIntervento === 'rigenerazione' && spelacchiato !== null) { setSpelacchiato(null); return; }
+    if (irrigazione !== null) { setIrrigazione(null); setMq(''); return; }
+    if (livello !== null) { setLivello(null); return; }
+    if (tipoIntervento !== null) { setTipoIntervento(null); return; }
+    if (tipoPrato !== null) { setTipoPrato(null); return; }
   };
 
   // Determina step corrente
@@ -785,7 +834,10 @@ export default function PratoVivo() {
         {/* Header */}
         <div className="flex items-center justify-between pt-2">
           {(tipoPrato || tipoIntervento) && (
-            <button onClick={reset} className="text-green-700 font-semibold text-sm">← Ricomincia</button>
+            <div className="flex flex-col gap-0.5">
+              <button onClick={goBack} className="text-green-700 font-semibold text-sm">← Indietro</button>
+              <button onClick={reset} className="text-gray-400 text-xs underline">Ricomincia</button>
+            </div>
           )}
           <h1 className="text-xl font-bold text-green-900 flex-1 text-center">🌱 PratoVivo</h1>
           {(tipoPrato || tipoIntervento) && <div className="w-20" />}
@@ -918,6 +970,7 @@ export default function PratoVivo() {
             colore={colore} setColore={setColore}
             estendi12={estendi12} setEstendi12={setEstendi12}
             liquidiSab={liquidiSab} setLiquidiSab={setLiquidiSab}
+            tipoPrato={tipoPrato}
             mq={mq} nomeCliente={nomeCliente}
             piano={pianoAnnuo} bimOggLabel={bimOggLabel}
             onPreventivo={() => setShowPreventivo(true)}
@@ -1032,16 +1085,25 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         </div>
       )}
 
-      {/* Banner sabbioso */}
-      {terreno === 'sabbioso' && (
+      {/* Banner sabbioso — solo per linea Mivena (Modifica 10) */}
+      {terreno === 'sabbioso' && linea === 'mivena' && (
         <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4">
-          <p className="font-bold text-amber-800 text-sm mb-2">🏖️ Adattamenti terreno sabbioso</p>
-          <ul className="text-xs text-amber-700 space-y-1">
-            <li>• Granulari: preferire AllRound CRF (ogni 3–4 mesi) o Pro Slow (ogni 5–6)</li>
-            <li>• Humifitos + Micosat F: ripetere ogni 20–30 gg</li>
-            <li>• Wet Turf: 3 trattamenti mensili da giugno</li>
-            <li>• Carotatura + compost vegetale maturo inodore 1×anno (NO stallatico)</li>
-          </ul>
+          <p className="font-bold text-amber-800 text-sm mb-2">🏖️ Adattamenti terreno sabbioso — Mivena</p>
+          {livello === 'premium' ? (
+            <ul className="text-xs text-amber-700 space-y-1">
+              <li>• <strong>Liquidi ogni 20–30 gg:</strong> Humifitos + Micosat F PG + Root Speed (20 g/m²) + Algapark</li>
+              <li>• <strong>Wet Turf:</strong> 3 trattamenti mensili da giugno</li>
+              <li>• <strong>Granulari (a scelta):</strong> AllRound CRF ogni 3–4 mesi <em>oppure</em> ProSlow ogni 5–6 mesi</li>
+              <li>• Carotatura + compost vegetale maturo inodore 1×anno (NO stallatico)</li>
+            </ul>
+          ) : (
+            <ul className="text-xs text-amber-700 space-y-1">
+              <li>• <strong>Liquidi ogni 20–30 gg:</strong> Humifitos + Micosat F PG</li>
+              <li>• <strong>Wet Turf + Algapark:</strong> 3 trattamenti mensili da giugno</li>
+              <li>• <strong>Granulari (a scelta):</strong> AllRound CRF ogni 3–4 mesi <em>oppure</em> ProSlow ogni 5–6 mesi</li>
+              <li>• Carotatura + compost vegetale maturo inodore 1×anno (NO stallatico)</li>
+            </ul>
+          )}
         </div>
       )}
 
@@ -1081,7 +1143,7 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         <button onClick={onStampa} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
           📄 PDF piano
         </button>
-        <button onClick={onPreventivo} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+        <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
           💶 Genera preventivo
         </button>
       </div>
@@ -1090,7 +1152,7 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, mq, nomeCliente, piano, bimOggLabel, onPreventivo, onStampa }) {
+function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, onPreventivo, onStampa }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
 
   return (
@@ -1157,13 +1219,23 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
             <h2 className="text-white font-bold text-sm">📋 Piano generato — {bimOggLabel}</h2>
             <p className="text-green-200 text-xs">{terreno==='sabbioso'?'Sabbioso — Pro Slow':`${linea==='mivena'?'Mivena':'Albatros'} — ${livello}`} · {colore==='pallido'?'🟡 pallido':'🟢 intenso'}</p>
           </div>
+          {/* Riepilogo scelte — Modifica 7 */}
+          <div className="px-4 pt-3 pb-0">
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">🌿 {tipoPrato === 'ornamentale' ? 'Ornamentale' : 'Sportivo'}</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-semibold">🌱 {terreno === 'sabbioso' ? '🏖️ Sabbioso' : '🟫 Normale'}</span>
+              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">{colore === 'pallido' ? '🟡 Pallido' : '🟢 Intenso'}</span>
+              {linea && terreno !== 'sabbioso' && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-semibold">{linea === 'mivena' ? 'Mivena' : 'Albatros'}</span>}
+              {livello && terreno !== 'sabbioso' && <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full font-semibold capitalize">{livello}</span>}
+            </div>
+          </div>
           <div className="p-4 space-y-3">
             {terreno === 'sabbioso'
               ? piano.map((iv, i) => (
-                <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.bridge?'border-amber-400 bg-amber-50':iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
+                <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.bridge?'border-amber-400 bg-amber-50':iv.verde?'border-emerald-500 bg-emerald-50':iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
                   <div className="flex justify-between items-start">
                     <div><p className="font-bold text-sm text-green-800">{iv.bimestre_label}</p><p className="text-xs text-gray-500">{iv.funzione}</p></div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.bridge?'Bridge':iv.passato?'Passato':'Programmato'}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.verde?'bg-emerald-200 text-emerald-800':iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.bridge?'Ponte':iv.verde?'Rinforzo colore':iv.passato?'Passato':'Programmato'}</span>
                   </div>
                   <p className="font-bold text-green-700 mt-1">{iv.prodotto} <span className="font-normal text-gray-500 text-xs">NPK {iv.npk}</span></p>
                   <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
@@ -1181,11 +1253,11 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
                 </div>
               ))
             }
-            {livello === 'premium' && terreno !== 'sabbioso' && (
+            {(livello === 'standard' || livello === 'premium') && terreno !== 'sabbioso' && (
               <div className="rounded-xl p-3 border-l-4 border-blue-400 bg-blue-50">
-                <p className="font-bold text-blue-800 text-sm">💧 Ciclo estivo ogni 20 gg</p>
-                <p className="text-xs text-blue-600 mt-0.5">Maggio → Agosto — iniziare entro 1ª metà Maggio</p>
-                <p className="text-xs text-gray-500 mt-0.5">Algapark · Root Speed · Micosat Tab Plus · Micosat Len</p>
+                <p className="font-bold text-blue-800 text-sm">💧 {livello === 'premium' ? 'Ciclo estivo ogni 20 gg' : 'Liquidi abbinati'}</p>
+                <p className="text-xs text-blue-600 mt-0.5">{livello === 'premium' ? 'Maggio → Agosto — iniziare entro 1ª metà Maggio' : 'Da abbinare ai concimi granulari secondo necessità'}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{livello === 'premium' ? 'Algapark · Root Speed · Micosat Tab Plus · Micosat Len' : 'Humifitos · Micosat F PG'}</p>
               </div>
             )}
             {terreno === 'sabbioso' && liquidiSab && (
@@ -1199,7 +1271,7 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
             <button onClick={onStampa} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
               📄 PDF piano
             </button>
-            <button onClick={onPreventivo} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+            <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
               💶 Genera preventivo
             </button>
           </div>

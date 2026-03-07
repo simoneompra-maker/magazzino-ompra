@@ -57,7 +57,7 @@ export const loadClienti = async (forceRefresh = false) => {
   try {
     const { data, error } = await supabase
       .from('clienti')
-      .select('id, nome, cognome, nome_completo, indirizzo, cap, localita, provincia, telefono, email, contatto, cf, piva, search_text, fonte, created_at')
+      .select('id, nome, cognome, nome_completo, indirizzo, cap, localita, provincia, telefono, email, contatto, codice_fiscale, partita_iva, sdi, search_text, fonte, created_at')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -74,7 +74,9 @@ export const loadClienti = async (forceRefresh = false) => {
         telefono:   c.telefono   || '',
         email:      c.email      || '',
         contatto:   c.contatto   || '',
-        cf:         c.cf         || '',
+        cf:         c.codice_fiscale || '',
+        piva:       c.partita_iva    || '',
+        sdi:        c.sdi            || '',
         searchText: (c.search_text || c.nome_completo || '').toLowerCase(),
         _fonte:     'db',
       }));

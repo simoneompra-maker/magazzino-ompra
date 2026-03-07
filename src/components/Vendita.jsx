@@ -256,7 +256,7 @@ export default function Vendita({ onNavigate }) {
 
   // Apri modal nuovo cliente
   const handleAprirNuovoCliente = () => {
-    setNuovoClienteForm({ nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '' });
+    setNuovoClienteForm({ nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '', cf: '', piva: '', sdi: '' });
     setScanStep('idle');
     setScanLato('');
     setShowNuovoCliente(true);

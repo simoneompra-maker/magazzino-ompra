@@ -1059,7 +1059,7 @@ export default function Vendita({ onNavigate }) {
       const { data: esistente } = await supabase
         .from('clienti')
         .select('id')
-        .eq('search_text', chiave)
+        .ilike('search_text', chiave)
         .maybeSingle();
 
       if (!esistente) {

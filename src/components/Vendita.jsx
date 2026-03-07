@@ -323,7 +323,7 @@ export default function Vendita({ onNavigate }) {
       if (esistente) {
         idSalvato = esistente.id;
       } else {
-        const { data: inserted, error } = await supabase.from('clienti').upsert({
+        const { data: inserted, error } = await supabase.from('clienti').insert({
           nome:          f.nome.trim()      || null,
           cognome:       f.cognome.trim()   || null,
           nome_completo: nomeCompleto,
@@ -338,15 +338,14 @@ export default function Vendita({ onNavigate }) {
           sdi:            f.sdi.trim()       || null,
           search_text:    searchKey,
           fonte:          'manuale',
-        }, { onConflict: 'search_text', ignoreDuplicates: true }).select('id').maybeSingle();
+        }).select('id').single();
         if (!error && inserted) {
           idSalvato = inserted.id;
           invalidaClienteCache();
-        }
-        // Se già esisteva, recupera l'id
-        if (!idSalvato) {
+        } else if (error?.code === '23505' || error?.code === '409') {
+          // Già esistente — recupera id silenziosamente
           const { data: dup } = await supabase
-            .from('clienti').select('id').ilike('nome_completo', nomeCompleto).is('deleted_at', null).maybeSingle();
+            .from('clienti').select('id').ilike('search_text', searchKey).is('deleted_at', null).maybeSingle();
           if (dup) idSalvato = dup.id;
         }
       }

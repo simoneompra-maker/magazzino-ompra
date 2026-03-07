@@ -56,8 +56,8 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
         return;
       }
 
-      // ── UPSERT con ignoreDuplicates — safe se già esiste ──
-      const { error: errInsert } = await supabase.from('clienti').upsert({
+      // ── INSERT con gestione silenziosa duplicati ──
+      const { error: errInsert } = await supabase.from('clienti').insert({
         nome:          clienteInfo.nome       || null,
         cognome:       clienteInfo.cognome    || null,
         nome_completo: clienteInfo.nomeP      || clienteInfo.nome || null,
@@ -73,9 +73,10 @@ export default function SalvaClienteBanner({ clienteInfo, onClose }) {
         contatto:      clienteInfo.contatto   || null,
         search_text:   searchKey,
         fonte:         'commissione',
-      }, { onConflict: 'search_text', ignoreDuplicates: true });
+      });
 
-      if (errInsert) throw errInsert;
+      // 23505 = già presente — non è un errore reale
+      if (errInsert && errInsert.code !== '23505') throw errInsert;
 
       invalidaClienteCache(); // forza ricaricamento autocompletamento
       setSalvato(true);

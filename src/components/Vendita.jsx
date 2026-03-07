@@ -316,7 +316,7 @@ export default function Vendita({ onNavigate }) {
       const { data: esistente } = await supabase
         .from('clienti')
         .select('id')
-        .eq('search_text', searchKey)
+        .ilike('search_text', searchKey)
         .is('deleted_at', null)
         .maybeSingle();
 
@@ -341,7 +341,11 @@ export default function Vendita({ onNavigate }) {
         }).select('id').single();
         if (!error && inserted) {
           idSalvato = inserted.id;
-          invalidaClienteCache(); // aggiorna autocompletamento
+          invalidaClienteCache();
+        } else if (error?.code === '23505') {
+          const { data: dup } = await supabase
+            .from('clienti').select('id').ilike('search_text', searchKey).maybeSingle();
+          if (dup) idSalvato = dup.id;
         }
       }
     } catch (err) {

@@ -190,6 +190,65 @@ const LIQUIDI_SABBIOSO = [
   { prodotto: 'Wet Turf', dose: '1 g/m²', note: '3x/mese da giugno' },
 ];
 
+// ─── Listino prezzi 2026 (IVA inclusa) ───────────────────────
+const LISTINO = {
+  'Eden 7 5kg':                 { formato: '5 kg',   kg: 5,   prezzoA: 14.90,  prezzoB: 14.20  },
+  'Eden 8 5kg':                 { formato: '5 kg',   kg: 5,   prezzoA: 17.30,  prezzoB: 16.50  },
+  'Green 7 25kg':               { formato: '25 kg',  kg: 25,  prezzoA: 45.30,  prezzoB: 43.00  },
+  'Green 8 25kg':               { formato: '25 kg',  kg: 25,  prezzoA: 57.70,  prezzoB: 54.80  },
+  'Vigor Active 5kg':           { formato: '5 kg',   kg: 5,   prezzoA: 13.80,  prezzoB: 13.10  },
+  'Vigor Active 25kg':          { formato: '25 kg',  kg: 25,  prezzoA: 50.40,  prezzoB: 47.90  },
+  'AllRound 20kg':              { formato: '20 kg',  kg: 20,  prezzoA: 61.30,  prezzoB: 58.30  },
+  'Universal Top 20kg':         { formato: '20 kg',  kg: 20,  prezzoA: 59.40,  prezzoB: 56.50  },
+  'Pro Starter 20kg':           { formato: '20 kg',  kg: 20,  prezzoA: 72.20,  prezzoB: 68.60  },
+  'Pro Slow 20kg':              { formato: '20 kg',  kg: 20,  prezzoA: 71.30,  prezzoB: 67.80  },
+  'Humifitos 5kg':              { formato: '5 kg',   kg: 5,   prezzoA: 34.20,  prezzoB: 30.80  },
+  'Humifitos 25kg':             { formato: '25 kg',  kg: 25,  prezzoA: 115.00, prezzoB: 103.00 },
+  'Root Speed 5kg':             { formato: '5 kg',   kg: 5,   prezzoA: 49.00,  prezzoB: 44.10  },
+  'Algapark 1kg':               { formato: '1 kg',   kg: 1,   prezzoA: 32.90,  prezzoB: 29.60  },
+  'Algapark 5kg':               { formato: '5 kg',   kg: 5,   prezzoA: 140.00, prezzoB: 126.00 },
+  'Wet Turf 1lt':               { formato: '1 lt',   kg: 1,   prezzoA: 65.90,  prezzoB: 62.60  },
+  'Wet Turf 5lt':               { formato: '5 lt',   kg: 5,   prezzoA: 230.60, prezzoB: 219.00 },
+  'Micosat F PG 1kg':           { formato: '1 kg',   kg: 1,   prezzoA: 31.20,  prezzoB: 31.20  },
+  'Micosat F Uno 200g':         { formato: '200 g',  kg: 0.2, prezzoA: 10.00,  prezzoB: 10.00  },
+  'Micosat Tab Plus Mini 100g': { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  prezzoB: 10.00  },
+  'Micosat Len Mini 100g':      { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  prezzoB: 10.00  },
+  // Semi Ares Seed (IVA 10%)
+  'Hurricane 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 13.75,  prezzoB: 13.75,  iva: 10 },
+  'Hurricane 5kg':              { formato: '5 kg',   kg: 5,   prezzoA: 52.00,  prezzoB: 50.00,  iva: 10 },
+  'Hurricane 10kg':             { formato: '10 kg',  kg: 10,  prezzoA: 104.00, prezzoB: 98.80,  iva: 10 },
+  'Blizzard 10kg':              { formato: '10 kg',  kg: 10,  prezzoA: 93.00,  prezzoB: 88.50,  iva: 10 },
+  'Renovate Sport 10kg':        { formato: '10 kg',  kg: 10,  prezzoA: 94.00,  prezzoB: 89.30,  iva: 10 },
+  'Twister 10kg':               { formato: '10 kg',  kg: 10,  prezzoA: 114.00, prezzoB: 108.30, iva: 10 },
+  'Ecograss 10kg':              { formato: '10 kg',  kg: 10,  prezzoA: 68.00,  prezzoB: 64.60,  iva: 10 },
+};
+
+const SEMI = [
+  { id: 'hurricane', nome: 'Hurricane',      desc: 'Alta resistenza — fescue + ryegrass',  skus: ['Hurricane 1kg', 'Hurricane 5kg', 'Hurricane 10kg'] },
+  { id: 'blizzard',  nome: 'Blizzard',       desc: 'Resistenza freddo — ornamentale',       skus: ['Blizzard 10kg'] },
+  { id: 'renovate',  nome: 'Renovate Sport', desc: 'Rigenerazione campi sportivi',          skus: ['Renovate Sport 10kg'] },
+  { id: 'twister',   nome: 'Twister',        desc: 'Fescue fine — ornamentale pregiato',    skus: ['Twister 10kg'] },
+  { id: 'ecograss',  nome: 'Ecograss',       desc: 'Rustico a bassa manutenzione',          skus: ['Ecograss 10kg'] },
+];
+
+const PRODOTTO_CONFIG = {
+  'Vigor Active':             { piccolo: 'Vigor Active 5kg',   kgP: 5,  grande: 'Vigor Active 25kg', kgG: 25, soglia: 3 },
+  'Green 7':                  { piccolo: 'Eden 7 5kg',         kgP: 5,  grande: 'Green 7 25kg',      kgG: 25, soglia: 3 },
+  'Green 8':                  { piccolo: 'Eden 8 5kg',         kgP: 5,  grande: 'Green 8 25kg',      kgG: 25, soglia: 3 },
+  'Humifitos':                { piccolo: 'Humifitos 5kg',      kgP: 5,  grande: 'Humifitos 25kg',    kgG: 25, soglia: 3 },
+  'Pro Starter':              { piccolo: 'Pro Starter 20kg',   kgP: 20, grande: null },
+  'AllRound':                 { piccolo: 'AllRound 20kg',      kgP: 20, grande: null },
+  'AllRound / Universal Top': { piccolo: 'AllRound 20kg',      kgP: 20, grande: null },
+  'Pro Slow':                 { piccolo: 'Pro Slow 20kg',      kgP: 20, grande: null },
+  'Universal Top':            { piccolo: 'Universal Top 20kg', kgP: 20, grande: null },
+  'Algapark':                 { piccolo: 'Algapark 1kg',       kgP: 1,  grande: 'Algapark 5kg',     kgG: 5  },
+  'Wet Turf':                 { piccolo: 'Wet Turf 1lt',       kgP: 1,  grande: 'Wet Turf 5lt',     kgG: 5  },
+  'Root Speed':               null,
+  'Micosat F PG':             { tipo: 'micosat_pg' },
+  'Micosat Tab Plus':         { tipo: 'micosat_mini', sku: 'Micosat Tab Plus Mini 100g', kgP: 0.1 },
+  'Micosat Len':              { tipo: 'micosat_mini', sku: 'Micosat Len Mini 100g',      kgP: 0.1 },
+};
+
 function getBimestreCorrente() {
   const now = new Date();
   const m = now.getMonth() + 1;
@@ -211,6 +270,221 @@ function calcolaPianoAnnuo(linea, terreno, livello, colore) {
     let liquidiAttivi = livello === 'standard' ? iv.liquidi_standard : livello === 'premium' ? iv.liquidi_premium : false;
     return { ...iv, dati, dose, saltato, passato: isPassato(iv.bimestre_target), liquidiAttivi };
   });
+}
+
+// versione con kg seme esplicito
+function calcolaPreventivoConKgSeme(inputItems, miscuglioSku, miscuglioKg, mq) {
+  if (!mq || isNaN(parseFloat(mq))) return null;
+  const mqN = parseFloat(mq);
+
+  const accumulo = {};
+  for (const item of inputItems) {
+    const key = item.prodotto;
+    const kg = (item.dose_g_mq * mqN * item.n_applicazioni) / 1000;
+    if (!accumulo[key]) accumulo[key] = kg;
+    else accumulo[key] += kg;
+  }
+
+  const righe = [];
+
+  for (const [nomeProd, kgTot] of Object.entries(accumulo)) {
+    const cfg = PRODOTTO_CONFIG[nomeProd];
+    if (!cfg) continue;
+
+    if (cfg.tipo === 'micosat_mini') {
+      const entry = LISTINO[cfg.sku];
+      if (!entry) continue;
+      const confezioni = Math.ceil(kgTot / cfg.kgP);
+      righe.push({ prodotto: nomeProd, sku: cfg.sku, formato: entry.formato, qtaConf: confezioni, kgTot: +kgTot.toFixed(2), prezzoUnit: entry.prezzoA, prezzoTot: +(entry.prezzoA * confezioni).toFixed(2), listino: 'A', upgrade: false });
+      continue;
+    }
+    if (cfg.tipo === 'micosat_pg') {
+      const entry = LISTINO['Micosat F PG 1kg'];
+      if (!entry) continue;
+      const confezioni = Math.ceil(kgTot);
+      const listino = confezioni > 5 ? 'B' : 'A';
+      const pu = listino === 'B' ? entry.prezzoB : entry.prezzoA;
+      righe.push({ prodotto: nomeProd, sku: 'Micosat F PG 1kg', formato: entry.formato, qtaConf: confezioni, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confezioni).toFixed(2), listino, upgrade: false });
+      continue;
+    }
+
+    const kgP = cfg.kgP;
+    const piccolo = LISTINO[cfg.piccolo];
+    if (!piccolo) continue;
+    const confPiccole = Math.ceil(kgTot / kgP);
+    const useGrande = !!(cfg.grande && cfg.soglia && confPiccole > cfg.soglia);
+
+    if (useGrande) {
+      const grande = LISTINO[cfg.grande];
+      const kgG = cfg.kgG;
+      const confGrandi = Math.ceil(kgTot / kgG);
+      const lt = confGrandi > 5 ? 'B' : 'A';
+      const pu = lt === 'B' ? grande.prezzoB : grande.prezzoA;
+      const risparmio = +(piccolo.prezzoA * confPiccole - pu * confGrandi).toFixed(2);
+      righe.push({ prodotto: nomeProd, sku: cfg.grande, formato: grande.formato, qtaConf: confGrandi, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confGrandi).toFixed(2), listino: lt, upgrade: true, upgradeMsgRisparmio: risparmio > 0 ? risparmio : null, altSku: cfg.piccolo, altQta: confPiccole, altPrezzoTot: +(piccolo.prezzoA * confPiccole).toFixed(2) });
+    } else {
+      const lt = confPiccole > 5 ? 'B' : 'A';
+      const pu = lt === 'B' ? piccolo.prezzoB : piccolo.prezzoA;
+      righe.push({ prodotto: nomeProd, sku: cfg.piccolo, formato: piccolo.formato, qtaConf: confPiccole, kgTot: +kgTot.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confPiccole).toFixed(2), listino: lt, upgrade: false });
+    }
+  }
+
+  if (miscuglioSku && miscuglioKg > 0) {
+    const entry = LISTINO[miscuglioSku];
+    if (entry) {
+      const confezioni = Math.ceil(miscuglioKg / entry.kg);
+      const lt = confezioni > 5 ? 'B' : 'A';
+      const pu = lt === 'B' ? entry.prezzoB : entry.prezzoA;
+      righe.push({ prodotto: 'Seme', sku: miscuglioSku, formato: entry.formato, qtaConf: confezioni, kgTot: +miscuglioKg.toFixed(2), prezzoUnit: pu, prezzoTot: +(pu * confezioni).toFixed(2), listino: lt, upgrade: false, iva: entry.iva || 22, isSeme: true });
+    }
+  }
+
+  const totale = +(righe.reduce((s, r) => s + r.prezzoTot, 0)).toFixed(2);
+  return { righe, totale };
+}
+
+// ─── Schermata Preventivo ──────────────────────────────────────
+function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento, livello, linea, onStampa, onBack }) {
+  if (!preventivo) return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 text-center">
+      <p className="text-gray-500 text-sm">Nessun dato per il preventivo. Completa prima il piano.</p>
+      <button onClick={onBack} className="mt-4 text-green-700 font-semibold text-sm underline">← Torna al piano</button>
+    </div>
+  );
+
+  const { righe, totale } = preventivo;
+  const hasListinoB = righe.some(r => r.listino === 'B');
+  const hasUpgrade = righe.some(r => r.upgrade);
+
+  const stampaPreventivoPdf = () => {
+    const oggi = new Date().toLocaleDateString('it-IT');
+    const righeHtml = righe.map(r => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">
+          <strong>${r.prodotto}</strong><br>
+          <span style="font-size:11px;color:#6b7280;">${r.sku}${r.upgrade ? ' <span style="color:#16a34a;font-weight:bold;">★ Formato convenienza</span>' : ''}</span>
+          ${r.isSeme ? '<br><span style="font-size:10px;color:#9ca3af;">IVA 10%</span>' : ''}
+        </td>
+        <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;">${r.formato}</td>
+        <td style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;">${r.qtaConf}</td>
+        <td style="padding:8px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">€ ${r.prezzoUnit.toFixed(2)}</td>
+        <td style="padding:8px 12px;text-align:right;font-weight:bold;border-bottom:1px solid #e5e7eb;">€ ${r.prezzoTot.toFixed(2)}</td>
+      </tr>
+      ${r.upgrade && r.upgradeMsgRisparmio ? `<tr><td colspan="5" style="padding:2px 12px 6px;font-size:10px;color:#16a34a;border-bottom:1px solid #e5e7eb;">💡 Risparmio rispetto a ${r.altQta}× ${r.altSku}: € ${r.upgradeMsgRisparmio.toFixed ? r.upgradeMsgRisparmio.toFixed(2) : r.upgradeMsgRisparmio}</td></tr>` : ''}
+    `).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Preventivo PratoVivo</title>
+    <style>body{font-family:Arial,sans-serif;margin:40px;color:#111;}h1{color:#166534;font-size:20px;margin-bottom:2px;}
+    .sub{color:#6b7280;font-size:12px;margin-bottom:24px;}table{width:100%;border-collapse:collapse;}
+    thead th{background:#166534;color:#fff;padding:8px 12px;text-align:left;font-size:12px;}
+    thead th:nth-child(3),thead th:nth-child(4),thead th:nth-child(5){text-align:right;}
+    tr:nth-child(even) td{background:#f9fafb;}.totale-row td{font-size:15px;font-weight:bold;color:#166534;padding:12px;}
+    .note{font-size:10px;color:#9ca3af;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:8px;}
+    </style></head><body>
+    <h1>🌱 Preventivo PratoVivo — ${tipoIntervento?.replace('_',' ')} ${livello ? '· ' + livello : ''}</h1>
+    <div class="sub">
+      ${nomeCliente ? `Cliente: <strong>${nomeCliente}</strong> &nbsp;·&nbsp; ` : ''}
+      Superficie: <strong>${mq} m²</strong> &nbsp;·&nbsp;
+      Linea: <strong>${linea === 'mivena' ? 'Mivena' : 'Albatros'}</strong> &nbsp;·&nbsp;
+      Data: <strong>${oggi}</strong>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Prodotto</th><th>Formato</th>
+        <th style="text-align:center">Qtà</th>
+        <th style="text-align:right">Prezzo unit.</th>
+        <th style="text-align:right">Totale</th>
+      </tr></thead>
+      <tbody>${righeHtml}</tbody>
+      <tfoot>
+        <tr class="totale-row">
+          <td colspan="4" style="text-align:right;padding:12px;">TOTALE</td>
+          <td style="padding:12px;text-align:right;">€ ${totale.toFixed(2)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${hasListinoB ? '<p style="font-size:11px;color:#16a34a;margin-top:8px;">★ Listino B applicato per quantità elevate.</p>' : ''}
+    <div class="note">
+      * Prezzi IVA 22% inclusa salvo diversa indicazione. Semi: IVA 10%. Listino 2026.<br>
+      * Per ordini di grandi quantità (bancale) contattare Ompra per condizioni dedicate.<br>
+      * Preventivo indicativo. Prezzi soggetti a variazioni.
+    </div>
+    </body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => { try { w.print(); } catch(e){} }, 600);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">
+        <div className="bg-green-700 px-4 py-3 flex items-center justify-between">
+          <h2 className="text-white font-bold text-sm">💶 Preventivo orientativo</h2>
+          {nomeCliente && <span className="text-green-200 text-xs">{nomeCliente}</span>}
+        </div>
+
+        {/* Info sessione */}
+        <div className="px-4 pt-3 pb-1 flex flex-wrap gap-2">
+          {[`${mq} m²`, linea === 'mivena' ? 'Mivena' : 'Albatros', livello, tipoIntervento?.replace('_',' ')].filter(Boolean).map((t, i) => (
+            <span key={i} className="text-xs bg-green-50 text-green-800 rounded-full px-2 py-0.5 font-semibold">{t}</span>
+          ))}
+        </div>
+
+        {/* Tabella prodotti */}
+        <div className="p-4 space-y-2">
+          {righe.map((r, i) => (
+            <div key={i} className={`rounded-xl border p-3 ${r.upgrade ? 'border-green-400 bg-green-50' : r.isSeme ? 'border-emerald-300 bg-emerald-50' : 'border-gray-100 bg-gray-50'}`}>
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="font-bold text-gray-900 text-sm">{r.prodotto}</span>
+                    {r.upgrade && <span className="text-xs bg-green-200 text-green-800 rounded-full px-1.5 py-0.5 font-bold">★ Convenienza</span>}
+                    {r.listino === 'B' && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-bold">Listino B</span>}
+                    {r.isSeme && <span className="text-xs bg-emerald-200 text-emerald-800 rounded-full px-1.5 py-0.5 font-bold">🌾 Seme IVA 10%</span>}
+                  </div>
+                  <span className="text-xs text-gray-500">{r.sku} · {r.formato}</span>
+                  {r.upgrade && r.upgradeMsgRisparmio && (
+                    <p className="text-xs text-green-700 mt-0.5">💡 Risparmio vs {r.altQta}× {r.altSku}: <strong>€ {typeof r.upgradeMsgRisparmio === 'number' ? r.upgradeMsgRisparmio.toFixed(2) : r.upgradeMsgRisparmio}</strong></p>
+                  )}
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs text-gray-400">{r.qtaConf} pz × € {r.prezzoUnit.toFixed(2)}</p>
+                  <p className="font-bold text-green-800 text-base">€ {r.prezzoTot.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Totale */}
+        <div className="mx-4 mb-4 rounded-xl bg-green-700 p-4 flex justify-between items-center">
+          <div>
+            <p className="text-green-200 text-xs">Totale stimato</p>
+            <p className="text-white text-xs mt-0.5">* prezzi IVA inclusa · listino 2026</p>
+          </div>
+          <p className="text-white text-3xl font-bold">€ {totale.toFixed(2)}</p>
+        </div>
+
+        {/* Note */}
+        <div className="px-4 pb-4 space-y-1">
+          {hasListinoB && <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2">★ Listino B applicato automaticamente per quantità elevate.</p>}
+          <p className="text-xs text-gray-400 px-1">Per ordini di grandi quantità (bancale) contattare Ompra per condizioni dedicate.</p>
+        </div>
+
+        {/* Azioni */}
+        <div className="px-4 pb-4 grid grid-cols-2 gap-3">
+          <button onClick={onBack} className="bg-gray-100 text-gray-700 font-bold py-3 rounded-xl text-sm hover:bg-gray-200 transition-colors">
+            ← Torna al piano
+          </button>
+          <button onClick={stampaPreventivoPdf} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-1">
+            📄 PDF preventivo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Pulsante selezione ───────────────────────────────────────
@@ -413,6 +687,8 @@ export default function PratoVivo() {
   const [estendi12, setEstendi12] = useState(null);
   const [liquidiSab, setLiquidiSab] = useState(true);
   const [spelacchiato, setSpelacchiato] = useState(null); // per rigenerazione
+  const [miscuglio, setMiscuglio] = useState(null);       // { id, nome, sku } selezionato
+  const [showPreventivo, setShowPreventivo] = useState(false);
 
   const bimestreCorrente = getBimestreCorrente();
   const bimOggLabel = BIMESTRI.find(b => b.id === bimestreCorrente)?.label;
@@ -427,6 +703,7 @@ export default function PratoVivo() {
     setMq(''); setIrrigazione(null); setNomeCliente('');
     setLinea('albatros'); setTerreno(null); setColore(null);
     setEstendi12(null); setLiquidiSab(true); setSpelacchiato(null);
+    setMiscuglio(null); setShowPreventivo(false);
   };
 
   // Determina step corrente
@@ -438,6 +715,68 @@ export default function PratoVivo() {
 
   const datiPianoAttivo = tipoIntervento === 'semina' ? PIANO_SEMINA[livello] : tipoIntervento === 'rigenerazione' ? PIANO_RIGENERAZIONE[livello] : null;
   const granulariAttivi = datiPianoAttivo ? (linea === 'mivena' ? datiPianoAttivo.granulari_mivena : datiPianoAttivo.granulari) : [];
+
+  // Calcola preventivo in base al percorso attivo
+  const preventivoData = useMemo(() => {
+    if (!mq || isNaN(parseFloat(mq))) return null;
+    const mqN = parseFloat(mq);
+    const items = [];
+
+    if ((tipoIntervento === 'semina' || tipoIntervento === 'rigenerazione') && datiPianoAttivo) {
+      const gran = linea === 'mivena' ? (datiPianoAttivo.granulari_mivena || []) : (datiPianoAttivo.granulari || []);
+      for (const g of gran) {
+        const dose = parseFloat(String(g.dose).split('–')[0]);
+        if (!isNaN(dose)) items.push({ prodotto: g.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
+      }
+      for (const l of (datiPianoAttivo.liquidi || [])) {
+        const dose = parseFloat(String(l.dose).split('–')[0].replace(/[^\d.]/g,''));
+        if (!isNaN(dose) && dose > 0) items.push({ prodotto: l.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
+      }
+      const doseS = tipoIntervento === 'rigenerazione'
+        ? parseFloat((spelacchiato ? datiPianoAttivo.seme?.dose_spelacchiato : datiPianoAttivo.seme?.dose_normale)?.split('–')[0] || '0')
+        : parseFloat(datiPianoAttivo.seme?.dose?.split('–')[0] || '0');
+      const kgSeme = doseS > 0 ? (doseS * mqN) / 1000 : 0;
+      const miscuglioSku = miscuglio?.sku || null;
+      return calcolaPreventivoConKgSeme(items, miscuglioSku, kgSeme, mq);
+    }
+
+    if (tipoIntervento === 'piano_annuo' && pianoAnnuo.length > 0 && terreno && colore) {
+      if (terreno === 'sabbioso') {
+        for (const iv of pianoAnnuo) {
+          const dose = parseFloat(String(iv.dose).split('–')[0]);
+          if (!isNaN(dose)) items.push({ prodotto: iv.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
+        }
+        if (liquidiSab) {
+          for (const l of LIQUIDI_SABBIOSO) {
+            const dose = parseFloat(String(l.dose).split('–')[0].replace(/[^\d.]/g,''));
+            if (!isNaN(dose)) {
+              const nAppl = Math.round(12 / (l.note?.includes('20') ? 0.67 : 1));
+              items.push({ prodotto: l.prodotto, dose_g_mq: dose, n_applicazioni: nAppl });
+            }
+          }
+        }
+      } else {
+        for (const iv of pianoAnnuo) {
+          if (iv.saltato) continue;
+          const dose = parseFloat(String(iv.dose).split('–')[0]);
+          if (!isNaN(dose)) items.push({ prodotto: iv.dati?.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
+          if (iv.liquidiAttivi) {
+            items.push({ prodotto: 'Humifitos', dose_g_mq: 20, n_applicazioni: 1 });
+            items.push({ prodotto: 'Micosat F PG', dose_g_mq: 1, n_applicazioni: 1 });
+          }
+        }
+        if (livello === 'premium') {
+          // Ciclo estivo premium: 3 mesi × ~4.5 appl/mese = ~13 applicazioni
+          items.push({ prodotto: 'Algapark', dose_g_mq: 1, n_applicazioni: 13 });
+          items.push({ prodotto: 'Root Speed', dose_g_mq: 20, n_applicazioni: 13 });
+          items.push({ prodotto: 'Wet Turf', dose_g_mq: 1, n_applicazioni: 13 });
+        }
+      }
+      return calcolaPreventivoConKgSeme(items, null, 0, mq);
+    }
+
+    return null;
+  }, [tipoIntervento, datiPianoAttivo, linea, mq, spelacchiato, miscuglio, pianoAnnuo, terreno, colore, livello, liquidiSab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4 pb-8">
@@ -514,7 +853,7 @@ export default function PratoVivo() {
         )}
 
         {/* ── SEMINA ──────────────────────────────────────────── */}
-        {showPianoSemina && (
+        {showPianoSemina && !showPreventivo && (
           <PianoSeminaRig
             tipo="semina"
             livello={livello}
@@ -527,6 +866,8 @@ export default function PratoVivo() {
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
             terreno={terreno} setTerreno={setTerreno}
+            miscuglio={miscuglio} setMiscuglio={setMiscuglio}
+            onPreventivo={() => setShowPreventivo(true)}
             onStampa={() => generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente })}
           />
         )}
@@ -550,7 +891,7 @@ export default function PratoVivo() {
           </Card>
         )}
 
-        {showPianoRig && (
+        {showPianoRig && !showPreventivo && (
           <PianoSeminaRig
             tipo="rigenerazione"
             livello={livello}
@@ -563,12 +904,14 @@ export default function PratoVivo() {
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
             terreno={terreno} setTerreno={setTerreno}
+            miscuglio={miscuglio} setMiscuglio={setMiscuglio}
+            onPreventivo={() => setShowPreventivo(true)}
             onStampa={() => generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente })}
           />
         )}
 
         {/* ── PIANO ANNUO ─────────────────────────────────────── */}
-        {tipoIntervento === 'piano_annuo' && livello && irrigazione && (
+        {tipoIntervento === 'piano_annuo' && livello && irrigazione && !showPreventivo && (
           <PianoAnnuo
             livello={livello} linea={linea} setLinea={setLinea}
             terreno={terreno} setTerreno={setTerreno}
@@ -577,7 +920,21 @@ export default function PratoVivo() {
             liquidiSab={liquidiSab} setLiquidiSab={setLiquidiSab}
             mq={mq} nomeCliente={nomeCliente}
             piano={pianoAnnuo} bimOggLabel={bimOggLabel}
+            onPreventivo={() => setShowPreventivo(true)}
             onStampa={() => generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente })}
+          />
+        )}
+
+        {/* ── SCHERMATA PREVENTIVO ────────────────────────────── */}
+        {showPreventivo && (
+          <SchermataPreventivoScreen
+            preventivo={preventivoData}
+            nomeCliente={nomeCliente}
+            mq={mq}
+            tipoIntervento={tipoIntervento}
+            livello={livello}
+            linea={linea}
+            onBack={() => setShowPreventivo(false)}
           />
         )}
 
@@ -592,7 +949,7 @@ export default function PratoVivo() {
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi, seme, spelacchiato, nomeCliente, tipoPrato, terreno, setTerreno, onStampa }) {
+function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi, seme, spelacchiato, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, onPreventivo, onStampa }) {
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
   const doseS = tipo === 'rigenerazione'
     ? (spelacchiato ? seme.dose_spelacchiato : seme.dose_normale)
@@ -688,15 +1045,52 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         </div>
       )}
 
-      <button onClick={onStampa} className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
-        📄 Genera PDF per il cliente
-      </button>
+      {/* Selettore miscuglio */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-emerald-200">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">🌾 Miscuglio seminativo</p>
+        <p className="text-xs text-gray-400 mb-3">Seleziona per includere il seme nel preventivo</p>
+        <div className="space-y-2">
+          {SEMI.map(s => (
+            <button key={s.id}
+              onClick={() => setMiscuglio(miscuglio?.id === s.id ? null : { id: s.id, nome: s.nome, sku: s.skus[s.skus.length - 1] })}
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 border-2 text-left transition-colors ${miscuglio?.id === s.id ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-gray-50 hover:border-emerald-300'}`}>
+              <div>
+                <p className="font-bold text-sm text-gray-900">{s.nome}</p>
+                <p className="text-xs text-gray-500">{s.desc}</p>
+              </div>
+              {miscuglio?.id === s.id && <span className="text-emerald-600 font-bold text-base ml-2">✓</span>}
+            </button>
+          ))}
+          {miscuglio && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-500 mb-1.5 font-semibold">Formato seme</p>
+              <div className="flex gap-2 flex-wrap">
+                {SEMI.find(s => s.id === miscuglio.id)?.skus.map(sku => (
+                  <button key={sku} onClick={() => setMiscuglio(prev => ({ ...prev, sku }))}
+                    className={`text-xs rounded-full px-3 py-1 border-2 font-semibold transition-colors ${miscuglio.sku === sku ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-gray-200 bg-white text-gray-600 hover:border-emerald-300'}`}>
+                    {LISTINO[sku]?.formato} — € {LISTINO[sku]?.prezzoA.toFixed(2)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={onStampa} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+          📄 PDF piano
+        </button>
+        <button onClick={onPreventivo} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+          💶 Genera preventivo
+        </button>
+      </div>
     </div>
   );
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, mq, nomeCliente, piano, bimOggLabel, onStampa }) {
+function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, mq, nomeCliente, piano, bimOggLabel, onPreventivo, onStampa }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
 
   return (
@@ -801,9 +1195,12 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
               </div>
             )}
           </div>
-          <div className="px-4 pb-4">
-            <button onClick={onStampa} className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
-              📄 Genera PDF per il cliente
+          <div className="px-4 pb-4 grid grid-cols-2 gap-3">
+            <button onClick={onStampa} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+              📄 PDF piano
+            </button>
+            <button onClick={onPreventivo} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+              💶 Genera preventivo
             </button>
           </div>
         </div>

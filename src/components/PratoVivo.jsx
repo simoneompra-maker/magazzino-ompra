@@ -1230,8 +1230,8 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         </div>
       )}
 
-      {/* Banner sabbioso — solo per linea Mivena */}
-      {terreno === 'sabbioso' && linea === 'mivena' && (
+      {/* Banner sabbioso */}
+      {terreno === 'sabbioso' && (
         <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4">
           <p className="font-bold text-amber-800 text-sm mb-2">🏖️ Adattamenti terreno sabbioso — Mivena</p>
           {livello === 'premium' ? (

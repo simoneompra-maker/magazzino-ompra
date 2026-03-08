@@ -13,7 +13,7 @@ const OMPRA = {
 const DISCLAIMER = [
   'Le dosi indicate sono orientative e devono essere adattate in base alle condizioni specifiche del tappeto erboso, all\'andamento stagionale, al tipo di terreno e al livello di manutenzione effettivo.',
   'Dopo ogni concimazione granulare si raccomanda una leggera irrigazione per favorire l\'assorbimento e ridurre il rischio di bruciature fogliari.',
-  'Dopo la distribuzione di Humifitos e Micosat F irrigare subito leggermente (5–10 min). Mantenere il terreno umido nei 3–5 giorni successivi per garantire la colonizzazione microbica. Evitare l\'esposizione del prodotto al sole diretto prima dell\'irrigazione.',
+  'Dopo la distribuzione di Humifitos e Micosat F irrigare subito leggermente (2–3 min). Mantenere il terreno umido nei 3–5 giorni successivi per garantire la colonizzazione microbica. Evitare l\'esposizione del prodotto al sole diretto prima dell\'irrigazione.',
   'LeoKare non deve essere miscelato o applicato in concomitanza con Humifitos. Utilizzarli in interventi separati.',
   'Ompra Srl declina ogni responsabilità per usi impropri, risultati difformi da quelli attesi o danni derivanti dal mancato rispetto delle istruzioni d\'uso dei singoli prodotti o delle indicazioni del presente piano.',
   'Il presente piano è elaborato a titolo consultivo e non sostituisce una valutazione agronomica professionale. Si consiglia un\'analisi del suolo prima di interventi straordinari su terreni di tipo sconosciuto.',
@@ -37,7 +37,7 @@ const PIANO_SEMINA = {
       { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
     liquidiSabbioso: [
@@ -53,7 +53,7 @@ const PIANO_SEMINA = {
     ],
     liquidi: [
       { prodotto: 'Root Speed', dose: '5 g/m²',  quando: 'Al momento della semina', note: 'Favorisce radicazione precoce — irrigare subito dopo' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da fine maggio', note: 'Agente umettante — migliora ritenzione idrica del substrato' },
       { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Humifitos e stimola radicazione' },
@@ -85,7 +85,7 @@ const PIANO_RIGENERAZIONE = {
       { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-trasemina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
     liquidiSabbioso: [
@@ -101,7 +101,7 @@ const PIANO_RIGENERAZIONE = {
     ],
     liquidi: [
       { prodotto: 'Root Speed', dose: '5 g/m²',  quando: 'Al momento della trasemina', note: 'Favorisce radicazione precoce — irrigare subito dopo' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito 5–10 min dopo applicazione' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da fine maggio', note: 'Agente umettante — migliora ritenzione idrica del substrato' },
       { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Humifitos e stimola radicazione' },
@@ -175,11 +175,11 @@ const INTERVENTI_SABBIOSO = [
 ];
 
 const LIQUIDI_SABBIOSO = [
-  { prodotto: 'Humifitos', dose: '20 g/m²' },
+  { prodotto: 'Humifitos', dose: '20 g/m²', note: 'Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
   { prodotto: 'Micosat F PG', dose: '1 g/m²' },
   { prodotto: 'Algapark', dose: '1 g/m²' },
-  { prodotto: 'Root Speed', dose: '20 g/m²' },
-  { prodotto: 'Wet Turf', dose: '1 g/m²', note: '3x/mese da giugno' },
+  { prodotto: 'Root Speed', dose: '5 g/m²', note: 'Irrigare subito dopo' },
+  { prodotto: 'Wet Turf', dose: '1 g/m²', note: '3x/mese da fine maggio' },
 ];
 
 // ─── Listino prezzi 2026 (IVA inclusa) ───────────────────────
@@ -1582,8 +1582,18 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
             )}
             {terreno === 'sabbioso' && liquidiSab && (
               <div className="rounded-xl p-3 border-l-4 border-amber-400 bg-amber-50">
-                <p className="font-bold text-amber-800 text-sm">💧 Liquidi ogni 20 gg</p>
-                <p className="text-xs text-gray-500 mt-0.5">{LIQUIDI_SABBIOSO.map(l => l.prodotto).join(' · ')}</p>
+                <p className="font-bold text-amber-800 text-sm mb-1.5">💧 Liquidi ogni 20 gg</p>
+                <div className="space-y-1">
+                  {LIQUIDI_SABBIOSO.map((l, i) => (
+                    <div key={i} className="text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-amber-900 font-semibold">{l.prodotto}</span>
+                        <span className="text-amber-700 font-bold">{l.dose}</span>
+                      </div>
+                      {l.note && <p className="text-amber-600 mt-0.5">{l.note}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

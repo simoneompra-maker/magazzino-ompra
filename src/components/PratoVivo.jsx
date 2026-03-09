@@ -829,7 +829,7 @@ export default function PratoVivo() {
   // Step 0–2: wizard comune
   const [tipoPrato, setTipoPrato] = useState(null);       // ornamentale | sportivo
   const [tipoIntervento, setTipoIntervento] = useState(null); // semina | rigenerazione | piano_annuo | singolo
-  const [livello, setLivello] = useState(null);           // base | standard | premium
+  const [livello, setLivello] = useState('standard');     // base | standard | premium
   const [mq, setMq] = useState('');
   const [irrigazione, setIrrigazione] = useState(null);  // centralizzata | mano
   const [nomeCliente, setNomeCliente] = useState('');
@@ -855,7 +855,7 @@ export default function PratoVivo() {
   }, [linea, terreno, livello, colore]);
 
   const reset = () => {
-    setTipoPrato(null); setTipoIntervento(null); setLivello(null);
+    setTipoPrato(null); setTipoIntervento(null); setLivello('standard');
     setMq(''); setIrrigazione(null); setNomeCliente('');
     setLinea('albatros'); setTerreno(null); setColore(null);
     setEstendi12(null); setLiquidiSab(true); setDegradazione(null);
@@ -871,7 +871,6 @@ export default function PratoVivo() {
     }
     if (tipoIntervento === 'rigenerazione' && degradazione !== null) { setDegradazione(null); return; }
     if (irrigazione !== null) { setIrrigazione(null); setMq(''); return; }
-    if (livello !== null) { setLivello(null); return; }
     if (tipoIntervento !== null) { setTipoIntervento(null); return; }
     if (tipoPrato !== null) { setTipoPrato(null); return; }
   };
@@ -1055,7 +1054,7 @@ export default function PratoVivo() {
         {showPianoSemina && !showPreventivo && (
           <PianoSeminaRig
             tipo="semina"
-            livello={livello}
+            livello={livello} setLivello={setLivello}
             linea={linea} setLinea={setLinea}
             mq={mq} irrigazione={irrigazione}
             granulari={granulariAttivi}
@@ -1128,7 +1127,7 @@ export default function PratoVivo() {
         {showPianoRig && !showPreventivo && (
           <PianoSeminaRig
             tipo="rigenerazione"
-            livello={livello}
+            livello={livello} setLivello={setLivello}
             linea={linea} setLinea={setLinea}
             mq={mq} irrigazione={irrigazione}
             granulari={granulariAttivi}
@@ -1150,7 +1149,7 @@ export default function PratoVivo() {
         {/* ── PIANO ANNUO ─────────────────────────────────────── */}
         {tipoIntervento === 'piano_annuo' && livello && irrigazione && !showPreventivo && (
           <PianoAnnuo
-            livello={livello} linea={linea} setLinea={setLinea}
+            livello={livello} setLivello={setLivello} linea={linea} setLinea={setLinea}
             terreno={terreno} setTerreno={setTerreno}
             colore={colore} setColore={setColore}
             estendi12={estendi12} setEstendi12={setEstendi12}
@@ -1188,7 +1187,7 @@ export default function PratoVivo() {
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa }) {
+function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
@@ -1233,6 +1232,21 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
 
   return (
     <div className="space-y-4">
+      {/* Tab livello */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Piano manutentivo</p>
+        <div className="flex rounded-xl overflow-hidden border border-gray-200">
+          {[['base','🌿 Base'],['standard','💧 Standard'],['premium','⭐ Premium']].map(([v,l]) => (
+            <button key={v} onClick={() => setLivello(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${livello===v?'bg-green-700 text-white':'bg-white text-gray-600 hover:bg-green-50'}`}>{l}</button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          {livello === 'base' && 'Solo granulari + seme'}
+          {livello === 'standard' && 'Granulari + liquidi nei momenti chiave'}
+          {livello === 'premium' && 'Granulari + liquidi completi + ciclo estivo'}
+        </p>
+      </div>
+
       {/* Toggle linea */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Linea concimi</p>
@@ -1482,12 +1496,28 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, onPreventivo, onStampa }) {
+function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, onPreventivo, onStampa }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
   return (
     <div className="space-y-4">
+      {/* Tab livello */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Piano manutentivo</p>
+        <div className="flex rounded-xl overflow-hidden border border-gray-200">
+          {[['base','🌿 Base'],['standard','💧 Standard'],['premium','⭐ Premium']].map(([v,l]) => (
+            <button key={v} onClick={() => setLivello(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${livello===v?'bg-green-700 text-white':'bg-white text-gray-600 hover:bg-green-50'}`}>{l}</button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          {livello === 'base' && 'Solo granulari — nessun biostimolante'}
+          {livello === 'standard' && 'Granulari + Humifitos/Micosat nei momenti chiave'}
+          {livello === 'premium' && 'Granulari + liquidi completi + ciclo estivo Algapark/Root Speed'}
+        </p>
+      </div>
+
+      {/* Toggle linea */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Linea concimi</p>
         <div className="flex rounded-xl overflow-hidden border border-gray-200">
@@ -1585,10 +1615,45 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
               ))
             }
             {(livello === 'standard' || livello === 'premium') && terreno !== 'sabbioso' && (
-              <div className="rounded-xl p-3 border-l-4 border-blue-400 bg-blue-50">
-                <p className="font-bold text-blue-800 text-sm">💧 {livello === 'premium' ? 'Ciclo estivo ogni 20 gg' : 'Liquidi abbinati'}</p>
-                <p className="text-xs text-blue-600 mt-0.5">{livello === 'premium' ? 'Maggio → Agosto — iniziare entro 1ª metà Maggio' : 'Da abbinare ai concimi granulari secondo necessità'}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{livello === 'premium' ? 'Algapark · Root Speed · Micosat Tab Plus · Micosat Len' : 'Humifitos · Micosat F PG'}</p>
+              <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
+                <div className="bg-blue-600 px-3 py-2">
+                  <p className="text-white font-bold text-xs">💧 {livello === 'premium' ? 'Biostimolanti completi' : 'Biostimolanti — momenti chiave'}</p>
+                </div>
+                <div className="p-3 space-y-2">
+                  {/* Humifitos + Micosat — comuni a standard e premium */}
+                  {[
+                    { prodotto: 'Humifitos', dose: '20 g/m²', quando: livello === 'premium' ? 'A ogni concimazione granulare (×4)' : 'Interventi 1, 3, 5 (×3)' },
+                    { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)' },
+                  ].map((p, i) => (
+                    <div key={i} className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-blue-800 text-xs">{p.prodotto}</p>
+                        <p className="text-xs text-blue-600">{p.quando}</p>
+                      </div>
+                      <p className="font-bold text-blue-700 text-xs whitespace-nowrap ml-2">{p.dose}</p>
+                    </div>
+                  ))}
+                  {/* Premium: ciclo estivo */}
+                  {livello === 'premium' && (
+                    <>
+                      <div className="border-t border-blue-200 my-1" />
+                      <p className="text-xs font-bold text-blue-700 mb-1">Ciclo estivo ogni 20 gg (Mag→Ago)</p>
+                      {[
+                        { prodotto: 'Algapark', dose: '1 g/m²' },
+                        { prodotto: 'Root Speed', dose: '20 g/m²' },
+                        { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3×/mese da fine Maggio' },
+                      ].map((p, i) => (
+                        <div key={i} className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold text-blue-800 text-xs">{p.prodotto}</p>
+                            {p.quando && <p className="text-xs text-blue-600">{p.quando}</p>}
+                          </div>
+                          <p className="font-bold text-blue-700 text-xs whitespace-nowrap ml-2">{p.dose}</p>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
               </div>
             )}
             {terreno === 'sabbioso' && liquidiSab && (

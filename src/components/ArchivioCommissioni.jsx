@@ -54,7 +54,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
     metodoPagamento: '',
     note: '',
     tipoDocumento: 'scontrino',
-    tipoOperazione: 'vendita'
+    tipoOperazione: 'vendita',
+    ivaCompresa: false
   });
 
   // Statistiche
@@ -617,14 +618,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
       cliente: comm.cliente || '',
       telefono: comm.telefono || '',
       operatore: comm.operatore || '',
-      prodotti: comm.prodotti.map(p => ({ ...p })),
-      accessori: comm.accessori ? comm.accessori.map(a => ({ ...a })) : [],
+      prodotti: comm.prodotti.map(p => ({ ...p, aliquotaIva: p.aliquotaIva || 22 })),
+      accessori: comm.accessori ? comm.accessori.map(a => ({ ...a, aliquotaIva: a.aliquotaIva || 22 })) : [],
       totale: comm.totale?.toString() || '',
       caparra: comm.caparra?.toString() || '',
       metodoPagamento: comm.metodoPagamento || '',
       note: comm.note || '',
       tipoDocumento: comm.tipoDocumento || 'scontrino',
-      tipoOperazione: comm.tipoOperazione || 'vendita'
+      tipoOperazione: comm.tipoOperazione || 'vendita',
+      ivaCompresa: comm.ivaCompresa || false
     });
   };
 
@@ -670,6 +672,61 @@ export default function ArchivioCommissioni({ onNavigate }) {
     });
   };
 
+  // Cicla aliquota IVA prodotto in modifica: 22 → 10 → 4 → 22
+  const cycleIvaProdotto = (index) => {
+    const map = { 22: 10, 10: 4, 4: 22 };
+    const updated = [...editForm.prodotti];
+    updated[index] = { ...updated[index], aliquotaIva: map[updated[index].aliquotaIva || 22] || 22 };
+    setEditForm({ ...editForm, prodotti: updated });
+  };
+
+  // Cicla aliquota IVA accessorio in modifica: 22 → 10 → 4 → 22
+  const cycleIvaAccessorioEdit = (index) => {
+    const map = { 22: 10, 10: 4, 4: 22 };
+    const updated = [...editForm.accessori];
+    updated[index] = { ...updated[index], aliquotaIva: map[updated[index].aliquotaIva || 22] || 22 };
+    setEditForm({ ...editForm, accessori: updated });
+  };
+
+  // Stile badge IVA
+  const getIvaBadgeStyle = (aliquota) => {
+    if (aliquota === 4)  return 'bg-green-100 text-green-700 border-green-300';
+    if (aliquota === 10) return 'bg-amber-100 text-amber-700 border-amber-300';
+    return 'bg-gray-100 text-gray-500 border-gray-300';
+  };
+
+  // Calcolo dettaglio IVA per anteprima nel modal modifica
+  const getDettaglioIvaEdit = () => {
+    const items = [];
+    editForm.prodotti.forEach(p => {
+      if (p.prezzo > 0 && !p.isOmaggio) items.push({ importo: parseFloat(p.prezzo) || 0, aliquota: p.aliquotaIva || 22 });
+    });
+    editForm.accessori.forEach(a => {
+      const prezzo = parseFloat(a.prezzo) || 0;
+      if (prezzo > 0) items.push({ importo: prezzo * (parseInt(a.quantita) || 1), aliquota: a.aliquotaIva || 22 });
+    });
+    if (items.length === 0) return null;
+    const gruppi = {};
+    items.forEach(({ importo, aliquota }) => {
+      gruppi[aliquota] = (gruppi[aliquota] || 0) + importo;
+    });
+    const righe = Object.entries(gruppi).map(([aliq, totale]) => {
+      const a = parseFloat(aliq);
+      let imponibile, iva;
+      if (editForm.ivaCompresa) {
+        imponibile = totale / (1 + a / 100);
+        iva = totale - imponibile;
+      } else {
+        imponibile = totale;
+        iva = totale * (a / 100);
+      }
+      return { aliquota: a, totale, imponibile, iva };
+    });
+    const totImponibile = righe.reduce((s, r) => s + r.imponibile, 0);
+    const totIva = righe.reduce((s, r) => s + r.iva, 0);
+    return { righe, totImponibile, totIva };
+  };
+
   // Salva modifiche commissione
   const handleSaveEditFull = () => {
     if (!editForm.cliente.trim()) {
@@ -707,11 +764,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
       metodoPagamento: caparra > 0 ? editForm.metodoPagamento : null,
       note: editForm.note.trim() || null,
       tipoDocumento: editForm.tipoDocumento,
-      tipoOperazione: editForm.tipoOperazione || 'vendita'
+      tipoOperazione: editForm.tipoOperazione || 'vendita',
+      ivaCompresa: editForm.ivaCompresa || false
     });
 
     setEditingFullCommissione(null);
-    setEditForm({ data: '', cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino', tipoOperazione: 'vendita' });
+    setEditForm({ data: '', cliente: '', telefono: '', operatore: '', prodotti: [], accessori: [], totale: '', caparra: '', metodoPagamento: '', note: '', tipoDocumento: 'scontrino', tipoOperazione: 'vendita', ivaCompresa: false });
   };
 
   // Formatta prezzo per visualizzazione
@@ -1575,6 +1633,27 @@ export default function ArchivioCommissioni({ onNavigate }) {
             </div>
             
             <div className="flex-1 overflow-auto p-4 space-y-4">
+              {/* Toggle IVA compresa / esclusa */}
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tipo prezzi</label>
+                <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                  <button
+                    onClick={() => setEditForm({ ...editForm, ivaCompresa: false })}
+                    className={`flex-1 py-2 text-sm font-medium transition-colors ${!editForm.ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+                  >
+                    IVA esclusa
+                  </button>
+                  <button
+                    onClick={() => setEditForm({ ...editForm, ivaCompresa: true })}
+                    className={`flex-1 py-2 text-sm font-medium transition-colors ${editForm.ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+                  >
+                    IVA compresa
+                  </button>
+                </div>
+                {!editForm.ivaCompresa && <p className="text-xs text-gray-400 mt-1">Prezzi imponibili — IVA calcolata separatamente</p>}
+                {editForm.ivaCompresa && <p className="text-xs text-gray-400 mt-1">Prezzi già comprensivi di IVA — verrà applicato lo scorporo</p>}
+              </div>
+
               {/* Data commissione */}
               <div>
                 <label className="text-xs font-bold text-gray-500">Data</label>
@@ -1634,6 +1713,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
                           <p className="text-xs text-gray-500 font-mono">SN: {prod.serialNumber || 'N/D'}</p>
                         </div>
                         <div className="flex items-center gap-2">
+                          {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700 border-green-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
+                              {prod.aliquotaIva}%
+                            </span>
+                          )}
                           <input
                             type="number"
                             placeholder="Prezzo"
@@ -1691,10 +1775,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     </div>
                   ))}
                   <button
-                    onClick={() => setEditForm({
-                      ...editForm,
-                      accessori: [...editForm.accessori, { nome: '', prezzo: 0, quantita: 1, id: Date.now() }]
-                    })}
+                    onClick={handleAddEditAccessorio}
                     className="text-sm text-blue-600"
                   >
                     + Aggiungi accessorio
@@ -1714,6 +1795,29 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     onChange={(e) => setEditForm({ ...editForm, totale: e.target.value })}
                   />
                 </div>
+                {(() => {
+                  const det = getDettaglioIvaEdit();
+                  if (!det) return null;
+                  return (
+                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-xs text-gray-500 uppercase font-bold mb-2">📊 Dettaglio IVA</p>
+                      {det.righe.map(r => (
+                        <div key={r.aliquota} className="flex justify-between text-xs text-gray-600 mb-1">
+                          <span>Imponibile {r.aliquota}%</span>
+                          <span>€ {r.imponibile.toFixed(2)} <span className="text-gray-400">(IVA € {r.iva.toFixed(2)})</span></span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between text-sm font-bold text-gray-800 mt-2 pt-2 border-t border-gray-300">
+                        <span>Totale imponibile</span>
+                        <span>€ {det.totImponibile.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Totale IVA</span>
+                        <span>€ {det.totIva.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Caparra */}

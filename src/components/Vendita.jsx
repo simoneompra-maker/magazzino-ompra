@@ -1595,6 +1595,27 @@ export default function Vendita({ onNavigate }) {
           <div className="fixed inset-0 z-20" onClick={() => setShowSuggerimenti(false)} />
         )}
 
+        {/* Toggle IVA compresa / esclusa */}
+        <div className="bg-white rounded-lg p-3">
+          <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Tipo prezzi</label>
+          <div className="flex rounded-lg overflow-hidden border border-gray-200">
+            <button
+              onClick={() => setIvaCompresa(false)}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${!ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+            >
+              IVA esclusa
+            </button>
+            <button
+              onClick={() => setIvaCompresa(true)}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
+            >
+              IVA compresa
+            </button>
+          </div>
+          {!ivaCompresa && <p className="text-xs text-gray-400 mt-1">I prezzi inseriti sono imponibili — l'IVA verrà calcolata separatamente</p>}
+          {ivaCompresa && <p className="text-xs text-gray-400 mt-1">I prezzi inseriti includono già l'IVA — verrà applicato lo scorporo</p>}
+        </div>
+
         {/* Prodotti */}
         <div className="bg-white rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
@@ -1640,13 +1661,11 @@ export default function Vendita({ onNavigate }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
-                    <button 
-                      onClick={() => cycleIvaProdotto(prod.id)}
-                      className={`text-xs px-1.5 py-0.5 rounded border font-medium ${getIvaBadgeStyle(prod.aliquotaIva || 22)}`}
-                      title="Tocca per cambiare aliquota IVA"
-                    >
-                      {prod.aliquotaIva || 22}%
-                    </button>
+                    {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700 border-green-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
+                        {prod.aliquotaIva}%
+                      </span>
+                    )}
                     <button onClick={() => handleOpenEditPrice(prod)} className="p-1">
                       {formatPrezzo(prod)}
                     </button>
@@ -1729,13 +1748,6 @@ export default function Vendita({ onNavigate }) {
                           <span className="text-xs text-gray-500 font-mono block truncate">SN: {acc.matricola}</span>
                         )}
                       </div>
-                      <button 
-                        onClick={() => cycleIvaAccessorio(acc.id)}
-                        className={`text-xs px-1.5 py-0.5 rounded border font-medium mx-1 shrink-0 ${getIvaBadgeStyle(acc.aliquotaIva || 22)}`}
-                        title="Tocca per cambiare aliquota IVA"
-                      >
-                        {acc.aliquotaIva || 22}%
-                      </button>
                       <span className="text-gray-600 mx-1 shrink-0">
                         {acc.prezzo > 0 
                           ? (acc.quantita > 1 ? `€${(acc.prezzo * acc.quantita).toFixed(2)}` : `€${acc.prezzo}`)
@@ -1883,15 +1895,6 @@ export default function Vendita({ onNavigate }) {
               onChange={(e) => setTotaleManuale(e.target.value)}
             />
           </div>
-          <label className="flex items-center gap-2 mt-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={ivaCompresa}
-              onChange={(e) => setIvaCompresa(e.target.checked)}
-              className="w-4 h-4 accent-green-600 rounded"
-            />
-            <span className="text-sm text-gray-600">I.C. (IVA compresa)</span>
-          </label>
         </div>
 
         {/* Caparra */}

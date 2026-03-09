@@ -846,6 +846,18 @@ export default function PratoVivo() {
   const [primoConcimeIncluso, setPrimoConcimeIncluso] = useState(false);
   const [showPreventivo, setShowPreventivo] = useState(false);
 
+  // Stato idrosemina
+  const [idroMq, setIdroMq] = useState('');
+  const [idroTerreno, setIdroTerreno] = useState('piano');
+  const [idroMiscuglio, setIdroMiscuglio] = useState('Ecograss');
+  const [idroMulch, setIdroMulch] = useState('premium_paper');
+  const [idroVoci, setIdroVoci] = useState({ mulch: true, sementi: true, algapark: true, rootspeed: true, collante: false, noleggio: true });
+  const [idroPrezzi, setIdroPrezzi] = useState({
+    premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50,
+    sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00,
+    collante: 12.00, noleggio: 350.00
+  });
+
   const bimestreCorrente = getBimestreCorrente();
   const bimOggLabel = BIMESTRI.find(b => b.id === bimestreCorrente)?.label;
 
@@ -860,6 +872,9 @@ export default function PratoVivo() {
     setLinea('albatros'); setTerreno(null); setColore(null);
     setEstendi12(null); setLiquidiSab(true); setDegradazione(null);
     setMiscuglio(null); setTipoCliente('privato'); setPrimoConcimeIncluso(false); setShowPreventivo(false);
+    setIdroMq(''); setIdroTerreno('piano'); setIdroMiscuglio('Ecograss'); setIdroMulch('premium_paper');
+    setIdroVoci({ mulch: true, sementi: true, algapark: true, rootspeed: true, collante: false, noleggio: true });
+    setIdroPrezzi({ premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00, collante: 12.00, noleggio: 350.00 });
   };
 
   const goBack = () => {
@@ -870,6 +885,7 @@ export default function PratoVivo() {
       if (terreno !== null) { setTerreno(null); return; }
     }
     if (tipoIntervento === 'rigenerazione' && degradazione !== null) { setDegradazione(null); return; }
+    if (tipoIntervento === 'idrosemina') { setTipoIntervento(null); return; }
     if (irrigazione !== null) { setIrrigazione(null); setMq(''); return; }
     if (tipoIntervento !== null) { setTipoIntervento(null); return; }
     if (tipoPrato !== null) { setTipoPrato(null); return; }
@@ -881,6 +897,7 @@ export default function PratoVivo() {
   const showPianoRig = hasCommonConfig && tipoIntervento === 'rigenerazione' && degradazione !== null;
   const showPianoAnnuo = hasCommonConfig && tipoIntervento === 'piano_annuo' && terreno && colore && estendi12 !== null;
   const showSingolo = tipoIntervento === 'singolo';
+  const showPianoIdrosemina = tipoPrato && tipoIntervento === 'idrosemina';
 
   const datiPianoAttivo = tipoIntervento === 'semina' ? PIANO_SEMINA[livello] : tipoIntervento === 'rigenerazione' ? PIANO_RIGENERAZIONE[livello] : null;
   const granulariAttivi = datiPianoAttivo ? datiPianoAttivo.granulari : [];
@@ -1005,6 +1022,7 @@ export default function PratoVivo() {
             <div className="space-y-2">
               <Btn emoji="🌱" label="Nuova Semina" desc="Semina da zero o posa zolle" onClick={() => setTipoIntervento('semina')} selected={tipoIntervento==='semina'} />
               <Btn emoji="🔄" label="Rigenerazione" desc="Trasemina e recupero prato" onClick={() => setTipoIntervento('rigenerazione')} selected={tipoIntervento==='rigenerazione'} />
+              <Btn emoji="💦" label="Idrosemina" desc="Semina idraulica a proiezione" onClick={() => setTipoIntervento('idrosemina')} selected={tipoIntervento==='idrosemina'} color="blue" />
               <Btn emoji="📅" label="Piano Annuo di Mantenimento" desc="Calendario completo 12 mesi" onClick={() => setTipoIntervento('piano_annuo')} selected={tipoIntervento==='piano_annuo'} />
               <Btn emoji="⚡" label="Intervento Singolo" desc="Cosa applico oggi?" onClick={() => setTipoIntervento('singolo')} selected={tipoIntervento==='singolo'} color="amber" />
             </div>
@@ -1181,7 +1199,341 @@ export default function PratoVivo() {
           <InterventoSingolo linea={linea} setLinea={setLinea} mq={mq} irrigazione={irrigazione} tipoCliente={tipoCliente} setTipoCliente={setTipoCliente} />
         )}
 
+        {/* ── IDROSEMINA ─────────────────────────────────────── */}
+        {showPianoIdrosemina && (
+          <PianoIdrosemina
+            mq={idroMq} setMq={setIdroMq}
+            terreno={idroTerreno} setTerreno={setIdroTerreno}
+            mulch={idroMulch} setMulch={setIdroMulch}
+            miscuglio={idroMiscuglio} setMiscuglio={setIdroMiscuglio}
+            voci={idroVoci} setVoci={setIdroVoci}
+            prezzi={idroPrezzi} setPrezzi={setIdroPrezzi}
+            tipoPrato={tipoPrato}
+          />
+        )}
+
       </div>
+    </div>
+  );
+}
+
+// ─── Sotto-componente: Idrosemina ─────────────────────────────
+function PianoIdrosemina({ mq, setMq, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
+
+  const MULCH_TIPI = {
+    premium_paper: { label: 'Premium Paper', kg: 15, chiave: 'premium_paper' },
+    hidro_mulch:   { label: 'Hidro Mulch UE Verde', kg: 18, chiave: 'hidro_mulch' },
+    wood_lok:      { label: 'Wood-Lok Blend', kg: 22.7, chiave: 'wood_lok' },
+  };
+
+  const mqNum = parseFloat(mq) || 0;
+  const BOTTE_MQ = 450;
+  const GIORNO_MQ = 4500;
+  const nBotti = mqNum > 0 ? Math.ceil(mqNum / BOTTE_MQ) : 0;
+  const nGiorni = mqNum > 0 ? Math.ceil(mqNum / GIORNO_MQ) : 0;
+
+  // Quantità materiali
+  const sacchiMulch = nBotti * 2;
+  const sacchiSementi = nBotti * 2; // 2 sacchi Ecograss 10kg/botte
+  const tankAlga = nBotti > 0 ? Math.ceil((nBotti * 2.5) / 5) : 0;  // taniche 5L
+  const tankRoot = tankAlga;
+  const busteCollante = nBotti; // 1 busta 300g/botte
+
+  const prezzoMulch = prezzi[mulch] || 0;
+
+  // Subtotali per voce
+  const sub = {
+    mulch:     voci.mulch    ? sacchiMulch * prezzoMulch : 0,
+    sementi:   voci.sementi  ? sacchiSementi * prezzi.sementi : 0,
+    algapark:  voci.algapark ? tankAlga * prezzi.algapark5 : 0,
+    rootspeed: voci.rootspeed? tankRoot * prezzi.rootspeed5 : 0,
+    collante:  voci.collante && terreno === 'pendenza_alta' ? busteCollante * prezzi.collante : 0,
+    noleggio:  voci.noleggio ? nGiorni * prezzi.noleggio : 0,
+  };
+
+  // IVA per voce: sementi 10%, algapark+rootspeed 4%, resto 22%
+  const iva = {
+    mulch:     sub.mulch * 0.22,
+    sementi:   sub.sementi * 0.10,
+    algapark:  sub.algapark * 0.04,
+    rootspeed: sub.rootspeed * 0.04,
+    collante:  sub.collante * 0.22,
+    noleggio:  sub.noleggio * 0.22,
+  };
+
+  const totImponibile = Object.values(sub).reduce((a, b) => a + b, 0);
+  const totIva = Object.values(iva).reduce((a, b) => a + b, 0);
+  const totIvato = totImponibile + totIva;
+  const costoMq = mqNum > 0 && totIvato > 0 ? (totIvato / mqNum) : 0;
+
+  // Raggruppa IVA per aliquota
+  const imp4  = sub.algapark + sub.rootspeed;
+  const imp10 = sub.sementi;
+  const imp22 = sub.mulch + sub.collante + sub.noleggio;
+
+  const toggleVoce = (k) => setVoci(v => ({ ...v, [k]: !v[k] }));
+  const setPrezzo = (k, val) => setPrezzi(p => ({ ...p, [k]: parseFloat(val) || 0 }));
+
+  const rowStyle = (attiva) => `flex items-center gap-2 py-2 border-b border-gray-100 ${attiva ? '' : 'opacity-40'}`;
+
+  // PDF
+  const [includiIntestazione, setIncludiIntestazione] = useState(true);
+  const stampaPDF = () => {
+    const w = window.open('', '_blank');
+    const oggi = new Date().toLocaleDateString('it-IT');
+    const terrenoLabel = { piano: 'Piano', pendenza: 'Pendenza media', pendenza_alta: 'Pendenza alta' }[terreno];
+    const mulchLabel = MULCH_TIPI[mulch]?.label || mulch;
+    const fmt = (n) => n.toFixed(2);
+    const rigaVoce = (label, qtaStr, prezzoU, sub, iva, aliq, attiva) => attiva && sub > 0 ? `
+      <tr>
+        <td>${label}</td><td>${qtaStr}</td>
+        <td style="text-align:right">€ ${fmt(prezzoU)}</td>
+        <td style="text-align:right">€ ${fmt(sub)}</td>
+        <td style="text-align:center">${aliq}%</td>
+        <td style="text-align:right">€ ${fmt(sub*(aliq/100))}</td>
+        <td style="text-align:right">€ ${fmt(sub+sub*(aliq/100))}</td>
+      </tr>` : '';
+
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Idrosemina</title>
+    <style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#222}
+    h2{color:#166534;margin:0}h3{color:#166534;margin:6px 0}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th{background:#166534;color:white;padding:4px 6px;text-align:left;font-size:11px}
+    td{padding:3px 6px;border-bottom:1px solid #eee;font-size:11px}
+    .totale{font-weight:bold;background:#f0fdf4}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+    .badge{background:#dcfce7;color:#166534;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:bold}
+    .riepilogo{margin-top:12px;background:#f0fdf4;padding:8px;border-radius:8px}
+    </style></head><body>
+    ${includiIntestazione ? `<div class="header">
+      <div><h2>OMPRA S.r.l.</h2><p style="margin:2px 0;font-size:11px">Via Roncade 7 — San Biagio di Callalta (TV)</p>
+      <p style="margin:2px 0;font-size:11px">Tel. 0422 891741 — info@ompra.it</p></div>
+      <div style="text-align:right"><h3>Preventivo Idrosemina</h3><p style="font-size:11px;color:#666">${oggi}</p></div>
+    </div><hr/>` : ''}
+    <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap">
+      <span><b>Superficie:</b> ${mqNum.toLocaleString('it-IT')} m²</span>
+      <span><b>Terreno:</b> ${terrenoLabel}</span>
+      <span><b>Mulch:</b> ${mulchLabel}</span>
+      <span><b>Miscuglio:</b> ${miscuglio}</span>
+      <span><b>N. botti:</b> ${nBotti}</span>
+      <span><b>Giornate noleggio:</b> ${nGiorni}</span>
+    </div>
+    <table>
+      <thead><tr><th>Voce</th><th>Quantità</th><th>Prezzo unit.</th><th>Imponibile</th><th>IVA %</th><th>IVA €</th><th>Totale</th></tr></thead>
+      <tbody>
+        ${rigaVoce(`Mulch ${mulchLabel} (${MULCH_TIPI[mulch]?.kg} kg/sacco)`, `${sacchiMulch} sacchi`, prezzoMulch, sub.mulch, iva.mulch, 22, voci.mulch)}
+        ${rigaVoce(`Sementi ${miscuglio} (10 kg/sacco)`, `${sacchiSementi} sacchi`, prezzi.sementi, sub.sementi, iva.sementi, 10, voci.sementi)}
+        ${rigaVoce('Algapark (tanica 5 kg)', `${tankAlga} taniche`, prezzi.algapark5, sub.algapark, iva.algapark, 4, voci.algapark)}
+        ${rigaVoce('Root Speed (tanica 5 kg)', `${tankRoot} taniche`, prezzi.rootspeed5, sub.rootspeed, iva.rootspeed, 4, voci.rootspeed)}
+        ${rigaVoce('Collante (busta 300 g)', `${busteCollante} buste`, prezzi.collante, sub.collante, iva.collante, 22, voci.collante && terreno==='pendenza_alta')}
+        ${rigaVoce('Noleggio macchina (giornata)', `${nGiorni} gg`, prezzi.noleggio, sub.noleggio, iva.noleggio, 22, voci.noleggio)}
+        <tr class="totale"><td colspan="3"><b>TOTALE</b></td>
+          <td style="text-align:right"><b>€ ${fmt(totImponibile)}</b></td>
+          <td></td>
+          <td style="text-align:right"><b>€ ${fmt(totIva)}</b></td>
+          <td style="text-align:right"><b>€ ${fmt(totIvato)}</b></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="riepilogo">
+      ${imp4>0?`<p style="margin:2px 0">Imponibile 4%: € ${fmt(imp4)} → IVA: € ${fmt(imp4*0.04)}</p>`:''}
+      ${imp10>0?`<p style="margin:2px 0">Imponibile 10%: € ${fmt(imp10)} → IVA: € ${fmt(imp10*0.10)}</p>`:''}
+      ${imp22>0?`<p style="margin:2px 0">Imponibile 22%: € ${fmt(imp22)} → IVA: € ${fmt(imp22*0.22)}</p>`:''}
+      <p style="margin:4px 0;font-size:13px"><b>Totale ivato: € ${fmt(totIvato)}</b>${costoMq>0?` &nbsp;·&nbsp; Costo/m²: € ${fmt(costoMq)}`:''}</p>
+    </div>
+    <script>window.onload=()=>window.print();</script></body></html>`);
+    w.document.close();
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="bg-green-700 text-white rounded-2xl p-4">
+        <h2 className="font-bold text-lg">💦 Preventivo Idrosemina</h2>
+        <p className="text-green-200 text-xs mt-1">Semina idraulica a proiezione — 1 botte ≈ 450 m²</p>
+      </div>
+
+      {/* Superficie */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Superficie da trattare</p>
+        <div className="flex items-center gap-2">
+          <input type="number" value={mq} onChange={e => setMq(e.target.value)} placeholder="es. 2000"
+            className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-green-500" />
+          <span className="text-sm text-gray-500 font-semibold">m²</span>
+        </div>
+        {nBotti > 0 && (
+          <div className="mt-2 flex gap-3 flex-wrap">
+            <span className="text-xs bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full">🛢 {nBotti} botti</span>
+            <span className="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full">📅 {nGiorni} giornata{nGiorni>1?'e':''} noleggio</span>
+            {nGiorni > 1 && <span className="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full">⚠️ Lavoro su più giorni</span>}
+          </div>
+        )}
+      </div>
+
+      {/* Tipo terreno */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo terreno</p>
+        <div className="flex rounded-xl overflow-hidden border border-gray-200">
+          {[['piano','🌿 Piano'],['pendenza','⛰ Pendenza'],['pendenza_alta','🏔 Pendenza alta']].map(([v,l]) => (
+            <button key={v} onClick={() => {
+              setTerreno(v);
+              if (v === 'pendenza_alta') setVoci(prev => ({ ...prev, collante: true }));
+              else setVoci(prev => ({ ...prev, collante: false }));
+            }}
+              className={`flex-1 py-2 text-xs font-bold transition-colors ${terreno===v?'bg-green-700 text-white':'bg-white text-gray-600 hover:bg-green-50'}`}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tipo mulch */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo mulch (2 sacchi/botte)</p>
+        <div className="space-y-2">
+          {Object.entries(MULCH_TIPI).map(([k, m]) => (
+            <button key={k} onClick={() => setMulch(k)}
+              className={`w-full flex justify-between items-center px-3 py-2.5 rounded-xl border-2 text-left transition-colors ${mulch===k?'border-green-500 bg-green-50':'border-gray-200 hover:border-green-300'}`}>
+              <span className="font-bold text-sm text-gray-800">{m.label} <span className="font-normal text-gray-400 text-xs">({m.kg} kg/sacco)</span></span>
+              <span className="text-sm font-bold text-green-700">€ {prezzi[k].toFixed(2)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Miscuglio */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Miscuglio sementi (2 sacchi 10 kg/botte)</p>
+        <input type="text" value={miscuglio} onChange={e => setMiscuglio(e.target.value)}
+          className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-green-500 mb-2" />
+        <div className="flex gap-2 flex-wrap">
+          {['Ecograss','Tornado','Blizzard','Altro'].map(s => (
+            <button key={s} onClick={() => setMiscuglio(s)}
+              className={`text-xs px-3 py-1 rounded-full border font-semibold transition-colors ${miscuglio===s?'border-green-500 bg-green-100 text-green-800':'border-gray-200 text-gray-600'}`}>{s}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Preventivo voci */}
+      {nBotti > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Voci preventivo</p>
+          <p className="text-xs text-gray-400 mb-2">☑ attiva · prezzo modificabile inline</p>
+
+          {/* Intestazione colonne */}
+          <div className="grid grid-cols-12 text-xs text-gray-400 font-bold pb-1 border-b border-gray-200 mb-1">
+            <span className="col-span-1"></span>
+            <span className="col-span-5">Voce</span>
+            <span className="col-span-2 text-center">Qt.</span>
+            <span className="col-span-2 text-right">€ unit.</span>
+            <span className="col-span-2 text-right">Sub.</span>
+          </div>
+
+          {/* MULCH */}
+          <div className={rowStyle(voci.mulch)}>
+            <input type="checkbox" checked={voci.mulch} onChange={() => toggleVoce('mulch')} className="accent-green-600 flex-shrink-0" />
+            <div className="flex-1 grid grid-cols-12 items-center gap-1">
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Mulch {MULCH_TIPI[mulch]?.label}<br/><span className="text-gray-400 font-normal">22% IVA</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{sacchiMulch} sac.</span>
+              <input type="number" step="0.10" value={prezzi[mulch]} onChange={e => setPrezzo(mulch, e.target.value)}
+                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.mulch.toFixed(0)}</span>
+            </div>
+          </div>
+
+          {/* SEMENTI */}
+          <div className={rowStyle(voci.sementi)}>
+            <input type="checkbox" checked={voci.sementi} onChange={() => toggleVoce('sementi')} className="accent-green-600 flex-shrink-0" />
+            <div className="flex-1 grid grid-cols-12 items-center gap-1">
+              <span className="col-span-5 text-xs font-semibold text-gray-700">{miscuglio} (10 kg)<br/><span className="text-gray-400 font-normal">10% IVA</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{sacchiSementi} sac.</span>
+              <input type="number" step="0.10" value={prezzi.sementi} onChange={e => setPrezzo('sementi', e.target.value)}
+                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.sementi.toFixed(0)}</span>
+            </div>
+          </div>
+
+          {/* ALGAPARK */}
+          <div className={rowStyle(voci.algapark)}>
+            <input type="checkbox" checked={voci.algapark} onChange={() => toggleVoce('algapark')} className="accent-green-600 flex-shrink-0" />
+            <div className="flex-1 grid grid-cols-12 items-center gap-1">
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Algapark 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{tankAlga} tan.</span>
+              <input type="number" step="0.10" value={prezzi.algapark5} onChange={e => setPrezzo('algapark5', e.target.value)}
+                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.algapark.toFixed(0)}</span>
+            </div>
+          </div>
+
+          {/* ROOT SPEED */}
+          <div className={rowStyle(voci.rootspeed)}>
+            <input type="checkbox" checked={voci.rootspeed} onChange={() => toggleVoce('rootspeed')} className="accent-green-600 flex-shrink-0" />
+            <div className="flex-1 grid grid-cols-12 items-center gap-1">
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Root Speed 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{tankRoot} tan.</span>
+              <input type="number" step="0.10" value={prezzi.rootspeed5} onChange={e => setPrezzo('rootspeed5', e.target.value)}
+                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.rootspeed.toFixed(0)}</span>
+            </div>
+          </div>
+
+          {/* COLLANTE — sempre visibile, auto-attivato su pendenza alta */}
+          <div className={rowStyle(voci.collante)}>
+            <input type="checkbox" checked={voci.collante} onChange={() => toggleVoce('collante')} className="accent-green-600 flex-shrink-0" />
+            <div className="flex-1 grid grid-cols-12 items-center gap-1">
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Collante 300g/botte<br/><span className="text-gray-400 font-normal">22% IVA · facoltativo</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{busteCollante} bus.</span>
+              <input type="number" step="0.10" value={prezzi.collante} onChange={e => setPrezzo('collante', e.target.value)}
+                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.collante.toFixed(0)}</span>
+            </div>
+          </div>
+
+          {/* NOLEGGIO */}
+          <div className={rowStyle(voci.noleggio)}>
+            <input type="checkbox" checked={voci.noleggio} onChange={() => toggleVoce('noleggio')} className="accent-green-600 flex-shrink-0" />
+            <div className="flex-1 grid grid-cols-12 items-center gap-1">
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Noleggio macchina<br/><span className="text-gray-400 font-normal">22% IVA · {nGiorni} gg</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{nGiorni} gg</span>
+              <input type="number" step="1" value={prezzi.noleggio} onChange={e => setPrezzo('noleggio', e.target.value)}
+                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.noleggio.toFixed(0)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Riepilogo totali */}
+      {nBotti > 0 && totImponibile > 0 && (
+        <div className="bg-green-50 rounded-2xl p-4 border border-green-200">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Riepilogo IVA</p>
+          <div className="space-y-1 text-xs">
+            {imp4  > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 4% (concimi)</span><span className="font-semibold">€ {imp4.toFixed(2)} + € {(imp4*0.04).toFixed(2)}</span></div>}
+            {imp10 > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 10% (sementi)</span><span className="font-semibold">€ {imp10.toFixed(2)} + € {(imp10*0.10).toFixed(2)}</span></div>}
+            {imp22 > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 22% (materiali/noleggio)</span><span className="font-semibold">€ {imp22.toFixed(2)} + € {(imp22*0.22).toFixed(2)}</span></div>}
+          </div>
+          <div className="mt-3 pt-3 border-t border-green-200 space-y-1">
+            <div className="flex justify-between text-sm"><span className="text-gray-600">Totale imponibile</span><span className="font-bold">€ {totImponibile.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-600">Totale IVA</span><span className="font-bold">€ {totIva.toFixed(2)}</span></div>
+            <div className="flex justify-between text-base font-bold text-green-800 mt-1 pt-1 border-t border-green-300">
+              <span>Totale ivato</span><span>€ {totIvato.toFixed(2)}</span>
+            </div>
+            {costoMq > 0 && <p className="text-xs text-green-700 text-right font-semibold mt-1">€ {costoMq.toFixed(2)} / m²</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Pulsante PDF */}
+      {nBotti > 0 && totImponibile > 0 && (
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-gray-200 cursor-pointer">
+            <input type="checkbox" checked={includiIntestazione} onChange={e => setIncludiIntestazione(e.target.checked)} className="accent-green-600" />
+            <span className="text-xs font-semibold text-gray-600">Includi intestazione OMPRA nel PDF</span>
+          </label>
+          <button onClick={stampaPDF}
+            className="w-full py-3 rounded-2xl bg-green-700 text-white font-bold text-sm">
+            📄 PDF preventivo idrosemina
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1451,11 +1803,6 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
               </button>
             );
           })}
-          {tipoPrato === 'ornamentale' && (
-            <button className="w-full text-left rounded-xl px-3 py-2.5 border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400 text-xs font-semibold">
-              🚧 Idrosemina — in arrivo
-            </button>
-          )}
           {miscuglio && (
             <div className="mt-2">
               <p className="text-xs text-gray-500 mb-1.5 font-semibold">Formato seme</p>

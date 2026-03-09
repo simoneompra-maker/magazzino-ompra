@@ -1202,6 +1202,7 @@ export default function PratoVivo() {
         {showPianoIdrosemina && (
           <PianoIdrosemina
             mq={mq}
+            nomeCliente={nomeCliente}
             terreno={idroTerreno} setTerreno={setIdroTerreno}
             mulch={idroMulch} setMulch={setIdroMulch}
             miscuglio={idroMiscuglio} setMiscuglio={setIdroMiscuglio}
@@ -1217,7 +1218,7 @@ export default function PratoVivo() {
 }
 
 // ─── Sotto-componente: Idrosemina ─────────────────────────────
-function PianoIdrosemina({ mq, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
+function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
 
   const MULCH_TIPI = {
     premium_paper: { label: 'Premium Paper', kg: 15, chiave: 'premium_paper' },
@@ -1307,8 +1308,8 @@ function PianoIdrosemina({ mq, terreno, setTerreno, mulch, setMulch, miscuglio, 
     ${includiIntestazione ? `<div class="header">
       <div><h2>OMPRA S.r.l.</h2><p style="margin:2px 0;font-size:11px">Via Roncade 7 — San Biagio di Callalta (TV)</p>
       <p style="margin:2px 0;font-size:11px">Tel. 0422 891741 — info@ompra.it</p></div>
-      <div style="text-align:right"><h3>Preventivo Idrosemina</h3><p style="font-size:11px;color:#666">${oggi}</p></div>
-    </div><hr/>` : ''}
+      <div style="text-align:right"><h3>Preventivo Idrosemina</h3><p style="font-size:11px;color:#666">${oggi}</p>${nomeCliente ? `<p style="font-size:12px;font-weight:bold;color:#166534;margin:4px 0">Cliente: ${nomeCliente}</p>` : ''}</div>
+    </div><hr/>` : `${nomeCliente ? `<p style="font-size:12px;font-weight:bold;color:#166534;margin:0 0 8px 0">Cliente: ${nomeCliente}</p>` : ''}`}
     <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap">
       <span><b>Superficie:</b> ${mqNum.toLocaleString('it-IT')} m²</span>
       <span><b>Terreno:</b> ${terrenoLabel}</span>

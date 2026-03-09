@@ -847,7 +847,6 @@ export default function PratoVivo() {
   const [showPreventivo, setShowPreventivo] = useState(false);
 
   // Stato idrosemina
-  const [idroMq, setIdroMq] = useState('');
   const [idroTerreno, setIdroTerreno] = useState('piano');
   const [idroMiscuglio, setIdroMiscuglio] = useState('Ecograss');
   const [idroMulch, setIdroMulch] = useState('premium_paper');
@@ -872,7 +871,7 @@ export default function PratoVivo() {
     setLinea('albatros'); setTerreno(null); setColore(null);
     setEstendi12(null); setLiquidiSab(true); setDegradazione(null);
     setMiscuglio(null); setTipoCliente('privato'); setPrimoConcimeIncluso(false); setShowPreventivo(false);
-    setIdroMq(''); setIdroTerreno('piano'); setIdroMiscuglio('Ecograss'); setIdroMulch('premium_paper');
+    setIdroTerreno('piano'); setIdroMiscuglio('Ecograss'); setIdroMulch('premium_paper');
     setIdroVoci({ mulch: true, sementi: true, algapark: true, rootspeed: true, collante: false, noleggio: true });
     setIdroPrezzi({ premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00, collante: 12.00, noleggio: 350.00 });
   };
@@ -1202,7 +1201,7 @@ export default function PratoVivo() {
         {/* ── IDROSEMINA ─────────────────────────────────────── */}
         {showPianoIdrosemina && (
           <PianoIdrosemina
-            mq={idroMq} setMq={setIdroMq}
+            mq={mq}
             terreno={idroTerreno} setTerreno={setIdroTerreno}
             mulch={idroMulch} setMulch={setIdroMulch}
             miscuglio={idroMiscuglio} setMiscuglio={setIdroMiscuglio}
@@ -1218,7 +1217,7 @@ export default function PratoVivo() {
 }
 
 // ─── Sotto-componente: Idrosemina ─────────────────────────────
-function PianoIdrosemina({ mq, setMq, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
+function PianoIdrosemina({ mq, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
 
   const MULCH_TIPI = {
     premium_paper: { label: 'Premium Paper', kg: 15, chiave: 'premium_paper' },
@@ -1351,21 +1350,11 @@ function PianoIdrosemina({ mq, setMq, terreno, setTerreno, mulch, setMulch, misc
       <div className="bg-green-700 text-white rounded-2xl p-4">
         <h2 className="font-bold text-lg">💦 Preventivo Idrosemina</h2>
         <p className="text-green-200 text-xs mt-1">Semina idraulica a proiezione — 1 botte ≈ 450 m²</p>
-      </div>
-
-      {/* Superficie */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Superficie da trattare</p>
-        <div className="flex items-center gap-2">
-          <input type="number" value={mq} onChange={e => setMq(e.target.value)} placeholder="es. 2000"
-            className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-green-500" />
-          <span className="text-sm text-gray-500 font-semibold">m²</span>
-        </div>
         {nBotti > 0 && (
-          <div className="mt-2 flex gap-3 flex-wrap">
-            <span className="text-xs bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full">🛢 {nBotti} botti</span>
-            <span className="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full">📅 {nGiorni} giornata{nGiorni>1?'e':''} noleggio</span>
-            {nGiorni > 1 && <span className="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full">⚠️ Lavoro su più giorni</span>}
+          <div className="mt-2 flex gap-2 flex-wrap">
+            <span className="text-xs bg-green-600 text-white font-bold px-3 py-1 rounded-full">🛢 {nBotti} botti</span>
+            <span className="text-xs bg-green-600 text-white font-bold px-3 py-1 rounded-full">📅 {nGiorni} giornata{nGiorni>1?'e':''} noleggio</span>
+            {nGiorni > 1 && <span className="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1 rounded-full">⚠️ Lavoro su più giorni</span>}
           </div>
         )}
       </div>

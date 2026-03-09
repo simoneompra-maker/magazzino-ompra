@@ -1221,60 +1221,116 @@ export default function PratoVivo() {
 function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
 
   const MULCH_TIPI = {
-    premium_paper: { label: 'Premium Paper', kg: 15, chiave: 'premium_paper' },
-    hidro_mulch:   { label: 'Hidro Mulch UE Verde', kg: 18, chiave: 'hidro_mulch' },
-    wood_lok:      { label: 'Wood-Lok Blend', kg: 22.7, chiave: 'wood_lok' },
+    premium_paper: { label: 'Premium Paper',      kg: 15   },
+    hidro_mulch:   { label: 'Hidro Mulch UE Verde', kg: 18 },
+    wood_lok:      { label: 'Wood-Lok Blend',      kg: 22.7 },
   };
+
+  // Tariffe noleggio per fascia giornaliera (€/giornata)
+  const TARIFFE_NOLEGGIO = [
+    { label: '½ giornata (≤ 450 m²)', maxGiorni: 0.5, tariffa: 195 },
+    { label: '1 giornata',             maxGiorni: 1,   tariffa: 176 },
+    { label: '2–3 giorni',             maxGiorni: 3,   tariffa: 158 },
+    { label: '4–7 giorni',             maxGiorni: 7,   tariffa: 150 },
+  ];
 
   const mqNum = parseFloat(mq) || 0;
   const BOTTE_MQ = 450;
   const GIORNO_MQ = 4500;
-  const nBotti = mqNum > 0 ? Math.ceil(mqNum / BOTTE_MQ) : 0;
+
+  // Botti teoriche (ceil) e botti effettive (editabile)
+  const nBottiTeoriche = mqNum > 0 ? Math.ceil(mqNum / BOTTE_MQ) : 0;
+  const [bottiEffettiveRaw, setBottiEffettive] = useState('');
+  const bottiEffettive = bottiEffettiveRaw !== '' ? parseFloat(bottiEffettiveRaw) : nBottiTeoriche;
+  const doseTroppoRidotta = nBottiTeoriche > 0 && bottiEffettive < nBottiTeoriche * 0.85;
+
+  // Reset botti effettive quando cambia mq
+  const prevMq = useState(mq)[0];
+  if (prevMq !== mq) setBottiEffettive('');
+
+  // Giornate e tariffa automatica
   const nGiorni = mqNum > 0 ? Math.ceil(mqNum / GIORNO_MQ) : 0;
+  const isOltre7 = nGiorni > 7;
+  const tariffattaAuto = (() => {
+    if (nGiorni <= 0) return 0;
+    if (nGiorni <= 0.5 || nBottiTeoriche <= 1) return 195; // mezza giornata
+    const fascia = TARIFFE_NOLEGGIO.slice().reverse().find(f => nGiorni <= f.maxGiorni);
+    return fascia ? fascia.tariffa : 150;
+  })();
 
-  // Quantità materiali
-  const sacchiMulch = nBotti * 2;
-  const sacchiSementi = nBotti * 2; // 2 sacchi Ecograss 10kg/botte
-  const tankAlga = nBotti > 0 ? Math.ceil((nBotti * 2.5) / 5) : 0;  // taniche 5L
-  const tankRoot = tankAlga;
-  const busteCollante = nBotti; // 1 busta 300g/botte
+  // Stato locale per il prezzo mulch (fix editabilità)
+  const [prezzoMulchLocale, setPrezzoMulchLocale] = useState(null);
+  const prezzoMulch = prezzoMulchLocale !== null ? prezzoMulchLocale : (prezzi[mulch] || 0);
+  const aggiornaMulch = (val) => {
+    const n = parseFloat(val);
+    if (!isNaN(n)) {
+      setPrezzoMulchLocale(n);
+      setPrezzi(p => ({ ...p, [mulch]: n }));
+    }
+  };
+  // Reset locale quando cambia tipo mulch
+  const [ultimoMulch, setUltimoMulch] = useState(mulch);
+  if (ultimoMulch !== mulch) { setPrezzoMulchLocale(null); setUltimoMulch(mulch); }
 
-  const prezzoMulch = prezzi[mulch] || 0;
+  // Tariffa noleggio effettiva (auto o libera per oltre 7)
+  const [noleggioLibero, setNoleggioLibero] = useState('');
+  const tariffattaEffettiva = isOltre7
+    ? (parseFloat(noleggioLibero) || 0)
+    : tariffattaAuto;
+  const totaleNoleggio = isOltre7
+    ? tariffattaEffettiva           // campo libero = totale diretto
+    : tariffattaEffettiva * nGiorni;
 
-  // Subtotali per voce
+  // Quantità materiali basate su bottiEffettive
+  const sacchiMulch    = Math.floor(bottiEffettive * 2);
+  const sacchiSementi  = Math.round(bottiEffettive * 2);
+  const tankAlga       = bottiEffettive > 0 ? Math.ceil((bottiEffettive * 2.5) / 5) : 0;
+  const tankRoot       = tankAlga;
+  const busteCollante  = Math.ceil(bottiEffettive);
+
+  const setPrezzo = (k, val) => setPrezzi(p => ({ ...p, [k]: parseFloat(val) || 0 }));
+
+  // Subtotali
   const sub = {
-    mulch:     voci.mulch    ? sacchiMulch * prezzoMulch : 0,
-    sementi:   voci.sementi  ? sacchiSementi * prezzi.sementi : 0,
-    algapark:  voci.algapark ? tankAlga * prezzi.algapark5 : 0,
-    rootspeed: voci.rootspeed? tankRoot * prezzi.rootspeed5 : 0,
-    collante:  voci.collante && terreno === 'pendenza_alta' ? busteCollante * prezzi.collante : 0,
-    noleggio:  voci.noleggio ? nGiorni * prezzi.noleggio : 0,
+    mulch:     voci.mulch     ? sacchiMulch   * prezzoMulch       : 0,
+    sementi:   voci.sementi   ? sacchiSementi * prezzi.sementi     : 0,
+    algapark:  voci.algapark  ? tankAlga      * prezzi.algapark5   : 0,
+    rootspeed: voci.rootspeed ? tankRoot      * prezzi.rootspeed5  : 0,
+    collante:  voci.collante  ? busteCollante * prezzi.collante    : 0,
+    noleggio:  voci.noleggio  ? totaleNoleggio                     : 0,
   };
 
-  // IVA per voce: sementi 10%, algapark+rootspeed 4%, resto 22%
+  // IVA: sementi 10%, algapark+rootspeed 4%, resto 22%
   const iva = {
-    mulch:     sub.mulch * 0.22,
-    sementi:   sub.sementi * 0.10,
-    algapark:  sub.algapark * 0.04,
+    mulch:     sub.mulch     * 0.22,
+    sementi:   sub.sementi   * 0.10,
+    algapark:  sub.algapark  * 0.04,
     rootspeed: sub.rootspeed * 0.04,
-    collante:  sub.collante * 0.22,
-    noleggio:  sub.noleggio * 0.22,
+    collante:  sub.collante  * 0.22,
+    noleggio:  sub.noleggio  * 0.22,
   };
 
   const totImponibile = Object.values(sub).reduce((a, b) => a + b, 0);
-  const totIva = Object.values(iva).reduce((a, b) => a + b, 0);
-  const totIvato = totImponibile + totIva;
-  const costoMq = mqNum > 0 && totIvato > 0 ? (totIvato / mqNum) : 0;
+  const totIva        = Object.values(iva).reduce((a, b) => a + b, 0);
+  const totIvato      = totImponibile + totIva;
+  const costoMq       = mqNum > 0 && totIvato > 0 ? (totIvato / mqNum) : 0;
 
-  // Raggruppa IVA per aliquota
   const imp4  = sub.algapark + sub.rootspeed;
   const imp10 = sub.sementi;
   const imp22 = sub.mulch + sub.collante + sub.noleggio;
 
   const toggleVoce = (k) => setVoci(v => ({ ...v, [k]: !v[k] }));
-  const setPrezzo = (k, val) => setPrezzi(p => ({ ...p, [k]: parseFloat(val) || 0 }));
-
   const rowStyle = (attiva) => `flex items-center gap-2 py-2 border-b border-gray-100 ${attiva ? '' : 'opacity-40'}`;
+
+  // Fascia noleggio attiva
+  const fasciaLabel = (() => {
+    if (isOltre7) return 'Oltre 7 giorni — prezzo su misura';
+    if (nGiorni <= 0) return '';
+    if (nBottiTeoriche <= 1) return '½ giornata';
+    if (nGiorni === 1) return '1 giornata';
+    if (nGiorni <= 3) return '2–3 giorni';
+    return '4–7 giorni';
+  })();
 
   // PDF
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
@@ -1284,17 +1340,20 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
     const terrenoLabel = { piano: 'Piano', pendenza: 'Pendenza media', pendenza_alta: 'Pendenza alta' }[terreno];
     const mulchLabel = MULCH_TIPI[mulch]?.label || mulch;
     const fmt = (n) => n.toFixed(2);
-    const rigaVoce = (label, qtaStr, prezzoU, sub, iva, aliq, attiva) => attiva && sub > 0 ? `
+    const rigaVoce = (label, qtaStr, prezzoU, subV, aliq, attiva) => attiva && subV > 0 ? `
       <tr>
         <td>${label}</td><td>${qtaStr}</td>
         <td style="text-align:right">€ ${fmt(prezzoU)}</td>
-        <td style="text-align:right">€ ${fmt(sub)}</td>
+        <td style="text-align:right">€ ${fmt(subV)}</td>
         <td style="text-align:center">${aliq}%</td>
-        <td style="text-align:right">€ ${fmt(sub*(aliq/100))}</td>
-        <td style="text-align:right">€ ${fmt(sub+sub*(aliq/100))}</td>
+        <td style="text-align:right">€ ${fmt(subV*(aliq/100))}</td>
+        <td style="text-align:right">€ ${fmt(subV+subV*(aliq/100))}</td>
       </tr>` : '';
+    const rigaNoleggioStr = isOltre7
+      ? `<tr><td>Noleggio macchina</td><td>Prezzo concordato</td><td style="text-align:right">—</td><td style="text-align:right">€ ${fmt(sub.noleggio)}</td><td style="text-align:center">22%</td><td style="text-align:right">€ ${fmt(iva.noleggio)}</td><td style="text-align:right">€ ${fmt(sub.noleggio+iva.noleggio)}</td></tr>`
+      : rigaVoce(`Noleggio macchina (${fasciaLabel})`, `${nGiorni} gg × € ${fmt(tariffattaEffettiva)}`, tariffattaEffettiva, sub.noleggio, 22, voci.noleggio);
 
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Idrosemina</title>
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Idrosemina — ${nomeCliente||'Preventivo'}</title>
     <style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#222}
     h2{color:#166534;margin:0}h3{color:#166534;margin:6px 0}
     table{width:100%;border-collapse:collapse;margin-top:8px}
@@ -1302,31 +1361,33 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
     td{padding:3px 6px;border-bottom:1px solid #eee;font-size:11px}
     .totale{font-weight:bold;background:#f0fdf4}
     .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-    .badge{background:#dcfce7;color:#166534;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:bold}
     .riepilogo{margin-top:12px;background:#f0fdf4;padding:8px;border-radius:8px}
     </style></head><body>
     ${includiIntestazione ? `<div class="header">
-      <div><h2>OMPRA S.r.l.</h2><p style="margin:2px 0;font-size:11px">Via Roncade 7 — San Biagio di Callalta (TV)</p>
+      <div><h2>OMPRA S.r.l.</h2>
+      <p style="margin:2px 0;font-size:11px">Via Roncade 7 — San Biagio di Callalta (TV)</p>
       <p style="margin:2px 0;font-size:11px">Tel. 0422 891741 — info@ompra.it</p></div>
-      <div style="text-align:right"><h3>Preventivo Idrosemina</h3><p style="font-size:11px;color:#666">${oggi}</p>${nomeCliente ? `<p style="font-size:12px;font-weight:bold;color:#166534;margin:4px 0">Cliente: ${nomeCliente}</p>` : ''}</div>
-    </div><hr/>` : `${nomeCliente ? `<p style="font-size:12px;font-weight:bold;color:#166534;margin:0 0 8px 0">Cliente: ${nomeCliente}</p>` : ''}`}
-    <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap">
+      <div style="text-align:right"><h3>Preventivo Idrosemina</h3>
+      <p style="font-size:11px;color:#666">${oggi}</p>
+      ${nomeCliente ? `<p style="font-size:12px;font-weight:bold;color:#166534;margin:4px 0">Cliente: ${nomeCliente}</p>` : ''}
+      </div></div><hr/>` : `${nomeCliente ? `<p style="font-size:12px;font-weight:bold;color:#166534;margin:0 0 8px 0">Cliente: ${nomeCliente}</p>` : ''}`}
+    <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap;font-size:11px">
       <span><b>Superficie:</b> ${mqNum.toLocaleString('it-IT')} m²</span>
       <span><b>Terreno:</b> ${terrenoLabel}</span>
       <span><b>Mulch:</b> ${mulchLabel}</span>
       <span><b>Miscuglio:</b> ${miscuglio}</span>
-      <span><b>N. botti:</b> ${nBotti}</span>
-      <span><b>Giornate noleggio:</b> ${nGiorni}</span>
+      <span><b>Botti:</b> ${bottiEffettive} (teoriche: ${nBottiTeoriche})</span>
+      <span><b>Noleggio:</b> ${fasciaLabel}</span>
     </div>
     <table>
-      <thead><tr><th>Voce</th><th>Quantità</th><th>Prezzo unit.</th><th>Imponibile</th><th>IVA %</th><th>IVA €</th><th>Totale</th></tr></thead>
+      <thead><tr><th>Voce</th><th>Quantità</th><th>€ unitario</th><th>Imponibile</th><th>IVA %</th><th>IVA €</th><th>Totale</th></tr></thead>
       <tbody>
-        ${rigaVoce(`Mulch ${mulchLabel} (${MULCH_TIPI[mulch]?.kg} kg/sacco)`, `${sacchiMulch} sacchi`, prezzoMulch, sub.mulch, iva.mulch, 22, voci.mulch)}
-        ${rigaVoce(`Sementi ${miscuglio} (10 kg/sacco)`, `${sacchiSementi} sacchi`, prezzi.sementi, sub.sementi, iva.sementi, 10, voci.sementi)}
-        ${rigaVoce('Algapark (tanica 5 kg)', `${tankAlga} taniche`, prezzi.algapark5, sub.algapark, iva.algapark, 4, voci.algapark)}
-        ${rigaVoce('Root Speed (tanica 5 kg)', `${tankRoot} taniche`, prezzi.rootspeed5, sub.rootspeed, iva.rootspeed, 4, voci.rootspeed)}
-        ${rigaVoce('Collante (busta 300 g)', `${busteCollante} buste`, prezzi.collante, sub.collante, iva.collante, 22, voci.collante && terreno==='pendenza_alta')}
-        ${rigaVoce('Noleggio macchina (giornata)', `${nGiorni} gg`, prezzi.noleggio, sub.noleggio, iva.noleggio, 22, voci.noleggio)}
+        ${rigaVoce(`Mulch ${mulchLabel} (${MULCH_TIPI[mulch]?.kg} kg/sacco)`, `${sacchiMulch} sacchi`, prezzoMulch, sub.mulch, 22, voci.mulch)}
+        ${rigaVoce(`Sementi ${miscuglio} (10 kg/sacco)`, `${sacchiSementi} sacchi`, prezzi.sementi, sub.sementi, 10, voci.sementi)}
+        ${rigaVoce('Algapark (tanica 5 kg)', `${tankAlga} taniche`, prezzi.algapark5, sub.algapark, 4, voci.algapark)}
+        ${rigaVoce('Root Speed (tanica 5 kg)', `${tankRoot} taniche`, prezzi.rootspeed5, sub.rootspeed, 4, voci.rootspeed)}
+        ${rigaVoce('Collante Green Tack (300 g)', `${busteCollante} buste`, prezzi.collante, sub.collante, 22, voci.collante)}
+        ${voci.noleggio ? rigaNoleggioStr : ''}
         <tr class="totale"><td colspan="3"><b>TOTALE</b></td>
           <td style="text-align:right"><b>€ ${fmt(totImponibile)}</b></td>
           <td></td>
@@ -1336,10 +1397,10 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
       </tbody>
     </table>
     <div class="riepilogo">
-      ${imp4>0?`<p style="margin:2px 0">Imponibile 4%: € ${fmt(imp4)} → IVA: € ${fmt(imp4*0.04)}</p>`:''}
-      ${imp10>0?`<p style="margin:2px 0">Imponibile 10%: € ${fmt(imp10)} → IVA: € ${fmt(imp10*0.10)}</p>`:''}
-      ${imp22>0?`<p style="margin:2px 0">Imponibile 22%: € ${fmt(imp22)} → IVA: € ${fmt(imp22*0.22)}</p>`:''}
-      <p style="margin:4px 0;font-size:13px"><b>Totale ivato: € ${fmt(totIvato)}</b>${costoMq>0?` &nbsp;·&nbsp; Costo/m²: € ${fmt(costoMq)}`:''}</p>
+      ${imp4  > 0 ? `<p style="margin:2px 0">Imponibile 4% (concimi): € ${fmt(imp4)} → IVA: € ${fmt(imp4*0.04)}</p>` : ''}
+      ${imp10 > 0 ? `<p style="margin:2px 0">Imponibile 10% (sementi): € ${fmt(imp10)} → IVA: € ${fmt(imp10*0.10)}</p>` : ''}
+      ${imp22 > 0 ? `<p style="margin:2px 0">Imponibile 22% (materiali/noleggio): € ${fmt(imp22)} → IVA: € ${fmt(imp22*0.22)}</p>` : ''}
+      <p style="margin:6px 0;font-size:13px"><b>Totale ivato: € ${fmt(totIvato)}</b>${costoMq > 0 ? ` &nbsp;·&nbsp; Costo/m²: € ${fmt(costoMq)}` : ''}</p>
     </div>
     <script>window.onload=()=>window.print();</script></body></html>`);
     w.document.close();
@@ -1347,18 +1408,42 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 
   return (
     <div className="space-y-4">
+
       {/* Header */}
       <div className="bg-green-700 text-white rounded-2xl p-4">
         <h2 className="font-bold text-lg">💦 Preventivo Idrosemina</h2>
         <p className="text-green-200 text-xs mt-1">Semina idraulica a proiezione — 1 botte ≈ 450 m²</p>
-        {nBotti > 0 && (
+        {nBottiTeoriche > 0 && (
           <div className="mt-2 flex gap-2 flex-wrap">
-            <span className="text-xs bg-green-600 text-white font-bold px-3 py-1 rounded-full">🛢 {nBotti} botti</span>
-            <span className="text-xs bg-green-600 text-white font-bold px-3 py-1 rounded-full">📅 {nGiorni} giornata{nGiorni>1?'e':''} noleggio</span>
-            {nGiorni > 1 && <span className="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1 rounded-full">⚠️ Lavoro su più giorni</span>}
+            <span className="text-xs bg-green-600 text-white font-bold px-3 py-1 rounded-full">🛢 {nBottiTeoriche} botti teoriche</span>
+            <span className="text-xs bg-green-600 text-white font-bold px-3 py-1 rounded-full">📅 {nGiorni} gg · {fasciaLabel}</span>
+            {nGiorni > 1 && !isOltre7 && <span className="text-xs bg-amber-400 text-amber-900 font-bold px-3 py-1 rounded-full">⚠️ Più giorni</span>}
+            {isOltre7 && <span className="text-xs bg-red-500 text-white font-bold px-3 py-1 rounded-full">⚠️ Oltre 7 giorni — prezzo su misura</span>}
           </div>
         )}
       </div>
+
+      {/* Botti effettive */}
+      {nBottiTeoriche > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Botti effettive</p>
+          <p className="text-xs text-gray-400 mb-2">Default = botti teoriche ({nBottiTeoriche}). Riduci per ottimizzare i materiali (max –15%).</p>
+          <div className="flex items-center gap-3">
+            <input type="number" step="0.5" min="0.5" value={bottiEffettiveRaw !== '' ? bottiEffettiveRaw : nBottiTeoriche}
+              onChange={e => setBottiEffettive(e.target.value)}
+              className="w-28 border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold text-center focus:outline-none focus:border-green-500" />
+            <span className="text-xs text-gray-500">botti (teoriche: {nBottiTeoriche} · {(mqNum/BOTTE_MQ).toFixed(2)} esatte)</span>
+            {bottiEffettiveRaw !== '' && bottiEffettive !== nBottiTeoriche && !doseTroppoRidotta && (
+              <span className="text-xs bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full">–{Math.round((1-bottiEffettive/nBottiTeoriche)*100)}%</span>
+            )}
+          </div>
+          {doseTroppoRidotta && (
+            <p className="mt-2 text-xs bg-red-50 text-red-700 font-semibold rounded-lg px-3 py-2">
+              ⚠️ Dose troppo ridotta — sotto il 15% consigliato. Rischio copertura insufficiente.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Tipo terreno */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
@@ -1367,10 +1452,8 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
           {[['piano','🌿 Piano'],['pendenza','⛰ Pendenza'],['pendenza_alta','🏔 Pendenza alta']].map(([v,l]) => (
             <button key={v} onClick={() => {
               setTerreno(v);
-              if (v === 'pendenza_alta') setVoci(prev => ({ ...prev, collante: true }));
-              else setVoci(prev => ({ ...prev, collante: false }));
-            }}
-              className={`flex-1 py-2 text-xs font-bold transition-colors ${terreno===v?'bg-green-700 text-white':'bg-white text-gray-600 hover:bg-green-50'}`}>{l}</button>
+              setVoci(prev => ({ ...prev, collante: v === 'pendenza_alta' }));
+            }} className={`flex-1 py-2 text-xs font-bold transition-colors ${terreno===v?'bg-green-700 text-white':'bg-white text-gray-600 hover:bg-green-50'}`}>{l}</button>
           ))}
         </div>
       </div>
@@ -1380,11 +1463,23 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo mulch (2 sacchi/botte)</p>
         <div className="space-y-2">
           {Object.entries(MULCH_TIPI).map(([k, m]) => (
-            <button key={k} onClick={() => setMulch(k)}
-              className={`w-full flex justify-between items-center px-3 py-2.5 rounded-xl border-2 text-left transition-colors ${mulch===k?'border-green-500 bg-green-50':'border-gray-200 hover:border-green-300'}`}>
-              <span className="font-bold text-sm text-gray-800">{m.label} <span className="font-normal text-gray-400 text-xs">({m.kg} kg/sacco)</span></span>
-              <span className="text-sm font-bold text-green-700">€ {prezzi[k].toFixed(2)}</span>
-            </button>
+            <div key={k} className={`flex justify-between items-center px-3 py-2.5 rounded-xl border-2 transition-colors ${mulch===k?'border-green-500 bg-green-50':'border-gray-200'}`}>
+              <button className="flex-1 text-left" onClick={() => setMulch(k)}>
+                <span className="font-bold text-sm text-gray-800">{m.label} </span>
+                <span className="text-gray-400 text-xs">({m.kg} kg/sacco)</span>
+              </button>
+              {mulch === k ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-gray-400">€</span>
+                  <input type="number" step="0.10" value={prezzoMulch}
+                    onChange={e => aggiornaMulch(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    className="w-16 text-sm font-bold text-right border border-green-300 rounded px-1 py-0.5 bg-white focus:outline-none focus:border-green-600" />
+                </div>
+              ) : (
+                <span className="text-sm font-bold text-gray-400">€ {(prezzi[k]||0).toFixed(2)}</span>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -1402,13 +1497,49 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
         </div>
       </div>
 
-      {/* Preventivo voci */}
-      {nBotti > 0 && (
+      {/* Noleggio — fascia automatica */}
+      {nBottiTeoriche > 0 && (
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Voci preventivo</p>
-          <p className="text-xs text-gray-400 mb-2">☑ attiva · prezzo modificabile inline</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Noleggio macchina</p>
+          <div className="bg-green-50 rounded-xl px-3 py-2 mb-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-semibold text-green-800">Fascia automatica: {fasciaLabel}</span>
+              {!isOltre7 && <span className="text-xs font-bold text-green-700">€ {tariffattaEffettiva.toFixed(2)}/gg</span>}
+            </div>
+            {!isOltre7 && <p className="text-xs text-green-600 mt-0.5">{nGiorni} gg × € {tariffattaEffettiva.toFixed(2)} = € {totaleNoleggio.toFixed(2)} imponibile</p>}
+          </div>
+          {isOltre7 && (
+            <div className="space-y-1">
+              <p className="text-xs text-amber-700 font-semibold">Oltre 7 giorni: inserisci il totale concordato</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">€</span>
+                <input type="number" step="10" value={noleggioLibero} onChange={e => setNoleggioLibero(e.target.value)}
+                  placeholder="es. 1200"
+                  className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-green-500" />
+                <span className="text-xs text-gray-400">imponibile 22%</span>
+              </div>
+            </div>
+          )}
+          {/* Tariffe di riferimento */}
+          <div className="mt-3 pt-2 border-t border-gray-100">
+            <p className="text-xs text-gray-400 font-bold mb-1">Tariffario di riferimento</p>
+            <div className="grid grid-cols-2 gap-1">
+              {[['½ gg (1 botte)','€ 195'],['1 giornata','€ 176'],['2–3 giorni','€ 158/gg'],['4–7 giorni','€ 150/gg'],['Oltre 7','Su misura']].map(([f,p]) => (
+                <div key={f} className="flex justify-between text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">
+                  <span>{f}</span><span className="font-semibold">{p}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-          {/* Intestazione colonne */}
+      {/* Preventivo voci */}
+      {nBottiTeoriche > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Voci preventivo</p>
+          <p className="text-xs text-gray-400 mb-3">☑ attiva · prezzi modificabili inline · calcolati su {bottiEffettive} botti effettive</p>
+
           <div className="grid grid-cols-12 text-xs text-gray-400 font-bold pb-1 border-b border-gray-200 mb-1">
             <span className="col-span-1"></span>
             <span className="col-span-5">Voce</span>
@@ -1423,7 +1554,8 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Mulch {MULCH_TIPI[mulch]?.label}<br/><span className="text-gray-400 font-normal">22% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiMulch} sac.</span>
-              <input type="number" step="0.10" value={prezzi[mulch]} onChange={e => setPrezzo(mulch, e.target.value)}
+              <input type="number" step="0.10" value={prezzoMulch}
+                onChange={e => aggiornaMulch(e.target.value)}
                 className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.mulch.toFixed(0)}</span>
             </div>
@@ -1435,7 +1567,8 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">{miscuglio} (10 kg)<br/><span className="text-gray-400 font-normal">10% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiSementi} sac.</span>
-              <input type="number" step="0.10" value={prezzi.sementi} onChange={e => setPrezzo('sementi', e.target.value)}
+              <input type="number" step="0.10" value={prezzi.sementi}
+                onChange={e => setPrezzo('sementi', e.target.value)}
                 className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.sementi.toFixed(0)}</span>
             </div>
@@ -1447,7 +1580,8 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Algapark 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{tankAlga} tan.</span>
-              <input type="number" step="0.10" value={prezzi.algapark5} onChange={e => setPrezzo('algapark5', e.target.value)}
+              <input type="number" step="0.10" value={prezzi.algapark5}
+                onChange={e => setPrezzo('algapark5', e.target.value)}
                 className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.algapark.toFixed(0)}</span>
             </div>
@@ -1459,19 +1593,21 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Root Speed 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{tankRoot} tan.</span>
-              <input type="number" step="0.10" value={prezzi.rootspeed5} onChange={e => setPrezzo('rootspeed5', e.target.value)}
+              <input type="number" step="0.10" value={prezzi.rootspeed5}
+                onChange={e => setPrezzo('rootspeed5', e.target.value)}
                 className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.rootspeed.toFixed(0)}</span>
             </div>
           </div>
 
-          {/* COLLANTE — sempre visibile, auto-attivato su pendenza alta */}
+          {/* COLLANTE */}
           <div className={rowStyle(voci.collante)}>
             <input type="checkbox" checked={voci.collante} onChange={() => toggleVoce('collante')} className="accent-green-600 flex-shrink-0" />
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
-              <span className="col-span-5 text-xs font-semibold text-gray-700">Collante 300g/botte<br/><span className="text-gray-400 font-normal">22% IVA · facoltativo</span></span>
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Collante 300g/botte<br/><span className="text-gray-400 font-normal">22% IVA{terreno==='pendenza_alta'?' · auto':' · facoltativo'}</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{busteCollante} bus.</span>
-              <input type="number" step="0.10" value={prezzi.collante} onChange={e => setPrezzo('collante', e.target.value)}
+              <input type="number" step="0.10" value={prezzi.collante}
+                onChange={e => setPrezzo('collante', e.target.value)}
                 className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.collante.toFixed(0)}</span>
             </div>
@@ -1481,10 +1617,9 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
           <div className={rowStyle(voci.noleggio)}>
             <input type="checkbox" checked={voci.noleggio} onChange={() => toggleVoce('noleggio')} className="accent-green-600 flex-shrink-0" />
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
-              <span className="col-span-5 text-xs font-semibold text-gray-700">Noleggio macchina<br/><span className="text-gray-400 font-normal">22% IVA · {nGiorni} gg</span></span>
-              <span className="col-span-2 text-xs text-center text-gray-500">{nGiorni} gg</span>
-              <input type="number" step="1" value={prezzi.noleggio} onChange={e => setPrezzo('noleggio', e.target.value)}
-                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <span className="col-span-5 text-xs font-semibold text-gray-700">Noleggio macchina<br/><span className="text-gray-400 font-normal">22% IVA · {fasciaLabel}</span></span>
+              <span className="col-span-2 text-xs text-center text-gray-500">{isOltre7 ? 'tot.' : `${nGiorni} gg`}</span>
+              <span className="col-span-2 text-xs text-right text-gray-400">{isOltre7 ? '—' : `€ ${tariffattaEffettiva.toFixed(0)}`}</span>
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.noleggio.toFixed(0)}</span>
             </div>
           </div>
@@ -1492,13 +1627,13 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
       )}
 
       {/* Riepilogo totali */}
-      {nBotti > 0 && totImponibile > 0 && (
+      {nBottiTeoriche > 0 && totImponibile > 0 && (
         <div className="bg-green-50 rounded-2xl p-4 border border-green-200">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Riepilogo IVA</p>
           <div className="space-y-1 text-xs">
-            {imp4  > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 4% (concimi)</span><span className="font-semibold">€ {imp4.toFixed(2)} + € {(imp4*0.04).toFixed(2)}</span></div>}
-            {imp10 > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 10% (sementi)</span><span className="font-semibold">€ {imp10.toFixed(2)} + € {(imp10*0.10).toFixed(2)}</span></div>}
-            {imp22 > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 22% (materiali/noleggio)</span><span className="font-semibold">€ {imp22.toFixed(2)} + € {(imp22*0.22).toFixed(2)}</span></div>}
+            {imp4  > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 4% (concimi)</span><span className="font-semibold">€ {imp4.toFixed(2)} + IVA € {(imp4*0.04).toFixed(2)}</span></div>}
+            {imp10 > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 10% (sementi)</span><span className="font-semibold">€ {imp10.toFixed(2)} + IVA € {(imp10*0.10).toFixed(2)}</span></div>}
+            {imp22 > 0 && <div className="flex justify-between"><span className="text-gray-600">Imponibile 22% (materiali/noleggio)</span><span className="font-semibold">€ {imp22.toFixed(2)} + IVA € {(imp22*0.22).toFixed(2)}</span></div>}
           </div>
           <div className="mt-3 pt-3 border-t border-green-200 space-y-1">
             <div className="flex justify-between text-sm"><span className="text-gray-600">Totale imponibile</span><span className="font-bold">€ {totImponibile.toFixed(2)}</span></div>
@@ -1511,15 +1646,14 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
         </div>
       )}
 
-      {/* Pulsante PDF */}
-      {nBotti > 0 && totImponibile > 0 && (
+      {/* PDF */}
+      {nBottiTeoriche > 0 && totImponibile > 0 && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-gray-200 cursor-pointer">
             <input type="checkbox" checked={includiIntestazione} onChange={e => setIncludiIntestazione(e.target.checked)} className="accent-green-600" />
             <span className="text-xs font-semibold text-gray-600">Includi intestazione OMPRA nel PDF</span>
           </label>
-          <button onClick={stampaPDF}
-            className="w-full py-3 rounded-2xl bg-green-700 text-white font-bold text-sm">
+          <button onClick={stampaPDF} className="w-full py-3 rounded-2xl bg-green-700 text-white font-bold text-sm">
             📄 PDF preventivo idrosemina
           </button>
         </div>

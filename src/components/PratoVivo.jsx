@@ -1253,7 +1253,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   const tariffattaAuto = (() => {
     if (nGiorni <= 0) return 0;
     if (nGiorni <= 0.5 || nBottiTeoriche <= 1) return 195; // mezza giornata
-    const fascia = TARIFFE_NOLEGGIO.slice().reverse().find(f => nGiorni <= f.maxGiorni);
+    const fascia = TARIFFE_NOLEGGIO.find(f => nGiorni <= f.maxGiorni);
     return fascia ? fascia.tariffa : 150;
   })();
 

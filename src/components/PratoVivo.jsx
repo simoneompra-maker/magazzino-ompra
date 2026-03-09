@@ -668,7 +668,7 @@ function Card({ title, children, colorClass = 'border-green-100' }) {
 }
 
 // ─── Generatore PDF ───────────────────────────────────────────
-function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente }) {
+function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione = true }) {
   const w = window.open('', '_blank');
   const oggi = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
   const mqLabel = mq ? `${parseFloat(mq).toLocaleString('it-IT')} m²` : '—';
@@ -792,6 +792,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
     .footer-bar{display:flex;justify-content:space-between;margin-top:8px;font-size:9px;color:#9ca3af}
     @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.page{padding:8mm 10mm}}
   </style></head><body><div class="page">
+    ${includiIntestazione ? `
     <header>
       <img src="${LOGO_BASE64}" alt="OMPRA Srl"/>
       <div class="azienda"><strong>${OMPRA.nome}</strong><br>${OMPRA.indirizzo}<br>Tel. ${OMPRA.tel} — ${OMPRA.email}</div>
@@ -808,7 +809,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       ${terreno ? `<div class="meta-item"><label>Terreno</label><span>${terreno === 'sabbioso' ? 'Sabbioso' : 'Normale'}</span></div>` : ''}
       ${colore ? `<div class="meta-item"><label>Colore prato</label><span>${colore === 'pallido' ? '🟡 Pallido' : '🟢 Intenso'}</span></div>` : ''}
       ${tipo === 'piano_annuo' ? `<div class="meta-item"><label>Esteso 12m</label><span>${estendi12 ? 'Sì' : 'No'}</span></div>` : ''}
-    </div>
+    </div>` : ''}
     ${sezioneGranulari}
     ${sezioneLiquidi}
     ${sezioneSeme}
@@ -1069,7 +1070,7 @@ export default function PratoVivo() {
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={() => generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente })}
+            onStampa={(includi) => generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, includiIntestazione: includi })}
           />
         )}
 
@@ -1142,7 +1143,7 @@ export default function PratoVivo() {
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={() => generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente })}
+            onStampa={(includi) => generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, includiIntestazione: includi })}
           />
         )}
 
@@ -1157,8 +1158,9 @@ export default function PratoVivo() {
             tipoPrato={tipoPrato}
             mq={mq} nomeCliente={nomeCliente}
             piano={pianoAnnuo} bimOggLabel={bimOggLabel}
+            tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={() => generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente })}
+            onStampa={(includi) => generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi })}
           />
         )}
 
@@ -1177,7 +1179,7 @@ export default function PratoVivo() {
 
         {/* ── INTERVENTO SINGOLO ──────────────────────────────── */}
         {showSingolo && irrigazione && (
-          <InterventoSingolo linea={linea} setLinea={setLinea} mq={mq} irrigazione={irrigazione} />
+          <InterventoSingolo linea={linea} setLinea={setLinea} mq={mq} irrigazione={irrigazione} tipoCliente={tipoCliente} setTipoCliente={setTipoCliente} />
         )}
 
       </div>
@@ -1188,6 +1190,7 @@ export default function PratoVivo() {
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
 function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
+  const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
 
   const degradazioneLabel = { ritocchi: 'Ritocchi puntuali', medio: 'Diradamento medio', grave: 'Diradamento grave' };
@@ -1459,8 +1462,15 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
         </div>
       </div>
 
+      <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" checked={includiIntestazione} onChange={e => setIncludiIntestazione(e.target.checked)} className="w-4 h-4 accent-green-700 rounded" />
+          <span className="text-xs text-gray-600">Includi intestazione OMPRA nel PDF</span>
+        </label>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={onStampa} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+        <button onClick={() => onStampa(includiIntestazione)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
           📄 PDF piano
         </button>
         <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
@@ -1472,8 +1482,9 @@ function PianoSeminaRig({ tipo, livello, linea, setLinea, mq, granulari, liquidi
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, onPreventivo, onStampa }) {
+function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, onPreventivo, onStampa }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
+  const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
   return (
     <div className="space-y-4">
@@ -1597,13 +1608,32 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
               </div>
             )}
           </div>
-          <div className="px-4 pb-4 grid grid-cols-2 gap-3">
-            <button onClick={onStampa} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-              📄 PDF piano
-            </button>
-            <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-              💶 Genera preventivo
-            </button>
+          <div className="px-4 pb-4 space-y-3">
+            {/* Tipo cliente */}
+            <div className="bg-white rounded-2xl p-3 shadow-sm border border-green-100">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
+              <div className="flex rounded-xl overflow-hidden border border-gray-200">
+                {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Fidelizzato']].map(([v,l]) => (
+                  <button key={v} onClick={() => setTipoCliente(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${tipoCliente===v?'bg-green-700 text-white':'bg-white text-gray-600'}`}>{l}</button>
+                ))}
+              </div>
+            </div>
+            {/* Intestazione PDF */}
+            <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" checked={includiIntestazione} onChange={e => setIncludiIntestazione(e.target.checked)} className="w-4 h-4 accent-green-700 rounded" />
+                <span className="text-xs text-gray-600">Includi intestazione OMPRA nel PDF</span>
+              </label>
+            </div>
+            {/* Pulsanti */}
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => onStampa(includiIntestazione)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+                📄 PDF piano
+              </button>
+              <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
+                💶 Genera preventivo
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1612,7 +1642,7 @@ function PianoAnnuo({ livello, linea, setLinea, terreno, setTerreno, colore, set
 }
 
 // ─── Sotto-componente: Intervento Singolo ─────────────────────
-function InterventoSingolo({ linea, setLinea }) {
+function InterventoSingolo({ linea, setLinea, mq, irrigazione, tipoCliente, setTipoCliente }) {
   const [colore, setColore] = useState(null);
   const corrente = getBimestreCorrente();
   const bimestre = BIMESTRI.find(b => b.id === corrente);
@@ -1686,6 +1716,18 @@ function InterventoSingolo({ linea, setLinea }) {
                 <p className="text-sm text-blue-700 bg-blue-50 rounded-lg p-3">{suggerimento.note_mivena}</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Tipo cliente */}
+      {tipoCliente !== undefined && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
+          <div className="flex rounded-xl overflow-hidden border border-gray-200">
+            {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Fidelizzato']].map(([v,l]) => (
+              <button key={v} onClick={() => setTipoCliente(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${tipoCliente===v?'bg-green-700 text-white':'bg-white text-gray-600'}`}>{l}</button>
+            ))}
           </div>
         </div>
       )}

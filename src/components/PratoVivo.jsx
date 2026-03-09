@@ -746,7 +746,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <h2>Liquidi di Supporto</h2>
         <table>
           <tr><th>Prodotto</th><th>Dose</th><th>Frequenza</th></tr>
-          <tr><td>Humifitos</td><td>20 g/m²</td><td>${livello==='standard' ? 'Marzo, fine Maggio, fine Ott/Nov (×3)' : 'Ogni concimazione granulare (×4)'}</td></tr>
+          <tr><td>Humifitos</td><td>20 g/m²</td><td>${livello==='standard' ? 'Marzo, fine Maggio, fine Ott/Nov (×3)' : 'Ogni concimazione granulare (×5)'}</td></tr>
           <tr><td>Micosat F PG</td><td>1 g/m²</td><td>Con Humifitos</td></tr>
           ${livello === 'premium' ? `
           <tr><td>Algapark</td><td>1 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
@@ -1603,26 +1603,52 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                 </div>
               ))
               : piano.map((iv, i) => iv.saltato ? null : (
-                <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
-                  <div className="flex justify-between items-start">
-                    <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numero} — {iv.funzione}</p></div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.passato?'Passato':iv.bimestre_label}</span>
+                <React.Fragment key={i}>
+                  <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
+                    <div className="flex justify-between items-start">
+                      <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numero} — {iv.funzione}</p></div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.passato?'Passato':iv.bimestre_label}</span>
+                    </div>
+                    <p className="font-bold text-green-800 mt-1">{iv.dati.prodotto}{iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}</p>
+                    <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
+                    {iv.liquidiAttivi&&<p className="text-xs text-blue-600 mt-1">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</p>}
                   </div>
-                  <p className="font-bold text-green-800 mt-1">{iv.dati.prodotto}{iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}</p>
-                  <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
-                  {iv.liquidiAttivi&&<p className="text-xs text-blue-600 mt-1">💧 Humifitos + Micosat F abbinati</p>}
-                </div>
+                  {/* Ciclo estivo premium — inserito inline dopo intervento 3 */}
+                  {livello === 'premium' && iv.numero === 3 && (
+                    <div className="rounded-xl border border-sky-300 bg-sky-50 overflow-hidden">
+                      <div className="bg-sky-500 px-3 py-2 flex items-center justify-between">
+                        <p className="text-white font-bold text-xs">🌞 Ciclo estivo — ogni 20 gg</p>
+                        <span className="text-sky-100 text-xs">Fine Maggio → Fine Agosto</span>
+                      </div>
+                      <div className="p-3 space-y-1.5">
+                        {[
+                          { prodotto: 'Algapark', dose: '1 g/m²', note: null },
+                          { prodotto: 'Root Speed', dose: '20 g/m²', note: null },
+                          { prodotto: 'Wet Turf', dose: '1 g/m²', note: '3×/mese — iniziare entro 1ª metà Maggio' },
+                        ].map((p, j) => (
+                          <div key={j} className="flex justify-between items-start">
+                            <div>
+                              <p className="font-bold text-sky-800 text-xs">{p.prodotto}</p>
+                              {p.note && <p className="text-xs text-sky-600">{p.note}</p>}
+                            </div>
+                            <p className="font-bold text-sky-700 text-xs whitespace-nowrap ml-2">{p.dose}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
               ))
             }
-            {(livello === 'standard' || livello === 'premium') && terreno !== 'sabbioso' && (
+            {/* Biostimolanti — Humifitos/Micosat riassunto per Standard; Premium già inline */}
+            {livello === 'standard' && terreno !== 'sabbioso' && (
               <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
                 <div className="bg-blue-600 px-3 py-2">
-                  <p className="text-white font-bold text-xs">💧 {livello === 'premium' ? 'Biostimolanti completi' : 'Biostimolanti — momenti chiave'}</p>
+                  <p className="text-white font-bold text-xs">💧 Biostimolanti — momenti chiave (×3)</p>
                 </div>
                 <div className="p-3 space-y-2">
-                  {/* Humifitos + Micosat — comuni a standard e premium */}
                   {[
-                    { prodotto: 'Humifitos', dose: '20 g/m²', quando: livello === 'premium' ? 'A ogni concimazione granulare (×4)' : 'Interventi 1, 3, 5 (×3)' },
+                    { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Interventi 1, 3, 5 — dopo distribuzione granulare' },
                     { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)' },
                   ].map((p, i) => (
                     <div key={i} className="flex justify-between items-start">
@@ -1633,27 +1659,13 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                       <p className="font-bold text-blue-700 text-xs whitespace-nowrap ml-2">{p.dose}</p>
                     </div>
                   ))}
-                  {/* Premium: ciclo estivo */}
-                  {livello === 'premium' && (
-                    <>
-                      <div className="border-t border-blue-200 my-1" />
-                      <p className="text-xs font-bold text-blue-700 mb-1">Ciclo estivo ogni 20 gg (Mag→Ago)</p>
-                      {[
-                        { prodotto: 'Algapark', dose: '1 g/m²' },
-                        { prodotto: 'Root Speed', dose: '20 g/m²' },
-                        { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3×/mese da fine Maggio' },
-                      ].map((p, i) => (
-                        <div key={i} className="flex justify-between items-start">
-                          <div>
-                            <p className="font-bold text-blue-800 text-xs">{p.prodotto}</p>
-                            {p.quando && <p className="text-xs text-blue-600">{p.quando}</p>}
-                          </div>
-                          <p className="font-bold text-blue-700 text-xs whitespace-nowrap ml-2">{p.dose}</p>
-                        </div>
-                      ))}
-                    </>
-                  )}
                 </div>
+              </div>
+            )}
+            {/* Premium: Humifitos/Micosat riassunto (già visibile inline, ma riepilogo frequenza) */}
+            {livello === 'premium' && terreno !== 'sabbioso' && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                <p className="text-xs text-blue-700"><span className="font-bold">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</span> — abbinati a ogni intervento granulare (×5)</p>
               </div>
             )}
             {terreno === 'sabbioso' && liquidiSab && (
@@ -1678,7 +1690,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
             <div className="bg-white rounded-2xl p-3 shadow-sm border border-green-100">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
               <div className="flex rounded-xl overflow-hidden border border-gray-200">
-                {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Fidelizzato']].map(([v,l]) => (
+                {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Gdre. Fidelizzato']].map(([v,l]) => (
                   <button key={v} onClick={() => setTipoCliente(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${tipoCliente===v?'bg-green-700 text-white':'bg-white text-gray-600'}`}>{l}</button>
                 ))}
               </div>
@@ -1790,7 +1802,7 @@ function InterventoSingolo({ linea, setLinea, mq, irrigazione, tipoCliente, setT
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
           <div className="flex rounded-xl overflow-hidden border border-gray-200">
-            {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Fidelizzato']].map(([v,l]) => (
+            {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Gdre. Fidelizzato']].map(([v,l]) => (
               <button key={v} onClick={() => setTipoCliente(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${tipoCliente===v?'bg-green-700 text-white':'bg-white text-gray-600'}`}>{l}</button>
             ))}
           </div>

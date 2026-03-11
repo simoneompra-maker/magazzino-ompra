@@ -145,72 +145,8 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-3 bg-gray-50">
 
-      {/* Header */}
-      <div className="rounded-xl px-4 py-3 mb-3 text-white flex items-center justify-between" style={{ backgroundColor: '#006B3F' }}>
-        <div>
-          <h1 className="text-2xl font-bold leading-none">OMPRA</h1>
-          <p className="text-white/70 text-xs mt-0.5">Gestionale Magazzino</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs text-white/60">Giacenze</p>
-            <p className="text-lg font-bold leading-none">{inventoryCount}</p>
-          </div>
-          <div className="w-px h-8 bg-white/30" />
-          <div className="text-right">
-            <p className="text-xs text-white/60">Vendite</p>
-            <p className="text-lg font-bold leading-none">{salesCount}</p>
-          </div>
-          <div className="w-px h-8 bg-white/30" />
-          <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full">
-            {getSyncIcon()}
-          </div>
-          <button
-            onClick={onCambiaOperatore}
-            className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2 py-1 rounded-full text-xs text-white/80 active:scale-95 transition-transform"
-            title="Cambia operatore"
-          >
-            <UserCircle className="w-3.5 h-3.5" />
-            <span className="max-w-[60px] truncate">{operatoreLoggato}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Alert scorte sotto minimo — solo Admin, solo se attivo */}
-      {isAdmin && stockAlertsEnabled && stockAlerts.length > 0 && (
-        <button
-          onClick={() => { setShowStockAlerts(true); document.querySelector('#stock-alerts-section')?.scrollIntoView({ behavior: 'smooth' }); }}
-          className="mb-3 px-3 py-2 bg-red-50 border border-red-300 rounded-xl flex items-center gap-2"
-        >
-          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
-          <p className="font-semibold text-red-800 text-sm flex-1 text-left">
-            {stockAlerts.length} modell{stockAlerts.length > 1 ? 'i' : 'o'} sotto scorta minima
-          </p>
-          <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
-            {stockAlerts.length}
-          </span>
-        </button>
-      )}
-
-      {/* Alert commissioni pendenti */}
-      {pendingCommissioni > 0 && (
-        <button
-          onClick={() => onNavigate('archivio-commissioni')}
-          className="mb-3 px-3 py-2 bg-yellow-50 border border-yellow-300 rounded-xl flex items-center gap-2"
-        >
-          <Clock className="w-5 h-5 text-yellow-600 shrink-0" />
-          <p className="font-semibold text-yellow-800 text-sm flex-1 text-left">
-            {pendingCommissioni} commissione{pendingCommissioni > 1 ? 'i' : ''} in attesa
-          </p>
-          <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold">
-            {pendingCommissioni}
-          </span>
-        </button>
-      )}
-
-      {/* ── OPERAZIONI QUOTIDIANE ── */}
+      {/* ── OPERAZIONI ── */}
       <div className="mb-2">
         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Operazioni</p>
         <div className="grid grid-cols-2 gap-2">
@@ -222,7 +158,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <ShoppingCart className="w-6 h-6" />
             <div className="text-sm font-bold">VENDITA</div>
           </button>
-
           <button
             onClick={() => onNavigate('archivio-commissioni')}
             className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl text-white font-semibold shadow-md active:scale-95 transition-transform relative"
@@ -251,7 +186,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <Leaf className="w-6 h-6" />
             <div className="text-sm font-bold">PRATOVIVO</div>
           </button>
-
           <button
             onClick={() => onNavigate('noleggio')}
             className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
@@ -275,7 +209,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <PackagePlus className="w-5 h-5" />
             <div className="text-xs font-bold">CARICO</div>
           </button>
-
           <button
             onClick={() => onNavigate('giacenze')}
             className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-gray-700 text-white font-semibold shadow active:scale-95 transition-transform"
@@ -283,7 +216,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <Package className="w-5 h-5" />
             <div className="text-xs font-bold">GIACENZE</div>
           </button>
-
           <button
             onClick={() => onNavigate('storico')}
             className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-gray-600 text-white font-semibold shadow active:scale-95 transition-transform"
@@ -305,7 +237,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <ClipboardList className="w-5 h-5 text-gray-400" />
             <div className="text-xs font-bold">LISTINI</div>
           </button>
-
           <button
             onClick={() => onNavigate('politiche-commerciali')}
             className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-semibold shadow-sm active:scale-95 transition-transform"
@@ -313,7 +244,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <BookLock className="w-5 h-5 text-gray-400" />
             <div className="text-xs font-bold">POLITICHE</div>
           </button>
-
           {isAdmin && (
             <button
               onClick={() => onNavigate('rubrica-clienti')}
@@ -537,7 +467,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
               </div>
             </div>
           )}
-        </div>
       )}
 
       {/* Footer */}

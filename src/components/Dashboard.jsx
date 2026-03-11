@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -210,123 +210,120 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
         </button>
       )}
 
-      {/* Pulsanti principali */}
-      <div className="flex-1 flex flex-col gap-2">
-
-        {/* Riga 1: CARICO + VENDITA */}
+      {/* ── OPERAZIONI QUOTIDIANE ── */}
+      <div className="mb-2">
+        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Operazioni</p>
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => onNavigate('carico')}
-            className="flex flex-col items-center justify-center gap-1.5 p-4 rounded-xl text-white font-semibold shadow-md active:scale-95 transition-transform"
-            style={{ backgroundColor: '#006B3F' }}
-          >
-            <PackagePlus className="w-6 h-6" />
-            <div className="text-sm font-bold">CARICO MERCE</div>
-            <div className="text-xs opacity-70">Scansione OCR</div>
-          </button>
-
-          <button
             onClick={() => onNavigate('vendita')}
-            className="flex flex-col items-center justify-center gap-1.5 p-4 rounded-xl font-semibold shadow-md active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-md active:scale-95 transition-transform"
             style={{ backgroundColor: '#FFDD00', color: '#006B3F' }}
           >
             <ShoppingCart className="w-6 h-6" />
-            <div className="text-sm font-bold">NUOVA VENDITA</div>
-            <div className="text-xs opacity-70">Scarico e commissione</div>
+            <div className="text-sm font-bold">VENDITA</div>
+          </button>
+
+          <button
+            onClick={() => onNavigate('archivio-commissioni')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl text-white font-semibold shadow-md active:scale-95 transition-transform relative"
+            style={{ backgroundColor: '#004d2e' }}
+          >
+            <FileText className="w-6 h-6" />
+            <div className="text-sm font-bold">COMMISSIONI</div>
+            {pendingCommissioni > 0 && (
+              <span className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
+                {pendingCommissioni}
+              </span>
+            )}
           </button>
         </div>
+      </div>
 
-        {/* ARCHIVIO COMMISSIONI — pulsante principale di cassa */}
-        <button
-          onClick={() => onNavigate('archivio-commissioni')}
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-md active:scale-95 transition-transform text-white"
-          style={{ backgroundColor: '#004d2e' }}
-        >
-          <FileText className="w-6 h-6 shrink-0" />
-          <div className="flex-1 text-left">
-            <div className="text-base font-bold">ARCHIVIO COMMISSIONI</div>
-            <div className="text-xs opacity-70">Gestisci ordini in attesa</div>
-          </div>
-          {pendingCommissioni > 0 && (
-            <span className="bg-yellow-400 text-yellow-900 px-2.5 py-1 rounded-full text-sm font-bold shrink-0">
-              {pendingCommissioni}
-            </span>
-          )}
-        </button>
-
-        {/* Riga 3: GIACENZE + STORICO */}
+      {/* ── SERVIZI ── */}
+      <div className="mb-2">
+        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Servizi</p>
         <div className="grid grid-cols-2 gap-2">
           <button
+            onClick={() => onNavigate('pratovivo')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
+          >
+            <Leaf className="w-6 h-6" />
+            <div className="text-sm font-bold">PRATOVIVO</div>
+          </button>
+
+          <button
+            onClick={() => onNavigate('noleggio')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
+          >
+            <Key className="w-6 h-6" />
+            <div className="text-sm font-bold">NOLEGGIO</div>
+          </button>
+        </div>
+      </div>
+
+      {/* ── MAGAZZINO ── */}
+      <div className="mb-2">
+        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Magazzino</p>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => onNavigate('carico')}
+            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-white font-semibold shadow active:scale-95 transition-transform"
+            style={{ backgroundColor: '#006B3F' }}
+          >
+            <PackagePlus className="w-5 h-5" />
+            <div className="text-xs font-bold">CARICO</div>
+          </button>
+
+          <button
             onClick={() => onNavigate('giacenze')}
-            className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-gray-700 text-white font-semibold shadow active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-gray-700 text-white font-semibold shadow active:scale-95 transition-transform"
           >
             <Package className="w-5 h-5" />
-            <div className="text-sm">GIACENZE</div>
-            <div className="text-xs opacity-60">Magazzino</div>
+            <div className="text-xs font-bold">GIACENZE</div>
           </button>
 
           <button
             onClick={() => onNavigate('storico')}
-            className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-gray-600 text-white font-semibold shadow active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-gray-600 text-white font-semibold shadow active:scale-95 transition-transform"
           >
             <History className="w-5 h-5" />
-            <div className="text-sm">STORICO</div>
-            <div className="text-xs opacity-60">Vendite</div>
+            <div className="text-xs font-bold">STORICO</div>
           </button>
         </div>
+      </div>
 
-        {/* Riga 4: LISTINI + POLITICHE */}
-        <div className="grid grid-cols-2 gap-2">
+      {/* ── CONFIGURAZIONE ── */}
+      <div className="mb-2">
+        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Configurazione</p>
+        <div className={`grid gap-2 ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <button
             onClick={() => onNavigate('listini')}
-            className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold shadow-sm active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-semibold shadow-sm active:scale-95 transition-transform"
           >
-            <ClipboardList className="w-5 h-5 text-gray-500" />
-            <div className="text-sm">LISTINI</div>
-            <div className="text-xs opacity-60">Prezzi</div>
+            <ClipboardList className="w-5 h-5 text-gray-400" />
+            <div className="text-xs font-bold">LISTINI</div>
           </button>
 
           <button
             onClick={() => onNavigate('politiche-commerciali')}
-            className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold shadow-sm active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-semibold shadow-sm active:scale-95 transition-transform"
           >
-            <BookLock className="w-5 h-5 text-gray-500" />
-            <div className="text-sm">POLITICHE</div>
-            <div className="text-xs opacity-60">Scontistiche</div>
+            <BookLock className="w-5 h-5 text-gray-400" />
+            <div className="text-xs font-bold">POLITICHE</div>
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => onNavigate('rubrica-clienti')}
+              className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-600 font-semibold shadow-sm active:scale-95 transition-transform"
+            >
+              <Users className="w-5 h-5" />
+              <div className="text-xs font-bold">RUBRICA</div>
+            </button>
+          )}
         </div>
-
-        {/* PRATOVIVO */}
-        <button
-          onClick={() => onNavigate('pratovivo')}
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
-          style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
-        >
-          <Leaf className="w-6 h-6 shrink-0" />
-          <div className="flex-1 text-left">
-            <div className="text-base font-bold">PRATOVIVO</div>
-            <div className="text-xs opacity-60">Piani concimazione · Kit Express</div>
-          </div>
-          <span className="text-xs bg-green-700 text-white px-2 py-0.5 rounded-full font-medium">
-            NUOVO
-          </span>
-        </button>
-
-        {/* RUBRICA CLIENTI — solo Admin */}
-        {isAdmin && (
-          <button
-            onClick={() => onNavigate('rubrica-clienti')}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
-            style={{ borderColor: '#1d4ed8', backgroundColor: '#eff6ff', color: '#1d4ed8' }}
-          >
-            <Users className="w-6 h-6 shrink-0" />
-            <div className="flex-1 text-left">
-              <div className="text-base font-bold">RUBRICA CLIENTI</div>
-              <div className="text-xs opacity-60">Cerca · Gestisci · Rimuovi</div>
-            </div>
-          </button>
-        )}
-
       </div>
 
       {/* Sezione Admin */}

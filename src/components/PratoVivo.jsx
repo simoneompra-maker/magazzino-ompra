@@ -1229,7 +1229,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   // Tariffe noleggio per fascia giornaliera (€/giornata)
   const TARIFFE_NOLEGGIO = [
     { label: '½ giornata (≤ 450 m²)', maxGiorni: 0.5, tariffa: 195 },
-    { label: '1 giornata',             maxGiorni: 1,   tariffa: 176 },
+    { label: '1 giornata',             maxGiorni: 1,   tariffa: 195 },
     { label: '2–3 giorni',             maxGiorni: 3,   tariffa: 158 },
     { label: '4–7 giorni',             maxGiorni: 7,   tariffa: 150 },
   ];
@@ -1522,7 +1522,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
           <div className="mt-3 pt-2 border-t border-gray-100">
             <p className="text-xs text-gray-400 font-bold mb-1">Tariffario di riferimento</p>
             <div className="grid grid-cols-2 gap-1">
-              {[['½ gg (1 botte)','€ 195'],['1 giornata','€ 176'],['2–3 giorni','€ 158/gg'],['4–7 giorni','€ 150/gg'],['Oltre 7','Su misura']].map(([f,p]) => (
+              {[['½ gg (1 botte)','€ 195'],['1 giornata','€ 195'],['2–3 giorni','€ 158/gg'],['4–7 giorni','€ 150/gg'],['Oltre 7','Su misura']].map(([f,p]) => (
                 <div key={f} className="flex justify-between text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">
                   <span>{f}</span><span className="font-semibold">{p}</span>
                 </div>

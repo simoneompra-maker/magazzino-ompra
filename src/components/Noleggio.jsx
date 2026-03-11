@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, X, FileText, Upload, Check, AlertCircle, MessageCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, X, FileText, Upload, Check, AlertCircle, MessageCircle, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import { supabase } from '../store';
 
 // ─── Costanti ────────────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ function generaWhatsApp({ macchina, accessoriSelezionati, listino, fasciaScelta,
 }
 
 // ─── Componente principale ───────────────────────────────────────────────────
-export default function Noleggio() {
+export default function Noleggio({ onNavigate }) {
   const [macchine, setMacchine] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -368,9 +368,15 @@ export default function Noleggio() {
       {/* Header */}
       <div className="text-white p-4 shadow" style={{backgroundColor:GREEN}}>
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold">🔑 Noleggio</h1>
-            <p className="text-xs opacity-75">{macchine.filter(m=>!m.is_accessorio).length} macchine · {macchine.filter(m=>m.is_accessorio).length} accessori</p>
+          <div className="flex items-center gap-3">
+            <button onClick={() => onNavigate('home')}
+              className="bg-white/20 hover:bg-white/30 p-1.5 rounded-lg transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold">🔑 Noleggio</h1>
+              <p className="text-xs opacity-75">{macchine.filter(m=>!m.is_accessorio).length} macchine · {macchine.filter(m=>m.is_accessorio).length} accessori</p>
+            </div>
           </div>
           <button onClick={()=>{setTab('import');setMacchinaSelezionata(null);}}
             className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-xs font-medium">

@@ -1,11 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { Search, X, FileText, ChevronDown, ChevronUp, Upload, Check, AlertCircle, Printer, MessageCircle, Plus, Trash2, Edit2, Save } from 'lucide-react';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { Search, X, FileText, ChevronDown, ChevronUp, Upload, Check, AlertCircle, MessageCircle } from 'lucide-react';
+import { supabase } from '../store';
 
 // ─── Costanti ──────────────────────────────────────────────────────────────
 const FASCE = [

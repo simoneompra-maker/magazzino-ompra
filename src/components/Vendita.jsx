@@ -518,25 +518,52 @@ export default function Vendita({ onNavigate }) {
     setIsOmaggio(false);
     setShowOmaggioOption(false);
 
-    // Cerca prezzo suggerito in listini
+    // Cerca prezzo suggerito in listini (multi-tentativo)
     try {
       const brand = (product.brand || '').toUpperCase();
       const model = (product.model || '').trim();
       if (brand && model) {
-        const { data, error } = await supabase
-          .from('listini')
-          .select('prezzo_a, iva')
-          .ilike('brand', brand)
-          .ilike('descrizione', `%${model}%`)
-          .limit(1)
-          .maybeSingle();
+        let trovato = null;
 
-        if (!error && data && data.prezzo_a) {
-          const aliquota = data.iva || 22;
-          // Se toggle IVA compresa → prezzo_a as-is; se esclusa → scorporo
+        // Tentativo 1: codice ilike con modello senza spazi/trattini
+        // Es: "MS 251 C-BE" → "MS251CBE"
+        const modelNorm = model.replace(/[\s\-_.]/g, '').toUpperCase();
+        const { data: d1 } = await supabase
+          .from('listini').select('prezzo_a, iva')
+          .ilike('brand', brand).ilike('codice', `%${modelNorm}%`)
+          .limit(1).maybeSingle();
+        if (d1?.prezzo_a) trovato = d1;
+
+        // Tentativo 2: codice ilike con modello senza soli spazi
+        // Es: "HF2625 HME" → "HF2625HME"
+        if (!trovato) {
+          const modelNoSpace = model.replace(/\s+/g, '').toUpperCase();
+          const { data: d2 } = await supabase
+            .from('listini').select('prezzo_a, iva')
+            .ilike('brand', brand).ilike('codice', `%${modelNoSpace}%`)
+            .limit(1).maybeSingle();
+          if (d2?.prezzo_a) trovato = d2;
+        }
+
+        // Tentativo 3: descrizione con prime 2 parole significative del modello
+        // Es: "MS 251 C-BE" → cerca "%MS%251%"
+        if (!trovato) {
+          const parole = model.split(/[\s\-_]+/).filter(p => p.length >= 2);
+          if (parole.length > 0) {
+            const chiave = parole.slice(0, 2).join('%');
+            const { data: d3 } = await supabase
+              .from('listini').select('prezzo_a, iva')
+              .ilike('brand', brand).ilike('descrizione', `%${chiave}%`)
+              .limit(1).maybeSingle();
+            if (d3?.prezzo_a) trovato = d3;
+          }
+        }
+
+        if (trovato) {
+          const aliquota = trovato.iva || 22;
           const prezzoSuggerito = ivaCompresa
-            ? data.prezzo_a
-            : parseFloat((data.prezzo_a / (1 + aliquota / 100)).toFixed(2));
+            ? trovato.prezzo_a
+            : parseFloat((trovato.prezzo_a / (1 + aliquota / 100)).toFixed(2));
           setProductPrice(prezzoSuggerito.toString());
         }
       }

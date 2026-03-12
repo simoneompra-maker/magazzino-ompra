@@ -519,52 +519,69 @@ export default function Vendita({ onNavigate }) {
     setShowOmaggioOption(false);
 
     // Cerca prezzo suggerito in listini (multi-tentativo)
+    // Se risultato unico → pre-compila; se multipli → mostra dropdown scelta
+    setFasceProdottoListino([]);
     try {
       const brand = (product.brand || '').toUpperCase();
       const model = (product.model || '').trim();
       if (brand && model) {
-        let trovato = null;
+        let risultati = [];
+
+        // Helper: calcola prezzo in base al toggle IVA
+        const calcolaPrezzo = (prezzo_a, iva) => {
+          const aliquota = iva || 22;
+          return ivaCompresa
+            ? prezzo_a
+            : parseFloat((prezzo_a / (1 + aliquota / 100)).toFixed(2));
+        };
 
         // Tentativo 1: codice ilike con modello senza spazi/trattini
-        // Es: "MS 251 C-BE" → "MS251CBE"
+        // Es: "MS 251 C-BE" → "%MS251CBE%"
         const modelNorm = model.replace(/[\s\-_.]/g, '').toUpperCase();
         const { data: d1 } = await supabase
-          .from('listini').select('prezzo_a, iva')
+          .from('listini').select('prezzo_a, iva, descrizione, codice')
           .ilike('brand', brand).ilike('codice', `%${modelNorm}%`)
-          .limit(1).maybeSingle();
-        if (d1?.prezzo_a) trovato = d1;
+          .limit(8);
+        if (d1?.length) risultati = d1;
 
         // Tentativo 2: codice ilike con modello senza soli spazi
-        // Es: "HF2625 HME" → "HF2625HME"
-        if (!trovato) {
+        if (!risultati.length) {
           const modelNoSpace = model.replace(/\s+/g, '').toUpperCase();
           const { data: d2 } = await supabase
-            .from('listini').select('prezzo_a, iva')
+            .from('listini').select('prezzo_a, iva, descrizione, codice')
             .ilike('brand', brand).ilike('codice', `%${modelNoSpace}%`)
-            .limit(1).maybeSingle();
-          if (d2?.prezzo_a) trovato = d2;
+            .limit(8);
+          if (d2?.length) risultati = d2;
         }
 
-        // Tentativo 3: descrizione con prime 2 parole significative del modello
-        // Es: "MS 251 C-BE" → cerca "%MS%251%"
-        if (!trovato) {
+        // Tentativo 3: descrizione con prime 2 parole significative
+        // Es: "CS 2511 TES" → "%CS%2511%"
+        if (!risultati.length) {
           const parole = model.split(/[\s\-_]+/).filter(p => p.length >= 2);
           if (parole.length > 0) {
             const chiave = parole.slice(0, 2).join('%');
             const { data: d3 } = await supabase
-              .from('listini').select('prezzo_a, iva')
+              .from('listini').select('prezzo_a, iva, descrizione, codice')
               .ilike('brand', brand).ilike('descrizione', `%${chiave}%`)
-              .limit(1).maybeSingle();
-            if (d3?.prezzo_a) trovato = d3;
+              .limit(8);
+            if (d3?.length) risultati = d3;
           }
         }
 
-        if (trovato) {
-          const aliquota = trovato.iva || 22;
-          const prezzoSuggerito = ivaCompresa
-            ? trovato.prezzo_a
-            : parseFloat((trovato.prezzo_a / (1 + aliquota / 100)).toFixed(2));
-          setProductPrice(prezzoSuggerito.toString());
+        // Filtra solo quelli con prezzo
+        risultati = (risultati || []).filter(r => r.prezzo_a);
+
+        if (risultati.length === 1) {
+          // Risultato unico → pre-compila direttamente
+          setProductPrice(calcolaPrezzo(risultati[0].prezzo_a, risultati[0].iva).toString());
+        } else if (risultati.length > 1) {
+          // Più risultati → mostra dropdown selezione (riuso fasceProdottoListino)
+          setFasceProdottoListino(risultati.map(r => ({
+            label: r.descrizione || r.codice || 'Prodotto',
+            prezzo: calcolaPrezzo(r.prezzo_a, r.iva),
+            isPromo: false,
+            isMachineMatch: true  // flag per distinguere dal dropdown accessori
+          })));
         }
       }
     } catch (_) {
@@ -2308,8 +2325,30 @@ export default function Vendita({ onNavigate }) {
                           placeholder="Vuoto = parte del kit"
                           className="w-full p-2 border rounded-lg mt-1"
                           value={productPrice}
-                          onChange={(e) => setProductPrice(e.target.value)}
+                          onChange={(e) => { setProductPrice(e.target.value); setFasceProdottoListino([]); }}
                         />
+                        {/* Dropdown selezione se più prodotti trovati nel listino */}
+                        {fasceProdottoListino.length > 0 && (
+                          <div className="mt-2 border border-green-200 rounded-lg overflow-hidden bg-green-50">
+                            <p className="text-xs text-green-700 px-3 py-1.5 font-medium border-b border-green-200">
+                              🏷️ Trovati nel listino — seleziona:
+                            </p>
+                            {fasceProdottoListino.map((fascia, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => {
+                                  setProductPrice(fascia.prezzo.toString());
+                                  setFasceProdottoListino([]);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-green-100 active:bg-green-200 border-b border-green-100 last:border-0"
+                              >
+                                <span className="text-gray-700 truncate block">{fascia.label}</span>
+                                <span className="text-green-700 font-semibold">€ {fascia.prezzo.toFixed(2)}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="text-center">

@@ -76,7 +76,7 @@ export default function Vendita({ onNavigate }) {
   const [accessori, setAccessori] = useState([]);
   const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
   const [totaleManuale, setTotaleManuale] = useState('');
-  const [ivaCompresa, setIvaCompresa] = useState(false);
+  const [ivaCompresa, setIvaCompresa] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
   // Ricerca listino accessori

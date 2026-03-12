@@ -76,7 +76,7 @@ export default function Vendita({ onNavigate }) {
   const [accessori, setAccessori] = useState([]);
   const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
   const [totaleManuale, setTotaleManuale] = useState('');
-  const [ivaCompresa, setIvaCompresa] = useState(true);
+  const [ivaCompresa, setIvaCompresa] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   // Ricerca listino accessori
@@ -508,7 +508,7 @@ export default function Vendita({ onNavigate }) {
     }
   };
 
-  const handleSelectProduct = (product) => {
+  const handleSelectProduct = async (product) => {
     if (prodotti.find(p => p.serialNumber === product.serialNumber)) {
       alert('Prodotto già aggiunto!');
       return;
@@ -517,6 +517,32 @@ export default function Vendita({ onNavigate }) {
     setProductPrice('');
     setIsOmaggio(false);
     setShowOmaggioOption(false);
+
+    // Cerca prezzo suggerito in listini
+    try {
+      const brand = (product.brand || '').toUpperCase();
+      const model = (product.model || '').trim();
+      if (brand && model) {
+        const { data, error } = await supabase
+          .from('listini')
+          .select('prezzo_a, iva')
+          .ilike('brand', brand)
+          .ilike('descrizione', `%${model}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data && data.prezzo_a) {
+          const aliquota = data.iva || 22;
+          // Se toggle IVA compresa → prezzo_a as-is; se esclusa → scorporo
+          const prezzoSuggerito = ivaCompresa
+            ? data.prezzo_a
+            : parseFloat((data.prezzo_a / (1 + aliquota / 100)).toFixed(2));
+          setProductPrice(prezzoSuggerito.toString());
+        }
+      }
+    } catch (_) {
+      // Nessun prezzo trovato — campo rimane vuoto come prima
+    }
   };
 
   const handleConfirmProduct = () => {

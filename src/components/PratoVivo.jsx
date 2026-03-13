@@ -149,7 +149,7 @@ const BIMESTRI = [
 const INTERVENTI_ANNUI = [
   { numero: 1, funzione: 'Risveglio vegetativo', bimestre_target: 'mar_1', bimestre_label: '1ª metà Marzo',
     albatros: { prodotto: 'Green 7', npk: '15-5-6', dose_intenso: 35, dose_pallido: 35 },
-    mivena: { prodotto: 'AllRound / Universal Top', npk: '—', dose_intenso: 30, dose_pallido: 30 },
+    mivena: { prodotto: 'Universal Top', prodotto_migliore: 'AllRound', npk: '—', dose_intenso: 30, dose_pallido: 30 },
     liquidi_standard: true, liquidi_premium: true, note: 'Prima concimazione dell\'anno. Irrigare dopo.' },
   { numero: 2, funzione: 'Rinforzo primaverile', bimestre_target: 'apr_2', bimestre_label: 'Fine Aprile (+6 sett.)',
     albatros: { prodotto: 'Green 7', npk: '15-5-6', dose_intenso: 25, dose_pallido: 25 },
@@ -157,15 +157,15 @@ const INTERVENTI_ANNUI = [
     liquidi_standard: false, liquidi_premium: true, note: 'Solo Albatros. Verifica colore prima di applicare: se il prato è verde intenso mantieni 25 g/m², se è ancora pallido/giallino aumenta a 30 g/m².' },
   { numero: 3, funzione: 'Pre-estate / anti-stress', bimestre_target: 'mag_2', bimestre_label: 'Fine Maggio',
     albatros: { prodotto: 'Green 8', npk: '10-6-14', dose_intenso: 35, dose_pallido: 35 },
-    mivena: { prodotto: 'AllRound / Universal Top', npk: '—', dose_intenso: 25, dose_pallido: 25 },
+    mivena: { prodotto: 'Universal Top', prodotto_migliore: 'AllRound', npk: '—', dose_intenso: 25, dose_pallido: 25 },
     liquidi_standard: true, liquidi_premium: true, note: 'Alto K per resistenza al caldo.' },
   { numero: 4, funzione: 'Ripartenza post-estate', bimestre_target: 'set_1', bimestre_label: '1ª metà Settembre',
     albatros: { prodotto: 'Green 7', npk: '15-5-6', dose_intenso: 35, dose_pallido: 40 },
-    mivena: { prodotto: 'AllRound / Universal Top', npk: '—', dose_intenso: 20, dose_pallido: 25 },
+    mivena: { prodotto: 'Universal Top', prodotto_migliore: 'AllRound', npk: '—', dose_intenso: 20, dose_pallido: 25 },
     liquidi_standard: false, liquidi_premium: true, note: 'Dose aumentata se estate ha stressato.' },
   { numero: 5, funzione: 'Nutrimento invernale', bimestre_target: 'ott_2', bimestre_label: 'Fine Ott / 1ª Nov',
     albatros: { prodotto: 'Green 8', npk: '10-6-14', dose_intenso: 50, dose_pallido: 50 },
-    mivena: { prodotto: 'AllRound / Universal Top', npk: '—', dose_intenso: 20, dose_pallido: 25 },
+    mivena: { prodotto: 'Universal Top', prodotto_migliore: 'AllRound', npk: '—', dose_intenso: 20, dose_pallido: 25 },
     liquidi_standard: true, liquidi_premium: true, note: 'K alto per resistenza al gelo.' },
 ];
 
@@ -254,15 +254,17 @@ const SEMI_CONSIGLIATI = {
 };
 
 // Tipo cliente → listino applicato
-// 'privato': A | 'giardiniere': B | 'fidelizzato': C (dove disponibile, altrimenti B)
+// 'privato': A | 'giardiniere': B | 'fidelizzato': C | 'speciale': D (bancale + consegna diretta)
 const TIPO_CLIENTE_LABEL = {
   privato:     '🏠 Privato',
-  giardiniere: '🌿 Giardiniere',
+  giardiniere: '🌿 Giardiniere occasionale',
   fidelizzato: '⭐ Giardiniere fidelizzato',
+  speciale:    '🚚 Consegna diretta',
 };
 
 function getPrezzoCliente(skuEntry, tipoCliente) {
   if (!skuEntry) return null;
+  if (tipoCliente === 'speciale'    && skuEntry.prezzoD) return skuEntry.prezzoD;
   if (tipoCliente === 'fidelizzato' && skuEntry.prezzoC) return skuEntry.prezzoC;
   if (tipoCliente === 'giardiniere' && skuEntry.prezzoB) return skuEntry.prezzoB;
   return skuEntry.prezzoA;
@@ -304,7 +306,6 @@ const PRODOTTO_CONFIG = {
   'Humifitos':                { piccolo: 'Humifitos 5kg',      kgP: 5,  grande: 'Humifitos 25kg',    kgG: 25, soglia: 3 },
   'Pro Starter':              { piccolo: 'Pro Starter 20kg',   kgP: 20, grande: null },
   'AllRound':                 { piccolo: 'AllRound 20kg',      kgP: 20, grande: null },
-  'AllRound / Universal Top': { piccolo: 'AllRound 20kg',      kgP: 20, grande: null },
   'Pro Slow':                 { piccolo: 'Pro Slow 20kg',      kgP: 20, grande: null },
   'Universal Top':            { piccolo: 'Universal Top 20kg', kgP: 20, grande: null },
   'Algapark':                 { piccolo: 'Algapark 1kg',       kgP: 1,  grande: 'Algapark 5kg',     kgG: 5  },
@@ -595,7 +596,9 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
                   <div className="flex items-center gap-1 flex-wrap">
                     <span className="font-bold text-gray-900 text-sm">{r.prodotto}</span>
                     {r.isOttimale && <span className="text-xs bg-green-200 text-green-800 rounded-full px-1.5 py-0.5 font-bold">✓ Formato ottimale</span>}
-                    {r.listino === 'B' && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-bold">Listino B</span>}
+                    {r.listino === 'giardiniere' && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-bold">Listino B</span>}
+                    {r.listino === 'fidelizzato' && <span className="text-xs bg-purple-100 text-purple-700 rounded-full px-1.5 py-0.5 font-bold">Listino C</span>}
+                    {r.listino === 'speciale' && <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 font-bold">Listino D</span>}
                     {r.isSeme && <span className="text-xs bg-emerald-200 text-emerald-800 rounded-full px-1.5 py-0.5 font-bold">🌾 Seme IVA 10%</span>}
                   </div>
                   <span className="text-xs text-gray-500">{r.sku} · {r.formato}</span>
@@ -845,7 +848,7 @@ export default function PratoVivo() {
   const [liquidiSab, setLiquidiSab] = useState(true);
   const [degradazione, setDegradazione] = useState(null); // 'ritocchi' | 'medio' | 'grave'
   const [miscuglio, setMiscuglio] = useState(null);       // { id, nome, sku } selezionato
-  const [tipoCliente, setTipoCliente] = useState('privato'); // 'privato' | 'giardiniere' | 'fidelizzato'
+  const [tipoCliente, setTipoCliente] = useState('privato'); // 'privato' | 'giardiniere' | 'fidelizzato' | 'speciale'
   const [primoConcimeIncluso, setPrimoConcimeIncluso] = useState(false);
   const [showPreventivo, setShowPreventivo] = useState(false);
 
@@ -2108,7 +2111,7 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
               className={`w-full text-left rounded-xl px-3 py-2.5 border-2 text-sm font-semibold transition-colors ${tipoCliente === key ? 'border-green-600 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-green-300'}`}>
               {label}
               <span className="ml-2 text-xs font-normal text-gray-400">
-                {key === 'privato' ? 'Listino A' : key === 'giardiniere' ? 'Listino B' : 'Listino C (concimi) · B (semi)'}
+                {key === 'privato' ? 'Listino A' : key === 'giardiniere' ? 'Listino B' : key === 'fidelizzato' ? 'Listino C (concimi) · B (semi)' : 'Listino D — bancale'}
               </span>
             </button>
           ))}
@@ -2286,14 +2289,24 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                   <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
                 </div>
               ))
-              : piano.map((iv, i) => iv.saltato ? null : (
+              : (() => {
+                  let contatore = 0;
+                  return piano.map((iv, i) => iv.saltato ? null : (() => {
+                    contatore++;
+                    const numVisivo = contatore;
+                    return (
                 <Fragment key={i}>
                   <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
                     <div className="flex justify-between items-start">
-                      <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numero} — {iv.funzione}</p></div>
+                      <div><p className="text-xs font-bold text-gray-500">Intervento {numVisivo} — {iv.funzione}</p></div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.passato?'Passato':iv.bimestre_label}</span>
                     </div>
-                    <p className="font-bold text-green-800 mt-1">{iv.dati.prodotto}{iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <p className="font-bold text-green-800">{iv.dati.prodotto}{iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}</p>
+                      {linea === 'mivena' && iv.dati.prodotto_migliore && (
+                        <span className="text-xs bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">⭐ Scelta migliore: {iv.dati.prodotto_migliore}</span>
+                      )}
+                    </div>
                     <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
                     {iv.liquidiAttivi&&<p className="text-xs text-blue-600 mt-1">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</p>}
                   </div>
@@ -2322,7 +2335,10 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                     </div>
                   )}
                 </Fragment>
-              ))
+              );
+                  })());
+                });
+              })()
             }
             {/* Biostimolanti — Humifitos/Micosat riassunto per Standard; Premium già inline */}
             {livello === 'standard' && terreno !== 'sabbioso' && (
@@ -2332,7 +2348,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                 </div>
                 <div className="p-3 space-y-2">
                   {[
-                    { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Interventi 1, 3, 5 — dopo distribuzione granulare' },
+                    { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Concimazioni 1, 3, 4 (Mivena) — dopo distribuzione granulare' },
                     { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)' },
                   ].map((p, i) => (
                     <div key={i} className="flex justify-between items-start">
@@ -2373,9 +2389,11 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
             {/* Tipo cliente */}
             <div className="bg-white rounded-2xl p-3 shadow-sm border border-green-100">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
-              <div className="flex rounded-xl overflow-hidden border border-gray-200">
-                {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Gdre. Fidelizzato']].map(([v,l]) => (
-                  <button key={v} onClick={() => setTipoCliente(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${tipoCliente===v?'bg-green-700 text-white':'bg-white text-gray-600'}`}>{l}</button>
+              <div className="grid grid-cols-2 gap-1">
+                {[['privato','🏠 Privato','A'],['giardiniere','🌿 Occasionale','B'],['fidelizzato','⭐ Fidelizzato','C'],['speciale','🚚 Consegna dir.','D']].map(([v,l,lst]) => (
+                  <button key={v} onClick={() => setTipoCliente(v)} className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-colors ${tipoCliente===v?'border-green-600 bg-green-700 text-white':'border-gray-200 bg-white text-gray-600'}`}>
+                    {l}<span className="block text-xs font-normal opacity-70">Listino {lst}</span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -2416,13 +2434,13 @@ function InterventoSingolo({ linea, setLinea, mq, irrigazione, tipoCliente, setT
     if ((m === 9 && meta === 2) || (m === 10 && meta === 1)) return { tipo: 'attesa', emoji: '⏳', titolo: 'Prodotto ancora attivo', msg: 'Green 7 di settembre ancora attivo. Attendere fine ottobre per il concime invernale.' };
     if (m === 11 && meta === 2) return { tipo: 'attesa', emoji: '⏳', titolo: 'Green 8 invernale attivo', msg: 'Prossimo intervento: marzo. Nessun granulare necessario.' };
 
-    if (m === 3 && meta === 1) return { numero: 1, funzione: 'Risveglio vegetativo', albatros: 'Green 7', dose_a: 35, mivena: 'AllRound / Universal Top', dose_m: 30, note: 'Prima concimazione dell\'anno.' };
+    if (m === 3 && meta === 1) return { numero: 1, funzione: 'Risveglio vegetativo', albatros: 'Green 7', dose_a: 35, mivena: 'Universal Top', mivena_migliore: 'AllRound', dose_m: 30, note: 'Prima concimazione dell\'anno.' };
     if ((m === 4 && meta === 2) || (m === 5 && meta === 1)) return { numero: 2, funzione: 'Rinforzo primaverile', albatros: 'Green 7', dose_a: colore === 'pallido' ? 30 : 25, mivena: null, note_mivena: 'Linea Mivena: intervento non previsto — durata più lunga copre il periodo.' };
     if (m === 5 && meta === 2) return { numero: 3, funzione: 'Pre-estate', albatros: 'Green 8', dose_a: 35, mivena: 'AllRound', dose_m: 25 };
     if (m === 6 && meta === 1) return { numero: 3, funzione: 'Pre-estate (tardivo)', albatros: 'Green 8', dose_a: 35, mivena: 'AllRound', dose_m: 25, attenzione: 'Applicare di sera o con temp. <25°C.' };
     if ((m === 3 && meta === 2) || (m === 4 && meta === 1)) return { tipo: 'attesa', emoji: '⏳', titolo: 'Green 7 ancora attivo', msg: 'Attendere fine aprile (+6 settimane) per il rinforzo primaverile.' };
-    if (m === 9 && meta === 1) return { numero: 4, funzione: 'Ripartenza post-estate', albatros: 'Green 7', dose_a: colore === 'pallido' ? 40 : 35, mivena: 'AllRound / Universal Top', dose_m: colore === 'pallido' ? 25 : 20 };
-    if ((m === 10 && meta === 2) || (m === 11 && meta === 1)) return { numero: 5, funzione: 'Nutrimento invernale', albatros: 'Green 8', dose_a: 50, mivena: 'AllRound / Universal Top', dose_m: colore === 'pallido' ? 25 : 20 };
+    if (m === 9 && meta === 1) return { numero: 4, funzione: 'Ripartenza post-estate', albatros: 'Green 7', dose_a: colore === 'pallido' ? 40 : 35, mivena: 'Universal Top', mivena_migliore: 'AllRound', dose_m: colore === 'pallido' ? 25 : 20 };
+    if ((m === 10 && meta === 2) || (m === 11 && meta === 1)) return { numero: 5, funzione: 'Nutrimento invernale', albatros: 'Green 8', dose_a: 50, mivena: 'Universal Top', mivena_migliore: 'AllRound', dose_m: colore === 'pallido' ? 25 : 20 };
     return null;
   }, [bimestre, colore]);
 
@@ -2485,9 +2503,11 @@ function InterventoSingolo({ linea, setLinea, mq, irrigazione, tipoCliente, setT
       {tipoCliente !== undefined && (
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
-          <div className="flex rounded-xl overflow-hidden border border-gray-200">
-            {[['privato','🏠 Privato'],['giardiniere','🌿 Giardiniere'],['fidelizzato','⭐ Gdre. Fidelizzato']].map(([v,l]) => (
-              <button key={v} onClick={() => setTipoCliente(v)} className={`flex-1 py-2 text-xs font-bold transition-colors ${tipoCliente===v?'bg-green-700 text-white':'bg-white text-gray-600'}`}>{l}</button>
+          <div className="grid grid-cols-2 gap-1">
+            {[['privato','🏠 Privato','A'],['giardiniere','🌿 Occasionale','B'],['fidelizzato','⭐ Fidelizzato','C'],['speciale','🚚 Consegna dir.','D']].map(([v,l,lst]) => (
+              <button key={v} onClick={() => setTipoCliente(v)} className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-colors ${tipoCliente===v?'border-green-600 bg-green-700 text-white':'border-gray-200 bg-white text-gray-600'}`}>
+                {l}<span className="block text-xs font-normal opacity-70">Listino {lst}</span>
+              </button>
             ))}
           </div>
         </div>

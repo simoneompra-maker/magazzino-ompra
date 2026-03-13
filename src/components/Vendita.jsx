@@ -541,7 +541,7 @@ export default function Vendita({ onNavigate }) {
         const modelNorm = model.replace(/[\s\-_.]/g, '').toUpperCase();
         const { data: d1 } = await supabase
           .from('listini').select('prezzo_a, iva, descrizione, codice')
-          .ilike('brand', brand).ilike('codice', `%${modelNorm}%`)
+          .ilike('brand', `%${brand}%`).ilike('codice', `%${modelNorm}%`)
           .limit(8);
         if (d1?.length) risultati = d1;
 
@@ -550,7 +550,7 @@ export default function Vendita({ onNavigate }) {
           const modelNoSpace = model.replace(/\s+/g, '').toUpperCase();
           const { data: d2 } = await supabase
             .from('listini').select('prezzo_a, iva, descrizione, codice')
-            .ilike('brand', brand).ilike('codice', `%${modelNoSpace}%`)
+            .ilike('brand', `%${brand}%`).ilike('codice', `%${modelNoSpace}%`)
             .limit(8);
           if (d2?.length) risultati = d2;
         }
@@ -563,7 +563,7 @@ export default function Vendita({ onNavigate }) {
             const chiave = parole.slice(0, 2).join('%');
             const { data: d3 } = await supabase
               .from('listini').select('prezzo_a, iva, descrizione, codice')
-              .ilike('brand', brand).ilike('descrizione', `%${chiave}%`)
+              .ilike('brand', `%${brand}%`).ilike('descrizione', `%${chiave}%`)
               .limit(8);
             if (d3?.length) risultati = d3;
           }

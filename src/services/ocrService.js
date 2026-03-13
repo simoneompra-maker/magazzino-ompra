@@ -183,19 +183,18 @@ Estrai le seguenti informazioni se presenti:
 2. MODELLO (es: MSA 140, HRX 476, RMA 443.3, GCV170)
 3. MATRICOLA/SERIAL NUMBER - codice identificativo univoco
 
-IMPORTANTE PER MATRICOLA:
-- Le matricole possono contenere SIA LETTERE che NUMERI
-- Honda: formato tipico 4 lettere + 7 numeri (es: GCARK1234567, GJNAK5678901)
-- Stihl: principalmente numeri (es: 450163072)
-- Echo/Yamabiko: mix lettere e numeri
-- Grillo: puo avere prefissi con lettere
-- LEGGI TUTTI I CARATTERI, sia lettere che numeri, dall'inizio alla fine
-- NON omettere le lettere iniziali o finali
+REGOLE MATRICOLA PER MARCA:
+- Honda: ESATTAMENTE 4 lettere maiuscole + 6 o 7 cifre, nessuno spazio (es: GCARK1234567, GJNAK567890). NON aggiungere caratteri extra.
+- Stihl: MASSIMO 9 caratteri alfanumerici, di solito solo numeri (es: 450163072). Se vedi più di 9 caratteri, prendi solo i primi 9.
+- Echo/Yamabiko: mix lettere e numeri, max 12 caratteri
+- Grillo: può avere prefissi con lettere, max 12 caratteri
+- NESSUNO SPAZIO nella matricola
+- SOLO i caratteri del serial number, niente altro testo
 
 RISPONDI ESATTAMENTE IN QUESTO FORMATO (una riga per campo):
 BRAND: [marca trovata o SCONOSCIUTO]
 MODELLO: [modello trovato o SCONOSCIUTO]
-MATRICOLA: [matricola COMPLETA con tutte le lettere e numeri, o ILLEGGIBILE]
+MATRICOLA: [matricola COMPLETA senza spazi, o ILLEGGIBILE]
 
 Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
 `;
@@ -240,7 +239,21 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
       } else if (upperLine.startsWith('MATRICOLA:')) {
         const val = line.substring(10).trim();
         if (val && val.toUpperCase() !== 'ILLEGGIBILE') {
-          matricola = val.replace(/\s+/g, '').toUpperCase();
+          let m = val.replace(/\s+/g, '').toUpperCase();
+
+          // Validazione per marca
+          if (brand && brand.toUpperCase() === 'HONDA') {
+            // Honda: deve essere 4 lettere + 6-7 cifre
+            const hondaMatch = m.match(/^([A-Z]{4}\d{6,7})/);
+            if (hondaMatch) {
+              m = hondaMatch[1]; // prende solo la parte valida
+            }
+          } else if (brand && brand.toUpperCase() === 'STIHL') {
+            // Stihl: max 9 caratteri alfanumerici
+            m = m.replace(/[^A-Z0-9]/g, '').substring(0, 9);
+          }
+
+          matricola = m;
         }
       }
     }

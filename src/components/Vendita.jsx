@@ -101,6 +101,7 @@ export default function Vendita({ onNavigate }) {
   // Modifica prezzo prodotto (MODAL invece di prompt)
   const [editingProduct, setEditingProduct] = useState(null);
   const [editProductPrice, setEditProductPrice] = useState('');
+  const [editProductSerial, setEditProductSerial] = useState('');
   
   // Operatore
   const [operatore, setOperatore] = useState('');
@@ -970,6 +971,7 @@ export default function Vendita({ onNavigate }) {
   const handleOpenEditPrice = (prod) => {
     setEditingProduct(prod);
     setEditProductPrice(prod.prezzo !== null ? prod.prezzo.toString() : '');
+    setEditProductSerial(prod.serialNumber || '');
   };
   
   // Salva prezzo prodotto
@@ -977,13 +979,15 @@ export default function Vendita({ onNavigate }) {
     if (!editingProduct) return;
     
     const prezzo = editProductPrice.trim() === '' ? null : parseFloat(editProductPrice);
+    const serialNumber = editProductSerial.trim().toUpperCase() || null;
     
     setProdotti(prodotti.map(p => 
-      p.id === editingProduct.id ? { ...p, prezzo: prezzo, isOmaggio: false } : p
+      p.id === editingProduct.id ? { ...p, prezzo: prezzo, isOmaggio: false, serialNumber: serialNumber } : p
     ));
     
     setEditingProduct(null);
     setEditProductPrice('');
+    setEditProductSerial('');
   };
 
   // Cicla aliquota IVA prodotto: 22 → 10 → 4 → 22
@@ -2149,7 +2153,13 @@ export default function Vendita({ onNavigate }) {
             
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="font-semibold">{editingProduct.brand} {editingProduct.model}</p>
-              <p className="text-xs text-gray-500 font-mono">{editingProduct.serialNumber || 'In ordine'}</p>
+              <input
+                type="text"
+                className="text-xs font-mono border border-gray-300 rounded px-2 py-1 w-full mt-2 uppercase tracking-wider"
+                placeholder="Matricola (modifica se necessario)"
+                value={editProductSerial}
+                onChange={(e) => setEditProductSerial(e.target.value.toUpperCase())}
+              />
             </div>
             
             <div className="mb-4">

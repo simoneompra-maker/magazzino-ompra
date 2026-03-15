@@ -498,6 +498,8 @@ function calcolaPreventivoConKgSeme(inputItems, miscuglioSku, miscuglioKg, mq, t
 
 // ─── Schermata Preventivo ──────────────────────────────────────
 function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento, livello, linea, onStampa, onBack, onSalvaArchivio }) {
+  const [usaAllRound, setUsaAllRound] = useState(false);
+
   if (!preventivo) return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 text-center">
       <p className="text-gray-500 text-sm">Nessun dato per il preventivo. Completa prima il piano.</p>
@@ -505,7 +507,22 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
     </div>
   );
 
-  const { righe, totale } = preventivo;
+  // Sostituisce Universal Top con AllRound se l'utente sceglie la variante migliore
+  const righeEffettive = usaAllRound
+    ? preventivo.righe.map(r => {
+        if (r.sku === 'Universal Top 20kg') {
+          const entry = LISTINO['AllRound 20kg'];
+          if (!entry) return r;
+          const pu = getPrezzoCliente(entry, r.listino) || entry.prezzoA;
+          return { ...r, prodotto: r.prodotto.replace('Universal Top', 'AllRound'), sku: 'AllRound 20kg', prezzoUnit: pu, prezzoTot: +(pu * r.qtaConf).toFixed(2) };
+        }
+        return r;
+      })
+    : preventivo.righe;
+  const totaleEffettivo = righeEffettive.reduce((s, r) => s + (r.prezzoTot || 0), 0);
+
+  const { righe, totale } = { righe: righeEffettive, totale: totaleEffettivo };
+  const hasUniversalTop = preventivo.righe.some(r => r.sku === 'Universal Top 20kg');
   const hasListinoB = righe.some(r => r.listino === 'B');
   const hasUpgrade = righe.some(r => r.upgrade);
 
@@ -586,6 +603,20 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
             <span key={i} className="text-xs bg-green-50 text-green-800 rounded-full px-2 py-0.5 font-semibold">{t}</span>
           ))}
         </div>
+
+        {/* Toggle AllRound / Universal Top — visibile solo se il piano include Universal Top */}
+        {hasUniversalTop && (
+          <div className="mx-4 mb-2 rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-amber-800">Concime Mivena</p>
+              <p className="text-xs text-amber-700">{usaAllRound ? '⭐ AllRound — scelta migliore' : 'Universal Top — standard'}</p>
+            </div>
+            <button
+              onClick={() => setUsaAllRound(v => !v)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-colors ${usaAllRound ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-amber-700 border-amber-400'}`}
+            >{usaAllRound ? '⭐ AllRound attivo' : '→ Usa AllRound'}</button>
+          </div>
+        )}
 
         {/* Tabella prodotti */}
         <div className="p-4 space-y-2">
@@ -888,6 +919,7 @@ export default function PratoVivo() {
   };
 
   const goBack = () => {
+    if (activeTab === 'archivio') { setActiveTab('nuovo'); return; }
     if (showPreventivo) { setShowPreventivo(false); return; }
     if (tipoIntervento === 'piano_annuo') {
       if (estendi12 !== null) { setEstendi12(null); return; }
@@ -1084,14 +1116,14 @@ export default function PratoVivo() {
 
         {/* Header */}
         <div className="flex items-center justify-between pt-2">
-          {(tipoPrato || tipoIntervento) && (
+          {(tipoPrato || tipoIntervento || activeTab === 'archivio') && (
             <div className="flex flex-col gap-0.5">
               <button onClick={goBack} className="text-green-700 font-semibold text-sm">← Indietro</button>
               <button onClick={reset} className="text-gray-400 text-xs underline">Ricomincia</button>
             </div>
           )}
           <h1 className="text-xl font-bold text-green-900 flex-1 text-center">🌱 PratoVivo</h1>
-          {(tipoPrato || tipoIntervento) && <div className="w-20" />}
+          {(tipoPrato || tipoIntervento || activeTab === 'archivio') && <div className="w-20" />}
         </div>
 
         {/* Tab bar */}
@@ -1153,18 +1185,40 @@ export default function PratoVivo() {
                   <input value={nomeCliente} onChange={e => setNomeCliente(e.target.value)}
                     placeholder="Es. Mario Rossi"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500" />
+                  {(() => {
+                    const ultimo = localStorage.getItem('pratovivo_ultimo_cliente');
+                    return ultimo && ultimo !== nomeCliente ? (
+                      <button onClick={() => setNomeCliente(ultimo)}
+                        className="mt-1.5 text-xs text-green-700 hover:underline">
+                        ↩ {ultimo}
+                      </button>
+                    ) : null;
+                  })()}
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Superficie (m²)</label>
                   <input value={mq} onChange={e => setMq(e.target.value)} type="number" placeholder="Es. 150"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500" />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {(() => {
+                      const ultimo = localStorage.getItem('pratovivo_ultimo_mq');
+                      const preset = [100, 200, 300, 500, 1000, 2000];
+                      const tutti = ultimo && !preset.includes(Number(ultimo)) ? [Number(ultimo), ...preset] : preset;
+                      return tutti.map(v => (
+                        <button key={v} onClick={() => setMq(String(v))}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${Number(mq) === v ? 'bg-green-700 text-white border-green-700' : 'bg-white text-green-700 border-green-300 hover:bg-green-50'}`}>
+                          {v === Number(ultimo) && !preset.includes(v) ? `↩ ${v}` : `${v} m²`}
+                        </button>
+                      ));
+                    })()}
+                  </div>
                 </div>
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Impianto di irrigazione</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Btn emoji="🚿" label="Centralizzato" desc="Automatico / a settori" onClick={() => setIrrigazione('centralizzata')} selected={irrigazione==='centralizzata'} />
-                  <Btn emoji="🪣" label="A mano" desc="Manichetta / innaffiatoio" onClick={() => setIrrigazione('mano')} selected={irrigazione==='mano'} color="amber" />
+                  <Btn emoji="🚿" label="Centralizzato" desc="Automatico / a settori" onClick={() => { if (mq) localStorage.setItem('pratovivo_ultimo_mq', mq); if (nomeCliente) localStorage.setItem('pratovivo_ultimo_cliente', nomeCliente); setIrrigazione('centralizzata'); }} selected={irrigazione==='centralizzata'} />
+                  <Btn emoji="🪣" label="A mano" desc="Manichetta / innaffiatoio" onClick={() => { if (mq) localStorage.setItem('pratovivo_ultimo_mq', mq); if (nomeCliente) localStorage.setItem('pratovivo_ultimo_cliente', nomeCliente); setIrrigazione('mano'); }} selected={irrigazione==='mano'} color="amber" />
                 </div>
               </div>
             </div>

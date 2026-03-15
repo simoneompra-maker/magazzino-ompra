@@ -604,7 +604,7 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
         </div>
 
         {/* Toggle AllRound / Universal Top — visibile solo se il piano include Universal Top */}
-        {hasUniversalTop && (
+        {hasUniversalTop && livello !== 'base' && (
           <div className="mx-4 mb-2 rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold text-amber-800">Concime Mivena</p>
@@ -704,7 +704,7 @@ function Card({ title, children, colorClass = 'border-green-100' }) {
 }
 
 // ─── Generatore PDF ───────────────────────────────────────────
-function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione = true }) {
+function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione = true, usaAllRound = false }) {
   const w = window.open('', '_blank');
   const oggi = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
   const mqLabel = mq ? `${parseFloat(mq).toLocaleString('it-IT')} m²` : '—';
@@ -772,11 +772,13 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <h2>Interventi Granulari Programmati</h2>
         <table>
           <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th><th>Note</th></tr>
-          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => `<tr class="${iv.passato ? 'passato' : ''}">
+          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => {
+              const nomeProdotto = (usaAllRound && iv.dati?.prodotto_migliore) ? iv.dati.prodotto_migliore : iv.dati.prodotto;
+              return `<tr class="${iv.passato ? 'passato' : ''}">
             <td>${iv.numero}</td><td>${iv.bimestre_label}</td><td>${iv.funzione}</td>
-            <td><strong>${iv.dati.prodotto}</strong>${iv.dati.npk !== '—' ? ` <span class="npk">NPK ${iv.dati.npk}</span>`:''}
+            <td><strong>${nomeProdotto}</strong>${iv.dati.npk !== '—' ? ` <span class="npk">NPK ${iv.dati.npk}</span>`:''}
             </td><td>${iv.dose} g/m²${kg(iv.dose)}</td><td>${iv.note||''}</td>
-          </tr>`).join('')}
+          </tr>`;}).join('')}
         </table>`;
       sezioneLiquidi = `
         <h2>Liquidi di Supporto</h2>
@@ -1374,7 +1376,7 @@ export default function PratoVivo() {
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             usaAllRound={usaAllRound} setUsaAllRound={setUsaAllRound}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound }); salvaInBackground(); }}
           />
         )}
 
@@ -2413,7 +2415,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                           : iv.dati.prodotto}
                         {iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}
                       </p>
-                      {linea === 'mivena' && iv.dati.prodotto_migliore && (
+                      {linea === 'mivena' && iv.dati.prodotto_migliore && livello !== 'base' && (
                         <button onClick={() => setUsaAllRound(v => !v)}
                           className={`text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors ${usaAllRound ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'}`}>
                           {usaAllRound ? '⭐ AllRound attivo' : '⭐ Usa AllRound'}

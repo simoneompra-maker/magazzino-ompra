@@ -5,10 +5,10 @@
 import React, { useState } from 'react'
 
 const FUEL_BADGE = {
-  batteria: 'bg-green-950 text-green-300 border-green-800',
-  elettrico: 'bg-blue-950 text-blue-300 border-blue-800',
-  miscela:   'bg-amber-950 text-amber-300 border-amber-800',
-  benzina:   'bg-orange-950 text-orange-300 border-orange-800',
+  batteria: 'bg-green-100 text-green-700 border-green-300',
+  elettrico: 'bg-blue-100 text-blue-700 border-blue-300',
+  miscela:   'bg-amber-100 text-amber-700 border-amber-300',
+  benzina:   'bg-orange-100 text-orange-700 border-orange-300',
 }
 
 function fuelKey(alim) {
@@ -48,8 +48,8 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
     <div
       className={`rounded-xl border transition-all cursor-pointer select-none
         ${open
-          ? 'border-orange-600 bg-gray-900 shadow-lg shadow-orange-950/20'
-          : 'border-gray-800 bg-gray-900 hover:border-gray-600'}`}
+          ? 'border-orange-600 bg-white shadow-lg shadow-orange-200/60'
+          : 'border-gray-200 bg-white hover:border-gray-400'}`}
     >
       {/* ── Riga principale ─────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-3" onClick={() => setOpen(o => !o)}>
@@ -57,18 +57,18 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
         {/* Info sinistra */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm text-white">{p.modello}</span>
+            <span className="font-semibold text-base text-gray-900">{p.modello}</span>
             {promo && (
-              <span className="text-xs bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.5 rounded font-semibold">
+              <span className="text-xs bg-red-100 text-red-600 border border-red-300 px-1.5 py-0.5 rounded font-semibold">
                 🏷️ {promo.etichetta || 'PROMO'}
               </span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span className={`text-xs border px-2 py-0.5 rounded-full ${fc}`}>{p.alimentazione}</span>
-            <span className="text-xs border border-gray-700 text-gray-500 px-2 py-0.5 rounded-full">{p.categoria}</span>
+            <span className="text-xs border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">{p.categoria}</span>
             {p.batteria_cons && (
-              <span className="text-xs border border-green-900 text-green-400 px-2 py-0.5 rounded-full">
+              <span className="text-xs border border-green-300 text-green-700 px-2 py-0.5 rounded-full">
                 ⚡ {p.batteria_cons}
               </span>
             )}
@@ -78,16 +78,16 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
         {/* Prezzi */}
         <div className="flex flex-col items-end shrink-0">
           {prezzoBarrato && prezzoAttivo && (
-            <span className="text-xs text-gray-500 line-through">€ {fmt(prezzoBarrato, 0)}</span>
+            <span className="text-sm text-gray-500 line-through">€ {fmt(prezzoBarrato, 0)}</span>
           )}
           {prezzoAttivo ? (
-            <span className={`text-base font-bold ${promo ? 'text-red-400' : 'text-orange-400'}`}>
+            <span className={`text-lg font-bold ${promo ? 'text-red-600' : 'text-orange-400'}`}>
               € {fmt(prezzoAttivo)}
             </span>
           ) : soloListino ? (
-            <span className="text-base font-bold text-gray-400">€ {fmt(soloListino, 0)}</span>
+            <span className="text-lg font-bold text-gray-500">€ {fmt(soloListino, 0)}</span>
           ) : (
-            <span className="text-xs text-gray-600 italic">su richiesta</span>
+            <span className="text-xs text-gray-400 italic">su richiesta</span>
           )}
           {promo && (
             <span className="text-xs text-red-500">scade in {promo.giorni_rimasti}gg</span>
@@ -102,26 +102,26 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
             title={inCompare ? 'Rimuovi dal confronto' : compareDisabled ? 'Categoria diversa' : 'Aggiungi al confronto'}
             className={`shrink-0 text-xs px-2 py-1 rounded-lg border transition-colors
               ${inCompare
-                ? 'bg-orange-500 border-orange-500 text-white'
+                ? 'bg-orange-500 border-orange-500 text-gray-900'
                 : compareDisabled
-                  ? 'border-gray-800 text-gray-700 cursor-not-allowed'
-                  : 'border-gray-700 text-gray-500 hover:border-orange-500 hover:text-orange-400'
+                  ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'border-gray-200 text-gray-500 hover:border-orange-500 hover:text-orange-400'
               }`}
           >
             {inCompare ? '⚖️ ✓' : '⚖️'}
           </button>
         )}
-        <div className={`text-gray-600 text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</div>
+        <div className={`text-gray-400 text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</div>
       </div>
 
       {/* ── Dettaglio espanso ────────────────────────────── */}
       {open && (
-        <div className="px-4 pb-4 border-t border-gray-800 pt-3 space-y-3">
+        <div className="px-4 pb-4 border-t border-gray-200 pt-3 space-y-3">
 
           {/* Codice articolo */}
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <span className="text-gray-600">Codice</span>
-            <code className="bg-gray-800 border border-gray-700 px-2 py-0.5 rounded text-gray-200 font-mono tracking-wide">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="text-gray-400">Codice</span>
+            <code className="bg-gray-100 border border-gray-200 px-2 py-0.5 rounded text-gray-200 font-mono tracking-wide">
               {p.codice}
             </code>
           </div>
@@ -147,8 +147,8 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
                 return (
                   <span key={i} className={`text-xs px-2 py-0.5 rounded border ${
                     isNew
-                      ? 'bg-red-950 text-red-400 border-red-900 font-bold'
-                      : 'bg-gray-800 text-gray-400 border-gray-700'
+                      ? 'bg-red-950 text-red-600 border-red-900 font-bold'
+                      : 'bg-gray-100 text-gray-500 border-gray-200'
                   }`}>
                     {isNew ? '✨ Novità' : n}
                   </span>
@@ -162,7 +162,7 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
 
           {/* Badge promo scadenza */}
           {promo && (
-            <div className="bg-red-950 border border-red-900 rounded-lg px-3 py-2 text-xs text-red-300">
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-600">
               <div className="font-semibold mb-0.5">🏷️ {promo.etichetta || 'Promozione attiva'}</div>
               <div>Scade il {new Date(promo.al).toLocaleDateString('it-IT')} ({promo.giorni_rimasti} giorni)</div>
             </div>
@@ -170,15 +170,15 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
 
           {/* Riepilogo prezzi completo */}
           {(p.prezzo_listino || prezzoAttivo) && (
-            <div className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 space-y-1.5">
+            <div className="bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 space-y-1.5">
               {p.prezzo_listino && (
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Listino</span>
-                  <span className="text-gray-300">€ {fmt(p.prezzo_listino)}</span>
+                  <span className="text-gray-400">€ {fmt(p.prezzo_listino)}</span>
                 </div>
               )}
               {p.prezzo_vendita && !promo && (
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-sm">
                   <span className="text-gray-500">OMPRA</span>
                   <span className="font-semibold text-orange-400">€ {fmt(p.prezzo_vendita)}</span>
                 </div>
@@ -186,14 +186,14 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
               {promo && (
                 <>
                   {p.prezzo_vendita && (
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-sm">
                       <span className="text-gray-500">OMPRA</span>
-                      <span className="text-gray-400 line-through">€ {fmt(p.prezzo_vendita)}</span>
+                      <span className="text-gray-500 line-through">€ {fmt(p.prezzo_vendita)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-xs">
-                    <span className="text-red-400 font-semibold">🏷️ Promo</span>
-                    <span className="font-bold text-red-400">€ {fmt(promo.prezzo_promo)}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-red-600 font-semibold">🏷️ Promo</span>
+                    <span className="font-bold text-red-600">€ {fmt(promo.prezzo_promo)}</span>
                   </div>
                 </>
               )}
@@ -203,8 +203,8 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
           {/* Copia codice */}
           <button
             onClick={copyCode}
-            className="w-full flex items-center justify-center gap-2 text-xs bg-gray-800
-                       hover:bg-gray-700 border border-gray-700 rounded-lg py-2 transition-colors"
+            className="w-full flex items-center justify-center gap-2 text-xs bg-gray-100
+                       hover:bg-gray-200 border border-gray-200 rounded-lg py-2 transition-colors"
           >
             <span>{copied ? '✅' : '📋'}</span>
             {copied ? 'Codice copiato!' : `Copia: ${p.codice}`}
@@ -217,9 +217,9 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
 
 function Spec({ label, val, highlight }) {
   return (
-    <div className="bg-gray-800 border border-gray-700/50 rounded-lg px-2 py-1.5">
-      <div className="text-xs text-gray-500 mb-0.5">{label}</div>
-      <div className={`text-xs font-semibold ${highlight ? 'text-orange-400' : 'text-white'}`}>{val}</div>
+    <div className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5">
+      <div className="text-sm text-gray-500 mb-0.5">{label}</div>
+      <div className={`text-sm font-semibold ${highlight ? 'text-orange-400' : 'text-gray-900'}`}>{val}</div>
     </div>
   )
 }
@@ -228,7 +228,7 @@ function BatteryBlock({ data }) {
   if (!data?.batterie?.length) return null
   const maxVal = Math.max(...data.batterie.map(b => b.val || 0))
   return (
-    <div className="bg-gray-800 border border-gray-700/50 rounded-xl px-3 py-2.5">
+    <div className="bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5">
       <div className="text-xs text-gray-500 uppercase tracking-wider mb-2.5">
         ⚡ Autonomia — Serie {data.serie}
       </div>
@@ -240,19 +240,19 @@ function BatteryBlock({ data }) {
           return (
             <div key={i} className={`flex items-center gap-2 ${incompat ? 'opacity-25' : ''}`}>
               <div className="flex items-center gap-1 min-w-[96px]">
-                <span className={`text-xs font-semibold ${rec ? 'text-orange-400' : 'text-gray-300'}`}>
+                <span className={`text-xs font-semibold ${rec ? 'text-orange-400' : 'text-gray-400'}`}>
                   {b.nome}
                 </span>
                 {rec && <span className="text-orange-500 text-xs">★</span>}
               </div>
-              <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${rec ? 'bg-orange-500' : 'bg-gray-500'}`}
+                  className={`h-full rounded-full transition-all ${rec ? 'bg-orange-500' : 'bg-gray-400'}`}
                   style={{ width: pct + '%' }}
                 />
               </div>
               <span className={`text-xs min-w-[64px] text-right tabular-nums
-                ${rec ? 'text-orange-400 font-bold' : incompat ? 'text-gray-600' : 'text-gray-400'}`}>
+                ${rec ? 'text-orange-400 font-bold' : incompat ? 'text-gray-400' : 'text-gray-500'}`}>
                 {incompat ? '—' : b.val ? b.val + '\u00a0' + b.unita : '—'}
               </span>
             </div>

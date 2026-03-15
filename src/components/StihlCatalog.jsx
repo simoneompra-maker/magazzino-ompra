@@ -161,25 +161,25 @@ function CompareModal({ prodotti, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-gray-900 w-full sm:max-w-2xl sm:rounded-2xl border border-gray-700
+      <div className="bg-white w-full sm:max-w-2xl sm:rounded-2xl border border-gray-200
                       max-h-[92vh] flex flex-col overflow-hidden rounded-t-2xl">
 
         {/* Header modale */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 shrink-0">
-          <span className="text-sm font-semibold text-white">⚖️ Confronto prodotti</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
+          <span className="text-base font-bold text-gray-900">⚖️ Confronto prodotti</span>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl leading-none">✕</button>
         </div>
 
         {/* Intestazioni prodotti */}
-        <div className="grid border-b border-gray-800 shrink-0"
+        <div className="grid border-b border-gray-200 shrink-0"
              style={{ gridTemplateColumns: `140px repeat(${prodotti.length}, 1fr)` }}>
           <div className="p-2" />
           {prodotti.map((p, i) => (
-            <div key={i} className="p-2 border-l border-gray-800 text-center">
-              <div className="text-xs font-bold text-orange-400 leading-tight">{p.modello}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{p.categoria}</div>
+            <div key={i} className="p-2 border-l border-gray-200 text-center">
+              <div className="text-sm font-bold text-orange-600 leading-tight">{p.modello}</div>
+              <div className="text-sm text-gray-400 mt-0.5">{p.categoria}</div>
               {p.promo && (
-                <span className="text-xs bg-red-950 text-red-400 border border-red-900 px-1 rounded">
+                <span className="text-xs bg-red-100 text-red-600 border border-red-300 px-1 rounded">
                   🏷️ PROMO
                 </span>
               )}
@@ -193,11 +193,11 @@ function CompareModal({ prodotti, onClose }) {
             const bestIdx = getBestIdx(row)
             return (
               <div key={ri}
-                   className={`grid border-b border-gray-800/50 ${ri % 2 === 0 ? 'bg-gray-900' : 'bg-gray-850'}`}
+                   className={`grid border-b border-gray-200/50 ${ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
                    style={{ gridTemplateColumns: `140px repeat(${prodotti.length}, 1fr)` }}>
                 {/* Label */}
                 <div className="px-3 py-2.5 flex items-center">
-                  <span className="text-xs text-gray-500">{row.label}</span>
+                  <span className="text-sm text-gray-500">{row.label}</span>
                 </div>
                 {/* Valori */}
                 {prodotti.map((p, i) => {
@@ -205,18 +205,18 @@ function CompareModal({ prodotti, onClose }) {
                   const display = fmtVal(val, row)
                   const isBest = bestIdx === i
                   return (
-                    <div key={i} className="px-2 py-2.5 border-l border-gray-800 text-center flex items-center justify-center">
+                    <div key={i} className="px-2 py-2.5 border-l border-gray-200 text-center flex items-center justify-center">
                       {display != null ? (
-                        <span className={`text-xs font-semibold rounded px-1.5 py-0.5 ${
+                        <span className={`text-sm font-semibold rounded px-1.5 py-0.5 ${
                           isBest
                             ? 'bg-green-950 text-green-400 border border-green-800'
-                            : 'text-gray-300'
+                            : 'text-gray-400'
                         }`}>
                           {display}
                           {isBest && <span className="ml-1 text-green-500">★</span>}
                         </span>
                       ) : (
-                        <span className="text-gray-700 text-xs">—</span>
+                        <span className="text-gray-300 text-sm">—</span>
                       )}
                     </div>
                   )
@@ -227,15 +227,15 @@ function CompareModal({ prodotti, onClose }) {
         </div>
 
         {/* Footer prezzi */}
-        <div className="border-t border-gray-800 px-4 py-3 shrink-0">
+        <div className="border-t border-gray-200 px-4 py-3 shrink-0">
           <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${prodotti.length}, 1fr)` }}>
             {prodotti.map((p, i) => {
               const pv = prezzi[i]
               const pl = p.prezzo_listino
               return (
-                <div key={i} className="bg-gray-800 rounded-lg px-2 py-2 text-center">
+                <div key={i} className="bg-gray-50 border border-gray-100 rounded-lg px-2 py-2 text-center">
                   <div className="text-xs text-gray-500 truncate mb-0.5">{p.modello}</div>
-                  {pl && <div className="text-xs text-gray-600 line-through">€ {pl.toLocaleString('it-IT')}</div>}
+                  {pl && <div className="text-xs text-gray-400 line-through">€ {pl.toLocaleString('it-IT')}</div>}
                   {pv
                     ? <div className="text-sm font-bold text-orange-400">€ {Math.ceil(pv).toLocaleString('it-IT')}</div>
                     : <div className="text-xs text-gray-500 italic">su richiesta</div>
@@ -254,29 +254,29 @@ function CompareModal({ prodotti, onClose }) {
 function CompareBar({ selected, onRemove, onCompare, onClear }) {
   if (!selected.length) return null
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 border-t border-gray-700
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200
                     px-3 py-2 flex items-center gap-2 shadow-2xl">
       <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-none">
         {selected.map(p => (
           <div key={p.codice}
-               className="flex items-center gap-1.5 bg-gray-800 border border-gray-700
-                          rounded-lg px-2 py-1 shrink-0 text-xs">
+               className="flex items-center gap-1.5 bg-orange-50 border border-orange-200
+                          rounded-lg px-2 py-1 shrink-0 text-sm">
             <span className="text-orange-400 font-semibold max-w-[80px] truncate">{p.modello}</span>
             <button onClick={() => onRemove(p.codice)}
-                    className="text-gray-500 hover:text-red-400 leading-none">✕</button>
+                    className="text-gray-500 hover:text-red-600 leading-none">✕</button>
           </div>
         ))}
         {/* Slot vuoti */}
         {Array.from({ length: 3 - selected.length }).map((_, i) => (
           <div key={`empty-${i}`}
-               className="flex items-center border border-dashed border-gray-700
-                          rounded-lg px-3 py-1 shrink-0 text-xs text-gray-700">
+               className="flex items-center border border-dashed border-gray-200
+                          rounded-lg px-3 py-1 shrink-0 text-sm text-gray-300">
             + prodotto
           </div>
         ))}
       </div>
       <button onClick={onClear}
-              className="text-xs text-gray-500 hover:text-gray-300 px-2 shrink-0">
+              className="text-xs text-gray-500 hover:text-gray-400 px-2 shrink-0">
         ✕
       </button>
       <button
@@ -284,7 +284,7 @@ function CompareBar({ selected, onRemove, onCompare, onClear }) {
         disabled={selected.length < 2}
         className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors
                    disabled:opacity-40 disabled:cursor-not-allowed
-                   bg-orange-500 hover:bg-orange-400 text-white"
+                   bg-orange-500 hover:bg-orange-400 text-gray-900"
       >
         ⚖️ Confronta {selected.length > 0 ? `(${selected.length})` : ''}
       </button>
@@ -332,7 +332,7 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
   const promoCount = results.filter(p => p.promo).length
 
   if (loading) return (
-    <div className="flex flex-col h-screen bg-gray-950 text-white">
+    <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
       <Header onBack={onBack} isAdmin={isAdmin} />
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-gray-500">
@@ -344,44 +344,44 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
   )
 
   if (error) return (
-    <div className="flex flex-col h-screen bg-gray-950 text-white">
+    <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
       <Header onBack={onBack} isAdmin={isAdmin} />
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="bg-red-950 border border-red-800 rounded-xl p-4 text-center max-w-sm">
           <div className="text-2xl mb-2">⚠️</div>
-          <div className="text-red-300 text-sm font-semibold mb-1">Errore caricamento</div>
-          <div className="text-red-400/70 text-xs">{error.message}</div>
+          <div className="text-red-600 text-sm font-semibold mb-1">Errore caricamento</div>
+          <div className="text-red-600/70 text-xs">{error.message}</div>
         </div>
       </div>
     </div>
   )
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-white">
+    <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
 
       {/* Header */}
-      <div className="px-4 pt-safe-top pt-4 pb-2 border-b border-gray-800 space-y-3">
+      <div className="px-4 pt-safe-top pt-4 pb-2 border-b border-gray-200 space-y-3 bg-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {onBack && (
-              <button onClick={onBack} className="text-gray-400 hover:text-white text-xl leading-none">←</button>
+              <button onClick={onBack} className="text-gray-500 hover:text-gray-900 text-xl leading-none">←</button>
             )}
             <div className="flex items-center gap-2">
-              <div className="bg-orange-500 text-white text-xs font-black px-2.5 py-1 rounded tracking-wide">STIHL</div>
+              <div className="bg-orange-500 text-gray-900 text-xs font-black px-2.5 py-1 rounded tracking-wide">STIHL</div>
               <span className="text-gray-400 text-xs">2026</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {promoCount > 0 && (
-              <span className="text-xs bg-red-950 text-red-400 border border-red-900 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">
                 🏷️ {promoCount} promo
               </span>
             )}
-            <span className="text-gray-500 text-xs">{results.length} art.</span>
+            <span className="text-gray-400 text-sm">{results.length} art.</span>
             {isAdmin && (
               <button
                 onClick={() => setShowPromoAdmin(true)}
-                className="text-xs bg-gray-800 hover:bg-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-700"
+                className="text-xs bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg border border-gray-200"
                 title="Gestione promozioni"
               >🏷️</button>
             )}
@@ -396,13 +396,13 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
             placeholder="Modello, codice, categoria…"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-700 rounded-xl pl-9 pr-9 py-2.5 text-sm
-                       focus:outline-none focus:border-orange-500 placeholder-gray-600"
+            className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-9 py-2.5 text-sm
+                       focus:outline-none focus:border-orange-500 placeholder-gray-400 text-gray-900"
             autoComplete="off" autoCorrect="off" spellCheck="false"
           />
           {query && (
             <button onClick={() => setQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">✕</button>
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900">✕</button>
           )}
         </div>
 
@@ -412,8 +412,8 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
             <button key={alim} onClick={() => setAlimentazione(alim)}
                     className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
                       alimentazione === alim
-                        ? 'bg-orange-500 border-orange-500 text-white font-semibold'
-                        : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                        ? 'bg-orange-500 border-orange-500 text-gray-900 font-semibold'
+                        : 'border-gray-200 text-gray-500 hover:border-gray-400'
                     }`}>
               {alim === 'Batteria' ? '🔋' : alim === 'Elettrico' ? '⚡' : alim === 'Miscela' ? '⛽' : ''}
               {' '}{alim}
@@ -424,11 +424,11 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
         {/* Filtro categoria */}
         <div>
           <button onClick={() => setShowFiltri(f => !f)}
-                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors">
             <span>{showFiltri ? '▾' : '▸'}</span>
             Categoria
             {categoria !== 'Tutti' && (
-              <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs ml-1">{categoria}</span>
+              <span className="bg-orange-500 text-gray-900 px-1.5 py-0.5 rounded text-xs ml-1">{categoria}</span>
             )}
           </button>
           {showFiltri && (
@@ -437,8 +437,8 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
                 <button key={cat} onClick={() => { setCategoria(cat); setShowFiltri(false) }}
                         className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                           categoria === cat
-                            ? 'bg-orange-500 border-orange-500 text-white font-semibold'
-                            : 'border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
+                            ? 'bg-orange-500 border-orange-500 text-gray-900 font-semibold'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-400'
                         }`}>
                   {cat !== 'Tutti' ? (CAT_ICONS[cat] || '📦') + ' ' : ''}{cat}
                 </button>
@@ -451,9 +451,9 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
       {/* Lista prodotti — padding bottom per barra confronto */}
       <div className={`flex-1 overflow-y-auto px-3 py-2 space-y-2 ${compareList.length ? 'pb-20' : 'pb-4'}`}>
         {results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-gray-600">
+          <div className="flex flex-col items-center justify-center h-48 text-gray-400">
             <div className="text-4xl mb-3">🔍</div>
-            <p className="text-sm">Nessun articolo trovato</p>
+            <p className="text-base text-gray-500">Nessun articolo trovato</p>
             {(query || categoria !== 'Tutti' || alimentazione !== 'Tutti') && (
               <button onClick={() => { setQuery(''); setCategoria('Tutti'); setAlimentazione('Tutti') }}
                       className="mt-3 text-xs text-orange-500 hover:text-orange-400 underline">
@@ -500,11 +500,11 @@ export default function StihlCatalog({ isAdmin = false, onBack }) {
 
 function Header({ onBack, isAdmin }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-800">
+    <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 bg-white">
       {onBack && (
-        <button onClick={onBack} className="text-gray-400 hover:text-white text-xl leading-none">←</button>
+        <button onClick={onBack} className="text-gray-500 hover:text-gray-900 text-xl leading-none">←</button>
       )}
-      <div className="bg-orange-500 text-white text-xs font-black px-2.5 py-1 rounded tracking-wide">STIHL</div>
+      <div className="bg-orange-500 text-gray-900 text-xs font-black px-2.5 py-1 rounded tracking-wide">STIHL</div>
       <span className="text-gray-400 text-xs">2026</span>
     </div>
   )

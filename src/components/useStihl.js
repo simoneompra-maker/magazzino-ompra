@@ -3,7 +3,7 @@
 // /src/modules/stihl/useStihl.js
 // ============================================================
 import { useState, useEffect, useMemo } from 'react'
-import { supabase } from '../store'
+import { supabase } from '../../store'
 
 // ── Catalogo completo ────────────────────────────────────────
 export function useStihlCatalog() {

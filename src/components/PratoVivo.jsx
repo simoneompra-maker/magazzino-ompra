@@ -497,8 +497,7 @@ function calcolaPreventivoConKgSeme(inputItems, miscuglioSku, miscuglioKg, mq, t
 }
 
 // ─── Schermata Preventivo ──────────────────────────────────────
-function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento, livello, linea, onStampa, onBack, onSalvaArchivio }) {
-  const [usaAllRound, setUsaAllRound] = useState(false);
+function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento, livello, linea, onStampa, onBack, onSalvaArchivio, usaAllRound, setUsaAllRound }) {
 
   if (!preventivo) return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 text-center">
@@ -881,6 +880,7 @@ export default function PratoVivo() {
   const [miscuglio, setMiscuglio] = useState(null);       // { id, nome, sku } selezionato
   const [tipoCliente, setTipoCliente] = useState('privato'); // 'privato' | 'giardiniere' | 'fidelizzato' | 'speciale'
   const [primoConcimeIncluso, setPrimoConcimeIncluso] = useState(false);
+  const [usaAllRound, setUsaAllRound] = useState(false);
   const [showPreventivo, setShowPreventivo] = useState(false);
 
   // Archivio
@@ -1349,6 +1349,8 @@ export default function PratoVivo() {
             linea={linea}
             onBack={() => setShowPreventivo(false)}
             onSalvaArchivio={(totale) => salvaInBackground({ totale })}
+            usaAllRound={usaAllRound}
+            setUsaAllRound={setUsaAllRound}
           />
         )}
 
@@ -2360,9 +2362,17 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                       <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.passato?'Passato':iv.bimestre_label}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <p className="font-bold text-green-800">{iv.dati.prodotto}{iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}</p>
+                      <p className="font-bold text-green-800">
+                        {linea === 'mivena' && iv.dati.prodotto_migliore
+                          ? (usaAllRound ? iv.dati.prodotto_migliore : iv.dati.prodotto)
+                          : iv.dati.prodotto}
+                        {iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}
+                      </p>
                       {linea === 'mivena' && iv.dati.prodotto_migliore && (
-                        <span className="text-xs bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">⭐ Scelta migliore: {iv.dati.prodotto_migliore}</span>
+                        <button onClick={() => setUsaAllRound(v => !v)}
+                          className={`text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors ${usaAllRound ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'}`}>
+                          {usaAllRound ? '⭐ AllRound attivo' : '⭐ Usa AllRound'}
+                        </button>
                       )}
                     </div>
                     <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>

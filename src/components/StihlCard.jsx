@@ -33,6 +33,11 @@ export default function StihlCard({ prodotto: p }) {
   const extra = p.extra || {}
   const promo = p.promo
 
+  // Prezzo OMPRA: arrotondato all'euro superiore, non oltre listino
+  const prezzoVendita = p.prezzo_vendita
+    ? Math.min(Math.ceil(p.prezzo_vendita), p.prezzo_listino ?? Infinity)
+    : null
+
   function copyCode() {
     navigator.clipboard?.writeText(p.codice).then(() => {
       setCopied(true)
@@ -40,8 +45,8 @@ export default function StihlCard({ prodotto: p }) {
     })
   }
 
-  const prezzoAttivo   = promo ? promo.prezzo_promo : p.prezzo_vendita
-  const prezzoBarrato  = promo ? p.prezzo_vendita   : p.prezzo_listino
+  const prezzoAttivo   = promo ? promo.prezzo_promo : prezzoVendita
+  const prezzoBarrato  = promo ? prezzoVendita   : p.prezzo_listino
   const soloListino    = !prezzoAttivo && p.prezzo_listino
 
   return (
@@ -160,18 +165,18 @@ export default function StihlCard({ prodotto: p }) {
                   <span className="text-gray-300">€ {fmt(p.prezzo_listino)}</span>
                 </div>
               )}
-              {p.prezzo_vendita && !promo && (
+              {prezzoVendita && !promo && (
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">OMPRA</span>
-                  <span className="font-semibold text-orange-400">€ {fmt(p.prezzo_vendita)}</span>
+                  <span className="font-semibold text-orange-400">€ {fmt(prezzoVendita)}</span>
                 </div>
               )}
               {promo && (
                 <>
-                  {p.prezzo_vendita && (
+                  {prezzoVendita && (
                     <div className="flex justify-between text-xs">
                       <span className="text-gray-500">OMPRA</span>
-                      <span className="text-gray-400 line-through">€ {fmt(p.prezzo_vendita)}</span>
+                      <span className="text-gray-400 line-through">€ {fmt(prezzoVendita)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-xs">

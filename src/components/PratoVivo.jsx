@@ -2187,6 +2187,15 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
+  // Numerazione progressiva per Mivena (salta trattamento 2 che ha mivena:null)
+  const pianoConNumero = (() => {
+    let n = 0;
+    return (piano || []).map(iv => {
+      if (!iv.saltato) n++;
+      return { ...iv, numVisivo: iv.saltato ? null : n };
+    });
+  })();
+
   return (
     <div className="space-y-4">
       {/* Tab livello */}
@@ -2289,16 +2298,11 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                   <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
                 </div>
               ))
-              : (() => {
-                  let contatore = 0;
-                  return piano.map((iv, i) => iv.saltato ? null : (() => {
-                    contatore++;
-                    const numVisivo = contatore;
-                    return (
+              : pianoConNumero.map((iv, i) => iv.saltato ? null : (
                 <Fragment key={i}>
                   <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
                     <div className="flex justify-between items-start">
-                      <div><p className="text-xs font-bold text-gray-500">Intervento {numVisivo} — {iv.funzione}</p></div>
+                      <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numVisivo} — {iv.funzione}</p></div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.passato?'Passato':iv.bimestre_label}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -2335,10 +2339,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                     </div>
                   )}
                 </Fragment>
-              );
-                  })());
-                });
-              })()
+              ))
             }
             {/* Biostimolanti — Humifitos/Micosat riassunto per Standard; Premium già inline */}
             {livello === 'standard' && terreno !== 'sabbioso' && (

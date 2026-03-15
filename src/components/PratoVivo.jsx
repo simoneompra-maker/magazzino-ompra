@@ -992,8 +992,19 @@ export default function PratoVivo() {
 
   const handleRidownload = (record) => {
     const p = record.pdf_params || {};
+    const tipo = record.tipo_intervento;
+    // Ricalcola piano/pianoAnnuo dai parametri salvati
+    let pianoRicalcolato = null;
+    let pianoAnnuoRicalcolato = null;
+    if (tipo === 'piano_annuo') {
+      pianoAnnuoRicalcolato = calcolaPianoAnnuo(p.linea, p.terreno, p.livello, p.colore);
+    } else if (tipo === 'semina') {
+      pianoRicalcolato = PIANO_SEMINA[p.livello] || null;
+    } else if (tipo === 'rigenerazione') {
+      pianoRicalcolato = PIANO_RIGENERAZIONE[p.livello] || null;
+    }
     generaPDF({
-      tipo: record.tipo_intervento,
+      tipo,
       tipoPrato: p.tipoPrato,
       livello: p.livello,
       linea: p.linea,
@@ -1008,7 +1019,35 @@ export default function PratoVivo() {
       liquidiSab: p.liquidiSab,
       miscuglio: p.miscuglio,
       primoConcimeIncluso: p.primoConcimeIncluso,
+      piano: pianoRicalcolato,
+      pianoAnnuo: pianoAnnuoRicalcolato,
+      spelacchiato: null,
+      includiIntestazione: true,
     });
+  };
+
+  const handleRipristinaArchivio = (record) => {
+    const p = record.pdf_params || {};
+    // Ripristina tutti gli stati
+    setTipoPrato(p.tipoPrato || null);
+    setTipoIntervento(record.tipo_intervento || null);
+    setLivello(p.livello || 'standard');
+    setLinea(p.linea || null);
+    setMq(p.mq ? String(p.mq) : '');
+    setIrrigazione(p.irrigazione || null);
+    setTerreno(p.terreno || null);
+    setColore(p.colore || null);
+    setEstendi12(p.estendi12 ?? null);
+    setDegradazione(p.degradazione || null);
+    setLiquidiSab(p.liquidiSab ?? true);
+    setMiscuglio(p.miscuglio || null);
+    setNomeCliente(p.nomeCliente || '');
+    setTipoCliente(p.tipoCliente || 'privato');
+    setPrimoConcimeIncluso(p.primoConcimeIncluso || false);
+    setUsaAllRound(false);
+    setShowPreventivo(false);
+    // Torna al tab nuovo piano
+    setActiveTab('nuovo');
   };
 
   // Determina step corrente
@@ -1383,6 +1422,7 @@ export default function PratoVivo() {
             loading={archivioLoading}
             onElimina={handleElimina}
             onRidownload={handleRidownload}
+            onRipristina={handleRipristinaArchivio}
             onRefresh={loadArchivio}
           />
         )}
@@ -1393,7 +1433,7 @@ export default function PratoVivo() {
 }
 
 // ─── TAB ARCHIVIO ────────────────────────────────────────────
-function TabArchivio({ data, loading, onElimina, onRidownload, onRefresh }) {
+function TabArchivio({ data, loading, onElimina, onRidownload, onRipristina, onRefresh }) {
   const [expanded, setExpanded] = useState(null);
 
   const labelTipo = (t) => ({
@@ -1456,6 +1496,10 @@ function TabArchivio({ data, loading, onElimina, onRidownload, onRefresh }) {
               onClick={() => setExpanded(expanded === r.id ? null : r.id)}
               className="flex-1 bg-gray-100 text-gray-700 text-xs font-semibold py-2 rounded-lg hover:bg-gray-200 transition-colors"
             >👁 {expanded === r.id ? 'Chiudi' : 'Dettagli'}</button>
+            <button
+              onClick={() => onRipristina(r)}
+              className="flex-1 bg-blue-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >🔄 Riapri piano</button>
             <button
               onClick={() => onRidownload(r)}
               className="flex-1 bg-green-700 text-white text-xs font-semibold py-2 rounded-lg hover:bg-green-800 transition-colors"

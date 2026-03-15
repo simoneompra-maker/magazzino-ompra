@@ -24,7 +24,7 @@ function fmt(n, dec = 2) {
   return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec })
 }
 
-export default function StihlCard({ prodotto: p }) {
+export default function StihlCard({ prodotto: p, inCompare = false, compareDisabled = false, onCompareToggle }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -33,11 +33,6 @@ export default function StihlCard({ prodotto: p }) {
   const extra = p.extra || {}
   const promo = p.promo
 
-  // Prezzo OMPRA: arrotondato all'euro superiore, non oltre listino
-  const prezzoVendita = p.prezzo_vendita
-    ? Math.min(Math.ceil(p.prezzo_vendita), p.prezzo_listino ?? Infinity)
-    : null
-
   function copyCode() {
     navigator.clipboard?.writeText(p.codice).then(() => {
       setCopied(true)
@@ -45,8 +40,8 @@ export default function StihlCard({ prodotto: p }) {
     })
   }
 
-  const prezzoAttivo   = promo ? promo.prezzo_promo : prezzoVendita
-  const prezzoBarrato  = promo ? prezzoVendita   : p.prezzo_listino
+  const prezzoAttivo   = promo ? promo.prezzo_promo : p.prezzo_vendita
+  const prezzoBarrato  = promo ? p.prezzo_vendita   : p.prezzo_listino
   const soloListino    = !prezzoAttivo && p.prezzo_listino
 
   return (
@@ -99,6 +94,23 @@ export default function StihlCard({ prodotto: p }) {
           )}
         </div>
 
+        {/* Bottone confronto */}
+        {onCompareToggle && (
+          <button
+            onClick={e => { e.stopPropagation(); onCompareToggle() }}
+            disabled={compareDisabled}
+            title={inCompare ? 'Rimuovi dal confronto' : compareDisabled ? 'Categoria diversa' : 'Aggiungi al confronto'}
+            className={`shrink-0 text-xs px-2 py-1 rounded-lg border transition-colors
+              ${inCompare
+                ? 'bg-orange-500 border-orange-500 text-white'
+                : compareDisabled
+                  ? 'border-gray-800 text-gray-700 cursor-not-allowed'
+                  : 'border-gray-700 text-gray-500 hover:border-orange-500 hover:text-orange-400'
+              }`}
+          >
+            {inCompare ? '⚖️ ✓' : '⚖️'}
+          </button>
+        )}
         <div className={`text-gray-600 text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</div>
       </div>
 
@@ -165,18 +177,18 @@ export default function StihlCard({ prodotto: p }) {
                   <span className="text-gray-300">€ {fmt(p.prezzo_listino)}</span>
                 </div>
               )}
-              {prezzoVendita && !promo && (
+              {p.prezzo_vendita && !promo && (
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">OMPRA</span>
-                  <span className="font-semibold text-orange-400">€ {fmt(prezzoVendita)}</span>
+                  <span className="font-semibold text-orange-400">€ {fmt(p.prezzo_vendita)}</span>
                 </div>
               )}
               {promo && (
                 <>
-                  {prezzoVendita && (
+                  {p.prezzo_vendita && (
                     <div className="flex justify-between text-xs">
                       <span className="text-gray-500">OMPRA</span>
-                      <span className="text-gray-400 line-through">€ {fmt(prezzoVendita)}</span>
+                      <span className="text-gray-400 line-through">€ {fmt(p.prezzo_vendita)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-xs">

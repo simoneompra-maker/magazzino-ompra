@@ -1333,6 +1333,7 @@ export default function PratoVivo() {
             mq={mq} nomeCliente={nomeCliente}
             piano={pianoAnnuo} bimOggLabel={bimOggLabel}
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
+            usaAllRound={usaAllRound} setUsaAllRound={setUsaAllRound}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi }); salvaInBackground(); }}
           />
@@ -2239,7 +2240,7 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, onPreventivo, onStampa }) {
+function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 

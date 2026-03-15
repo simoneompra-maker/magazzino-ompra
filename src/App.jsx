@@ -13,7 +13,7 @@ import SelezionaOperatore from './components/SelezionaOperatore';
 import PratoVivo from './components/PratoVivo';
 import Noleggio from './components/Noleggio';
 import RubricaClienti from './components/RubricaClienti';
-import StihlCatalog from './modules/stihl/StihlCatalog';
+import StihlCatalog from './components/StihlCatalog';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 

@@ -241,14 +241,14 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
       {/* ── SERVIZI ── */}
       <div className="mb-2">
         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Servizi</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => onNavigate('pratovivo')}
             className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
             style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
           >
             <Leaf className="w-6 h-6" />
-            <div className="text-sm font-bold">PRATOVIVO</div>
+            <div className="text-xs font-bold">PRATOVIVO</div>
           </button>
           <button
             onClick={() => onNavigate('noleggio')}
@@ -256,7 +256,17 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
           >
             <Key className="w-6 h-6" />
-            <div className="text-sm font-bold">NOLEGGIO</div>
+            <div className="text-xs font-bold">NOLEGGIO</div>
+          </button>
+          <button
+            onClick={() => onNavigate('stihl')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#f97316', backgroundColor: '#fff7ed', color: '#ea580c' }}
+          >
+            <div className="text-xs font-black px-2 py-0.5 rounded tracking-widest text-white" style={{ backgroundColor: '#f97316' }}>
+              STIHL
+            </div>
+            <div className="text-xs font-bold">CATALOGO</div>
           </button>
         </div>
       </div>

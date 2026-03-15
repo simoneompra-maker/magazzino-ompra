@@ -13,6 +13,7 @@ import SelezionaOperatore from './components/SelezionaOperatore';
 import PratoVivo from './components/PratoVivo';
 import Noleggio from './components/Noleggio';
 import RubricaClienti from './components/RubricaClienti';
+import StihlCatalog from './modules/stihl/StihlCatalog';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
@@ -106,6 +107,8 @@ function App() {
         return <Noleggio onNavigate={navigate} />;
       case 'rubrica-clienti':
         return <RubricaClienti onBack={() => navigate('home')} />;
+      case 'stihl':
+        return <StihlCatalog isAdmin={true} onBack={() => navigate('home')} />;
       default:
         return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }

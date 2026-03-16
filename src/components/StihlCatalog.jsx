@@ -56,6 +56,7 @@ function getCompareGroup(categoria) {
 const COMPARE_ROWS = {
   motoseghe: [
     { key: 'alimentazione',   label: 'Alimentazione',   unit: '',    better: null,    from: 'root' },
+    { key: 'motore',          label: 'Motore',          unit: '',    better: null,    from: 'note' },
     { key: 'prezzo',          label: 'Prezzo OMPRA',    unit: '€',   better: 'lower', from: 'price' },
     { key: 'peso_kg',         label: 'Peso',            unit: 'kg',  better: 'lower', from: 'extra' },
     { key: 'potenza_kw',      label: 'Potenza',         unit: 'kW',  better: 'higher',from: 'extra' },
@@ -69,6 +70,7 @@ const COMPARE_ROWS = {
   ],
   tosasiepi: [
     { key: 'alimentazione',   label: 'Alimentazione',   unit: '',    better: null,    from: 'root' },
+    { key: 'motore',          label: 'Motore',          unit: '',    better: null,    from: 'note' },
     { key: 'prezzo',          label: 'Prezzo OMPRA',    unit: '€',   better: 'lower', from: 'price' },
     { key: 'peso_kg',         label: 'Peso',            unit: 'kg',  better: 'lower', from: 'extra' },
     { key: 'potenza_kw',      label: 'Potenza',         unit: 'kW',  better: 'higher',from: 'extra' },
@@ -102,13 +104,28 @@ const COMPARE_ROWS = {
     { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower',from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
-  _default: [
+  decespugliatori: [
     { key: 'alimentazione',   label: 'Alimentazione',   unit: '',    better: null,    from: 'root' },
+    { key: 'motore',          label: 'Motore',          unit: '',    better: null,    from: 'note' },
     { key: 'prezzo',          label: 'Prezzo OMPRA',    unit: '€',   better: 'lower', from: 'price' },
     { key: 'peso_kg',         label: 'Peso',            unit: 'kg',  better: 'lower', from: 'extra' },
     { key: 'potenza_kw',      label: 'Potenza',         unit: 'kW',  better: 'higher',from: 'extra' },
+    { key: 'potenza_cv',      label: 'Potenza',         unit: 'CV',  better: 'higher',from: 'extra' },
     { key: 'cilindrata_cc',   label: 'Cilindrata',      unit: 'cm³', better: null,    from: 'extra' },
-    { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower',from: 'extra' },
+    { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower', from: 'extra' },
+    { key: 'vibrazioni_sx',   label: 'Vibrazioni sx',   unit: 'm/s²',better: 'lower', from: 'extra' },
+    { key: 'vibrazioni_dx',   label: 'Vibrazioni dx',   unit: 'm/s²',better: 'lower', from: 'extra' },
+    { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
+  ],
+  _default: [
+    { key: 'alimentazione',   label: 'Alimentazione',   unit: '',    better: null,    from: 'root' },
+    { key: 'motore',          label: 'Motore',          unit: '',    better: null,    from: 'note' },
+    { key: 'prezzo',          label: 'Prezzo OMPRA',    unit: '€',   better: 'lower', from: 'price' },
+    { key: 'peso_kg',         label: 'Peso',            unit: 'kg',  better: 'lower', from: 'extra' },
+    { key: 'potenza_kw',      label: 'Potenza',         unit: 'kW',  better: 'higher',from: 'extra' },
+    { key: 'potenza_cv',      label: 'Potenza',         unit: 'CV',  better: 'higher',from: 'extra' },
+    { key: 'cilindrata_cc',   label: 'Cilindrata',      unit: 'cm³', better: null,    from: 'extra' },
+    { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower', from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
 }
@@ -117,10 +134,19 @@ function getRows(gruppo) {
   return COMPARE_ROWS[gruppo] || COMPARE_ROWS._default
 }
 
+function getMotoType(note) {
+  if (!note) return null
+  // Cerca token tipo motore nelle note (2-MIX, 4-MIX, EVC, OHV, ecc.)
+  const tokens = note.split(' · ').map(t => t.trim())
+  const motor = tokens.find(t => /mix|evc|ohv|2-mix|4-mix|injection/i.test(t))
+  return motor || null
+}
+
 function getVal(p, row, prezzoVendita) {
   if (row.from === 'root')  return p[row.key] ?? null
   if (row.from === 'price') return prezzoVendita
   if (row.from === 'extra') return (p.extra || {})[row.key] ?? null
+  if (row.from === 'note')  return getMotoType(p.note)
   return null
 }
 

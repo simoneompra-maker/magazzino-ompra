@@ -34,19 +34,19 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     return data.saleData?.prezzo || data.prezzo || 0;
   };
 
-  // Calcola totale accessori
+  // Calcola totale accessori (considera quantita)
   const getTotaleAccessori = () => {
     const accessori = isKit ? data.accessori : data.saleData?.accessori;
     if (!accessori || accessori.length === 0) return 0;
-    return accessori.reduce((sum, a) => sum + (parseFloat(a.prezzo) || 0), 0);
+    return accessori.reduce((sum, a) => {
+      const qta = parseFloat(a.quantita) || 1;
+      return sum + (parseFloat(a.prezzo) || 0) * qta;
+    }, 0);
   };
 
-  // Totale complessivo
+  // Totale complessivo — sempre ricalcolato dinamicamente
   const getTotale = () => {
-    if (isKit) {
-      return data.totale || (getTotaleProdotti() + getTotaleAccessori());
-    }
-    return data.saleData?.totale || data.totale || data.prezzo || 0;
+    return getTotaleProdotti() + getTotaleAccessori();
   };
 
   // Calcola da saldare
@@ -495,7 +495,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE', margin + 5, y + 9);
+    doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE (I.E.)', margin + 5, y + 9);
 
     doc.setFontSize(14);
     doc.text(`€ ${getTotale().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
@@ -836,7 +836,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE', margin + 5, y + 9);
+    doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE (I.E.)', margin + 5, y + 9);
 
     doc.setFontSize(14);
     doc.text(`€ ${getTotale().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
@@ -987,7 +987,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     }
     
     text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `💰 *TOTALE${data.ivaCompresa ? ' (I.C.)' : ''}: €${getTotale().toFixed(2)}*`;
+    text += `💰 *TOTALE${data.ivaCompresa ? ' (I.C.)' : ' (I.E.)'}: €${getTotale().toFixed(2)}*`;
     
     // Dettaglio IVA
     const { righe: righeIva, totImponibile, totIva } = getDettaglioIva();

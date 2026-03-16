@@ -66,6 +66,14 @@ const COMPARE_ROWS = {
     { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower',from: 'extra' },
     { key: 'vibrazioni_sx',   label: 'Vibrazioni sx',   unit: 'm/s²',better: 'lower',from: 'extra' },
     { key: 'vibrazioni_dx',   label: 'Vibrazioni dx',   unit: 'm/s²',better: 'lower',from: 'extra' },
+    { key: 'tipo_motore',       label: 'Tipo motore',         unit: '',    better: null,    from: 'extra' },
+    { key: 'smart_connector',    label: 'Smart Connector',     unit: '',    better: null,    from: 'extra' },
+    { key: 'antivibrante',       label: 'Antivibrante',        unit: '',    better: null,    from: 'extra' },
+    { key: 'ergostart',          label: 'ErgoStart',           unit: '',    better: null,    from: 'extra' },
+    { key: 'elastostart',        label: 'ElastoStart',         unit: '',    better: null,    from: 'extra' },
+    { key: 'm_tronic',           label: 'M-Tronic',            unit: '',    better: null,    from: 'extra' },
+    { key: 'pompa_olio_regolabile', label: 'Pompa olio regolabile', unit: '', better: null, from: 'extra' },
+    { key: 'valvola_decompressione', label: 'Valvola decompressione', unit: '', better: null, from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
   tosasiepi: [
@@ -78,6 +86,14 @@ const COMPARE_ROWS = {
     { key: 'colpi_min',       label: 'Colpi/min',       unit: 'min⁻¹',better:'higher',from: 'extra' },
     { key: 'passo_denti_mm',  label: 'Passo denti',     unit: 'mm',  better: 'higher',from: 'extra' },
     { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower',from: 'extra' },
+    { key: 'tipo_motore',       label: 'Tipo motore',         unit: '',    better: null,    from: 'extra' },
+    { key: 'smart_connector',    label: 'Smart Connector',     unit: '',    better: null,    from: 'extra' },
+    { key: 'antivibrante',       label: 'Antivibrante',        unit: '',    better: null,    from: 'extra' },
+    { key: 'ergostart',          label: 'ErgoStart',           unit: '',    better: null,    from: 'extra' },
+    { key: 'elastostart',        label: 'ElastoStart',         unit: '',    better: null,    from: 'extra' },
+    { key: 'm_tronic',           label: 'M-Tronic',            unit: '',    better: null,    from: 'extra' },
+    { key: 'pompa_olio_regolabile', label: 'Pompa olio regolabile', unit: '', better: null, from: 'extra' },
+    { key: 'valvola_decompressione', label: 'Valvola decompressione', unit: '', better: null, from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
   tosaerba: [
@@ -92,6 +108,14 @@ const COMPARE_ROWS = {
     { key: 'altezza_taglio_mm',   label: 'Range altezza',unit: 'mm', better: null,    from: 'extra' },
     { key: 'superfici_m2',    label: 'Superficie max',  unit: 'm²',  better: 'higher',from: 'extra' },
     { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower',from: 'extra' },
+    { key: 'tipo_motore',       label: 'Tipo motore',         unit: '',    better: null,    from: 'extra' },
+    { key: 'smart_connector',    label: 'Smart Connector',     unit: '',    better: null,    from: 'extra' },
+    { key: 'antivibrante',       label: 'Antivibrante',        unit: '',    better: null,    from: 'extra' },
+    { key: 'ergostart',          label: 'ErgoStart',           unit: '',    better: null,    from: 'extra' },
+    { key: 'elastostart',        label: 'ElastoStart',         unit: '',    better: null,    from: 'extra' },
+    { key: 'm_tronic',           label: 'M-Tronic',            unit: '',    better: null,    from: 'extra' },
+    { key: 'pompa_olio_regolabile', label: 'Pompa olio regolabile', unit: '', better: null, from: 'extra' },
+    { key: 'valvola_decompressione', label: 'Valvola decompressione', unit: '', better: null, from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
   kombi: [
@@ -102,6 +126,14 @@ const COMPARE_ROWS = {
     { key: 'cilindrata_cc',   label: 'Cilindrata',      unit: 'cm³', better: null,    from: 'extra' },
     { key: 'lunghezza_cm',    label: 'Lunghezza',       unit: 'cm',  better: null,    from: 'extra' },
     { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower',from: 'extra' },
+    { key: 'tipo_motore',       label: 'Tipo motore',         unit: '',    better: null,    from: 'extra' },
+    { key: 'smart_connector',    label: 'Smart Connector',     unit: '',    better: null,    from: 'extra' },
+    { key: 'antivibrante',       label: 'Antivibrante',        unit: '',    better: null,    from: 'extra' },
+    { key: 'ergostart',          label: 'ErgoStart',           unit: '',    better: null,    from: 'extra' },
+    { key: 'elastostart',        label: 'ElastoStart',         unit: '',    better: null,    from: 'extra' },
+    { key: 'm_tronic',           label: 'M-Tronic',            unit: '',    better: null,    from: 'extra' },
+    { key: 'pompa_olio_regolabile', label: 'Pompa olio regolabile', unit: '', better: null, from: 'extra' },
+    { key: 'valvola_decompressione', label: 'Valvola decompressione', unit: '', better: null, from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
   decespugliatori: [
@@ -115,6 +147,14 @@ const COMPARE_ROWS = {
     { key: 'db_pressione',    label: 'Rumorosità',      unit: 'dB(A)',better: 'lower', from: 'extra' },
     { key: 'vibrazioni_sx',   label: 'Vibrazioni sx',   unit: 'm/s²',better: 'lower', from: 'extra' },
     { key: 'vibrazioni_dx',   label: 'Vibrazioni dx',   unit: 'm/s²',better: 'lower', from: 'extra' },
+    { key: 'tipo_motore',       label: 'Tipo motore',         unit: '',    better: null,    from: 'extra' },
+    { key: 'smart_connector',    label: 'Smart Connector',     unit: '',    better: null,    from: 'extra' },
+    { key: 'antivibrante',       label: 'Antivibrante',        unit: '',    better: null,    from: 'extra' },
+    { key: 'ergostart',          label: 'ErgoStart',           unit: '',    better: null,    from: 'extra' },
+    { key: 'elastostart',        label: 'ElastoStart',         unit: '',    better: null,    from: 'extra' },
+    { key: 'm_tronic',           label: 'M-Tronic',            unit: '',    better: null,    from: 'extra' },
+    { key: 'pompa_olio_regolabile', label: 'Pompa olio regolabile', unit: '', better: null, from: 'extra' },
+    { key: 'valvola_decompressione', label: 'Valvola decompressione', unit: '', better: null, from: 'extra' },
     { key: 'batteria_cons',   label: 'Batteria cons.',  unit: '',    better: null,    from: 'root' },
   ],
   _default: [
@@ -150,9 +190,41 @@ function getVal(p, row, prezzoVendita) {
   return null
 }
 
+function fmtSC(val) {
+  if (!val) return null
+  const s = String(val).trim().toUpperCase()
+  if (s === 'SC 1' || s === 'SC1' || s === '1') return 'Smart Connector'
+  if (s === 'SC 2A' || s === 'SC2A' || s === '2A') return 'Smart Connector 2A'
+  if (s === 'SC 2' || s === 'SC2') return 'Smart Connector 2'
+  if (val === true) return 'Smart Connector'
+  return String(val)
+}
+
+const DOT_LABELS = {
+  tendicatena_laterale:      'Tendicatena laterale',
+  ergostart:                 'ErgoStart',
+  elastostart:               'ElastoStart',
+  m_tronic:                  'M-Tronic',
+  antivibrante:              'Antivibrante',
+  pompa_olio_regolabile:     'Pompa olio regolabile',
+  pompa_carburante_manuale:  'Pompa carburante manuale',
+  tappo_no_utensili:         'Tappo senza utensili',
+  valvola_decompressione:    'Valvola decompressione',
+  filtro_hd2:                'Filtro HD2',
+  impugnatura_morbida:       'Impugnatura morbida',
+  protezione_sovraccarico:   'Protezione sovraccarico',
+  constant_power:            'Constant Power',
+  injection:                 'Injection',
+  sensore_olio:              'Sensore olio',
+}
+
 function fmtVal(val, row) {
   if (val == null) return null
   if (row.key === 'prezzo') return `€ ${Math.ceil(val).toLocaleString('it-IT')}`
+  if (row.key === 'smart_connector') return fmtSC(val)
+  if (row.key === 'motore') return String(val)
+  // Dotazioni booleane
+  if (typeof val === 'boolean') return val ? '✓ Sì' : null
   if (typeof val === 'number') return `${val.toLocaleString('it-IT')} ${row.unit}`.trim()
   return String(val)
 }

@@ -24,6 +24,51 @@ function fmt(n, dec = 2) {
   return n.toLocaleString('it-IT', { minimumFractionDigits: dec, maximumFractionDigits: dec })
 }
 
+// Traduci codici tecnici in testo leggibile
+function fmtSC(val) {
+  if (!val) return null
+  const s = String(val).trim().toUpperCase()
+  if (s === 'SC 1' || s === 'SC1' || s === '1') return 'Smart Connector'
+  if (s === 'SC 2A' || s === 'SC2A' || s === '2A') return 'Smart Connector 2A'
+  if (s === 'SC 2' || s === 'SC2') return 'Smart Connector 2'
+  if (val === true) return 'Smart Connector'
+  return null
+}
+
+const DOTAZIONI_LABEL = {
+  tendicatena_laterale:      'Tendicatena laterale',
+  ergostart:                 'STIHL ErgoStart',
+  elastostart:               'STIHL ElastoStart',
+  m_tronic:                  'STIHL M-Tronic',
+  antivibrante:              'Sistema antivibrante',
+  pompa_olio_regolabile:     'Pompa olio regolabile',
+  pompa_carburante_manuale:  'Pompa carburante manuale',
+  tappo_no_utensili:         'Tappo senza utensili',
+  valvola_decompressione:    'Valvola decompressione',
+  filtro_hd2:                'Filtro HD2',
+  filtro_prefiltraggio:      'Filtro con prefiltraggio',
+  filtro_tessuto:            'Filtro in tessuto non tessuto',
+  impugnatura_morbida:       'Impugnatura morbida',
+  impugnatura_multifunzione: 'Impugnatura multifunzione',
+  impugnatura_circolare:     'Impugnatura circolare',
+  impugnatura_super_morbida: 'Impugnatura super morbida',
+  protezione_sovraccarico:   'Protezione sovraccarico',
+  constant_power:            'Constant Power',
+  injection:                 'STIHL Injection',
+  sensore_olio:              'Sensore olio',
+  modalita_eco:              'Modalità Eco',
+  mulching:                  'Funzione mulching',
+  altezza_centralizzata:     'Regolazione altezza centralizzata',
+  lama_flusso_ottimizzato:   'Lama a flusso ottimizzato',
+  lama_multifunzione:        'Lama multifunzione',
+  trazione_pedale:           'Trazione a 1 pedale',
+  frizione_elettromagnetica: 'Frizione elettromagnetica',
+  freno_frizione_lama:       'Freno-frizione-lama',
+  svuotamento_cesto_facile:  'Svuotamento cesto facilitato',
+  tracolla:                  'Tracolla inclusa',
+  impugnatura_circolare:     'Impugnatura circolare',
+}
+
 export default function StihlCard({ prodotto: p, inCompare = false, compareDisabled = false, onCompareToggle }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -125,7 +170,7 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
           {/* Codice articolo */}
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="text-gray-400">Codice</span>
-            <code className="bg-gray-100 border border-gray-200 px-2 py-0.5 rounded text-gray-200 font-mono tracking-wide">
+            <code className="bg-gray-100 border border-gray-200 px-2 py-0.5 rounded text-gray-800 font-mono tracking-wide">
               {p.codice}
             </code>
           </div>
@@ -133,13 +178,39 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
           {/* Specifiche tecniche */}
           {Object.keys(extra).length > 0 && (
             <div className="grid grid-cols-3 gap-1.5">
-              {extra.spranga_cm    && <Spec label="Spranga"    val={extra.spranga_cm + ' cm'} />}
-              {extra.lama_cm       && <Spec label="Lama"       val={extra.lama_cm + ' cm'} />}
-              {extra.asta_cm       && <Spec label="Asta"       val={extra.asta_cm + ' cm'} />}
-              {extra.cilindrata_cc && <Spec label="Cilindrata" val={extra.cilindrata_cc + ' cc'} />}
-              {extra.potenza_kw    && <Spec label="Potenza"    val={extra.potenza_kw + ' kW'} />}
-              {extra.peso_kg       && <Spec label="Peso"       val={extra.peso_kg + ' kg'} />}
-              {extra.durata_min    && <Spec label="Autonomia"  val={'≤ ' + extra.durata_min + ' min'} highlight />}
+              {extra.tipo_motore        && <Spec label="Motore"         val={extra.tipo_motore} />}
+              {extra.cilindrata_cc      && <Spec label="Cilindrata"     val={extra.cilindrata_cc + ' cm³'} />}
+              {extra.potenza_kw         && <Spec label="Potenza"        val={extra.potenza_kw + ' kW'} />}
+              {extra.potenza_cv         && <Spec label="Potenza"        val={extra.potenza_cv + ' CV'} />}
+              {extra.peso_kg            && <Spec label="Peso"           val={extra.peso_kg + ' kg'} />}
+              {extra.spranga_cm         && <Spec label="Spranga"        val={extra.spranga_cm + ' cm'} />}
+              {extra.lama_cm            && <Spec label="Lama"           val={extra.lama_cm + ' cm'} />}
+              {extra.asta_cm            && <Spec label="Asta"           val={extra.asta_cm + ' cm'} />}
+              {extra.larghezza_taglio_cm && <Spec label="Largh. taglio" val={extra.larghezza_taglio_cm + ' cm'} />}
+              {extra.cesto_l            && <Spec label="Cesto raccolta" val={extra.cesto_l + ' L'} />}
+              {extra.altezza_regolazioni && <Spec label="Pos. altezza"  val={extra.altezza_regolazioni + ' livelli'} />}
+              {extra.colpi_min          && <Spec label="Colpi/min"      val={extra.colpi_min.toLocaleString('it-IT')} />}
+              {extra.passo_denti_mm     && <Spec label="Passo denti"    val={extra.passo_denti_mm + ' mm'} />}
+              {extra.db_pressione       && <Spec label="Rumorosità"     val={extra.db_pressione + ' dB(A)'} />}
+              {extra.vibrazioni_sx      && <Spec label="Vibr. sinistra" val={extra.vibrazioni_sx + ' m/s²'} />}
+              {extra.vibrazioni_dx      && <Spec label="Vibr. destra"   val={extra.vibrazioni_dx + ' m/s²'} />}
+              {extra.superfici_m2       && <Spec label="Superficie max" val={extra.superfici_m2.toLocaleString('it-IT') + ' m²'} />}
+              {extra.durata_min         && <Spec label="Autonomia"      val={'≤ ' + extra.durata_min + ' min'} highlight />}
+            </div>
+          )}
+
+          {/* Dotazioni */}
+          {Object.keys(extra).some(k => DOTAZIONI_LABEL[k] && (extra[k] === true || fmtSC(extra.smart_connector))) && (
+            <div className="space-y-1.5">
+              <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Dotazioni di serie</div>
+              <div className="flex flex-wrap gap-1.5">
+                {extra.smart_connector && fmtSC(extra.smart_connector) && (
+                  <DotBadge label={fmtSC(extra.smart_connector)} highlight />
+                )}
+                {Object.entries(DOTAZIONI_LABEL).map(([key, label]) => (
+                  extra[key] === true ? <DotBadge key={key} label={label} /> : null
+                ))}
+              </div>
             </div>
           )}
 
@@ -216,6 +287,18 @@ export default function StihlCard({ prodotto: p, inCompare = false, compareDisab
         </div>
       )}
     </div>
+  )
+}
+
+function DotBadge({ label, highlight }) {
+  return (
+    <span className={`text-sm px-2.5 py-1 rounded-lg border font-medium
+      ${highlight
+        ? 'bg-orange-50 text-orange-700 border-orange-200'
+        : 'bg-green-50 text-green-800 border-green-200'
+      }`}>
+      ✓ {label}
+    </span>
   )
 }
 

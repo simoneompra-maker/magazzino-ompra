@@ -145,9 +145,9 @@ export function useStihlSearch(prodotti, promoMap) {
           if (modello.startsWith(t) || codice.includes(t)) return true
           // Categoria, alimentazione, batteria: match ovunque
           if (categoria.includes(t) || alim.includes(t) || battcons.includes(t)) return true
-          // Note: solo parola intera — "rm" NON trova "45cm RM" a meno che
-          // non sia all'inizio o preceduto da spazio
-          const wordRe = new RegExp('(?:^|\\s)' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+          // Note: solo parola intera su entrambi i lati
+          const esc = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          const wordRe = new RegExp('(?:^|\\s)' + esc + '(?:\\s|$)', 'i')
           return wordRe.test(note)
         })
       })

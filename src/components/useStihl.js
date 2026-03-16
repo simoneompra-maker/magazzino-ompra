@@ -133,23 +133,10 @@ export function useStihlSearch(prodotti, promoMap) {
     if (query.trim()) {
       const tokens = query.toLowerCase().replace(/[-_]/g, ' ').split(/\s+/).filter(Boolean)
       list = list.filter(p => {
-        const modello   = (p.modello        || '').toLowerCase()
-        const codice    = (p.codice         || '').toLowerCase()
-        const categoria = (p.categoria      || '').toLowerCase()
-        const battcons  = (p.batteria_cons  || '').toLowerCase()
-        const alim      = (p.alimentazione  || '').toLowerCase()
-        const note      = (p.note           || '').toLowerCase()
-
-        return tokens.every(t => {
-          // Modello e codice: match libero (es. "rm" trova "RMA", "RM 2")
-          if (modello.startsWith(t) || codice.includes(t)) return true
-          // Categoria, alimentazione, batteria: match ovunque
-          if (categoria.includes(t) || alim.includes(t) || battcons.includes(t)) return true
-          // Note: solo parola intera su entrambi i lati
-          const esc = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          const wordRe = new RegExp('(?:^|\\s)' + esc + '(?:\\s|$)', 'i')
-          return wordRe.test(note)
-        })
+        const modello = (p.modello || '').toLowerCase()
+        const codice  = (p.codice  || '').toLowerCase()
+        // Cerca solo su modello e codice
+        return tokens.every(t => modello.includes(t) || codice.includes(t))
       })
     }
     return list.map(p => ({ ...p, promo: promoMap[p.codice] || null }))

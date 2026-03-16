@@ -132,12 +132,24 @@ export function useStihlSearch(prodotti, promoMap) {
     }
     if (query.trim()) {
       const tokens = query.toLowerCase().replace(/[-_]/g, ' ').split(/\s+/).filter(Boolean)
-      const qn = normalize(query)
       list = list.filter(p => {
-        const hay = [p.modello, p.codice, p.categoria, p.batteria_cons, p.alimentazione, p.note].join(' ').toLowerCase()
-        const hayn = normalize(hay)
-        if (qn && hayn.includes(qn)) return true
-        return tokens.every(t => hay.includes(t))
+        const modello   = (p.modello        || '').toLowerCase()
+        const codice    = (p.codice         || '').toLowerCase()
+        const categoria = (p.categoria      || '').toLowerCase()
+        const battcons  = (p.batteria_cons  || '').toLowerCase()
+        const alim      = (p.alimentazione  || '').toLowerCase()
+        const note      = (p.note           || '').toLowerCase()
+
+        return tokens.every(t => {
+          // Modello e codice: match libero (es. "rm" trova "RMA", "RM 2")
+          if (modello.startsWith(t) || codice.includes(t)) return true
+          // Categoria, alimentazione, batteria: match ovunque
+          if (categoria.includes(t) || alim.includes(t) || battcons.includes(t)) return true
+          // Note: solo parola intera — "rm" NON trova "45cm RM" a meno che
+          // non sia all'inizio o preceduto da spazio
+          const wordRe = new RegExp('(?:^|\\s)' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+          return wordRe.test(note)
+        })
       })
     }
     return list.map(p => ({ ...p, promo: promoMap[p.codice] || null }))

@@ -271,8 +271,9 @@ function getPrezzoCliente(skuEntry, tipoCliente) {
 }
 
 // Primo concime post-attecchimento — logica stagionale
-function getPrimoConcime(terreno, linea) {
-  const m = new Date().getMonth() + 1; // 1-12
+function getPrimoConcime(terreno, linea, dataRif = null) {
+  const now = dataRif ? new Date(dataRif + 'T12:00:00') : new Date();
+  const m = now.getMonth() + 1; // 1-12
   // Dic–feb: nessun concime
   if (m <= 2 || m === 12) return null;
   // Giu–ago: periodo non ideale
@@ -1337,6 +1338,7 @@ export default function PratoVivo() {
             miscuglio={miscuglio} setMiscuglio={setMiscuglio}
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
+            dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
           />
@@ -1410,6 +1412,7 @@ export default function PratoVivo() {
             miscuglio={miscuglio} setMiscuglio={setMiscuglio}
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
+            dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
           />
@@ -2035,7 +2038,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa }) {
+function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa, dataInizio = null }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
@@ -2065,7 +2068,7 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
     : 'Microgranulare a secco — distribuire separatamente o con piccolo spandiconcime';
 
   // Primo concime stagionale
-  const primoConcime = getPrimoConcime(terreno || 'normale', linea);
+  const primoConcime = getPrimoConcime(terreno || 'normale', linea, dataInizio);
 
   // Miscugli consigliati per tipo e livello
   const consigliatiCfg = SEMI_CONSIGLIATI[tipoPrato]?.[livello] || { consigliato: 'hurricane', altri: [] };

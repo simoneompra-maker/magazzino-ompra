@@ -318,15 +318,15 @@ const PRODOTTO_CONFIG = {
   'Micosat Len':              { tipo: 'micosat_mini', sku: 'Micosat Len Mini 100g',      kgP: 0.1 },
 };
 
-function getBimestreCorrente() {
-  const now = new Date();
+function getBimestreCorrente(dataRif = null) {
+  const now = dataRif ? new Date(dataRif + 'T12:00:00') : new Date();
   const m = now.getMonth() + 1;
   const g = now.getDate();
   const nomi = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
   return `${nomi[m-1]}_${g <= 15 ? 1 : 2}`;
 }
 function getBimestreIdx(id) { return BIMESTRI.findIndex(b => b.id === id); }
-function isPassato(id) { return id && getBimestreIdx(id) < getBimestreIdx(getBimestreCorrente()); }
+function isPassato(id, dataRif = null) { return id && getBimestreIdx(id) < getBimestreIdx(getBimestreCorrente(dataRif)); }
 
 // Vigor Active: dose dinamica per rigenerazione in base al mese
 function getVigorActiveDoseRig() {
@@ -350,11 +350,11 @@ function getMicosatProduct(mq) {
 const DEGRADAZIONE_PCT = { ritocchi: 0.15, medio: 0.40, grave: 0.70 };
 const DEGRADAZIONE_DOSE = { ritocchi: 18, medio: 28, grave: 33 }; // g/m² centro fascia
 
-function calcolaPianoAnnuo(linea, terreno, livello, colore) {
+function calcolaPianoAnnuo(linea, terreno, livello, colore, dataInizio = null) {
   if (terreno === 'sabbioso') {
     // Logica stagionale: il bridge è visibile solo tra fine maggio e fine giugno
     // Da luglio in poi: dose ridotta a max 20 g/m²
-    const now = new Date();
+    const now = dataInizio ? new Date(dataInizio + 'T12:00:00') : new Date();
     const m = now.getMonth() + 1; // 1-12
     const g = now.getDate();
     const isBridgePeriod = (m === 5 && g >= 20) || m === 6; // fine maggio - fine giugno
@@ -367,7 +367,7 @@ function calcolaPianoAnnuo(linea, terreno, livello, colore) {
         const noteB = isBridgeRidotto ? 'Luglio/Agosto — dose ridotta max 20 g/m²' : 'Maggio/Giugno — periodo ottimale';
         return { ...iv, dose: doseB, note: noteB, passato: false };
       }
-      return { ...iv, passato: isPassato(iv.bimestre_target) };
+      return { ...iv, passato: isPassato(iv.bimestre_target, dataInizio) };
     }).filter(Boolean);
 
     // Modifica 2: se prato pallido, aggiungere Green 7 come primo intervento
@@ -393,7 +393,7 @@ function calcolaPianoAnnuo(linea, terreno, livello, colore) {
     const dati = linea === 'mivena' ? (iv.mivena || iv.albatros) : iv.albatros;
     const dose = colore === 'pallido' ? dati.dose_pallido : dati.dose_intenso;
     let liquidiAttivi = livello === 'standard' ? iv.liquidi_standard : livello === 'premium' ? iv.liquidi_premium : false;
-    return { ...iv, dati, dose, saltato, passato: isPassato(iv.bimestre_target), liquidiAttivi };
+    return { ...iv, dati, dose, saltato, passato: isPassato(iv.bimestre_target, dataInizio), liquidiAttivi };
   });
 }
 
@@ -704,13 +704,14 @@ function Card({ title, children, colorClass = 'border-green-100' }) {
 }
 
 // ─── Generatore PDF ───────────────────────────────────────────
-function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione = true, usaAllRound = false }) {
+function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, dataInizio = null, includiIntestazione = true, usaAllRound = false }) {
   const w = window.open('', '_blank');
   const oggi = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
   const mqLabel = mq ? `${parseFloat(mq).toLocaleString('it-IT')} m²` : '—';
   const lineaLabel = linea === 'mivena' ? 'Mivena' : 'Albatros';
   const livLabel = livello ? livello.charAt(0).toUpperCase() + livello.slice(1) : '—';
   const tipoLabel = { semina: 'Nuova Semina', rigenerazione: 'Rigenerazione', piano_annuo: 'Piano Annuo di Mantenimento' }[tipo] || tipo;
+  const dataInizioLabel = dataInizio ? new Date(dataInizio + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : null;
   const pratoLabel = tipoPrato === 'sportivo' ? 'Sportivo' : 'Ornamentale';
   const irrLabel = irrigazione === 'centralizzata' ? 'Centralizzata' : 'A mano';
 
@@ -871,6 +872,7 @@ export default function PratoVivo() {
   const [mq, setMq] = useState('');
   const [irrigazione, setIrrigazione] = useState(null);  // centralizzata | mano
   const [nomeCliente, setNomeCliente] = useState('');
+  const [dataInizio, setDataInizio] = useState(() => new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
 
   // Parametri aggiuntivi
   const [linea, setLinea] = useState('albatros');
@@ -906,12 +908,12 @@ export default function PratoVivo() {
 
   const pianoAnnuo = useMemo(() => {
     if (!terreno || !colore || !livello) return [];
-    return calcolaPianoAnnuo(linea, terreno, livello, colore);
-  }, [linea, terreno, livello, colore]);
+    return calcolaPianoAnnuo(linea, terreno, livello, colore, dataInizio);
+  }, [linea, terreno, livello, colore, dataInizio]);
 
   const reset = () => {
     setTipoPrato(null); setTipoIntervento(null); setLivello('standard');
-    setMq(''); setIrrigazione(null); setNomeCliente('');
+    setMq(''); setIrrigazione(null); setNomeCliente(''); setDataInizio(new Date().toISOString().slice(0, 10));
     setLinea('albatros'); setTerreno(null); setColore(null);
     setEstendi12(null); setLiquidiSab(true); setDegradazione(null);
     setMiscuglio(null); setTipoCliente('privato'); setPrimoConcimeIncluso(false); setShowPreventivo(false);
@@ -960,6 +962,7 @@ export default function PratoVivo() {
     irrigazione,
     tipo_cliente: tipoCliente,
     degradazione,
+    data_inizio: dataInizio || new Date().toISOString().slice(0, 10),
     estendi12: !!estendi12,
     liquidi_sab: !!liquidiSab,
     miscuglio_id: miscuglio?.id || null,
@@ -970,6 +973,7 @@ export default function PratoVivo() {
       mq: parseFloat(mq) || null, irrigazione, nomeCliente, tipoCliente,
       degradazione, estendi12, liquidiSab, miscuglio,
       primoConcimeIncluso,
+      dataInizio,
     },
   });
 
@@ -999,7 +1003,7 @@ export default function PratoVivo() {
     let pianoRicalcolato = null;
     let pianoAnnuoRicalcolato = null;
     if (tipo === 'piano_annuo') {
-      pianoAnnuoRicalcolato = calcolaPianoAnnuo(p.linea, p.terreno, p.livello, p.colore);
+      pianoAnnuoRicalcolato = calcolaPianoAnnuo(p.linea, p.terreno, p.livello, p.colore, p.dataInizio || null);
     } else if (tipo === 'semina') {
       pianoRicalcolato = PIANO_SEMINA[p.livello] || null;
     } else if (tipo === 'rigenerazione') {
@@ -1044,6 +1048,7 @@ export default function PratoVivo() {
     setLiquidiSab(p.liquidiSab ?? true);
     setMiscuglio(p.miscuglio || null);
     setNomeCliente(p.nomeCliente || '');
+    setDataInizio(p.dataInizio || new Date().toISOString().slice(0, 10));
     setTipoCliente(p.tipoCliente || 'privato');
     setPrimoConcimeIncluso(p.primoConcimeIncluso || false);
     setUsaAllRound(false);
@@ -1256,6 +1261,16 @@ export default function PratoVivo() {
                 </div>
               </div>
               <div>
+                <label className="text-xs text-gray-500 mb-1 block">Data inizio piano</label>
+                <input
+                  type="date"
+                  value={dataInizio}
+                  onChange={e => setDataInizio(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">Il piano verrà calcolato a partire da questa data</p>
+              </div>
+              <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Impianto di irrigazione</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Btn emoji="🚿" label="Centralizzato" desc="Automatico / a settori" onClick={() => { if (mq) localStorage.setItem('pratovivo_ultimo_mq', mq); if (nomeCliente) localStorage.setItem('pratovivo_ultimo_cliente', nomeCliente); setIrrigazione('centralizzata'); }} selected={irrigazione==='centralizzata'} />
@@ -1285,7 +1300,7 @@ export default function PratoVivo() {
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
           />
         )}
 
@@ -1358,7 +1373,7 @@ export default function PratoVivo() {
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
           />
         )}
 

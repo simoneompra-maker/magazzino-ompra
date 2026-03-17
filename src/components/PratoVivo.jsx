@@ -327,7 +327,22 @@ function getBimestreCorrente(dataRif = null) {
   return `${nomi[m-1]}_${g <= 15 ? 1 : 2}`;
 }
 function getBimestreIdx(id) { return BIMESTRI.findIndex(b => b.id === id); }
-function isPassato(id, dataRif = null) { return id && getBimestreIdx(id) < getBimestreIdx(getBimestreCorrente(dataRif)); }
+
+// Ritorna: 'futuro' | 'corrente' | 'ritardo' | 'passato'
+// settimaneRitardo: finestra recupero (2-3 albatros, 4-5 mivena)
+function getStatoIntervento(id, dataRif = null, settimaneRitardo = 3) {
+  if (!id) return 'futuro';
+  const corrIdx = getBimestreIdx(getBimestreCorrente(dataRif));
+  const targIdx = getBimestreIdx(id);
+  const diff = corrIdx - targIdx; // bimestri di ritardo (1 bimestre ≈ 2 sett.)
+  if (diff <= 0) return 'futuro';    // nel periodo o futuro
+  const settimane = diff * 2;        // 1 bimestre = ~2 settimane
+  if (settimane <= settimaneRitardo) return 'ritardo';
+  return 'passato';
+}
+
+// Mantieni isPassato per retrocompatibilità
+function isPassato(id, dataRif = null) { return getStatoIntervento(id, dataRif) === 'passato'; }
 
 // Vigor Active: dose dinamica per rigenerazione in base al mese
 function getVigorActiveDoseRig() {
@@ -368,7 +383,8 @@ function calcolaPianoAnnuo(linea, terreno, livello, colore, dataInizio = null) {
         const noteB = isBridgeRidotto ? 'Luglio/Agosto — dose ridotta max 20 g/m²' : 'Maggio/Giugno — periodo ottimale';
         return { ...iv, dose: doseB, note: noteB, passato: false };
       }
-      return { ...iv, passato: isPassato(iv.bimestre_target, dataInizio) };
+      const stato = getStatoIntervento(iv.bimestre_target, dataInizio, 3);
+        return { ...iv, passato: stato === 'passato', inRitardo: stato === 'ritardo' };
     }).filter(Boolean);
 
     // Modifica 2: se prato pallido, aggiungere Green 7 come primo intervento
@@ -389,13 +405,76 @@ function calcolaPianoAnnuo(linea, terreno, livello, colore, dataInizio = null) {
     }
     return base;
   }
-  return INTERVENTI_ANNUI.map(iv => {
+  const interventi = INTERVENTI_ANNUI.map(iv => {
     const saltato = linea === 'mivena' && iv.mivena === null;
     const dati = linea === 'mivena' ? (iv.mivena || iv.albatros) : iv.albatros;
     const dose = colore === 'pallido' ? dati.dose_pallido : dati.dose_intenso;
     let liquidiAttivi = livello === 'standard' ? iv.liquidi_standard : livello === 'premium' ? iv.liquidi_premium : false;
-    return { ...iv, dati, dose, saltato, passato: isPassato(iv.bimestre_target, dataInizio), liquidiAttivi };
+    const settRitardo = linea === 'mivena' ? 5 : 3;
+    const stato = getStatoIntervento(iv.bimestre_target, dataInizio, settRitardo);
+    return { ...iv, dati, dose, saltato, passato: stato === 'passato', inRitardo: stato === 'ritardo', liquidiAttivi };
   });
+
+  // ── Logica dose Green 7 primaverile in base al ritardo ───────
+  // Solo linea Albatros, solo interventi 1 e 2 (Green 7 primavera)
+  if (linea !== 'mivena' && dataInizio) {
+    const now = new Date(dataInizio + 'T12:00:00');
+    const m = now.getMonth() + 1; // 1-12
+    const g = now.getDate();
+
+    // Intervento 1: target mar_1. Calcola data stimata effettiva del 1°
+    // Se siamo dopo mar_1, la data effettiva è dataInizio stessa
+    const iv1 = interventi.find(iv => iv.numero === 1);
+    const iv2 = interventi.find(iv => iv.numero === 2);
+
+    if (iv1 && iv2 && !iv1.saltato) {
+      // Data stimata del 1° intervento = dataInizio se è in ritardo, altrimenti target (mar_1 ≈ 1-8 marzo)
+      // Data stimata del 2° intervento = 1° + 6 settimane
+      let dataEff1 = null;
+      // Se siamo nel periodo di ritardo (apr o oltre), l'intervento 1 cade oggi
+      if (m === 4 || (m === 3 && g >= 15)) {
+        dataEff1 = now;
+      }
+
+      if (dataEff1) {
+        const dataEff2 = new Date(dataEff1);
+        dataEff2.setDate(dataEff2.getDate() + 42); // +6 settimane
+        const m2 = dataEff2.getMonth() + 1;
+        const g2 = dataEff2.getDate();
+
+        if (m === 3 && g >= 15) {
+          // Intervento 1 seconda metà marzo → intervento 2 a 20 g/m²
+          if (iv2 && iv2.dati?.prodotto === 'Green 7') {
+            interventi[interventi.indexOf(iv2)] = {
+              ...iv2,
+              dose: 20,
+              noteRitardo: '⚠️ Intervento 1 in ritardo — dose ridotta a 20 g/m²',
+            };
+          }
+        } else if (m === 4 && g <= 10) {
+          // Intervento 1 entro 10 aprile → intervento 2 a metà maggio, dose ridotta 10-15 g/m²
+          if (iv2 && iv2.dati?.prodotto === 'Green 7') {
+            interventi[interventi.indexOf(iv2)] = {
+              ...iv2,
+              dose: 15,
+              noteRitardo: '⚠️ Intervento 1 in ritardo — dose ridotta per evitare eccesso azoto',
+            };
+          }
+        } else if (m === 4 && g > 10) {
+          // Intervento 1 dopo 10 aprile → salta intervento 2
+          if (iv2 && iv2.dati?.prodotto === 'Green 7') {
+            interventi[interventi.indexOf(iv2)] = {
+              ...iv2,
+              saltato: true,
+              noteRitardo: '⚠️ Intervento 1 troppo tardivo — intervento 2 saltato per evitare eccesso azoto a ridosso del pre-estate',
+            };
+          }
+        }
+      }
+    }
+  }
+
+  return interventi;
 }
 
 // versione con kg seme esplicito
@@ -2448,21 +2527,26 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
           <div className="p-4 space-y-3">
             {terreno === 'sabbioso'
               ? piano.map((iv, i) => (
-                <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.bridge?'border-amber-400 bg-amber-50':iv.verde?'border-emerald-500 bg-emerald-50':iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
+                <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.bridge?'border-amber-400 bg-amber-50':iv.verde?'border-emerald-500 bg-emerald-50':iv.passato?'border-gray-300 bg-gray-50 opacity-50':iv.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>
                   <div className="flex justify-between items-start">
                     <div><p className="font-bold text-sm text-green-800">{iv.bimestre_label}</p><p className="text-xs text-gray-500">{iv.funzione}</p></div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.verde?'bg-emerald-200 text-emerald-800':iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.bridge?'Ponte':iv.verde?'Rinforzo colore':iv.passato?'Passato':'Programmato'}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.verde?'bg-emerald-200 text-emerald-800':iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
+                      {iv.bridge?'🟡 Ponte':iv.verde?'🟢 Rinforzo colore':iv.passato?'⚫ Passato':iv.inRitardo?'🟡 In ritardo — ancora recuperabile':'🟢 Programmato'}
+                    </span>
                   </div>
                   <p className="font-bold text-green-700 mt-1">{iv.prodotto} <span className="font-normal text-gray-500 text-xs">NPK {iv.npk}</span></p>
                   <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
+                  {iv.noteRitardo && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-1.5 border border-amber-200">{iv.noteRitardo}</p>}
                 </div>
               ))
               : pianoConNumero.map((iv, i) => iv.saltato ? null : (
                 <Fragment key={i}>
-                  <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-60':'border-green-500 bg-green-50'}`}>
+                  <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-50':iv.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>
                     <div className="flex justify-between items-start">
                       <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numVisivo} — {iv.funzione}</p></div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-600':'bg-green-200 text-green-800'}`}>{iv.passato?'Passato':iv.bimestre_label}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
+                      {iv.passato ? '⚫ Passato' : iv.inRitardo ? '🟡 In ritardo — ancora recuperabile' : iv.bimestre_label}
+                    </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <p className="font-bold text-green-800">
@@ -2480,6 +2564,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                     </div>
                     <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
                     {iv.liquidiAttivi&&<p className="text-xs text-blue-600 mt-1">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</p>}
+                    {iv.noteRitardo && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-1.5 border border-amber-200">{iv.noteRitardo}</p>}
                   </div>
                   {/* Ciclo estivo premium — inserito inline dopo intervento 3 */}
                   {livello === 'premium' && iv.numero === 3 && (

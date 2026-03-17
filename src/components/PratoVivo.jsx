@@ -497,7 +497,27 @@ function calcolaPreventivoConKgSeme(inputItems, miscuglioSku, miscuglioKg, mq, t
 }
 
 // ─── Schermata Preventivo ──────────────────────────────────────
-function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento, livello, linea, onStampa, onBack, onSalvaArchivio, usaAllRound, setUsaAllRound }) {
+function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento, livello, linea, onStampa, onBack, onSalvaArchivio, usaAllRound, setUsaAllRound, tipoCliente = 'privato' }) {
+  // formatoOverride: { nomeProdotto: skuScelto } — sovrascrive la scelta automatica
+  const [formatoOverride, setFormatoOverride] = useState({});
+
+  // Ricalcola le righe applicando gli override di formato
+  const righeConOverride = useMemo(() => {
+    if (!preventivo?.righe) return [];
+    return preventivo.righe.map(r => {
+      const skuScelto = formatoOverride[r.prodotto];
+      if (!skuScelto || skuScelto === r.sku) return r;
+      // Cerca il formato scelto tra piccolo e grande
+      const cfg = PRODOTTO_CONFIG[r.prodotto];
+      if (!cfg) return r;
+      const entry = LISTINO[skuScelto];
+      if (!entry) return r;
+      const kgFormato = skuScelto === cfg.piccolo ? cfg.kgP : (cfg.kgG || cfg.kgP);
+      const confezioni = Math.ceil(r.kgTot / kgFormato);
+      const pu = getPrezzoCliente(entry, r.listino) || entry.prezzoA;
+      return { ...r, sku: skuScelto, formato: entry.formato, qtaConf: confezioni, prezzoUnit: pu, prezzoTot: +(pu * confezioni).toFixed(2), isOttimale: false, alt: null };
+    });
+  }, [preventivo, formatoOverride]);
 
   if (!preventivo) return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 text-center">
@@ -508,7 +528,7 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
 
   // Sostituisce Universal Top con AllRound se l'utente sceglie la variante migliore
   const righeEffettive = usaAllRound
-    ? preventivo.righe.map(r => {
+    ? righeConOverride.map(r => {
         if (r.sku === 'Universal Top 20kg') {
           const entry = LISTINO['AllRound 20kg'];
           if (!entry) return r;
@@ -521,7 +541,7 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
   const totaleEffettivo = righeEffettive.reduce((s, r) => s + (r.prezzoTot || 0), 0);
 
   const { righe, totale } = { righe: righeEffettive, totale: totaleEffettivo };
-  const hasUniversalTop = preventivo.righe.some(r => r.sku === 'Universal Top 20kg');
+  const hasUniversalTop = righeConOverride.some(r => r.sku === 'Universal Top 20kg');
   const hasListinoB = righe.some(r => r.listino === 'B');
   const hasUpgrade = righe.some(r => r.upgrade);
 
@@ -625,17 +645,35 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 flex-wrap">
                     <span className="font-bold text-gray-900 text-sm">{r.prodotto}</span>
-                    {r.isOttimale && <span className="text-xs bg-green-200 text-green-800 rounded-full px-1.5 py-0.5 font-bold">✓ Formato ottimale</span>}
                     {r.listino === 'giardiniere' && <span className="text-xs bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.5 font-bold">Listino B</span>}
                     {r.listino === 'fidelizzato' && <span className="text-xs bg-purple-100 text-purple-700 rounded-full px-1.5 py-0.5 font-bold">Listino C</span>}
                     {r.listino === 'speciale' && <span className="text-xs bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 font-bold">Listino D</span>}
                     {r.isSeme && <span className="text-xs bg-emerald-200 text-emerald-800 rounded-full px-1.5 py-0.5 font-bold">🌾 Seme IVA 10%</span>}
                   </div>
-                  <span className="text-xs text-gray-500">{r.sku} · {r.formato}</span>
+                  {/* Dropdown formato — visibile se il prodotto ha più formati */}
+                  {(() => {
+                    const cfg = PRODOTTO_CONFIG[r.prodotto];
+                    if (!cfg || cfg.tipo || (!cfg.grande)) return (
+                      <span className="text-xs text-gray-500">{r.sku} · {r.formato}</span>
+                    );
+                    const opzioni = [
+                      cfg.piccolo && LISTINO[cfg.piccolo] ? { sku: cfg.piccolo, label: `${cfg.piccolo} (${cfg.kgP} kg) — € ${(LISTINO[cfg.piccolo].prezzoA || 0).toFixed(2)}` } : null,
+                      cfg.grande && LISTINO[cfg.grande] ? { sku: cfg.grande, label: `${cfg.grande} (${cfg.kgG} kg) — € ${(LISTINO[cfg.grande].prezzoA || 0).toFixed(2)}` } : null,
+                    ].filter(Boolean);
+                    if (opzioni.length < 2) return (
+                      <span className="text-xs text-gray-500">{r.sku} · {r.formato}</span>
+                    );
+                    return (
+                      <select
+                        value={formatoOverride[r.prodotto] || r.sku}
+                        onChange={e => setFormatoOverride(prev => ({ ...prev, [r.prodotto]: e.target.value }))}
+                        className="mt-1 text-xs border border-green-300 rounded-lg px-2 py-1 bg-white text-green-800 font-medium focus:outline-none focus:border-green-500 w-full"
+                      >
+                        {opzioni.map(o => <option key={o.sku} value={o.sku}>{o.label}</option>)}
+                      </select>
+                    );
+                  })()}
                   {r.noteMicosat && <p className="text-xs text-blue-600 mt-0.5">💧 {r.noteMicosat}</p>}
-                  {r.alt && r.alt.differenza > 0 && (
-                    <p className="text-xs text-gray-400 mt-0.5">Se preferisci {r.alt.sku} ({r.alt.qtaConf} pz): € {r.alt.prezzoTot.toFixed(2)} <span className="text-amber-600 font-semibold">(+€ {r.alt.differenza.toFixed(2)})</span></p>
-                  )}
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-xs text-gray-400">{r.qtaConf} pz × € {r.prezzoUnit.toFixed(2)}</p>

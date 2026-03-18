@@ -329,8 +329,7 @@ export default function Noleggio({ onNavigate }) {
       subtotale: totale,
     };
     setCarrello(prev => [...prev, voce]);
-    // Reset selezione per aggiungere la prossima macchina
-    setMacchinaSelezionata(null);
+    // Reset solo fascia e accessori — la macchina rimane selezionata
     setAccessoriSelezionati([]);
     setFasciaScelta(null);
   }
@@ -820,53 +819,53 @@ export default function Noleggio({ onNavigate }) {
                 </div>
               )}
 
-              {/* ── Carrello preventivo ────────────────────────────────── */}
-              {carrello.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">📋 Preventivo ({carrello.length} voc{carrello.length===1?'e':'i'})</p>
-                    <button onClick={() => setCarrello([])} className="text-xs text-red-500 hover:text-red-700">Svuota tutto</button>
-                  </div>
+            </div>
+          )}
 
-                  {carrello.map((voce, idx) => {
-                    const fasciaLabel = FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta;
-                    return (
-                      <div key={voce.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                        <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50">
-                          <span className="text-sm font-bold text-gray-800">{idx+1}. {voce.macchina.nome}</span>
-                          <button onClick={() => rimuoviDalCarrello(voce.id)} className="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
-                        </div>
-                        <div className="px-3 py-2 text-xs text-gray-500 space-y-0.5">
-                          <p>{fasciaLabel} · {voce.nGiorni} giorno/i</p>
-                          {voce.accessori.map(a => <p key={a.id} className="pl-2 text-green-700">↳ {a.nome}</p>)}
-                        </div>
-                        <div className="px-3 py-2 border-t flex justify-between items-center">
-                          <span className="text-xs text-gray-400">Subtotale</span>
-                          <span className="font-bold text-sm" style={{color:GREEN}}>{fmt(voce.subtotale)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* ── Carrello preventivo — sempre visibile se ci sono voci ── */}
+          {tab!=='import' && carrello.length > 0 && (
+            <div className="max-w-2xl mx-auto space-y-3 pb-6">
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">📋 Preventivo ({carrello.length} voc{carrello.length===1?'e':'i'})</p>
+                <button onClick={() => setCarrello([])} className="text-xs text-red-500 hover:text-red-700">Svuota tutto</button>
+              </div>
 
-                  {/* Totale complessivo e azioni */}
-                  <div className="bg-white rounded-xl border overflow-hidden">
-                    <div className="p-4 border-b flex justify-between items-center">
-                      <span className="font-bold text-gray-800">TOTALE COMPLESSIVO</span>
-                      <span className="text-2xl font-bold" style={{color:GREEN}}>{fmt(totaleCarrello)}</span>
+              {carrello.map((voce, idx) => {
+                const fasciaLabel = FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta;
+                return (
+                  <div key={voce.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50">
+                      <span className="text-sm font-bold text-gray-800">{idx+1}. {voce.macchina.nome}</span>
+                      <button onClick={() => rimuoviDalCarrello(voce.id)} className="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
                     </div>
-                    <div className="p-4 flex gap-3">
-                      <button onClick={()=>generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
-                        <FileText className="w-4 h-4"/> PDF
-                      </button>
-                      <button onClick={()=>generaWhatsAppCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm bg-[#25D366] text-white">
-                        <MessageCircle className="w-4 h-4"/> WhatsApp
-                      </button>
+                    <div className="px-3 py-2 text-xs text-gray-500 space-y-0.5">
+                      <p>{fasciaLabel} · {voce.nGiorni} giorno/i</p>
+                      {voce.accessori.map(a => <p key={a.id} className="pl-2 text-green-700">↳ {a.nome}</p>)}
+                    </div>
+                    <div className="px-3 py-2 border-t flex justify-between items-center">
+                      <span className="text-xs text-gray-400">Subtotale</span>
+                      <span className="font-bold text-sm" style={{color:GREEN}}>{fmt(voce.subtotale)}</span>
                     </div>
                   </div>
+                );
+              })}
+
+              <div className="bg-white rounded-xl border overflow-hidden">
+                <div className="p-4 border-b flex justify-between items-center">
+                  <span className="font-bold text-gray-800">TOTALE COMPLESSIVO</span>
+                  <span className="text-2xl font-bold" style={{color:GREEN}}>{fmt(totaleCarrello)}</span>
                 </div>
-              )}
+                <div className="p-4 flex gap-3">
+                  <button onClick={()=>generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
+                    <FileText className="w-4 h-4"/> PDF
+                  </button>
+                  <button onClick={()=>generaWhatsAppCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm bg-[#25D366] text-white">
+                    <MessageCircle className="w-4 h-4"/> WhatsApp
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

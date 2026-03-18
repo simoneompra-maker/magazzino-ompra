@@ -50,8 +50,10 @@ async function fetchMacchine() {
 // ─── PDF ─────────────────────────────────────────────────────────────────────
 // ─── PDF carrello multiplo ──────────────────────────────────────────────────
 async function generaPDFCarrello({ carrello, cliente, dataDa, dataA, note, totaleCarrello }) {
-  const jsPDF = (await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-    .then(() => ({ default: window.jspdf.jsPDF })))).default;
+  if (!window.jspdf) {
+    await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  }
+  const jsPDF = window.jspdf.jsPDF;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = doc.internal.pageSize.getWidth(), M = 14;
   let y = 20;
@@ -157,8 +159,10 @@ function generaWhatsAppCarrello({ carrello, cliente, dataDa, dataA, note, totale
 }
 
 async function generaPDF({ macchina, accessoriSelezionati, listino, fasciaScelta, nGiorni, cliente, dataDa, dataA, note, totale }) {
-  const jsPDF = (await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-    .then(() => ({ default: window.jspdf.jsPDF })))).default;
+  if (!window.jspdf) {
+    await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  }
+  const jsPDF = window.jspdf.jsPDF;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = doc.internal.pageSize.getWidth(), M = 14;
   let y = 20;

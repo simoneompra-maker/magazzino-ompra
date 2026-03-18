@@ -66,7 +66,6 @@ const DOTAZIONI_LABEL = {
   freno_frizione_lama:       'Freno-frizione-lama',
   svuotamento_cesto_facile:  'Svuotamento cesto facilitato',
   tracolla:                  'Tracolla inclusa',
-  impugnatura_circolare:     'Impugnatura circolare',
 }
 
 export default function StihlCard({ prodotto: p, inCompare = false, compareDisabled = false, onCompareToggle }) {

@@ -48,6 +48,107 @@ async function fetchMacchine() {
 }
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
+// ─── PDF carrello multiplo ──────────────────────────────────────────────────
+async function generaPDFCarrello({ carrello, cliente, dataDa, dataA, note, totaleCarrello }) {
+  const jsPDF = (await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+    .then(() => ({ default: window.jspdf.jsPDF })))).default;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth(), M = 14;
+  let y = 20;
+
+  doc.setFillColor(0,107,63); doc.rect(0,0,W,28,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('OMPRA srl', M, 12);
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('Via Roncade 7 · San Biagio di Callalta (TV) · Tel. 0422 890300', M, 19);
+  doc.text('P.IVA 03584360262', M, 24); y = 36;
+
+  doc.setTextColor(0,0,0); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('PREVENTIVO NOLEGGIO', M, y); y += 6;
+  doc.setDrawColor(0,107,63); doc.setLineWidth(0.5); doc.line(M, y, W-M, y); y += 5;
+
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, W-M, y, {align:'right'}); y += 6;
+  if (cliente) { doc.setFont('helvetica','bold'); doc.text('Cliente:', M, y); doc.setFont('helvetica','normal'); doc.text(cliente, M+18, y); y+=6; }
+  if (dataDa||dataA) {
+    const nGiorni = dataDa && dataA ? Math.max(1, Math.round((new Date(dataA)-new Date(dataDa))/(1000*60*60*24))) : 1;
+    doc.setFont('helvetica','bold'); doc.text('Periodo:', M, y); doc.setFont('helvetica','normal');
+    doc.text(`${dataDa?new Date(dataDa).toLocaleDateString('it-IT'):''}${dataA?' → '+new Date(dataA).toLocaleDateString('it-IT'):''} (${nGiorni} giorni)`, M+18, y); y+=6;
+  }
+  y += 2;
+
+  // Una sezione per ogni voce del carrello
+  carrello.forEach((voce, idx) => {
+    if (y > 240) { doc.addPage(); y = 20; }
+    const fasciaLabel = FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta;
+
+    doc.setFillColor(240,248,240); doc.rect(M, y, W-M*2, 12, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(0,107,63);
+    doc.text(`${idx+1}. ${voce.macchina.nome}`, M+3, y+8);
+    y += 12; doc.setTextColor(0,0,0);
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+    doc.text(`Fascia: ${fasciaLabel} · ${voce.nGiorni} giorno/i`, M+3, y+4); y += 6;
+
+    if (voce.accessori.length > 0) {
+      doc.setFont('helvetica','italic');
+      voce.accessori.forEach(acc => {
+        const p = getPrezzoFascia(acc, voce.fasciaScelta, voce.listino);
+        doc.text(`↳ ${acc.nome}  ${fmt(p)}`, M+6, y+4); y+=4;
+      });
+    }
+    doc.setTextColor(0,0,0);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text(`Subtotale: ${fmt(voce.subtotale)}`, W-M, y+4, {align:'right'}); y += 8;
+    doc.setDrawColor(220,220,220); doc.line(M, y, W-M, y); y += 5;
+  });
+
+  // Totale complessivo
+  y += 2;
+  doc.setDrawColor(0,107,63); doc.setLineWidth(0.8); doc.line(M, y, W-M, y); y += 5;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(0,107,63);
+  doc.text('TOTALE COMPLESSIVO:', M, y);
+  doc.text(fmt(totaleCarrello), W-M, y, {align:'right'}); y += 8;
+  doc.setTextColor(0,0,0);
+
+  if (note) {
+    y+=3; doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text('Note:', M, y); y+=5;
+    doc.setFont('helvetica','normal');
+    const nl = doc.splitTextToSize(note, W-M*2); doc.text(nl, M, y);
+  }
+
+  y = Math.max(y+10, 260);
+  doc.setDrawColor(200,200,200); doc.line(M, y, W-M, y); y+=5;
+  doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(120,120,120);
+  doc.text('I prezzi sono IVA inclusa salvo diversa indicazione · Preventivo non vincolante · OMPRA srl', W/2, y, {align:'center'});
+  doc.save(`Preventivo_Noleggio_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// ─── WhatsApp carrello multiplo ──────────────────────────────────────────────
+function generaWhatsAppCarrello({ carrello, cliente, dataDa, dataA, note, totaleCarrello }) {
+  let t = `🔑 *PREVENTIVO NOLEGGIO OMPRA*\n📅 ${new Date().toLocaleDateString('it-IT')}\n\n`;
+  if (cliente) t += `👤 *Cliente:* ${cliente}\n`;
+  if (dataDa||dataA) {
+    const nGiorni = dataDa && dataA ? Math.max(1, Math.round((new Date(dataA)-new Date(dataDa))/(1000*60*60*24))) : 1;
+    t += `📆 *Periodo:* ${dataDa?new Date(dataDa).toLocaleDateString('it-IT'):''}${dataA?' → '+new Date(dataA).toLocaleDateString('it-IT'):''} _(${nGiorni} giorni)_\n`;
+  }
+  carrello.forEach((voce, idx) => {
+    const fasciaLabel = FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta;
+    t += `\n${idx+1}. 🚜 *${voce.macchina.nome}*\n`;
+    if (voce.macchina.note_tecniche) t += `   📌 _${voce.macchina.note_tecniche}_\n`;
+    t += `   📋 ${fasciaLabel} · ${voce.nGiorni} giorno/i\n`;
+    if (voce.accessori.length>0) {
+      t += `   🔩 Accessori:\n`;
+      voce.accessori.forEach(a => t += `     ↳ ${a.nome}\n`);
+    }
+    t += `   💶 Subtotale: ${fmt(voce.subtotale)}\n`;
+  });
+  t += `\n💰 *TOTALE COMPLESSIVO: ${fmt(totaleCarrello)}*`;
+  if (note) t += `\n📝 *Note:* ${note}`;
+  t += `\n\n_OMPRA srl · Via Roncade 7 · San Biagio di Callalta (TV) · Tel. 0422 890300_`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, '_blank');
+}
+
 async function generaPDF({ macchina, accessoriSelezionati, listino, fasciaScelta, nGiorni, cliente, dataDa, dataA, note, totale }) {
   const jsPDF = (await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
     .then(() => ({ default: window.jspdf.jsPDF })))).default;
@@ -159,6 +260,7 @@ export default function Noleggio({ onNavigate }) {
   const [dataDa, setDataDa] = useState('');
   const [dataA, setDataA] = useState('');
   const [noteNoleggio, setNoteNoleggio] = useState('');
+  const [carrello, setCarrello] = useState([]); // [{macchina, accessori, listino, fasciaScelta, nGiorni, subtotale}]
   const [importFile, setImportFile] = useState(null);
   const [importTipo, setImportTipo] = useState('std_iva');
   const [importPreview, setImportPreview] = useState(null);
@@ -210,6 +312,32 @@ export default function Noleggio({ onNavigate }) {
     });
     return tot;
   }, [macchinaSelezionata, fasciaScelta, listino, nGiorni, accessoriSelezionati]);
+
+  const totaleCarrello = useMemo(() => {
+    return carrello.reduce((s, v) => s + (v.subtotale || 0), 0);
+  }, [carrello]);
+
+  function aggiungiAlCarrello() {
+    if (!macchinaSelezionata || !fasciaScelta || totale == null) return;
+    const voce = {
+      id: Date.now(),
+      macchina: macchinaSelezionata,
+      accessori: [...accessoriSelezionati],
+      listino,
+      fasciaScelta,
+      nGiorni,
+      subtotale: totale,
+    };
+    setCarrello(prev => [...prev, voce]);
+    // Reset selezione per aggiungere la prossima macchina
+    setMacchinaSelezionata(null);
+    setAccessoriSelezionati([]);
+    setFasciaScelta(null);
+  }
+
+  function rimuoviDalCarrello(id) {
+    setCarrello(prev => prev.filter(v => v.id !== id));
+  }
 
   // Macchine (solo principali) filtrate, raggruppate per famiglia
   const { standalone, perFamiglia } = useMemo(() => {
@@ -680,19 +808,63 @@ export default function Noleggio({ onNavigate }) {
                           </div>
                         )}
                       </div>
-                      <div className="p-4 flex gap-3">
-                        <button onClick={()=>generaPDF({macchina:macchinaSelezionata,accessoriSelezionati,listino,fasciaScelta,nGiorni,cliente,dataDa,dataA,note:noteNoleggio,totale})}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
-                          <FileText className="w-4 h-4"/> PDF
-                        </button>
-                        <button onClick={()=>generaWhatsApp({macchina:macchinaSelezionata,accessoriSelezionati,listino,fasciaScelta,nGiorni,cliente,dataDa,dataA,note:noteNoleggio,totale})}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm bg-[#25D366] text-white">
-                          <MessageCircle className="w-4 h-4"/> WhatsApp
+                      <div className="p-4">
+                        <button onClick={aggiungiAlCarrello}
+                          className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
+                          ➕ Aggiungi al preventivo
                         </button>
                       </div>
                     </div>
                   )}
                   {!fasciaScelta && <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">⚠️ Seleziona una fascia giorni</div>}
+                </div>
+              )}
+
+              {/* ── Carrello preventivo ────────────────────────────────── */}
+              {carrello.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">📋 Preventivo ({carrello.length} voc{carrello.length===1?'e':'i'})</p>
+                    <button onClick={() => setCarrello([])} className="text-xs text-red-500 hover:text-red-700">Svuota tutto</button>
+                  </div>
+
+                  {carrello.map((voce, idx) => {
+                    const fasciaLabel = FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta;
+                    return (
+                      <div key={voce.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50">
+                          <span className="text-sm font-bold text-gray-800">{idx+1}. {voce.macchina.nome}</span>
+                          <button onClick={() => rimuoviDalCarrello(voce.id)} className="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+                        </div>
+                        <div className="px-3 py-2 text-xs text-gray-500 space-y-0.5">
+                          <p>{fasciaLabel} · {voce.nGiorni} giorno/i</p>
+                          {voce.accessori.map(a => <p key={a.id} className="pl-2 text-green-700">↳ {a.nome}</p>)}
+                        </div>
+                        <div className="px-3 py-2 border-t flex justify-between items-center">
+                          <span className="text-xs text-gray-400">Subtotale</span>
+                          <span className="font-bold text-sm" style={{color:GREEN}}>{fmt(voce.subtotale)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Totale complessivo e azioni */}
+                  <div className="bg-white rounded-xl border overflow-hidden">
+                    <div className="p-4 border-b flex justify-between items-center">
+                      <span className="font-bold text-gray-800">TOTALE COMPLESSIVO</span>
+                      <span className="text-2xl font-bold" style={{color:GREEN}}>{fmt(totaleCarrello)}</span>
+                    </div>
+                    <div className="p-4 flex gap-3">
+                      <button onClick={()=>generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
+                        <FileText className="w-4 h-4"/> PDF
+                      </button>
+                      <button onClick={()=>generaWhatsAppCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm bg-[#25D366] text-white">
+                        <MessageCircle className="w-4 h-4"/> WhatsApp
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

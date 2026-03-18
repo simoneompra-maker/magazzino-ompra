@@ -121,7 +121,14 @@ async function generaPDFCarrello({ carrello, cliente, dataDa, dataA, note, total
   doc.setDrawColor(200,200,200); doc.line(M, y, W-M, y); y+=5;
   doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(120,120,120);
   doc.text('I prezzi sono IVA inclusa salvo diversa indicazione · Preventivo non vincolante · OMPRA srl', W/2, y, {align:'center'});
-  doc.save(`Preventivo_Noleggio_${new Date().toISOString().slice(0,10)}.pdf`);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Preventivo_Noleggio_${new Date().toISOString().slice(0,10)}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
 }
 
 // ─── WhatsApp carrello multiplo ──────────────────────────────────────────────

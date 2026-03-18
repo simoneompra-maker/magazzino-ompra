@@ -30,7 +30,7 @@ const PIANO_SEMINA = {
     ],
     liquidi: [],
     liquidiSabbioso: [],
-    seme: { dose: '25–40 g/m²', note: 'Varia per specie — vedi confezione' },
+    seme: { dose: '40 g/m²', note: 'Varia per specie — vedi confezione' },
   },
   standard: {
     label: 'Standard',
@@ -45,7 +45,7 @@ const PIANO_SEMINA = {
       { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina, poi ogni 20 gg', note: '⚠️ Irrigare subito — la sabbia trattiene poca vita biologica. Ciclo breve essenziale.' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Stessa frequenza di Humifitos', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
-    seme: { dose: '25–40 g/m²', note: 'Varia per specie — vedi confezione' },
+    seme: { dose: '40 g/m²', note: 'Varia per specie — vedi confezione' },
   },
   premium: {
     label: 'Premium',
@@ -66,7 +66,7 @@ const PIANO_SEMINA = {
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da fine maggio', note: 'Agente umettante — contrasta il drenaggio rapido della sabbia' },
       { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20 gg in abbinamento', note: 'Biostimolante — potenzia Humifitos e stimola radicazione' },
     ],
-    seme: { dose: '25–40 g/m²', note: 'Varia per specie — vedi confezione' },
+    seme: { dose: '40 g/m²', note: 'Varia per specie — vedi confezione' },
   },
 };
 
@@ -78,7 +78,7 @@ const PIANO_RIGENERAZIONE = {
     ],
     liquidi: [],
     liquidiSabbioso: [],
-    seme: { dose_ritocchi: '15–20 g/m²', dose_medio: '25–30 g/m²', dose_grave: '30–35 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
+    seme: { dose_ritocchi: '40 g/m²', dose_medio: '40 g/m²', dose_grave: '40 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
   },
   standard: {
     label: 'Standard',
@@ -93,7 +93,7 @@ const PIANO_RIGENERAZIONE = {
       { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina, poi ogni 20 gg', note: '⚠️ Irrigare subito — la sabbia trattiene poca vita biologica. Ciclo breve essenziale.' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Stessa frequenza di Humifitos', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
-    seme: { dose_ritocchi: '15–20 g/m²', dose_medio: '25–30 g/m²', dose_grave: '30–35 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
+    seme: { dose_ritocchi: '40 g/m²', dose_medio: '40 g/m²', dose_grave: '40 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
   },
   premium: {
     label: 'Premium',
@@ -114,7 +114,7 @@ const PIANO_RIGENERAZIONE = {
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da fine maggio', note: 'Agente umettante — contrasta il drenaggio rapido della sabbia' },
       { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20 gg in abbinamento', note: 'Biostimolante — potenzia Humifitos e stimola radicazione' },
     ],
-    seme: { dose_ritocchi: '15–20 g/m²', dose_medio: '25–30 g/m²', dose_grave: '30–35 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
+    seme: { dose_ritocchi: '40 g/m²', dose_medio: '40 g/m²', dose_grave: '40 g/m²', note: 'Dose calcolata sull\'area degradata (non l\'intera superficie)' },
   },
 };
 

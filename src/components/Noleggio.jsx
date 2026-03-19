@@ -1095,6 +1095,7 @@ export default function Noleggio({ onNavigate }) {
             })}
           </div>
         </div>
+        </div>
       )}
     </div>
   );

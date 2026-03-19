@@ -137,21 +137,18 @@ async function generaPDFCarrello({ carrello, cliente, dataDa, dataA, note, total
 }
 
 // ─── Carica PDF su Supabase Storage e scarica localmente ────────────────────
-async function uploadEscaricaPDF(blob, nomeFile) {
-  // Upload su Storage
-  const { data, error } = await supabase.storage
+async function uploadEApriPDF(blob, nomeFile) {
+  // Upload su Supabase Storage
+  const { error } = await supabase.storage
     .from('noleggio-preventivi')
     .upload(nomeFile, blob, { contentType: 'application/pdf', upsert: true });
   if (error) { console.error('Errore upload PDF:', error); return null; }
   // URL pubblico
   const { data: urlData } = supabase.storage.from('noleggio-preventivi').getPublicUrl(nomeFile);
-  // Scarica anche in locale
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = nomeFile;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-  return urlData?.publicUrl || null;
+  const publicUrl = urlData?.publicUrl || null;
+  // Apri nel browser
+  if (publicUrl) window.open(publicUrl, '_blank');
+  return publicUrl;
 }
 
 // ─── WhatsApp carrello ───────────────────────────────────────────────────────
@@ -199,10 +196,11 @@ export default function Noleggio({ onNavigate }) {
   const [importPreview, setImportPreview] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
-  // Archivio
+  // Archivio e UI
   const [mainTab, setMainTab] = useState('noleggio');
   const [archivioData, setArchivioData] = useState([]);
   const [archivioLoading, setArchivioLoading] = useState(false);
+  const [toast, setToast] = useState(null); // { msg, type }
 
   useEffect(() => {
     loadMacchine();
@@ -224,6 +222,11 @@ export default function Noleggio({ onNavigate }) {
     try { setArchivioData(await getArchivioNoleggio()); } catch(e) { console.error(e); } finally { setArchivioLoading(false); }
   }
 
+  function showToast(msg, type = 'success') {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  }
+
   async function handleEliminaArchivio(id) {
     if (!window.confirm('Eliminare questo preventivo?')) return;
     try { await eliminaArchivioNoleggio(id); setArchivioData(prev => prev.filter(r => r.id !== id)); } catch { alert('Errore eliminazione.'); }
@@ -234,7 +237,7 @@ export default function Noleggio({ onNavigate }) {
       window.open(record.pdf_url, '_blank');
       return;
     }
-    // Fallback: rigenera il PDF
+    // Fallback: rigenera e apri
     const blob = await generaPDFCarrello({
       carrello: record.carrello || [],
       cliente: record.nome_cliente || '',
@@ -244,10 +247,8 @@ export default function Noleggio({ onNavigate }) {
       totaleCarrello: record.totale_preventivo || 0,
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `Preventivo_Noleggio_${record.created_at?.slice(0,10)||'archivio'}.pdf`;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
   const nGiorni = useMemo(() => {
@@ -413,63 +414,63 @@ export default function Noleggio({ onNavigate }) {
               <p className="text-xs opacity-75">{macchine.filter(m=>!m.is_accessorio).length} macchine · {macchine.filter(m=>m.is_accessorio).length} accessori</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={()=>{ setMainTab(mainTab==='archivio'?'noleggio':'archivio'); if (mainTab!=='archivio') loadArchivio(); }}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium ${mainTab==='archivio'?'bg-white text-green-800':'bg-white/20 hover:bg-white/30'}`}>
-              <Archive className="w-3.5 h-3.5"/> Archivio
-            </button>
-            <button onClick={()=>{setMainTab('noleggio');setTab('import');setMacchinaSelezionata(null);}}
-              className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-xs font-medium">
-              <Upload className="w-3.5 h-3.5"/> Aggiorna listino
-            </button>
-          </div>
+          <button onClick={()=>{setMainTab('noleggio');setTab('import');setMacchinaSelezionata(null);}}
+            className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-xs font-medium">
+            <Upload className="w-3.5 h-3.5"/> Aggiorna listino
+          </button>
         </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-semibold transition-all ${toast.type==='error'?'bg-red-600':'bg-green-700'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Tab bar — stile PratoVivo */}
+      <div className="flex border-b bg-white">
+        <button onClick={()=>setMainTab('noleggio')}
+          className={`flex-1 py-2.5 text-sm font-bold transition-colors ${mainTab==='noleggio'?'bg-green-700 text-white':'text-gray-600 hover:bg-green-50'}`}>
+          🔑 Noleggio
+        </button>
+        <button onClick={()=>{ setMainTab('archivio'); loadArchivio(); }}
+          className={`flex-1 py-2.5 text-sm font-bold transition-colors ${mainTab==='archivio'?'bg-green-700 text-white':'text-gray-600 hover:bg-green-50'}`}>
+          📂 Archivio
+        </button>
       </div>
 
       {/* Tab Archivio */}
       {mainTab === 'archivio' && (
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-gray-700">📋 Preventivi salvati</p>
-            <button onClick={()=>setMainTab('noleggio')} className="text-xs text-green-700 hover:underline">← Torna al noleggio</button>
-          </div>
-          {archivioLoading && <p className="text-sm text-gray-400 text-center py-8">Caricamento...</p>}
-          {!archivioLoading && archivioData.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              <Archive className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Nessun preventivo salvato</p>
-              <p className="text-xs mt-1">I preventivi PDF vengono salvati automaticamente</p>
+          {archivioLoading && (
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-green-100 text-center">
+              <p className="text-gray-400 text-sm animate-pulse">Caricamento archivio…</p>
             </div>
           )}
-          {archivioData.map(record => (
-            <div key={record.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-3 border-b bg-gray-50 flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-bold text-gray-800 text-sm">{record.nome_cliente || 'Cliente non specificato'}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {new Date(record.created_at).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'})}
-                    {record.data_da && ` · ${new Date(record.data_da).toLocaleDateString('it-IT')}${record.data_a?' → '+new Date(record.data_a).toLocaleDateString('it-IT'):''}`}
-                  </p>
-                </div>
-                <p className="font-bold text-sm shrink-0" style={{color:GREEN}}>{fmt(record.totale_preventivo)}</p>
-              </div>
-              <div className="px-4 py-2 space-y-0.5">
-                {(record.carrello || []).map((voce, i) => (
-                  <p key={i} className="text-xs text-gray-600">• {voce.macchina?.nome} — {FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta} · {fmt(voce.subtotale)}</p>
-                ))}
-              </div>
-              <div className="px-4 py-3 border-t flex gap-2">
-                <button onClick={()=>handleRidownload(record)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-xs font-bold" style={{backgroundColor:GREEN}}>
-                  <FileText className="w-3.5 h-3.5"/> {record.pdf_url ? 'Apri PDF' : 'Rigenera PDF'}
-                </button>
-                <button onClick={()=>handleEliminaArchivio(record.id)}
-                  className="px-3 py-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
-                  <Trash2 className="w-3.5 h-3.5"/>
-                </button>
-              </div>
+          {!archivioLoading && archivioData.length === 0 && (
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-green-100 text-center space-y-3">
+              <p className="text-4xl">📂</p>
+              <p className="text-gray-500 text-sm">Nessun preventivo salvato.<br/>I preventivi vengono salvati automaticamente quando generi un PDF.</p>
+              <button onClick={loadArchivio} className="text-green-700 text-xs font-semibold underline">↺ Aggiorna</button>
             </div>
-          ))}
+          )}
+          {!archivioLoading && archivioData.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center px-1">
+                <p className="text-xs text-gray-500 font-semibold">{archivioData.length} preventiv{archivioData.length!==1?'i':'o'} salvat{archivioData.length!==1?'i':'o'}</p>
+                <button onClick={loadArchivio} className="text-green-700 text-xs font-semibold underline">↺ Aggiorna</button>
+              </div>
+              {archivioData.map(record => (
+                <NoleggioArchivioCard
+                  key={record.id}
+                  record={record}
+                  onRidownload={handleRidownload}
+                  onElimina={handleEliminaArchivio}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -738,8 +739,9 @@ export default function Noleggio({ onNavigate }) {
                         const blob = await generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello});
                         const ng = dataDa&&dataA ? Math.max(1,Math.round((new Date(dataA)-new Date(dataDa))/(1000*60*60*24))) : 1;
                         const nomeFile = `preventivo_${Date.now()}.pdf`;
-                        const pdfUrl = await uploadEscaricaPDF(blob, nomeFile);
+                        const pdfUrl = await uploadEApriPDF(blob, nomeFile);
                         await salvaArchivioNoleggio({ nome_cliente:cliente||null, data_da:dataDa||null, data_a:dataA||null, n_giorni:ng, totale_preventivo:totaleCarrello, note:noteNoleggio||null, carrello, pdf_url:pdfUrl });
+                        showToast('✅ Preventivo salvato in archivio');
                       }}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
                       <FileText className="w-4 h-4"/> PDF
@@ -760,6 +762,60 @@ export default function Noleggio({ onNavigate }) {
 }
 
 // ─── Componente riga macchina ────────────────────────────────────────────────
+// ─── Card archivio noleggio ─────────────────────────────────────────────────
+function NoleggioArchivioCard({ record, onRidownload, onElimina }) {
+  const [expanded, setExpanded] = useState(false);
+  const fmtData = (iso) => iso ? new Date(iso).toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+  const voci = record.carrello || [];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">
+      <div className="px-4 py-3 flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-green-800 bg-green-50 rounded-full px-2 py-0.5">🔑 Noleggio</span>
+            <span className="text-xs text-gray-400">{fmtData(record.created_at)}</span>
+            {record.data_da && <span className="text-xs text-gray-400">{fmtData(record.data_da)}{record.data_a?' → '+fmtData(record.data_a):''}</span>}
+          </div>
+          <p className="font-bold text-gray-900 text-sm mt-1">{record.nome_cliente || <span className="text-gray-400 italic">Cliente non specificato</span>}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{voci.length} macchina{voci.length!==1?'e':''}</p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          {record.totale_preventivo && <p className="text-green-800 font-bold text-base">€ {Number(record.totale_preventivo).toFixed(2)}</p>}
+        </div>
+      </div>
+      <div className="px-4 pb-3 flex gap-2 flex-wrap">
+        <button onClick={()=>setExpanded(!expanded)}
+          className="flex-1 bg-gray-100 text-gray-700 text-xs font-semibold py-2 rounded-lg hover:bg-gray-200 transition-colors">
+          👁 {expanded?'Chiudi':'Dettagli'}
+        </button>
+        <button onClick={()=>onRidownload(record)}
+          className="flex-1 bg-green-700 text-white text-xs font-semibold py-2 rounded-lg hover:bg-green-800 transition-colors">
+          📄 {record.pdf_url?'Apri PDF':'Rigenera PDF'}
+        </button>
+        <button onClick={()=>onElimina(record.id)}
+          className="bg-red-50 text-red-600 text-xs font-semibold py-2 px-3 rounded-lg hover:bg-red-100 transition-colors">
+          🗑
+        </button>
+      </div>
+      {expanded && (
+        <div className="border-t border-gray-100 px-4 py-3 space-y-1">
+          {voci.map((voce, i) => {
+            const fasciaLabel = FASCE.find(f=>f.key===voce.fasciaScelta)?.label||voce.fasciaScelta;
+            return (
+              <div key={i} className="flex justify-between text-xs text-gray-600">
+                <span>• {voce.macchina?.nome}</span>
+                <span className="text-gray-400">{fasciaLabel} · € {Number(voce.subtotale).toFixed(2)}</span>
+              </div>
+            );
+          })}
+          {record.note && <p className="text-xs text-gray-500 mt-1 pt-1 border-t">📝 {record.note}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MacchinaRow({ m, selezionata, onSelect, indent }) {
   return (
     <button onClick={()=>onSelect(m)}

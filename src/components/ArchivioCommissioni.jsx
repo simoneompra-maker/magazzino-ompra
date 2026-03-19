@@ -535,8 +535,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
     
     updateCommissione(editingCommissione.id, { prodotti: updatedProdotti });
     
-    // Controlla se tutte le matricole sono state inserite
-    const tutteMatricoleInserite = updatedProdotti.every(p => p.serialNumber);
+    // Controlla se tutte le matricole NECESSARIE sono state inserite
+    const tutteMatricoleInserite = updatedProdotti.every(p => !richiedeMatricola(p.brand, p.model) || p.serialNumber);
     
     setEditingCommissione(null);
     setEditingProductIndex(null);
@@ -583,10 +583,26 @@ export default function ArchivioCommissioni({ onNavigate }) {
     }
   };
 
+  // Prodotti che NON richiedono matricola (batterie, caricabatterie, accessori, consumabili)
+  const richiedeMatricola = (brand, model) => {
+    if (!model) return false;
+    const m = model.toLowerCase();
+    const noSerial = [
+      'batteria', 'battery', 'caricabatterie', 'caricatore', 'charger',
+      'olio', 'oil', 'filo', 'wire', 'accessori', 'accessory',
+      'casco', 'helmet', 'guanti', 'gloves', 'protezione', 'protection',
+      'borsa', 'bag', 'zaino', 'backpack', 'tracolla', 'harness',
+      'testina', 'head', 'lama', 'blade', 'catena', 'chain',
+      'spranga', 'bar', 'carburante', 'fuel', 'lubrificante',
+      'ak', 'ap ', 'ar ', 'al1', 'al3', 'al5',
+    ];
+    return !noSerial.some(kw => m.includes(kw));
+  };
+
   // Completa commissione - ora mostra anteprima invece di chiudere subito
   const handleComplete = async (commissione) => {
-    if (commissione.prodotti.some(p => !p.serialNumber)) {
-      alert('Aggiungi prima tutte le matricole!');
+    if (commissione.prodotti.some(p => richiedeMatricola(p.brand, p.model) && !p.serialNumber)) {
+      alert('Aggiungi prima le matricole delle macchine!');
       return;
     }
     
@@ -1289,7 +1305,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                         handleComplete(comm);
                       }
                     }}
-                    disabled={comm.prodotti.some(p => !p.serialNumber)}
+                    disabled={comm.prodotti.some(p => richiedeMatricola(p.brand, p.model) && !p.serialNumber)}
                     className="flex-1 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50"
                     style={{ backgroundColor: '#006B3F' }}
                   >

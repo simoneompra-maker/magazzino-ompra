@@ -1006,6 +1006,15 @@ export default function PratoVivo({ onNavigate }) {
   const [usaAllRound, setUsaAllRound] = useState(false);
   const [showPreventivo, setShowPreventivo] = useState(false);
 
+  // ── MODALITÀ ESPERTO ─────────────────────────────────────────
+  const [modalitaEsperto, setModalitaEsperto] = useState(false);
+  // Override per semina/rigenerazione (null = usa default da costante)
+  const [overrideGranulari, setOverrideGranulari] = useState(null);
+  const [overrideLiquidi, setOverrideLiquidi] = useState(null);
+  const [overrideSeme, setOverrideSeme] = useState(null);
+  // Override per piano annuo
+  const [overridePianoAnnuo, setOverridePianoAnnuo] = useState(null);
+
   // Archivio
   const [activeTab, setActiveTab] = useState('nuovo');
   const [archivioData, setArchivioData] = useState([]);
@@ -1039,6 +1048,8 @@ export default function PratoVivo({ onNavigate }) {
     setIdroTerreno('piano'); setIdroMiscuglio('Ecograss'); setIdroMulch('premium_paper');
     setIdroVoci({ mulch: true, sementi: true, algapark: true, rootspeed: true, collante: false, noleggio: true });
     setIdroPrezzi({ premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00, collante: 12.00, noleggio: 350.00 });
+    // Reset override modalità esperto
+    setOverrideGranulari(null); setOverrideLiquidi(null); setOverrideSeme(null); setOverridePianoAnnuo(null);
   };
 
   const goBack = () => {
@@ -1185,7 +1196,13 @@ export default function PratoVivo({ onNavigate }) {
   const showPianoIdrosemina = tipoPrato && tipoIntervento === 'idrosemina';
 
   const datiPianoAttivo = tipoIntervento === 'semina' ? PIANO_SEMINA[livello] : tipoIntervento === 'rigenerazione' ? PIANO_RIGENERAZIONE[livello] : null;
-  const granulariAttivi = datiPianoAttivo ? datiPianoAttivo.granulari : [];
+  // Valori "effettivi" — usano override esperto se impostati, altrimenti il default
+  const granulariEffettivi = overrideGranulari ?? (datiPianoAttivo?.granulari || []);
+  const liquidiEffettivi   = overrideLiquidi   ?? (datiPianoAttivo?.liquidi || []);
+  const liquidiSabbEffettivi = datiPianoAttivo?.liquidiSabbioso || [];
+  const semeEffettivo      = overrideSeme      ?? datiPianoAttivo?.seme;
+  const pianoAnnuoEffettivo = overridePianoAnnuo ?? pianoAnnuo;
+  const granulariAttivi = granulariEffettivi;
 
   // Calcola preventivo in base al percorso attivo
   const preventivoData = useMemo(() => {
@@ -1195,13 +1212,13 @@ export default function PratoVivo({ onNavigate }) {
     const terrenoSem = terreno || 'normale'; // terreno per semina/rigenerazione
 
     if ((tipoIntervento === 'semina' || tipoIntervento === 'rigenerazione') && datiPianoAttivo) {
-      const gran = datiPianoAttivo.granulari || [];
+      const gran = granulariEffettivi;
       for (const g of gran) {
         const dose = parseFloat(String(g.dose).split('–')[0]);
         if (!isNaN(dose)) items.push({ prodotto: g.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
       }
-      // Usa liquidiSabbioso se terreno sabbioso, altrimenti liquidi normali
-      const liquidiAttivi = terrenoSem === 'sabbioso' ? (datiPianoAttivo.liquidiSabbioso || datiPianoAttivo.liquidi || []) : (datiPianoAttivo.liquidi || []);
+      // Usa liquidiSabbioso se terreno sabbioso, altrimenti liquidi effettivi (con override esperto)
+      const liquidiAttivi = terrenoSem === 'sabbioso' ? (datiPianoAttivo.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi;
       for (const l of liquidiAttivi) {
         const dose = parseFloat(String(l.dose).split('–')[0].replace(/[^\d.]/g,''));
         if (!isNaN(dose) && dose > 0) items.push({ prodotto: l.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
@@ -1238,9 +1255,9 @@ export default function PratoVivo({ onNavigate }) {
       return result;
     }
 
-    if (tipoIntervento === 'piano_annuo' && pianoAnnuo.length > 0 && terreno && colore) {
+    if (tipoIntervento === 'piano_annuo' && pianoAnnuoEffettivo.length > 0 && terreno && colore) {
       if (terreno === 'sabbioso') {
-        for (const iv of pianoAnnuo) {
+        for (const iv of pianoAnnuoEffettivo) {
           const dose = parseFloat(String(iv.dose).split('–')[0]);
           if (!isNaN(dose)) items.push({ prodotto: iv.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
         }
@@ -1254,7 +1271,7 @@ export default function PratoVivo({ onNavigate }) {
           }
         }
       } else {
-        for (const iv of pianoAnnuo) {
+        for (const iv of pianoAnnuoEffettivo) {
           if (iv.saltato) continue;
           const dose = parseFloat(String(iv.dose).split('–')[0]);
           if (!isNaN(dose)) items.push({ prodotto: iv.dati?.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
@@ -1296,7 +1313,34 @@ export default function PratoVivo({ onNavigate }) {
             )}
           </div>
           <h1 className="text-xl font-bold text-green-900 flex-1 text-center">🌱 PratoVivo</h1>
-          <div className="w-20" />
+          <button
+            onClick={() => {
+              const nuovoStato = !modalitaEsperto;
+              setModalitaEsperto(nuovoStato);
+              if (nuovoStato) {
+                // Inizializza override con i valori attuali del piano
+                if (datiPianoAttivo) {
+                  setOverrideGranulari(JSON.parse(JSON.stringify(datiPianoAttivo.granulari || [])));
+                  setOverrideLiquidi(JSON.parse(JSON.stringify(datiPianoAttivo.liquidi || [])));
+                  setOverrideSeme(datiPianoAttivo.seme ? JSON.parse(JSON.stringify(datiPianoAttivo.seme)) : null);
+                }
+                if (pianoAnnuo.length > 0) {
+                  setOverridePianoAnnuo(JSON.parse(JSON.stringify(pianoAnnuo)));
+                }
+              } else {
+                // Disattiva: annulla override (torna ai default)
+                setOverrideGranulari(null); setOverrideLiquidi(null);
+                setOverrideSeme(null); setOverridePianoAnnuo(null);
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+              modalitaEsperto
+                ? 'bg-amber-400 border-amber-500 text-amber-900'
+                : 'bg-white border-gray-200 text-gray-500 hover:border-amber-300'
+            }`}
+          >
+            🔬 {modalitaEsperto ? 'Esperto ON' : 'Esperto'}
+          </button>
         </div>
 
         {/* Tab bar */}
@@ -1415,10 +1459,14 @@ export default function PratoVivo({ onNavigate }) {
             livello={livello} setLivello={setLivello}
             linea={linea} setLinea={setLinea}
             mq={mq} irrigazione={irrigazione}
-            granulari={granulariAttivi}
-            liquidi={datiPianoAttivo.liquidi}
-            liquidiSabbioso={datiPianoAttivo.liquidiSabbioso}
-            seme={datiPianoAttivo.seme}
+            granulari={granulariEffettivi}
+            liquidi={liquidiEffettivi}
+            liquidiSabbioso={liquidiSabbEffettivi}
+            seme={semeEffettivo}
+            modalitaEsperto={modalitaEsperto}
+            onChangeGranulari={setOverrideGranulari}
+            onChangeLiquidi={setOverrideLiquidi}
+            onChangeSeme={setOverrideSeme}
             degradazione={null}
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
@@ -1489,10 +1537,14 @@ export default function PratoVivo({ onNavigate }) {
             livello={livello} setLivello={setLivello}
             linea={linea} setLinea={setLinea}
             mq={mq} irrigazione={irrigazione}
-            granulari={granulariAttivi}
-            liquidi={datiPianoAttivo.liquidi}
-            liquidiSabbioso={datiPianoAttivo.liquidiSabbioso}
-            seme={datiPianoAttivo.seme}
+            granulari={granulariEffettivi}
+            liquidi={liquidiEffettivi}
+            liquidiSabbioso={liquidiSabbEffettivi}
+            seme={semeEffettivo}
+            modalitaEsperto={modalitaEsperto}
+            onChangeGranulari={setOverrideGranulari}
+            onChangeLiquidi={setOverrideLiquidi}
+            onChangeSeme={setOverrideSeme}
             degradazione={degradazione}
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
@@ -1516,11 +1568,13 @@ export default function PratoVivo({ onNavigate }) {
             liquidiSab={liquidiSab} setLiquidiSab={setLiquidiSab}
             tipoPrato={tipoPrato}
             mq={mq} nomeCliente={nomeCliente}
-            piano={pianoAnnuo} bimOggLabel={bimOggLabel}
+            piano={pianoAnnuoEffettivo} bimOggLabel={bimOggLabel}
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             usaAllRound={usaAllRound} setUsaAllRound={setUsaAllRound}
+            modalitaEsperto={modalitaEsperto}
+            onChangePianoAnnuo={setOverridePianoAnnuo}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound }); salvaInBackground(); }}
+            onStampa={(includi) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo: pianoAnnuoEffettivo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound }); salvaInBackground(); }}
           />
         )}
 
@@ -2126,7 +2180,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa, dataInizio = null }) {
+function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
@@ -2245,6 +2299,78 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
           <p className="text-blue-600 text-xs mt-1">
             Seme calcolato su <strong>{mqDeg} m²</strong> ({Math.round(pct * 100)}% di {mq} m²) · Vigor Active e concimi su intera superficie ({mq} m²)
           </p>
+        </div>
+      )}
+
+      {/* ── MODALITÀ ESPERTO: editor granulari ──────────────── */}
+      {modalitaEsperto && (
+        <div className="bg-amber-50 rounded-2xl border-2 border-amber-400 overflow-hidden">
+          <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
+            <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Granulari</h2>
+            <button
+              onClick={() => onChangeGranulari([...granulari, { prodotto: '', npk: '', dose: 0, unita: 'g/m²', quando: '', note: '' }])}
+              className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
+            >+ Aggiungi</button>
+          </div>
+          <div className="p-3 space-y-2">
+            {granulari.map((p, i) => (
+              <div key={i} className="bg-white rounded-xl p-3 space-y-2 border border-amber-200">
+                <div className="flex gap-2">
+                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={p.prodotto} placeholder="Prodotto"
+                    onChange={e => { const u=[...granulari]; u[i]={...u[i],prodotto:e.target.value}; onChangeGranulari(u); }} />
+                  <input className="w-20 border rounded-lg px-2 py-1 text-sm text-center" value={p.npk||''} placeholder="NPK"
+                    onChange={e => { const u=[...granulari]; u[i]={...u[i],npk:e.target.value}; onChangeGranulari(u); }} />
+                  <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm text-right font-bold" value={p.dose} placeholder="Dose"
+                    onChange={e => { const u=[...granulari]; u[i]={...u[i],dose:parseFloat(e.target.value)||0}; onChangeGranulari(u); }} />
+                  <span className="text-xs text-gray-400 self-center">g/m²</span>
+                  <button onClick={() => { const u=granulari.filter((_,j)=>j!==i); onChangeGranulari(u); }} className="text-red-400 text-lg leading-none px-1">×</button>
+                </div>
+                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-600" value={p.quando||''} placeholder="Quando applicare"
+                  onChange={e => { const u=[...granulari]; u[i]={...u[i],quando:e.target.value}; onChangeGranulari(u); }} />
+                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={p.note||''} placeholder="Note"
+                  onChange={e => { const u=[...granulari]; u[i]={...u[i],note:e.target.value}; onChangeGranulari(u); }} />
+              </div>
+            ))}
+          </div>
+          {/* Editor seme */}
+          {seme && (
+            <div className="px-3 pb-3">
+              <div className="bg-white rounded-xl p-3 border border-amber-200">
+                <p className="text-xs font-bold text-amber-700 mb-2">🌾 Dose seme</p>
+                <div className="flex gap-2">
+                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={seme.dose||seme.dose_grave||''} placeholder="Dose (es. 40 g/m²)"
+                    onChange={e => { onChangeSeme({...seme, dose: e.target.value, dose_ritocchi: e.target.value, dose_medio: e.target.value, dose_grave: e.target.value}); }} />
+                  <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-500" value={seme.note||''} placeholder="Note seme"
+                    onChange={e => { onChangeSeme({...seme, note: e.target.value}); }} />
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Editor liquidi */}
+          <div className="bg-blue-50 border-t border-amber-200 px-3 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-blue-700">💧 Liquidi / Biostimolanti</p>
+              <button
+                onClick={() => onChangeLiquidi([...liquidi, { prodotto: '', dose: '', quando: '', note: '' }])}
+                className="text-xs bg-blue-500 text-white font-bold px-2 py-1 rounded-lg"
+              >+ Aggiungi</button>
+            </div>
+            {liquidi.map((p, i) => (
+              <div key={i} className="bg-white rounded-xl p-3 space-y-2 mb-2 border border-blue-100">
+                <div className="flex gap-2">
+                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={p.prodotto||''} placeholder="Prodotto"
+                    onChange={e => { const u=[...liquidi]; u[i]={...u[i],prodotto:e.target.value}; onChangeLiquidi(u); }} />
+                  <input className="w-20 border rounded-lg px-2 py-1 text-sm text-right" value={p.dose||''} placeholder="Dose"
+                    onChange={e => { const u=[...liquidi]; u[i]={...u[i],dose:e.target.value}; onChangeLiquidi(u); }} />
+                  <button onClick={() => { const u=liquidi.filter((_,j)=>j!==i); onChangeLiquidi(u); }} className="text-red-400 text-lg leading-none px-1">×</button>
+                </div>
+                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-600" value={p.quando||''} placeholder="Quando"
+                  onChange={e => { const u=[...liquidi]; u[i]={...u[i],quando:e.target.value}; onChangeLiquidi(u); }} />
+                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={p.note||''} placeholder="Note"
+                  onChange={e => { const u=[...liquidi]; u[i]={...u[i],note:e.target.value}; onChangeLiquidi(u); }} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -2430,7 +2556,7 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa }) {
+function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa, modalitaEsperto = false, onChangePianoAnnuo }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
@@ -2513,6 +2639,44 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => setLiquidiSab(true)} className={`rounded-xl py-2 text-sm font-bold transition-colors ${liquidiSab?'bg-amber-500 text-white':'bg-white text-amber-700 border border-amber-300'}`}>✅ Sì, li includo</button>
             <button onClick={() => setLiquidiSab(false)} className={`rounded-xl py-2 text-sm font-bold transition-colors ${!liquidiSab?'bg-gray-400 text-white':'bg-white text-gray-600 border border-gray-300'}`}>No grazie</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODALITÀ ESPERTO: editor piano annuo ───────────── */}
+      {modalitaEsperto && terreno && colore && piano.length > 0 && (
+        <div className="bg-amber-50 rounded-2xl border-2 border-amber-400 overflow-hidden">
+          <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
+            <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Interventi piano annuo</h2>
+            <button
+              onClick={() => onChangePianoAnnuo([...piano, { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false }])}
+              className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
+            >+ Aggiungi</button>
+          </div>
+          <div className="p-3 space-y-2">
+            {piano.map((iv, i) => iv.saltato ? null : (
+              <div key={i} className="bg-white rounded-xl p-3 border border-amber-200 space-y-2">
+                <div className="flex gap-2 items-center">
+                  <span className="text-xs font-bold text-amber-600 w-6">#{iv.numero??i+1}</span>
+                  <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.funzione||''} placeholder="Funzione (es. Nutrizione primaverile)"
+                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,funzione:e.target.value}:x); onChangePianoAnnuo(u); }} />
+                  <input className="w-28 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.bimestre_label||''} placeholder="Periodo"
+                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,bimestre_label:e.target.value}:x); onChangePianoAnnuo(u); }} />
+                  <button onClick={() => { const u=piano.map((x,j)=>j===i?{...x,saltato:true}:x); onChangePianoAnnuo(u); }} className="text-red-400 text-lg leading-none px-1" title="Rimuovi">×</button>
+                </div>
+                <div className="flex gap-2">
+                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={iv.prodotto||''} placeholder="Prodotto"
+                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,prodotto:e.target.value, dati:{...x.dati, prodotto:e.target.value}}:x); onChangePianoAnnuo(u); }} />
+                  <input className="w-16 border rounded-lg px-2 py-1 text-xs" value={iv.npk||(iv.dati?.npk)||''} placeholder="NPK"
+                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,npk:e.target.value, dati:{...x.dati, npk:e.target.value}}:x); onChangePianoAnnuo(u); }} />
+                  <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm font-bold text-right" value={iv.dose||0} placeholder="g/m²"
+                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,dose:parseFloat(e.target.value)||0}:x); onChangePianoAnnuo(u); }} />
+                  <span className="text-xs text-gray-400 self-center">g/m²</span>
+                </div>
+                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={iv.note||''} placeholder="Note"
+                  onChange={e => { const u=piano.map((x,j)=>j===i?{...x,note:e.target.value}:x); onChangePianoAnnuo(u); }} />
+              </div>
+            ))}
           </div>
         </div>
       )}

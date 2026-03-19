@@ -133,12 +133,25 @@ async function generaPDFCarrello({ carrello, cliente, dataDa, dataA, note, total
   doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(120,120,120);
   doc.text('I prezzi sono IVA inclusa salvo diversa indicazione · Preventivo non vincolante · OMPRA srl', W/2, y, {align:'center'});
 
-  const blob = doc.output('blob');
+  return doc.output('blob');
+}
+
+// ─── Carica PDF su Supabase Storage e scarica localmente ────────────────────
+async function uploadEscaricaPDF(blob, nomeFile) {
+  // Upload su Storage
+  const { data, error } = await supabase.storage
+    .from('noleggio-preventivi')
+    .upload(nomeFile, blob, { contentType: 'application/pdf', upsert: true });
+  if (error) { console.error('Errore upload PDF:', error); return null; }
+  // URL pubblico
+  const { data: urlData } = supabase.storage.from('noleggio-preventivi').getPublicUrl(nomeFile);
+  // Scarica anche in locale
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `Preventivo_Noleggio_${new Date().toISOString().slice(0,10)}.pdf`;
+  a.href = url; a.download = nomeFile;
   document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  return urlData?.publicUrl || null;
 }
 
 // ─── WhatsApp carrello ───────────────────────────────────────────────────────
@@ -217,7 +230,12 @@ export default function Noleggio({ onNavigate }) {
   }
 
   async function handleRidownload(record) {
-    await generaPDFCarrello({
+    if (record.pdf_url) {
+      window.open(record.pdf_url, '_blank');
+      return;
+    }
+    // Fallback: rigenera il PDF
+    const blob = await generaPDFCarrello({
       carrello: record.carrello || [],
       cliente: record.nome_cliente || '',
       dataDa: record.data_da || '',
@@ -225,6 +243,11 @@ export default function Noleggio({ onNavigate }) {
       note: record.note || '',
       totaleCarrello: record.totale_preventivo || 0,
     });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Preventivo_Noleggio_${record.created_at?.slice(0,10)||'archivio'}.pdf`;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
   }
 
   const nGiorni = useMemo(() => {
@@ -438,7 +461,7 @@ export default function Noleggio({ onNavigate }) {
               <div className="px-4 py-3 border-t flex gap-2">
                 <button onClick={()=>handleRidownload(record)}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-xs font-bold" style={{backgroundColor:GREEN}}>
-                  <FileText className="w-3.5 h-3.5"/> Scarica PDF
+                  <FileText className="w-3.5 h-3.5"/> {record.pdf_url ? 'Apri PDF' : 'Rigenera PDF'}
                 </button>
                 <button onClick={()=>handleEliminaArchivio(record.id)}
                   className="px-3 py-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
@@ -712,9 +735,11 @@ export default function Noleggio({ onNavigate }) {
                   </div>
                   <div className="p-4 flex gap-3">
                     <button onClick={async()=>{
-                        await generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello});
+                        const blob = await generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello});
                         const ng = dataDa&&dataA ? Math.max(1,Math.round((new Date(dataA)-new Date(dataDa))/(1000*60*60*24))) : 1;
-                        await salvaArchivioNoleggio({ nome_cliente:cliente||null, data_da:dataDa||null, data_a:dataA||null, n_giorni:ng, totale_preventivo:totaleCarrello, note:noteNoleggio||null, carrello });
+                        const nomeFile = `preventivo_${Date.now()}.pdf`;
+                        const pdfUrl = await uploadEscaricaPDF(blob, nomeFile);
+                        await salvaArchivioNoleggio({ nome_cliente:cliente||null, data_da:dataDa||null, data_a:dataA||null, n_giorni:ng, totale_preventivo:totaleCarrello, note:noteNoleggio||null, carrello, pdf_url:pdfUrl });
                       }}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
                       <FileText className="w-4 h-4"/> PDF

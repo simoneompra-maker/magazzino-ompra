@@ -893,10 +893,10 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <table>
           <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th><th>Note</th></tr>
           ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => {
-              const nomeProdotto = (usaAllRound && iv.dati?.prodotto_migliore) ? iv.dati.prodotto_migliore : iv.dati.prodotto;
+              const nomeProdotto = (usaAllRound && iv.dati?.prodotto_migliore) ? (iv.dati?.prodotto_migliore || iv.prodotto || '—') : (iv.dati?.prodotto || iv.prodotto || '—');
               return `<tr class="${iv.passato ? 'passato' : ''}">
             <td>${iv.numero}</td><td>${iv.bimestre_label}</td><td>${iv.funzione}</td>
-            <td><strong>${nomeProdotto}</strong>${iv.dati.npk !== '—' ? ` <span class="npk">NPK ${iv.dati.npk}</span>`:''}
+            <td><strong>${nomeProdotto}</strong>${iv.dati?.npk && iv.dati.npk !== '—' ? ` <span class="npk">NPK ${iv.dati.npk}</span>`:''}
             </td><td>${iv.dose} g/m²${kg(iv.dose)}</td><td>${iv.note||''}</td>
           </tr>`;}).join('')}
         </table>`;
@@ -2649,7 +2649,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
           <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
             <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Interventi piano annuo</h2>
             <button
-              onClick={() => onChangePianoAnnuo([...piano, { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false }])}
+              onClick={() => onChangePianoAnnuo([...piano, { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false, dati: { prodotto: '', npk: '—', dose_intenso: 0, dose_pallido: 0 } }])}
               className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
             >+ Aggiungi in fondo</button>
           </div>
@@ -2677,9 +2677,9 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                   </div>
                   <div className="flex gap-2">
                     <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={iv.prodotto||''} placeholder="Prodotto"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,prodotto:e.target.value, dati:{...x.dati, prodotto:e.target.value}}:x); onChangePianoAnnuo(u); }} />
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,prodotto:e.target.value, dati:{...(x.dati||{}), prodotto:e.target.value}}:x); onChangePianoAnnuo(u); }} />
                     <input className="w-16 border rounded-lg px-2 py-1 text-xs" value={iv.npk||(iv.dati?.npk)||''} placeholder="NPK"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,npk:e.target.value, dati:{...x.dati, npk:e.target.value}}:x); onChangePianoAnnuo(u); }} />
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,npk:e.target.value, dati:{...(x.dati||{}), npk:e.target.value}}:x); onChangePianoAnnuo(u); }} />
                     <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm font-bold text-right" value={iv.dose||0} placeholder="g/m²"
                       onChange={e => { const u=piano.map((x,j)=>j===i?{...x,dose:parseFloat(e.target.value)||0}:x); onChangePianoAnnuo(u); }} />
                     <span className="text-xs text-gray-400 self-center">g/m²</span>
@@ -2691,7 +2691,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                 <div className="flex justify-center py-1">
                   <button
                     onClick={() => {
-                      const nuovo = { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false };
+                      const nuovo = { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false, dati: { prodotto: '', npk: '—', dose_intenso: 0, dose_pallido: 0 } };
                       const u = [...piano.slice(0, i + 1), nuovo, ...piano.slice(i + 1)];
                       onChangePianoAnnuo(u);
                     }}
@@ -2748,12 +2748,12 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <p className="font-bold text-green-800">
-                        {linea === 'mivena' && iv.dati.prodotto_migliore
+                        {linea === 'mivena' && iv.dati?.prodotto_migliore
                           ? (usaAllRound ? iv.dati.prodotto_migliore : iv.dati.prodotto)
-                          : iv.dati.prodotto}
-                        {iv.dati.npk!=='—'&&<span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}
+                          : (iv.dati?.prodotto || iv.prodotto || '—')}
+                        {iv.dati?.npk && iv.dati.npk!=='—' && <span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}
                       </p>
-                      {linea === 'mivena' && iv.dati.prodotto_migliore && livello !== 'base' && (
+                      {linea === 'mivena' && iv.dati?.prodotto_migliore && livello !== 'base' && (
                         <button onClick={() => setUsaAllRound(v => !v)}
                           className={`text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors ${usaAllRound ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'}`}>
                           {usaAllRound ? '⭐ AllRound attivo' : '⭐ Usa AllRound'}

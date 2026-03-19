@@ -300,7 +300,7 @@ export default function Vendita({ onNavigate }) {
     }
   };
 
-  // Conferma nuovo cliente dal form manuale — salva subito su Supabase
+  // Conferma nuovo cliente dal form manuale — salva su Supabase con feedback visibile
   const handleConfermaClienteManuale = async () => {
     const f = nuovoClienteForm;
     const nomeCompleto = [f.cognome.trim(), f.nome.trim()].filter(Boolean).join(' ');
@@ -309,57 +309,12 @@ export default function Vendita({ onNavigate }) {
       return;
     }
 
-    // Salva subito in DB (silenzioso, non blocca il flusso)
-    let idSalvato = null;
-    try {
-      const searchKey = nomeCompleto;
-      // Controlla se esiste già
-      const { data: esistente } = await supabase
-        .from('clienti')
-        .select('id')
-        .ilike('search_text', searchKey)
-        .is('deleted_at', null)
-        .maybeSingle();
-
-      if (esistente) {
-        idSalvato = esistente.id;
-      } else {
-        const { data: inserted, error } = await supabase.from('clienti').insert({
-          nome:          f.nome.trim()      || null,
-          cognome:       f.cognome.trim()   || null,
-          nome_completo: nomeCompleto,
-          indirizzo:     f.indirizzo.trim() || null,
-          cap:           f.cap.trim()       || null,
-          localita:      f.localita.trim()  || null,
-          provincia:     f.provincia.trim() || null,
-          telefono:      f.telefono.trim()  || null,
-          email:         f.email.trim()     || null,
-          codice_fiscale: f.cf.trim()        || null,
-          partita_iva:    f.piva.trim()      || null,
-          sdi:            f.sdi.trim()       || null,
-          search_text:    searchKey,
-          fonte:          'manuale',
-        }).select('id').single();
-        if (!error && inserted) {
-          idSalvato = inserted.id;
-          invalidaClienteCache();
-        } else if (error?.code === '23505' || error?.code === '409') {
-          // Già esistente — recupera id silenziosamente
-          const { data: dup } = await supabase
-            .from('clienti').select('id').ilike('search_text', searchKey).is('deleted_at', null).maybeSingle();
-          if (dup) idSalvato = dup.id;
-        }
-      }
-    } catch (err) {
-      console.warn('Salvataggio cliente silenzioso fallito:', err);
-      // Non bloccare — il cliente viene usato in memoria per la commissione
-    }
-
+    // Costruisce subito il cliente virtuale per non bloccare il flusso
     const clienteVirtuale = {
-      id: idSalvato, // se salvato, ha l'id reale — evita il banner ridondante
+      id: null,
       nome: nomeCompleto,
       nomeP: nomeCompleto,
-      searchText: nomeCompleto,
+      searchText: nomeCompleto.toLowerCase(),
       indirizzo: f.indirizzo.trim() || null,
       cap:       f.cap.trim()       || null,
       localita:  f.localita.trim()  || null,
@@ -370,10 +325,79 @@ export default function Vendita({ onNavigate }) {
       piva:      f.piva.trim()      || null,
       sdi:       f.sdi.trim()       || null,
     };
+
+    // Aggiorna UI subito — non aspetta Supabase
     setCliente(nomeCompleto);
     setClienteSelezionato(clienteVirtuale);
     setTelefonoCliente(f.telefono.trim() || '');
     setShowNuovoCliente(false);
+
+    // Salva in DB in background — con feedback visibile su errore
+    const searchKey = nomeCompleto.toLowerCase();
+    try {
+      // Controlla se esiste già (evita duplicati)
+      const { data: esistente, error: errCheck } = await supabase
+        .from('clienti')
+        .select('id')
+        .ilike('search_text', `%${searchKey}%`)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (errCheck) throw errCheck;
+
+      if (esistente) {
+        // Esiste già — aggiorna l'id nel clienteSelezionato
+        setClienteSelezionato(prev => ({ ...prev, id: esistente.id }));
+        return;
+      }
+
+      // Non esiste — inserisci
+      const { data: inserted, error: errInsert } = await supabase
+        .from('clienti')
+        .insert({
+          nome:           f.nome.trim()      || null,
+          cognome:        f.cognome.trim()   || null,
+          nome_completo:  nomeCompleto,
+          indirizzo:      f.indirizzo.trim() || null,
+          cap:            f.cap.trim()       || null,
+          localita:       f.localita.trim()  || null,
+          provincia:      f.provincia.trim() || null,
+          telefono:       f.telefono.trim()  || null,
+          email:          f.email.trim()     || null,
+          codice_fiscale: f.cf.trim()        || null,
+          partita_iva:    f.piva.trim()      || null,
+          sdi:            f.sdi.trim()       || null,
+          search_text:    nomeCompleto,
+          fonte:          'manuale',
+        })
+        .select('id')
+        .single();
+
+      if (errInsert) {
+        // Duplicato per race condition — recupera id esistente
+        if (errInsert.code === '23505' || errInsert.code === '409') {
+          const { data: dup } = await supabase
+            .from('clienti').select('id')
+            .ilike('search_text', `%${searchKey}%`)
+            .is('deleted_at', null).maybeSingle();
+          if (dup) setClienteSelezionato(prev => ({ ...prev, id: dup.id }));
+          invalidaClienteCache();
+          return;
+        }
+        throw errInsert;
+      }
+
+      if (inserted) {
+        setClienteSelezionato(prev => ({ ...prev, id: inserted.id }));
+        invalidaClienteCache();
+        console.log('✅ Cliente salvato in rubrica:', nomeCompleto, inserted.id);
+      }
+
+    } catch (err) {
+      console.error('❌ Salvataggio cliente fallito:', err);
+      // Banner visibile — il cliente è già nella commissione ma NON in rubrica
+      alert(`⚠️ Cliente "${nomeCompleto}" aggiunto alla commissione ma NON salvato in rubrica.\n\nMotivo: ${err?.message || 'Errore di rete'}\n\nPuoi continuare normalmente — il cliente verrà usato solo per questa commissione.`);
+    }
   };
 
   // Gestione operatore

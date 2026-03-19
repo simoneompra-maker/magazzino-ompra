@@ -650,7 +650,23 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const handleEditProductPrice = (index, newPrice) => {
     const updated = [...editForm.prodotti];
     updated[index].prezzo = newPrice === '' ? null : parseFloat(newPrice);
+    const newTotale = calcolaTotaleEdit({ ...editForm, prodotti: updated });
+    setEditForm({ ...editForm, prodotti: updated, totale: newTotale });
+  };
+
+  // Aggiorna matricola prodotto in modifica
+  const handleEditProductSerial = (index, value) => {
+    const updated = [...editForm.prodotti];
+    updated[index] = { ...updated[index], serialNumber: value };
     setEditForm({ ...editForm, prodotti: updated });
+  };
+
+  // Calcola totale automatico da prodotti + accessori
+  const calcolaTotaleEdit = (form) => {
+    const sommaProdotti = (form.prodotti || []).reduce((s, p) => s + (parseFloat(p.prezzo) || 0), 0);
+    const sommaAccessori = (form.accessori || []).reduce((s, a) => s + (parseFloat(a.prezzo) || 0) * (parseInt(a.quantita) || 1), 0);
+    const tot = sommaProdotti + sommaAccessori;
+    return tot > 0 ? tot.toString() : form.totale;
   };
 
   // Rimuovi prodotto in modifica
@@ -660,6 +676,20 @@ export default function ArchivioCommissioni({ onNavigate }) {
       return;
     }
     const updated = editForm.prodotti.filter((_, i) => i !== index);
+    const newTotale = calcolaTotaleEdit({ ...editForm, prodotti: updated });
+    setEditForm({ ...editForm, prodotti: updated, totale: newTotale });
+  };
+
+  // Aggiungi prodotto in modifica
+  const handleAddEditProduct = () => {
+    const updated = [...editForm.prodotti, { brand: '', model: '', serialNumber: '', prezzo: null, aliquotaIva: 22 }];
+    setEditForm({ ...editForm, prodotti: updated });
+  };
+
+  // Aggiorna campo generico prodotto in modifica
+  const handleEditProductField = (index, field, value) => {
+    const updated = [...editForm.prodotti];
+    updated[index] = { ...updated[index], [field]: value };
     setEditForm({ ...editForm, prodotti: updated });
   };
 
@@ -671,13 +701,15 @@ export default function ArchivioCommissioni({ onNavigate }) {
     } else {
       updated[index][field] = value;
     }
-    setEditForm({ ...editForm, accessori: updated });
+    const newTotale = calcolaTotaleEdit({ ...editForm, accessori: updated });
+    setEditForm({ ...editForm, accessori: updated, totale: newTotale });
   };
 
   // Rimuovi accessorio in modifica
   const handleRemoveEditAccessorio = (index) => {
     const updated = editForm.accessori.filter((_, i) => i !== index);
-    setEditForm({ ...editForm, accessori: updated });
+    const newTotale = calcolaTotaleEdit({ ...editForm, accessori: updated });
+    setEditForm({ ...editForm, accessori: updated, totale: newTotale });
   };
 
   // Aggiungi accessorio in modifica
@@ -1710,36 +1742,67 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <label className="text-sm font-bold text-gray-700">Prodotti</label>
                 <div className="space-y-2 mt-2">
                   {editForm.prodotti.map((prod, idx) => (
-                    <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
+                    <div key={idx} className="p-3 bg-gray-50 rounded-lg space-y-2">
+                      {/* Riga 1: brand + model (solo se vuoti = nuova riga) */}
+                      {(!prod.brand && !prod.model) ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Brand"
+                            className="w-24 p-2 border rounded text-sm"
+                            value={prod.brand || ''}
+                            onChange={(e) => handleEditProductField(idx, 'brand', e.target.value)}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Modello"
+                            className="flex-1 p-2 border rounded text-sm"
+                            value={prod.model || ''}
+                            onChange={(e) => handleEditProductField(idx, 'model', e.target.value)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
                           <p className="font-semibold text-sm">{prod.brand} {prod.model}</p>
                           {prod.tipo && <p className="text-xs text-blue-600">{prod.tipo}</p>}
-                          <p className="text-xs text-gray-500 font-mono">SN: {prod.serialNumber || 'N/D'}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700 border-green-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
-                              {prod.aliquotaIva}%
-                            </span>
-                          )}
-                          <input
-                            type="number"
-                            placeholder="Prezzo"
-                            className="w-20 p-2 border rounded text-sm text-right"
-                            value={prod.prezzo || ''}
-                            onChange={(e) => handleEditProductPrice(idx, e.target.value)}
-                          />
-                          <button 
-                            onClick={() => handleRemoveEditProduct(idx)}
-                            className="p-1 text-red-500"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      )}
+                      {/* Riga 2: matricola + prezzo + elimina */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Matricola (SN)"
+                          className="flex-1 p-2 border rounded text-sm font-mono"
+                          value={prod.serialNumber || ''}
+                          onChange={(e) => handleEditProductSerial(idx, e.target.value)}
+                        />
+                        {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700 border-green-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
+                            {prod.aliquotaIva}%
+                          </span>
+                        )}
+                        <input
+                          type="number"
+                          placeholder="Prezzo"
+                          className="w-20 p-2 border rounded text-sm text-right"
+                          value={prod.prezzo || ''}
+                          onChange={(e) => handleEditProductPrice(idx, e.target.value)}
+                        />
+                        <button
+                          onClick={() => handleRemoveEditProduct(idx)}
+                          className="p-1 text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
+                  <button
+                    onClick={handleAddEditProduct}
+                    className="text-sm text-blue-600 font-medium"
+                  >
+                    + Aggiungi prodotto
+                  </button>
                 </div>
               </div>
 
@@ -1790,7 +1853,18 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
               {/* Totale */}
               <div>
-                <label className="text-sm font-bold text-gray-700">Totale *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-bold text-gray-700">Totale *</label>
+                  <button
+                    onClick={() => {
+                      const calc = calcolaTotaleEdit(editForm);
+                      setEditForm({ ...editForm, totale: calc });
+                    }}
+                    className="text-xs text-blue-600 underline"
+                  >
+                    ↻ Ricalcola
+                  </button>
+                </div>
                 <div className="relative mt-1">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">€</span>
                   <input

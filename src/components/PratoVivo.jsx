@@ -2651,30 +2651,55 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
             <button
               onClick={() => onChangePianoAnnuo([...piano, { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false }])}
               className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
-            >+ Aggiungi</button>
+            >+ Aggiungi in fondo</button>
           </div>
-          <div className="p-3 space-y-2">
+          <div className="p-3 space-y-1">
             {piano.map((iv, i) => iv.saltato ? null : (
-              <div key={i} className="bg-white rounded-xl p-3 border border-amber-200 space-y-2">
-                <div className="flex gap-2 items-center">
-                  <span className="text-xs font-bold text-amber-600 w-6">#{iv.numero??i+1}</span>
-                  <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.funzione||''} placeholder="Funzione (es. Nutrizione primaverile)"
-                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,funzione:e.target.value}:x); onChangePianoAnnuo(u); }} />
-                  <input className="w-28 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.bimestre_label||''} placeholder="Periodo"
-                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,bimestre_label:e.target.value}:x); onChangePianoAnnuo(u); }} />
-                  <button onClick={() => { const u=piano.map((x,j)=>j===i?{...x,saltato:true}:x); onChangePianoAnnuo(u); }} className="text-red-400 text-lg leading-none px-1" title="Rimuovi">×</button>
+              <div key={i}>
+                {/* Card intervento */}
+                <div className="bg-white rounded-xl p-3 border border-amber-200 space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <span className="text-xs font-bold text-amber-600 w-6">#{iv.numero??i+1}</span>
+                    <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.funzione||''} placeholder="Funzione (es. Nutrizione primaverile)"
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,funzione:e.target.value}:x); onChangePianoAnnuo(u); }} />
+                    <input className="w-28 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.bimestre_label||''} placeholder="Periodo"
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,bimestre_label:e.target.value}:x); onChangePianoAnnuo(u); }} />
+                    {/* Duplica */}
+                    <button
+                      onClick={() => {
+                        const copia = { ...iv, numero: piano.length + 1, funzione: iv.funzione ? `${iv.funzione} (copia)` : '' };
+                        const u = [...piano.slice(0, i + 1), copia, ...piano.slice(i + 1)];
+                        onChangePianoAnnuo(u);
+                      }}
+                      className="text-amber-500 hover:text-amber-700 px-1" title="Duplica">⧉</button>
+                    {/* Rimuovi */}
+                    <button onClick={() => { const u=piano.map((x,j)=>j===i?{...x,saltato:true}:x); onChangePianoAnnuo(u); }} className="text-red-400 hover:text-red-600 text-lg leading-none px-1" title="Rimuovi">×</button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={iv.prodotto||''} placeholder="Prodotto"
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,prodotto:e.target.value, dati:{...x.dati, prodotto:e.target.value}}:x); onChangePianoAnnuo(u); }} />
+                    <input className="w-16 border rounded-lg px-2 py-1 text-xs" value={iv.npk||(iv.dati?.npk)||''} placeholder="NPK"
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,npk:e.target.value, dati:{...x.dati, npk:e.target.value}}:x); onChangePianoAnnuo(u); }} />
+                    <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm font-bold text-right" value={iv.dose||0} placeholder="g/m²"
+                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,dose:parseFloat(e.target.value)||0}:x); onChangePianoAnnuo(u); }} />
+                    <span className="text-xs text-gray-400 self-center">g/m²</span>
+                  </div>
+                  <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={iv.note||''} placeholder="Note"
+                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,note:e.target.value}:x); onChangePianoAnnuo(u); }} />
                 </div>
-                <div className="flex gap-2">
-                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={iv.prodotto||''} placeholder="Prodotto"
-                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,prodotto:e.target.value, dati:{...x.dati, prodotto:e.target.value}}:x); onChangePianoAnnuo(u); }} />
-                  <input className="w-16 border rounded-lg px-2 py-1 text-xs" value={iv.npk||(iv.dati?.npk)||''} placeholder="NPK"
-                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,npk:e.target.value, dati:{...x.dati, npk:e.target.value}}:x); onChangePianoAnnuo(u); }} />
-                  <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm font-bold text-right" value={iv.dose||0} placeholder="g/m²"
-                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,dose:parseFloat(e.target.value)||0}:x); onChangePianoAnnuo(u); }} />
-                  <span className="text-xs text-gray-400 self-center">g/m²</span>
+                {/* Pulsante "Inserisci qui sotto" tra un trattamento e l'altro */}
+                <div className="flex justify-center py-1">
+                  <button
+                    onClick={() => {
+                      const nuovo = { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false };
+                      const u = [...piano.slice(0, i + 1), nuovo, ...piano.slice(i + 1)];
+                      onChangePianoAnnuo(u);
+                    }}
+                    className="text-xs text-amber-600 hover:text-amber-800 font-semibold flex items-center gap-1 px-3 py-0.5 rounded-full border border-dashed border-amber-300 hover:border-amber-500 hover:bg-amber-50 transition-colors"
+                  >
+                    <span className="text-base leading-none">+</span> Inserisci intervento qui
+                  </button>
                 </div>
-                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={iv.note||''} placeholder="Note"
-                  onChange={e => { const u=piano.map((x,j)=>j===i?{...x,note:e.target.value}:x); onChangePianoAnnuo(u); }} />
               </div>
             ))}
           </div>

@@ -118,6 +118,8 @@ export default function Vendita({ onNavigate }) {
   const [addMode, setAddMode] = useState('magazzino');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [editingModel, setEditingModel] = useState(false);
+  const [editModelValue, setEditModelValue] = useState('');
   const [productPrice, setProductPrice] = useState('');
   const [showOmaggioOption, setShowOmaggioOption] = useState(false);
   const [isOmaggio, setIsOmaggio] = useState(false);
@@ -457,6 +459,7 @@ export default function Vendita({ onNavigate }) {
         if (found) {
           setSelectedProduct(found);
           setSearchQuery(matricola);
+          setEditingModel(false);
         } else {
           // Controlla se è una matricola completa Honda: 4 lettere + 6-7 cifre
           // Es: MZBB1234567 — cerca in inventory per i soli numeri finali
@@ -539,6 +542,7 @@ export default function Vendita({ onNavigate }) {
       return;
     }
     setSelectedProduct(product);
+    setEditingModel(false);
     setProductPrice('');
     setIsOmaggio(false);
     setShowOmaggioOption(false);
@@ -2314,14 +2318,37 @@ export default function Vendita({ onNavigate }) {
 
                   {selectedProduct ? (
                     <div className="p-3 border-2 rounded-lg" style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4' }}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-bold" style={{ color: '#006B3F' }}>
-                            {selectedProduct.brand} {selectedProduct.model}
-                          </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          {editingModel ? (
+                            <div className="flex items-center gap-1">
+                              <span className="font-bold text-sm shrink-0" style={{ color: '#006B3F' }}>{selectedProduct.brand}</span>
+                              <input
+                                autoFocus
+                                className="flex-1 border border-green-500 rounded px-2 py-0.5 text-sm font-bold min-w-0"
+                                style={{ color: '#006B3F' }}
+                                value={editModelValue}
+                                onChange={e => setEditModelValue(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') { setSelectedProduct(p => ({ ...p, model: editModelValue.trim() || p.model })); setEditingModel(false); }
+                                  if (e.key === 'Escape') setEditingModel(false);
+                                }}
+                              />
+                              <button onClick={() => { setSelectedProduct(p => ({ ...p, model: editModelValue.trim() || p.model })); setEditingModel(false); }}
+                                className="text-xs bg-green-600 text-white px-2 py-0.5 rounded font-bold shrink-0">✓</button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <p className="font-bold" style={{ color: '#006B3F' }}>
+                                {selectedProduct.brand} {selectedProduct.model}
+                              </p>
+                              <button onClick={() => { setEditModelValue(selectedProduct.model || ''); setEditingModel(true); }}
+                                className="text-gray-400 hover:text-green-700 text-sm" title="Correggi modello">✏️</button>
+                            </div>
+                          )}
                           <p className="text-xs font-mono text-gray-600">{selectedProduct.serialNumber}</p>
                         </div>
-                        <button onClick={() => setSelectedProduct(null)} className="text-gray-400">
+                        <button onClick={() => { setSelectedProduct(null); setEditingModel(false); }} className="text-gray-400 shrink-0">
                           <X className="w-5 h-5" />
                         </button>
                       </div>

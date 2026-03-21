@@ -167,6 +167,13 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     return { righe, totImponibile, totIva };
   };
 
+  // Totale IVA compresa (corretto anche in modalità IVA esclusa)
+  const getTotaleConIva = () => {
+    if (data.ivaCompresa) return getTotale(); // già compreso
+    const { totImponibile, totIva } = getDettaglioIva();
+    return totImponibile + totIva;
+  };
+
   // Controlla se ci sono aliquote miste (non solo 22%)
   const hasAliquoteMiste = () => {
     const { righe } = getDettaglioIva();
@@ -1339,39 +1346,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
           )}
         </div>
 
-        {/* Totale */}
-        <div 
-          className="p-4 rounded-lg mt-4"
-          style={{ backgroundColor: '#006B3F' }}
-        >
-          <div className="flex justify-between items-center text-white">
-            <div className="flex items-center gap-2">
-              <p className="text-lg font-bold uppercase">Totale</p>
-              {data.ivaCompresa && (
-                <span className="text-xs bg-white/20 px-2 py-0.5 rounded">I.C.</span>
-              )}
-            </div>
-            <p className="text-3xl font-bold">€ {getTotale().toFixed(2)}</p>
-          </div>
-          
-          {/* Caparra e Da saldare */}
-          {data.caparra && (
-            <div className="mt-3 pt-3 border-t border-white/30">
-              <div className="flex justify-between items-center text-white/90 text-sm">
-                <p>Caparra ({formatMetodoPagamento(data.metodoPagamento)})</p>
-                <p className="font-semibold">€ {data.caparra.toFixed(2)}</p>
-              </div>
-              <div className="flex justify-between items-center text-yellow-300 mt-1">
-                <p className="font-bold">Da saldare</p>
-                <p className="text-xl font-bold">€ {getDaSaldare().toFixed(2)}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Dettaglio IVA / Scorporo */}
+        {/* Dettaglio IVA / Scorporo — PRIMA della barra verde */}
         {getTotale() > 0 && (
-          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-xs text-gray-500 uppercase font-bold mb-2">📊 Dettaglio IVA</p>
             {(() => {
               const { righe, totImponibile, totIva } = getDettaglioIva();
@@ -1396,6 +1373,34 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
             })()}
           </div>
         )}
+
+        {/* Totale IVA compresa — barra verde DOPO il dettaglio */}
+        <div
+          className="p-4 rounded-lg mt-2"
+          style={{ backgroundColor: '#006B3F' }}
+        >
+          <div className="flex justify-between items-center text-white">
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold uppercase">Totale</p>
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded">IVA compresa</span>
+            </div>
+            <p className="text-3xl font-bold">€ {getTotaleConIva().toFixed(2)}</p>
+          </div>
+
+          {/* Caparra e Da saldare */}
+          {data.caparra && (
+            <div className="mt-3 pt-3 border-t border-white/30">
+              <div className="flex justify-between items-center text-white/90 text-sm">
+                <p>Caparra ({formatMetodoPagamento(data.metodoPagamento)})</p>
+                <p className="font-semibold">€ {data.caparra.toFixed(2)}</p>
+              </div>
+              <div className="flex justify-between items-center text-yellow-300 mt-1">
+                <p className="font-bold">Da saldare</p>
+                <p className="text-xl font-bold">€ {(getTotaleConIva() - data.caparra).toFixed(2)}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Note */}
         {data.note && (

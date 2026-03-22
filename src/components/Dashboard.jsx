@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -137,6 +137,20 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
     return commissioni.filter(c => c.status === 'pending' && c.operatore === operatoreLoggato).length;
   });
 
+  const preventiviInAttesa = useStore((state) => {
+    const commissioni = state.commissioni;
+    const oggi = new Date();
+    const list = commissioni.filter(c => {
+      if (!c.is_preventivo) return false;
+      if (c.stato_preventivo === 'confermato') return false;
+      const creato = new Date(c.data_vendita || c.created_at);
+      const giorniPassati = Math.floor((oggi - creato) / (1000 * 60 * 60 * 24));
+      return giorniPassati < 30;
+    });
+    if (isAdmin) return list.length;
+    return list.filter(c => c.operatore === operatoreLoggato).length;
+  });
+
   const getSyncIcon = () => {
     if (syncStatus === 'success') return <Wifi className="w-4 h-4" style={{ color: '#006B3F' }} />;
     if (syncStatus === 'error') return <WifiOff className="w-4 h-4 text-red-500" />;
@@ -210,10 +224,26 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
         </button>
       )}
 
+      {/* Alert preventivi in attesa */}
+      {preventiviInAttesa > 0 && (
+        <button
+          onClick={() => onNavigate('preventivi')}
+          className="mb-3 px-3 py-2 bg-orange-50 border border-orange-300 rounded-xl flex items-center gap-2"
+        >
+          <FileSearch className="w-5 h-5 text-orange-600 shrink-0" />
+          <p className="font-semibold text-orange-800 text-sm flex-1 text-left">
+            {preventiviInAttesa} preventiv{preventiviInAttesa > 1 ? 'i' : 'o'} in attesa
+          </p>
+          <span className="bg-orange-400 text-orange-900 px-2 py-0.5 rounded-full text-xs font-bold">
+            {preventiviInAttesa}
+          </span>
+        </button>
+      )}
+
       {/* ── OPERAZIONI ── */}
       <div className="mb-2">
         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Operazioni</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => onNavigate('vendita')}
             className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-md active:scale-95 transition-transform"
@@ -232,6 +262,19 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             {pendingCommissioni > 0 && (
               <span className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
                 {pendingCommissioni}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => onNavigate('preventivi')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl text-white font-semibold shadow-md active:scale-95 transition-transform relative"
+            style={{ backgroundColor: '#EA580C' }}
+          >
+            <FileSearch className="w-6 h-6" />
+            <div className="text-sm font-bold">PREVENTIVI</div>
+            {preventiviInAttesa > 0 && (
+              <span className="absolute top-2 right-2 bg-white text-orange-700 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center">
+                {preventiviInAttesa}
               </span>
             )}
           </button>

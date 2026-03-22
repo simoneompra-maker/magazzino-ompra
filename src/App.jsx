@@ -14,6 +14,7 @@ import PratoVivo from './components/PratoVivo';
 import Noleggio from './components/Noleggio';
 import RubricaClienti from './components/RubricaClienti';
 import StihlCatalog from './components/StihlCatalog';
+import ArchivioPreventivi from './components/ArchivioPreventivi';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
@@ -109,6 +110,8 @@ function App() {
         return <RubricaClienti onBack={() => navigate('home')} />;
       case 'stihl':
         return <StihlCatalog isAdmin={true} onBack={() => navigate('home')} />;
+      case 'preventivi':
+        return <ArchivioPreventivi onNavigate={navigate} />;
       default:
         return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }

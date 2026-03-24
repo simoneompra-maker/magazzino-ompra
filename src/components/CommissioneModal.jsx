@@ -196,11 +196,17 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
+    const colCenter = pageWidth / 2;
     righeIva.forEach(r => {
+      const totaleRiga = r.imponibile + r.iva;
       doc.setTextColor(80, 80, 80);
       doc.text(`Imponibile ${r.aliquota}%: € ${r.imponibile.toFixed(2)}`, margin, y);
       doc.setTextColor(130, 130, 130);
-      doc.text(`IVA € ${r.iva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      doc.text(`IVA € ${r.iva.toFixed(2)}`, colCenter, y, { align: 'center' });
+      doc.setTextColor(60, 60, 60);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Totale: € ${totaleRiga.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
       y += 4;
     });
     
@@ -209,7 +215,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(0, 0, 0);
     doc.text(`Totale imponibile: € ${totImponibile.toFixed(2)}`, margin, y);
     doc.setTextColor(100, 100, 100);
-    doc.text(`IVA totale: € ${totIva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(`IVA totale: € ${totIva.toFixed(2)}`, colCenter, y, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Totale: € ${(totImponibile + totIva).toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 3;
     
     return y;
@@ -1001,9 +1009,10 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getTotale() > 0) {
       text += `\n\n📊 *Dettaglio IVA:*`;
       righeIva.forEach(r => {
-        text += `\nImponibile ${r.aliquota}%: €${r.imponibile.toFixed(2)} (IVA €${r.iva.toFixed(2)})`;
+        const totaleRiga = r.imponibile + r.iva;
+        text += `\nImponibile ${r.aliquota}%: €${r.imponibile.toFixed(2)} (IVA €${r.iva.toFixed(2)}) → *Totale: €${totaleRiga.toFixed(2)}*`;
       });
-      text += `\n*Totale imponibile: €${totImponibile.toFixed(2)}*`;
+      text += `\n*Totale imponibile: €${totImponibile.toFixed(2)}* | IVA: €${totIva.toFixed(2)} | *Totale: €${(totImponibile + totIva).toFixed(2)}*`;
     }
     
     // Aggiungi caparra se presente
@@ -1357,16 +1366,19 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
                   {righe.map(r => (
                     <div key={r.aliquota} className="flex justify-between text-xs text-gray-600 mb-1">
                       <span>Imponibile {r.aliquota}%</span>
-                      <span>€ {r.imponibile.toFixed(2)} <span className="text-gray-400">(IVA € {r.iva.toFixed(2)})</span></span>
+                      <span className="text-gray-400">IVA € {r.iva.toFixed(2)}</span>
+                      <span className="font-semibold text-gray-700">€ {(r.imponibile + r.iva).toFixed(2)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between text-sm font-bold text-gray-800 mt-2 pt-2 border-t border-gray-300">
                     <span>Totale imponibile</span>
+                    <span className="text-gray-500 font-normal text-xs">IVA € {totIva.toFixed(2)}</span>
                     <span>€ {totImponibile.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Totale IVA</span>
-                    <span>€ {totIva.toFixed(2)}</span>
+                  <div className="flex justify-between text-xs font-semibold text-gray-700 mt-1">
+                    <span>Totale IVA compresa</span>
+                    <span></span>
+                    <span>€ {(totImponibile + totIva).toFixed(2)}</span>
                   </div>
                 </>
               );

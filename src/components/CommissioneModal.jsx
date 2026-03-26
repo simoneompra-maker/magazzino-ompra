@@ -196,17 +196,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    const colCenter = pageWidth / 2;
     righeIva.forEach(r => {
-      const totaleRiga = r.imponibile + r.iva;
       doc.setTextColor(80, 80, 80);
       doc.text(`Imponibile ${r.aliquota}%: € ${r.imponibile.toFixed(2)}`, margin, y);
       doc.setTextColor(130, 130, 130);
-      doc.text(`IVA € ${r.iva.toFixed(2)}`, colCenter, y, { align: 'center' });
-      doc.setTextColor(60, 60, 60);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Totale: € ${totaleRiga.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
-      doc.setFont('helvetica', 'normal');
+      doc.text(`IVA € ${r.iva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
       y += 4;
     });
     
@@ -215,9 +209,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setTextColor(0, 0, 0);
     doc.text(`Totale imponibile: € ${totImponibile.toFixed(2)}`, margin, y);
     doc.setTextColor(100, 100, 100);
-    doc.text(`IVA totale: € ${totIva.toFixed(2)}`, colCenter, y, { align: 'center' });
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Totale: € ${(totImponibile + totIva).toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    doc.text(`IVA totale: € ${totIva.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 3;
     
     return y;
@@ -232,8 +224,17 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
     let y = 15;
+
+    // Helper: nuova pagina se necessario
+    const checkPageBreak = (neededSpace = 10) => {
+      if (y + neededSpace > pageHeight - 15) {
+        doc.addPage();
+        y = 15;
+      }
+    };
 
     // Colore header (arancione per preventivo, verde per commissione)
     const headerColor = data.isPreventivo ? [249, 115, 22] : [0, 107, 63];
@@ -411,6 +412,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     prodotti.forEach((prod) => {
       const rowH = prod.serialNumber ? 13 : 8;
+      checkPageBreak(rowH + 4);
       doc.setDrawColor(230, 230, 230);
       doc.setLineWidth(0.15);
       doc.line(margin, y + rowH, rightEdge, y + rowH);
@@ -467,6 +469,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         const totPrezzo = unitPrezzo * qta;
         const rowH = acc.matricola ? 13 : 8;
 
+        checkPageBreak(rowH + 4);
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.15);
         doc.line(margin, y + rowH, rightEdge, y + rowH);
@@ -500,11 +503,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     // Sezione Totale con caparra
     y += 8;
+    const totaleBoxHeight = data.caparra ? 28 : 14;
+    checkPageBreak(totaleBoxHeight + 30);
     doc.setDrawColor(0, 107, 63);
     doc.setLineWidth(0.5);
     
-    // Altezza box dipende se c'è caparra
-    const totaleBoxHeight = data.caparra ? 28 : 14;
     doc.rect(margin, y, pageWidth - 2 * margin, totaleBoxHeight);
 
     doc.setTextColor(0, 0, 0);
@@ -540,6 +543,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     // Note
     if (data.note) {
+      checkPageBreak(20);
       y += 5;
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
@@ -549,16 +553,17 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
       
-      // Gestisci note lunghe su più righe
       const noteLines = doc.splitTextToSize(data.note, pageWidth - 2 * margin);
       y += 5;
       noteLines.forEach((line) => {
+        checkPageBreak(6);
         doc.text(line, margin, y);
         y += 4;
       });
     }
 
     // Footer
+    checkPageBreak(15);
     y += 10;
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
@@ -587,8 +592,17 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
     let y = 15;
+
+    // Helper: nuova pagina se necessario
+    const checkPageBreak = (neededSpace = 10) => {
+      if (y + neededSpace > pageHeight - 15) {
+        doc.addPage();
+        y = 15;
+      }
+    };
 
     // Colore header (arancione per preventivo, verde per commissione)
     const headerColor = data.isPreventivo ? [249, 115, 22] : [0, 107, 63];
@@ -760,6 +774,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     prodotti.forEach((prod) => {
       const rowH = prod.serialNumber ? 13 : 8;
+      checkPageBreak(rowH + 4);
       doc.setDrawColor(230, 230, 230);
       doc.setLineWidth(0.15);
       doc.line(margin, y + rowH, rightEdge2, y + rowH);
@@ -812,6 +827,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         const totPrezzo = unitPrezzo * qta;
         const rowH = acc.matricola ? 13 : 8;
 
+        checkPageBreak(rowH + 4);
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.15);
         doc.line(margin, y + rowH, rightEdge2, y + rowH);
@@ -842,10 +858,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     // Sezione Totale con caparra
     y += 8;
+    const totaleBoxHeight = data.caparra ? 28 : 14;
+    checkPageBreak(totaleBoxHeight + 30);
     doc.setDrawColor(0, 107, 63);
     doc.setLineWidth(0.5);
     
-    const totaleBoxHeight = data.caparra ? 28 : 14;
     doc.rect(margin, y, pageWidth - 2 * margin, totaleBoxHeight);
 
     doc.setTextColor(0, 0, 0);
@@ -880,6 +897,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
     // Note
     if (data.note) {
+      checkPageBreak(20);
       y += 5;
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
@@ -892,12 +910,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       const noteLines = doc.splitTextToSize(data.note, pageWidth - 2 * margin);
       y += 5;
       noteLines.forEach((line) => {
+        checkPageBreak(6);
         doc.text(line, margin, y);
         y += 4;
       });
     }
 
     // Footer
+    checkPageBreak(15);
     y += 10;
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
@@ -1009,10 +1029,9 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     if (getTotale() > 0) {
       text += `\n\n📊 *Dettaglio IVA:*`;
       righeIva.forEach(r => {
-        const totaleRiga = r.imponibile + r.iva;
-        text += `\nImponibile ${r.aliquota}%: €${r.imponibile.toFixed(2)} (IVA €${r.iva.toFixed(2)}) → *Totale: €${totaleRiga.toFixed(2)}*`;
+        text += `\nImponibile ${r.aliquota}%: €${r.imponibile.toFixed(2)} (IVA €${r.iva.toFixed(2)})`;
       });
-      text += `\n*Totale imponibile: €${totImponibile.toFixed(2)}* | IVA: €${totIva.toFixed(2)} | *Totale: €${(totImponibile + totIva).toFixed(2)}*`;
+      text += `\n*Totale imponibile: €${totImponibile.toFixed(2)}*`;
     }
     
     // Aggiungi caparra se presente
@@ -1366,19 +1385,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
                   {righe.map(r => (
                     <div key={r.aliquota} className="flex justify-between text-xs text-gray-600 mb-1">
                       <span>Imponibile {r.aliquota}%</span>
-                      <span className="text-gray-400">IVA € {r.iva.toFixed(2)}</span>
-                      <span className="font-semibold text-gray-700">€ {(r.imponibile + r.iva).toFixed(2)}</span>
+                      <span>€ {r.imponibile.toFixed(2)} <span className="text-gray-400">(IVA € {r.iva.toFixed(2)})</span></span>
                     </div>
                   ))}
                   <div className="flex justify-between text-sm font-bold text-gray-800 mt-2 pt-2 border-t border-gray-300">
                     <span>Totale imponibile</span>
-                    <span className="text-gray-500 font-normal text-xs">IVA € {totIva.toFixed(2)}</span>
                     <span>€ {totImponibile.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-xs font-semibold text-gray-700 mt-1">
-                    <span>Totale IVA compresa</span>
-                    <span></span>
-                    <span>€ {(totImponibile + totIva).toFixed(2)}</span>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Totale IVA</span>
+                    <span>€ {totIva.toFixed(2)}</span>
                   </div>
                 </>
               );

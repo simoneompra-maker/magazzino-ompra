@@ -224,8 +224,16 @@ export default function ArchivioCommissioni({ onNavigate }) {
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
     let y = 15;
+
+    const checkPageBreak = (neededSpace = 10) => {
+      if (y + neededSpace > pageHeight - 15) {
+        doc.addPage();
+        y = 15;
+      }
+    };
 
     // Header semplice con bordo
     doc.setDrawColor(0, 107, 63);
@@ -334,6 +342,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
     // Prodotti
     comm.prodotti?.forEach((prod) => {
       const rowH = prod.serialNumber ? 13 : 8;
+      checkPageBreak(rowH + 4);
       doc.setDrawColor(230, 230, 230);
       doc.setLineWidth(0.15);
       doc.line(margin, y + rowH, rightEdge, y + rowH);
@@ -390,6 +399,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
         const unitPrezzo = parseFloat(acc.prezzo) || 0;
         const totPrezzo = unitPrezzo * qta;
 
+        checkPageBreak(14);
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.15);
         doc.line(margin, y + 8, rightEdge, y + 8);
@@ -412,10 +422,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
     // Sezione Totale con caparra
     y += 8;
+    const totaleBoxHeight = comm.caparra ? 28 : 14;
+    checkPageBreak(totaleBoxHeight + 30);
     doc.setDrawColor(0, 107, 63);
     doc.setLineWidth(0.5);
     
-    const totaleBoxHeight = comm.caparra ? 28 : 14;
     doc.rect(margin, y, pageWidth - 2 * margin, totaleBoxHeight);
 
     doc.setTextColor(0, 0, 0);
@@ -448,6 +459,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
     // Note
     if (comm.note) {
+      checkPageBreak(20);
       y += 5;
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
@@ -460,12 +472,14 @@ export default function ArchivioCommissioni({ onNavigate }) {
       const noteLines = doc.splitTextToSize(comm.note, pageWidth - 2 * margin);
       y += 5;
       noteLines.forEach((line) => {
+        checkPageBreak(6);
         doc.text(line, margin, y);
         y += 4;
       });
     }
 
     // Footer
+    checkPageBreak(15);
     y += 10;
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);

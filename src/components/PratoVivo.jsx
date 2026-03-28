@@ -278,7 +278,7 @@ const CATALOGO_ESPERTO = {
     label: '⚙️ Granulare Mivena',
     prodotti: [
       { nome: 'Universal Top',   npk: '22-5-9',   dose: 25, doseMin: 20, doseMax: 30,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 40% azoto in resina, durata 12-16 sett.' },
-      { nome: 'AllRound',        npk: '18-7-15',  dose: 30, doseMin: 25, doseMax: 35,  unita: 'g/m²', quando: 'Tutto l'anno, ideale mar-giu e set-nov', note: 'Bilanciato, durata 3-4 mesi' },
+      { nome: 'AllRound',        npk: '18-7-15',  dose: 30, doseMin: 25, doseMax: 35,  unita: 'g/m²', quando: "Tutto l'anno, ideale mar-giu e set-nov", note: 'Bilanciato, durata 3-4 mesi' },
       { nome: 'Pro Slow',        npk: '23-5-12',  dose: 50, doseMin: 40, doseMax: 60,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 75% azoto in resina, durata 5-6 mesi' },
       { nome: 'Pro Green',       npk: '31-5-5',   dose: 30, doseMin: 25, doseMax: 30,  unita: 'g/m²', quando: 'Primavera — spinta fogliare',           note: 'Alto azoto, linea Mivena sportivo' },
       { nome: 'Pro Starter',     npk: '16-25-12', dose: 30, doseMin: 30, doseMax: 30,  unita: 'g/m²', quando: 'Semina o rigenerazione apr/set',        note: 'Alto fosforo starter, linea Mivena' },
@@ -313,7 +313,7 @@ const CATALOGO_ESPERTO = {
       { nome: 'PBS 150',         npk: '—',        dose: 2,  doseMin: 1.3,doseMax: 2.5, unita: 'ml/m²',quando: 'Pre-estivo o in siccità',              note: 'Idratante prolungato fino a 150 giorni' },
       { nome: 'FWY-ISP',         npk: '—',        dose: 0.35,doseMin:0.25,doseMax: 0.45,unita: 'ml/m²',quando: 'Al momento della semina',             note: 'Penetrante del suolo, favorisce germinazione' },
       { nome: 'Solar',           npk: '—',        dose: 1,  doseMin: 1,  doseMax: 1,   unita: 'g/m²', quando: 'Estate su prato giovane',              note: 'Scudo UV, protezione raggi infrarossi' },
-      { nome: 'Dekal Vyro',      npk: 'N3 P18',   dose: 0,  doseMin: 0,  doseMax: 0,   unita: 'g/hl', quando: 'Aggiungere all'acqua dei trattamenti fogliare', note: 'Acidificante pH acqua — iniziare da 50 g/hl' },
+      { nome: 'Dekal Vyro',      npk: 'N3 P18',   dose: 0,  doseMin: 0,  doseMax: 0,   unita: 'g/hl', quando: "Aggiungere all'acqua dei trattamenti fogliare", note: 'Acidificante pH acqua — iniziare da 50 g/hl' },
       { nome: 'Zefir Fe 4.8',   npk: 'Fe 6%',    dose: 0.5,doseMin: 0.2,doseMax: 2,   unita: 'g/m²', quando: 'Clorosi su terreni alcalini',           note: 'Chelato EDDHA, stabile anche ad alto pH' },
       { nome: 'Zefir Micro',     npk: '—',        dose: 0.5,doseMin: 0.2,doseMax: 2,   unita: 'g/m²', quando: 'Carenze microelementi',                note: 'Mix oligoelementi chelati' },
     ]

@@ -39,7 +39,7 @@ const PIANO_SEMINA = {
       { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-semina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito — 5 min con irrigatori dinamici, 2 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
     liquidiSabbioso: [
@@ -55,7 +55,7 @@ const PIANO_SEMINA = {
     ],
     liquidi: [
       { prodotto: 'Root Speed', dose: '5 g/m²',  quando: 'Al momento della semina', note: 'Favorisce radicazione precoce — irrigare subito dopo' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo semina (unica applicazione)', note: '⚠️ Irrigare subito — 5 min con irrigatori dinamici, 2 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da fine maggio', note: 'Agente umettante — migliora ritenzione idrica del substrato' },
       { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Humifitos e stimola radicazione' },
@@ -87,7 +87,7 @@ const PIANO_RIGENERAZIONE = {
       { prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, unita: 'g/m²', quando: 'Pre-trasemina — incorporare leggermente', note: 'Bacillus subtilis — nutrimento + stimolo radicazione' },
     ],
     liquidi: [
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito — 5 min con irrigatori dinamici, 2 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
     ],
     liquidiSabbioso: [
@@ -103,7 +103,7 @@ const PIANO_RIGENERAZIONE = {
     ],
     liquidi: [
       { prodotto: 'Root Speed', dose: '5 g/m²',  quando: 'Al momento della trasemina', note: 'Favorisce radicazione precoce — irrigare subito dopo' },
-      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
+      { prodotto: 'Humifitos', dose: '20 g/m²', quando: '20–30 gg dopo trasemina (unica applicazione)', note: '⚠️ Irrigare subito — 5 min con irrigatori dinamici, 2 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
       { prodotto: 'Micosat F MO/PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)', note: '≤300 m²: PG a secco. >300 m²: MO si diluisce con Humifitos' },
       { prodotto: 'Wet Turf', dose: '1 g/m²', quando: '3 trattamenti mensili da fine maggio', note: 'Agente umettante — migliora ritenzione idrica del substrato' },
       { prodotto: 'Algapark', dose: '1 g/m²', quando: 'Ogni 20–30 gg in abbinamento', note: 'Biostimolante — potenzia Humifitos e stimola radicazione' },
@@ -177,7 +177,7 @@ const INTERVENTI_SABBIOSO = [
 ];
 
 const LIQUIDI_SABBIOSO = [
-  { prodotto: 'Humifitos', dose: '20 g/m²', note: 'Irrigare subito — 2–3 min con irrigatori dinamici, 3 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
+  { prodotto: 'Humifitos', dose: '20 g/m²', note: 'Irrigare subito — 5 min con irrigatori dinamici, 2 min con statici (lavare le foglie e far arrivare il prodotto al suolo)' },
   { prodotto: 'Micosat F PG', dose: '1 g/m²' },
   { prodotto: 'Algapark', dose: '1 g/m²' },
   { prodotto: 'Root Speed', dose: '5 g/m²', note: 'Irrigare subito dopo' },
@@ -935,7 +935,7 @@ function Card({ title, children, colorClass = 'border-green-100' }) {
 }
 
 // ─── Generatore PDF ───────────────────────────────────────────
-function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, dataInizio = null, includiIntestazione = true, usaAllRound = false, autoStampa = false }) {
+function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, dataInizio = null, includiIntestazione = true, usaAllRound = false, autoStampa = false, miscuglio = null }) {
   const w = window.open('', '_blank');
   const oggi = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
   const mqLabel = mq ? `${parseFloat(mq).toLocaleString('it-IT')} m²` : '—';
@@ -1020,11 +1020,18 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
     }
     const s = piano?.seme || datiPiano.seme;
     const doseS = tipo === 'rigenerazione' ? (s.dose_grave || s.dose) : s.dose;
+    // Miscuglio selezionato
+    const mixNome = miscuglio?.nome || null;
+    const mixDose = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); return sd?.dose || doseS; })() : null;
+    const mixComp = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); return sd ? `${Object.entries({'Festuca arundinacea':sd.festuca,'Lolium perenne':sd.lolium,'Poa pratensis':sd.poa,'Festuca rubra':sd.rubra}).filter(([,v])=>v).map(([k,v])=>`${v}% ${k}`).join(', ') : ''; })() : null;
     sezioneSeme = `
       <h2>Seme</h2>
       <table>
-        <tr><th>Dose consigliata</th><th>Note</th></tr>
-        <tr><td><strong>${doseS}</strong></td><td>${s.note || ''}</td></tr>
+        <tr><th>Miscuglio</th><th>Composizione</th><th>Dose</th><th>Note</th></tr>
+        ${mixNome
+          ? `<tr><td><strong>${mixNome}</strong></td><td><small>${mixComp || '—'}</small></td><td><strong>${mixDose} g/m²${kg(mixDose)}</strong></td><td>${s.note || ''}</td></tr>`
+          : `<tr><td colspan="2"><em>Miscuglio non selezionato</em></td><td><strong>${doseS}${kg(parseFloat(doseS))}</strong></td><td>${s.note || ''}</td></tr>`
+        }
       </table>`;
   } else if (tipo === 'piano_annuo') {
     if (terreno === 'sabbioso') {
@@ -1660,7 +1667,7 @@ export default function PratoVivo({ onNavigate }) {
             haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi, autoStampa: stampa }); salvaInBackground(); }}
+            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi, autoStampa: stampa, miscuglio }); salvaInBackground(); }}
           />
         )}
 
@@ -1739,7 +1746,7 @@ export default function PratoVivo({ onNavigate }) {
             haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi, autoStampa: stampa }); salvaInBackground(); }}
+            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi, autoStampa: stampa, miscuglio }); salvaInBackground(); }}
           />
         )}
 
@@ -2636,6 +2643,51 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
         );
       })()}
 
+      {/* Selettore miscuglio */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-emerald-200">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">🌾 Miscuglio seminativo</p>
+        <p className="text-xs text-gray-400 mb-3">Seleziona per includere il seme nel preventivo</p>
+        <div className="space-y-2">
+          {semiOrdinati.map((s, idx) => {
+            const isConsigliato = idx === 0;
+            const isSelected = miscuglio?.id === s.id;
+            return (
+              <button key={s.id}
+                onClick={() => setMiscuglio(isSelected ? null : { id: s.id, nome: s.nome, sku: s.skus[s.skus.length - 1] })}
+                className={`w-full flex items-start justify-between rounded-xl px-3 py-3 border-2 text-left transition-colors ${isSelected ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-gray-50 hover:border-emerald-300'}`}>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-sm text-gray-900">{s.nome}</p>
+                    {isConsigliato && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Consigliato</span>}
+                    <span className="text-xs text-gray-400">Dose: {s.dose} g/m²</span>
+                  </div>
+                  <p className="text-xs text-emerald-700 font-semibold mt-0.5">{s.comp}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+                </div>
+                {isSelected && <span className="text-emerald-600 font-bold text-base ml-2 mt-0.5">✓</span>}
+              </button>
+            );
+          })}
+          {miscuglio && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-500 mb-1.5 font-semibold">Formato seme</p>
+              <div className="flex gap-2 flex-wrap">
+                {SEMI.find(s => s.id === miscuglio.id)?.skus.map(sku => {
+                  const entry = LISTINO[sku];
+                  const prezzo = entry ? getPrezzoCliente(entry, tipoCliente) || entry.prezzoA : null;
+                  return (
+                    <button key={sku} onClick={() => setMiscuglio(prev => ({ ...prev, sku }))}
+                      className={`text-xs rounded-full px-3 py-1 border-2 font-semibold transition-colors ${miscuglio.sku === sku ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-gray-200 bg-white text-gray-600 hover:border-emerald-300'}`}>
+                      {entry?.formato} — € {prezzo?.toFixed(2)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Granulari */}
       <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">
         <div className="bg-green-700 px-4 py-3"><h2 className="text-white font-bold text-sm">📋 {titoloTipo} — {livello.charAt(0).toUpperCase()+livello.slice(1)}</h2></div>
@@ -2796,50 +2848,6 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
         </div>
       </div>
 
-      {/* Selettore miscuglio */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-emerald-200">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">🌾 Miscuglio seminativo</p>
-        <p className="text-xs text-gray-400 mb-3">Seleziona per includere il seme nel preventivo</p>
-        <div className="space-y-2">
-          {semiOrdinati.map((s, idx) => {
-            const isConsigliato = idx === 0;
-            const isSelected = miscuglio?.id === s.id;
-            return (
-              <button key={s.id}
-                onClick={() => setMiscuglio(isSelected ? null : { id: s.id, nome: s.nome, sku: s.skus[s.skus.length - 1] })}
-                className={`w-full flex items-start justify-between rounded-xl px-3 py-3 border-2 text-left transition-colors ${isSelected ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-gray-50 hover:border-emerald-300'}`}>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-sm text-gray-900">{s.nome}</p>
-                    {isConsigliato && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Consigliato</span>}
-                    <span className="text-xs text-gray-400">Dose: {s.dose} g/m²</span>
-                  </div>
-                  <p className="text-xs text-emerald-700 font-semibold mt-0.5">{s.comp}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                </div>
-                {isSelected && <span className="text-emerald-600 font-bold text-base ml-2 mt-0.5">✓</span>}
-              </button>
-            );
-          })}
-          {miscuglio && (
-            <div className="mt-2">
-              <p className="text-xs text-gray-500 mb-1.5 font-semibold">Formato seme</p>
-              <div className="flex gap-2 flex-wrap">
-                {SEMI.find(s => s.id === miscuglio.id)?.skus.map(sku => {
-                  const entry = LISTINO[sku];
-                  const prezzo = entry ? getPrezzoCliente(entry, tipoCliente) || entry.prezzoA : null;
-                  return (
-                    <button key={sku} onClick={() => setMiscuglio(prev => ({ ...prev, sku }))}
-                      className={`text-xs rounded-full px-3 py-1 border-2 font-semibold transition-colors ${miscuglio.sku === sku ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-gray-200 bg-white text-gray-600 hover:border-emerald-300'}`}>
-                      {entry?.formato} — € {prezzo?.toFixed(2)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
         <label className="flex items-center gap-2 cursor-pointer select-none">

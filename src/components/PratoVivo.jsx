@@ -948,28 +948,77 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
 
   const kg = (dose) => mq && dose ? ` <small style="color:#6b7280">(≈ ${(parseFloat(mq) * parseFloat(dose) / 1000).toFixed(1)} kg)</small>` : '';
 
+  // Helper: stampa lista prodotti (supporta sia legacy string che array miscele)
+  const renderProdottiMiscela = (iv) => {
+    // Nuovo formato: array prodotti
+    if (iv.prodotti && iv.prodotti.length > 0) {
+      return iv.prodotti.map((p, pi) => {
+        const nomeProd = p.nomeProdotto || p.prodotto || '—';
+        const npkProd = p.npk || '';
+        const microProd = p.micro || '';
+        const doseProd = p.dose != null ? p.dose : (iv.dose || 0);
+        const prefix = pi > 0 ? '<span style="color:#9ca3af;font-size:9px">+ miscela</span> ' : '';
+        return `<div style="margin-bottom:${pi < iv.prodotti.length-1 ? '4px' : '0'}">
+          ${prefix}<strong>${nomeProd}</strong>${npkProd ? ` <span style="font-size:9px;color:#6b7280">NPK ${npkProd}</span>` : ''}
+          ${microProd ? `<br><span style="font-size:8px;color:#9ca3af">${microProd}</span>` : ''}
+          <span style="float:right;font-weight:700">${doseProd} g/m²${kg(doseProd)}</span>
+        </div>`;
+      }).join('');
+    }
+    // Legacy: singolo prodotto
+    const nomeProd = (usaAllRound && iv.dati?.prodotto_migliore) ? (iv.dati?.prodotto_migliore || iv.prodotto || '—') : (iv.dati?.prodotto || iv.prodotto || '—');
+    const npkProd = iv.dati?.npk && iv.dati.npk !== '—' ? iv.dati.npk : (iv.npk || '');
+    const doseProd = iv.dose || 0;
+    return `<strong>${nomeProd}</strong>${npkProd ? ` <span style="font-size:9px;color:#6b7280">NPK ${npkProd}</span>` : ''}
+      <span style="float:right;font-weight:700">${doseProd} g/m²${kg(doseProd)}</span>`;
+  };
+
+  // Helper: stampa lista granulari semina/rig (supporta campo prodotti)
+  const renderGranulare = (p) => {
+    if (p.prodotti && p.prodotti.length > 0) {
+      return p.prodotti.map((pr, pi) => {
+        const prefix = pi > 0 ? '+ ' : '';
+        return `<tr style="${pi > 0 ? 'background:#f9fafb' : ''}">
+          <td>${pi === 0 ? `<strong>${pr.nomeProdotto||pr.prodotto||'—'}</strong>` : `<span style="color:#6b7280;padding-left:10px">${prefix}${pr.nomeProdotto||pr.prodotto||'—'}</span>`}</td>
+          <td>${pr.npk||p.npk||'—'}${pr.micro ? `<br><small>${pr.micro}</small>` : ''}</td>
+          <td>${pr.dose != null ? pr.dose : p.dose} ${pr.unita||p.unita||'g/m²'}${kg(pr.dose != null ? pr.dose : p.dose)}</td>
+          <td>${pi === 0 ? (p.quando||'') : ''}</td>
+          <td>${pi === 0 ? (p.note||'') : ''}</td>
+        </tr>`;
+      }).join('');
+    }
+    return `<tr>
+      <td><strong>${p.prodotto||'—'}</strong></td>
+      <td>${p.npk||'—'}</td>
+      <td>${p.dose} ${p.unita||'g/m²'}${kg(p.dose)}</td>
+      <td>${p.quando||''}</td>
+      <td>${p.note||''}</td>
+    </tr>`;
+  };
+
   let sezioneGranulari = '';
   let sezioneLiquidi = '';
   let sezioneSeme = '';
 
   if (tipo === 'semina' || tipo === 'rigenerazione') {
     const datiPiano = tipo === 'semina' ? PIANO_SEMINA[livello] : PIANO_RIGENERAZIONE[livello];
-    const granulari = datiPiano.granulari || [];
+    const granulari = piano?.granulari || datiPiano.granulari || [];
     sezioneGranulari = `
       <h2>Granulari</h2>
       <table>
-        <tr><th>Prodotto</th><th>NPK</th><th>Dose</th><th>Quando</th><th>Note</th></tr>
-        ${granulari.map(p => `<tr><td><strong>${p.prodotto}</strong></td><td>${p.npk || '—'}</td><td>${p.dose} ${p.unita || 'g/m²'}${kg(p.dose)}</td><td>${p.quando}</td><td>${p.note || ''}</td></tr>`).join('')}
+        <tr><th>Prodotto</th><th>NPK / Microelementi</th><th>Dose</th><th>Quando</th><th>Note</th></tr>
+        ${granulari.map(p => renderGranulare(p)).join('')}
       </table>`;
-    if (datiPiano.liquidi.length > 0) {
+    const liquidi = piano?.liquidi || datiPiano.liquidi || [];
+    if (liquidi.length > 0) {
       sezioneLiquidi = `
         <h2>Liquidi / Biostimolanti</h2>
         <table>
           <tr><th>Prodotto</th><th>Dose</th><th>Quando</th><th>Note</th></tr>
-          ${datiPiano.liquidi.map(p => `<tr><td><strong>${p.prodotto}</strong></td><td>${p.dose}</td><td>${p.quando}</td><td>${p.note || ''}</td></tr>`).join('')}
+          ${liquidi.map(p => `<tr><td><strong>${p.prodotto||p.nomeProdotto||'—'}</strong></td><td>${p.dose}</td><td>${p.quando||''}</td><td>${p.note||''}</td></tr>`).join('')}
         </table>`;
     }
-    const s = datiPiano.seme;
+    const s = piano?.seme || datiPiano.seme;
     const doseS = tipo === 'rigenerazione' ? (s.dose_grave || s.dose) : s.dose;
     sezioneSeme = `
       <h2>Seme</h2>
@@ -982,12 +1031,15 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       sezioneGranulari = `
         <h2>Interventi Granulari</h2>
         <table>
-          <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th></tr>
-          ${pianoAnnuo.map(iv => `<tr class="${iv.bridge ? 'bridge' : iv.verde ? 'verde' : iv.passato ? 'passato' : ''}">
-            <td>${iv.bridge ? '⚑' : iv.verde ? '▲' : iv.numero}</td><td>${iv.bimestre_label}</td><td>${iv.funzione}${iv.note ? `<br><small>${iv.note}</small>` : ''}</td>
-            <td><strong>${iv.prodotto}</strong> <span class="npk">${iv.npk}</span></td>
-            <td>${iv.dose} g/m²${kg(iv.dose)}</td>
-          </tr>`).join('')}
+          <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto / Miscela</th><th>Note</th></tr>
+          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => `
+            <tr class="${iv.bridge ? 'bridge' : iv.verde ? 'verde' : iv.passato ? 'passato' : ''}" style="page-break-inside:avoid">
+              <td>${iv.bridge ? '⚑' : iv.verde ? '▲' : iv.numero}</td>
+              <td>${iv.bimestre_label||''}</td>
+              <td>${iv.funzione||''}</td>
+              <td>${renderProdottiMiscela(iv)}</td>
+              <td><small>${iv.note||''}</small></td>
+            </tr>`).join('')}
         </table>`;
       if (liquidiSab) {
         sezioneLiquidi = `
@@ -1003,14 +1055,15 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       sezioneGranulari = `
         <h2>Interventi Granulari Programmati</h2>
         <table>
-          <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th><th>Note</th></tr>
-          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => {
-              const nomeProdotto = (usaAllRound && iv.dati?.prodotto_migliore) ? (iv.dati?.prodotto_migliore || iv.prodotto || '—') : (iv.dati?.prodotto || iv.prodotto || '—');
-              return `<tr class="${iv.passato ? 'passato' : ''}">
-            <td>${iv.numero}</td><td>${iv.bimestre_label}</td><td>${iv.funzione}</td>
-            <td><strong>${nomeProdotto}</strong>${iv.dati?.npk && iv.dati.npk !== '—' ? ` <span class="npk">NPK ${iv.dati.npk}</span>`:''}
-            </td><td>${iv.dose} g/m²${kg(iv.dose)}</td><td>${iv.note||''}</td>
-          </tr>`;}).join('')}
+          <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto / Miscela</th><th>Note</th></tr>
+          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => `
+            <tr class="${iv.passato ? 'passato' : ''}" style="page-break-inside:avoid">
+              <td>${iv.numero||''}</td>
+              <td style="white-space:nowrap">${iv.bimestre_label||''}</td>
+              <td>${iv.funzione||''}</td>
+              <td>${renderProdottiMiscela(iv)}</td>
+              <td><small>${iv.note||''}</small></td>
+            </tr>`).join('')}
         </table>`;
       sezioneLiquidi = `
         <h2>Liquidi di Supporto</h2>
@@ -1021,7 +1074,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
           ${livello === 'premium' ? `
           <tr><td>Algapark</td><td>1 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
           <tr><td>Root Speed</td><td>20 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
-          <tr><td>Micosat Tab Plus</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago (entro 1ª metà Maggio)</td></tr>
+          <tr><td>Micosat Tab Plus</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
           <tr><td>Micosat Len</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>` : ''}
         </table>`;
     }
@@ -1042,25 +1095,35 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
     .azienda{text-align:right;font-size:10px;color:#555;line-height:1.6}
     .azienda strong{color:#15803d;font-size:12px}
     h1{font-size:17px;font-weight:900;color:#15803d;margin-bottom:4px}
-    h2{font-size:12px;font-weight:700;color:#166534;margin:16px 0 6px;border-left:4px solid #4ade80;padding-left:8px}
+    h2{font-size:12px;font-weight:700;color:#166534;margin:16px 0 6px;border-left:4px solid #4ade80;padding-left:8px;page-break-after:avoid}
     .meta{display:flex;flex-wrap:wrap;gap:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 14px;margin-bottom:16px}
     .meta-item{display:flex;flex-direction:column;min-width:80px}
     .meta-item label{font-weight:700;color:#15803d;text-transform:uppercase;font-size:8px;letter-spacing:.5px}
     .meta-item span{font-size:11px;font-weight:700}
-    table{width:100%;border-collapse:collapse;font-size:10px;margin-top:6px}
+    table{width:100%;border-collapse:collapse;font-size:10px;margin-top:6px;margin-bottom:4px}
     th{background:#15803d;color:#fff;padding:5px 8px;text-align:left;font-weight:700;font-size:9px;text-transform:uppercase}
     td{padding:5px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+    tr{page-break-inside:avoid}
     tr.passato td{color:#9ca3af;background:#f9fafb}
     tr.bridge td{background:#fefce8;color:#713f12}
     tr.verde td{background:#ecfdf5;color:#065f46}
     .npk{font-size:9px;color:#6b7280}
     small{font-size:9px;color:#6b7280}
-    .alert{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:10px;color:#7f1d1d}
-    footer{margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px}
+    .alert{background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;margin:12px 0;font-size:10px;color:#7f1d1d;page-break-inside:avoid}
+    footer{margin-top:20px;border-top:2px solid #e5e7eb;padding-top:12px;page-break-inside:avoid}
     .disclaimer{font-size:8.5px;color:#6b7280;line-height:1.5}
     .disclaimer p{margin-bottom:4px}
     .footer-bar{display:flex;justify-content:space-between;margin-top:8px;font-size:9px;color:#9ca3af}
-    @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.page{padding:8mm 10mm}}
+    @media print{
+      body{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+      .page{padding:8mm 10mm}
+      h2{page-break-after:avoid}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;page-break-after:auto}
+      thead{display:table-header-group}
+      footer{page-break-inside:avoid}
+      .meta{page-break-inside:avoid}
+    }
   </style></head><body><div class="page">
     ${includiIntestazione ? `
     <header>
@@ -1078,6 +1141,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       ${linea ? `<div class="meta-item"><label>Linea</label><span>${lineaLabel}</span></div>` : ''}
       ${terreno ? `<div class="meta-item"><label>Terreno</label><span>${terreno === 'sabbioso' ? 'Sabbioso' : 'Normale'}</span></div>` : ''}
       ${colore ? `<div class="meta-item"><label>Colore prato</label><span>${colore === 'pallido' ? '🟡 Pallido' : '🟢 Intenso'}</span></div>` : ''}
+      ${dataInizioLabel ? `<div class="meta-item"><label>Data inizio</label><span>${dataInizioLabel}</span></div>` : ''}
       ${tipo === 'piano_annuo' ? `<div class="meta-item"><label>Esteso 12m</label><span>${estendi12 ? 'Sì' : 'No'}</span></div>` : ''}
     </div>` : ''}
     ${sezioneGranulari}
@@ -1596,7 +1660,7 @@ export default function PratoVivo({ onNavigate }) {
             haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
           />
         )}
 
@@ -1675,7 +1739,7 @@ export default function PratoVivo({ onNavigate }) {
             haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
           />
         )}
 

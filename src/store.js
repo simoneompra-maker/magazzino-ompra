@@ -321,7 +321,8 @@ const useStore = create((set, get) => ({
           location: get().location
         });
       
-      // Non aspettiamo fetchInventory qui - viene fatto dopo addGenericSale
+      // Aggiorna lo store locale per rimuovere la macchina dalle giacenze
+      await get().fetchInventory();
     } catch (error) {
       console.warn('⚠️ Inventario non scaricato per SN:', serialNumber, error);
     }
@@ -498,7 +499,7 @@ const useStore = create((set, get) => ({
       metodoPagamento: data.metodoPagamento || null,
       note: data.note || null,
       tipoDocumento: data.tipoDocumento || 'scontrino',
-      ivaCompresa: data.ivaCompresa !== false,
+      ivaCompresa: data.ivaCompresa === true,
       status: isCompleted ? 'completed' : 'pending',
       completedAt: isCompleted ? createdAt : null,
       user: get().user

@@ -1023,7 +1023,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
     // Miscuglio selezionato
     const mixNome = miscuglio?.nome || null;
     const mixDose = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); return sd?.dose || doseS; })() : null;
-    const mixComp = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); return sd ? `${Object.entries({'Festuca arundinacea':sd.festuca,'Lolium perenne':sd.lolium,'Poa pratensis':sd.poa,'Festuca rubra':sd.rubra}).filter(([,v])=>v).map(([k,v])=>`${v}% ${k}`).join(', ') : ''; })() : null;
+    const mixComp = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); if (!sd) return ''; return [['Festuca arundinacea',sd.festuca],['Lolium perenne',sd.lolium],['Poa pratensis',sd.poa],['Festuca rubra',sd.rubra]].filter(([,v])=>v).map(([k,v])=>v+'% '+k).join(', '); })() : null;
     sezioneSeme = `
       <h2>Seme</h2>
       <table>

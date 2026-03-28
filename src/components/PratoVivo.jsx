@@ -935,7 +935,7 @@ function Card({ title, children, colorClass = 'border-green-100' }) {
 }
 
 // ─── Generatore PDF ───────────────────────────────────────────
-function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, dataInizio = null, includiIntestazione = true, usaAllRound = false }) {
+function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato, piano, pianoAnnuo, liquidiSab, estendi12, nomeCliente, dataInizio = null, includiIntestazione = true, usaAllRound = false, autoStampa = false }) {
   const w = window.open('', '_blank');
   const oggi = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
   const mqLabel = mq ? `${parseFloat(mq).toLocaleString('it-IT')} m²` : '—';
@@ -1153,7 +1153,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       <div class="footer-bar"><span>${OMPRA.nome} — ${OMPRA.indirizzo}</span><span>Tel. ${OMPRA.tel}</span></div>
     </footer>
   </div>
-  <script>window.onload=()=>window.print();</script>
+${autoStampa ? '<script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>' : ''}
   </body></html>`);
   w.document.close();
 }
@@ -1660,7 +1660,7 @@ export default function PratoVivo({ onNavigate }) {
             haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi, autoStampa: stampa }); salvaInBackground(); }}
           />
         )}
 
@@ -1739,7 +1739,7 @@ export default function PratoVivo({ onNavigate }) {
             haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
+            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: { granulari: granulariEffettivi, liquidi: overrideLiquidi ? liquidiEffettivi : (terreno === 'sabbioso' ? (datiPianoAttivo?.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi), seme: semeEffettivo }, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi, autoStampa: stampa }); salvaInBackground(); }}
           />
         )}
 
@@ -1759,7 +1759,7 @@ export default function PratoVivo({ onNavigate }) {
             modalitaEsperto={modalitaEsperto}
             onChangePianoAnnuo={setOverridePianoAnnuo}
             onPreventivo={() => setShowPreventivo(true)}
-            onStampa={(includi) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo: pianoAnnuoEffettivo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound }); salvaInBackground(); }}
+            onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo: pianoAnnuoEffettivo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound, autoStampa: stampa }); salvaInBackground(); }}
           />
         )}
 
@@ -2104,7 +2104,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
       ${imp22 > 0 ? `<p style="margin:2px 0">Imponibile 22% (materiali/noleggio): € ${fmt(imp22)} → IVA: € ${fmt(imp22*0.22)}</p>` : ''}
       <p style="margin:6px 0;font-size:13px"><b>Totale ivato: € ${fmt(totIvato)}</b>${costoMq > 0 ? ` &nbsp;·&nbsp; Costo/m²: € ${fmt(costoMq)}` : ''}</p>
     </div>
-    <script>window.onload=()=>window.print();</script></body></html>`);
+  ${autoStampa ? '<script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>' : ''}</body></html>`);
     w.document.close();
   };
 
@@ -2848,12 +2848,15 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
         </label>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => onStampa(includiIntestazione)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-          📄 PDF piano
+      <div className="grid grid-cols-3 gap-2">
+        <button onClick={() => onStampa(includiIntestazione, false)} className="bg-white border-2 border-green-700 text-green-700 hover:bg-green-50 font-bold py-3 rounded-xl flex items-center justify-center gap-1 transition-colors text-xs">
+          👁️ Anteprima
         </button>
-        <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-          💶 Genera preventivo
+        <button onClick={() => onStampa(includiIntestazione, true)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1 transition-colors text-xs">
+          🖨️ Stampa
+        </button>
+        <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1 transition-colors text-xs">
+          💶 Preventivo
         </button>
       </div>
     </div>
@@ -3380,12 +3383,15 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
               </label>
             </div>
             {/* Pulsanti */}
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => onStampa(includiIntestazione)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-                📄 PDF piano
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => onStampa(includiIntestazione, false)} className="bg-white border-2 border-green-700 text-green-700 hover:bg-green-50 font-bold py-3 rounded-xl flex items-center justify-center gap-1 transition-colors text-xs">
+                👁️ Anteprima
               </button>
-              <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm">
-                💶 Genera preventivo
+              <button onClick={() => onStampa(includiIntestazione, true)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1 transition-colors text-xs">
+                🖨️ Stampa
+              </button>
+              <button onClick={() => { if (!mq || isNaN(parseFloat(mq)) || parseFloat(mq) <= 0) { alert('⚠️ Inserisci la superficie in m² per generare il preventivo.'); return; } onPreventivo(); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1 transition-colors text-xs">
+                💶 Preventivo
               </button>
             </div>
           </div>

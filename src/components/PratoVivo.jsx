@@ -269,17 +269,17 @@ const CATALOGO_ESPERTO = {
   granulare_albatros: {
     label: '🌿 Granulare Albatros',
     prodotti: [
-      { nome: 'Green 7',         npk: '15-5-6',   dose: 30, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Ripresa primaverile o settembre',      note: 'Rinverdimento rapido, durata ~2 mesi' },
-      { nome: 'Green 8 Prestige',npk: '10-6-14',  dose: 40, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Fine maggio o ottobre/novembre',        note: 'Antistress, alto potassio, durata ~3 mesi' },
-      { nome: 'Vigor Active',    npk: '7-9-16,5', dose: 50, doseMin: 30, doseMax: 50,  unita: 'g/m²', quando: 'Pre-semina o pre-posa zolle',           note: 'Starter + Bacillus subtilis, durata ~2 mesi' },
+      { nome: 'Green 7',         npk: '15-5-6',   dose: 30, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Ripresa primaverile o settembre',      note: 'Rinverdimento rapido, durata ~2 mesi', micro: 'Fe 0.5% · B 0.05% · Zn 0.01% · SO3 20%' },
+      { nome: 'Green 8 Prestige',npk: '10-6-14',  dose: 40, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Fine maggio o ottobre/novembre',        note: 'Antistress, alto potassio, durata ~3 mesi', micro: 'Fe 2% · B 0.1% · Zn 0.01% · MgO 2% · SO3 18%' },
+      { nome: 'Vigor Active',    npk: '7-9-16,5', dose: 50, doseMin: 30, doseMax: 50,  unita: 'g/m²', quando: 'Pre-semina o pre-posa zolle',           note: 'Starter + Bacillus subtilis, durata ~2 mesi', micro: 'Zn 0.01% · SO3 8% · C 7.5%' },
     ]
   },
   granulare_mivena: {
     label: '⚙️ Granulare Mivena',
     prodotti: [
-      { nome: 'Universal Top',   npk: '22-5-9',   dose: 25, doseMin: 20, doseMax: 30,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 40% azoto in resina, durata 12-16 sett.' },
-      { nome: 'AllRound',        npk: '18-7-15',  dose: 30, doseMin: 25, doseMax: 35,  unita: 'g/m²', quando: "Tutto l'anno, ideale mar-giu e set-nov", note: 'Bilanciato, durata 3-4 mesi' },
-      { nome: 'Pro Slow',        npk: '23-5-12',  dose: 50, doseMin: 40, doseMax: 60,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 75% azoto in resina, durata 5-6 mesi' },
+      { nome: 'Universal Top',   npk: '22-5-9',   dose: 25, doseMin: 20, doseMax: 30,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 40% azoto in resina, durata 12-16 sett.', micro: 'CaO 2.5% · MgO 2.5% · Fe 1% · SO3 9.7%' },
+      { nome: 'AllRound',        npk: '18-7-15',  dose: 30, doseMin: 25, doseMax: 35,  unita: 'g/m²', quando: "Tutto l'anno, ideale mar-giu e set-nov", note: 'Bilanciato, durata 3-4 mesi', micro: 'CaO 2.8% · MgO 2.3% · Fe 0.5% · SO3 12.5%' },
+      { nome: 'Pro Slow',        npk: '23-5-12',  dose: 50, doseMin: 40, doseMax: 60,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 75% azoto in resina, durata 5-6 mesi', micro: 'MgO 2.75% · Fe 0.74% · Mn 0.08% · Zn 0.05% · Cu 0.012% · B 0.012%' },
       { nome: 'Pro Green',       npk: '31-5-5',   dose: 30, doseMin: 25, doseMax: 30,  unita: 'g/m²', quando: 'Primavera — spinta fogliare',           note: 'Alto azoto, linea Mivena sportivo' },
       { nome: 'Pro Starter',     npk: '16-25-12', dose: 30, doseMin: 30, doseMax: 30,  unita: 'g/m²', quando: 'Semina o rigenerazione apr/set',        note: 'Alto fosforo starter, linea Mivena' },
       { nome: 'Pro Kappa',       npk: '12-5-24',  dose: 28, doseMin: 25, doseMax: 30,  unita: 'g/m²', quando: 'Estate o pre-invernale',               note: 'Alto potassio, indurimento tessuti' },
@@ -2885,67 +2885,286 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
       )}
 
       {/* ── MODALITÀ ESPERTO: editor piano annuo ───────────── */}
-      {modalitaEsperto && terreno && colore && piano.length > 0 && (
-        <div className="bg-amber-50 rounded-2xl border-2 border-amber-400 overflow-hidden">
-          <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
-            <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Interventi piano annuo</h2>
-            <button
-              onClick={() => onChangePianoAnnuo([...piano, { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false, dati: { prodotto: '', npk: '—', dose_intenso: 0, dose_pallido: 0 } }])}
-              className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
-            >+ Aggiungi in fondo</button>
-          </div>
-          <div className="p-3 space-y-1">
-            {piano.map((iv, i) => iv.saltato ? null : (
-              <div key={i}>
-                {/* Card intervento */}
-                <div className="bg-white rounded-xl p-3 border border-amber-200 space-y-2">
-                  <div className="flex gap-2 items-center">
-                    <span className="text-xs font-bold text-amber-600 w-6">#{iv.numero??i+1}</span>
-                    <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.funzione||''} placeholder="Funzione (es. Nutrizione primaverile)"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,funzione:e.target.value}:x); onChangePianoAnnuo(u); }} />
-                    <input className="w-28 border rounded-lg px-2 py-1 text-xs text-gray-600" value={iv.bimestre_label||''} placeholder="Periodo"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,bimestre_label:e.target.value}:x); onChangePianoAnnuo(u); }} />
-                    {/* Duplica */}
-                    <button
-                      onClick={() => {
-                        const copia = { ...iv, numero: piano.length + 1, funzione: iv.funzione ? `${iv.funzione} (copia)` : '' };
-                        const u = [...piano.slice(0, i + 1), copia, ...piano.slice(i + 1)];
-                        onChangePianoAnnuo(u);
-                      }}
-                      className="text-amber-500 hover:text-amber-700 px-1" title="Duplica">⧉</button>
-                    {/* Rimuovi */}
-                    <button onClick={() => { const u=piano.map((x,j)=>j===i?{...x,saltato:true}:x); onChangePianoAnnuo(u); }} className="text-red-400 hover:text-red-600 text-lg leading-none px-1" title="Rimuovi">×</button>
+      {modalitaEsperto && terreno && colore && piano.length > 0 && (() => {
+
+        // ── Helpers localStorage note per-prodotto ──
+        const NOTES_KEY = 'pratovivo_note_prodotto';
+        const getNoteMemoria = () => { try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); } catch { return {}; } };
+        const salvaNota = (prodotto, nota) => {
+          if (!prodotto || !nota.trim()) return;
+          const mem = getNoteMemoria();
+          mem[prodotto] = nota.trim();
+          localStorage.setItem(NOTES_KEY, JSON.stringify(mem));
+        };
+        const eliminaNota = (prodotto) => {
+          const mem = getNoteMemoria();
+          delete mem[prodotto];
+          localStorage.setItem(NOTES_KEY, JSON.stringify(mem));
+        };
+
+        // ── Helper trova prodotto nel catalogo ──
+        const trovaProdottoCatalogo = (nomeProdotto) => {
+          for (const cat of Object.values(CATALOGO_ESPERTO)) {
+            const found = cat.prodotti.find(p => p.nome === nomeProdotto);
+            if (found) return found;
+          }
+          return null;
+        };
+
+        // ── Periodi standard ──
+        const PERIODI_STANDARD = [
+          '1ª metà Marzo', 'Fine Marzo', 'Fine Aprile', 'Fine Maggio',
+          'Giugno', 'Luglio', '1ª metà Settembre', 'Fine Settembre',
+          'Ottobre', 'Fine Ottobre / 1ª Nov', 'Personalizzato'
+        ];
+
+        // ── Nuova riga prodotto vuota ──
+        const nuovoRigaProdotto = () => ({ nomeProdotto: '', catKey: '', npk: '', micro: '', dose: 0, unita: 'g/m²' });
+
+        // ── Nuovo intervento vuoto ──
+        const nuovoIntervento = () => ({
+          numero: piano.length + 1, funzione: '', bimestre_label: '',
+          periodoCustom: false, prodotti: [nuovoRigaProdotto()],
+          note: '', saltato: false,
+          // legacy compat
+          prodotto: '', npk: '', dose: 0, dati: { prodotto: '', npk: '—', dose_intenso: 0, dose_pallido: 0 }
+        });
+
+        // ── Aggiorna prodotto in riga miscela ──
+        const aggiornaRigaProdotto = (iv, rigaIdx, nomeProdotto, catKey) => {
+          const cat = CATALOGO_ESPERTO[catKey];
+          const found = cat?.prodotti.find(p => p.nome === nomeProdotto);
+          const prodotti = (iv.prodotti || [{ nomeProdotto: iv.prodotto||'', catKey:'', npk: iv.npk||'', micro:'', dose: iv.dose||0, unita:'g/m²' }]);
+          const nuovi = prodotti.map((r, ri) => ri === rigaIdx
+            ? { ...r, nomeProdotto: found?.nome || nomeProdotto, catKey, npk: found?.npk || '', micro: found?.micro || '', dose: found?.dose || 0, unita: found?.unita || 'g/m²' }
+            : r
+          );
+          // Carica nota memoria per il prodotto selezionato
+          const notaMem = found ? (getNoteMemoria()[found.nome] || '') : '';
+          return { ...iv, prodotti: nuovi, prodotto: nuovi[0]?.nomeProdotto||'', npk: nuovi[0]?.npk||'', dose: nuovi[0]?.dose||0, note: notaMem || iv.note };
+        };
+
+        // ── Migra interventi legacy (senza campo prodotti) ──
+        const normalizzaIntervento = (iv) => {
+          if (iv.prodotti && iv.prodotti.length > 0) return iv;
+          return {
+            ...iv,
+            prodotti: [{ nomeProdotto: iv.prodotto||'', catKey:'', npk: iv.npk||iv.dati?.npk||'', micro:'', dose: iv.dose||0, unita:'g/m²' }],
+            periodoCustom: false,
+          };
+        };
+
+        return (
+          <div className="bg-amber-50 rounded-2xl border-2 border-amber-400 overflow-hidden">
+            <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
+              <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Interventi piano annuo</h2>
+              <button
+                onClick={() => onChangePianoAnnuo([...piano, nuovoIntervento()])}
+                className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
+              >+ Nuovo intervento</button>
+            </div>
+            <div className="p-3 space-y-1">
+              {piano.map((ivRaw, i) => {
+                if (ivRaw.saltato) return null;
+                const iv = normalizzaIntervento(ivRaw);
+                const prodotti = iv.prodotti || [nuovoRigaProdotto()];
+
+                return (
+                  <div key={i}>
+                    <div className="bg-white rounded-xl p-3 border border-amber-200 space-y-2">
+                      {/* Riga 1: numero + funzione + periodo + dup + del */}
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <span className="text-xs font-bold text-amber-600 w-6 shrink-0">#{iv.numero??i+1}</span>
+                        <input
+                          className="flex-1 min-w-0 border rounded-lg px-2 py-1 text-xs text-gray-600"
+                          value={iv.funzione||''} placeholder="Funzione intervento"
+                          onChange={e => { const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),funzione:e.target.value}:x); onChangePianoAnnuo(u); }}
+                        />
+                        {/* Periodo: select + eventuale input custom */}
+                        {iv.periodoCustom ? (
+                          <div className="flex gap-1 items-center">
+                            <input
+                              className="w-28 border rounded-lg px-2 py-1 text-xs text-gray-600"
+                              value={iv.bimestre_label||''} placeholder="Periodo libero"
+                              onChange={e => { const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),bimestre_label:e.target.value}:x); onChangePianoAnnuo(u); }}
+                            />
+                            <button onClick={() => { const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),periodoCustom:false}:x); onChangePianoAnnuo(u); }}
+                              className="text-xs text-gray-400 hover:text-gray-600">↩</button>
+                          </div>
+                        ) : (
+                          <select
+                            className="w-32 border rounded-lg px-2 py-1 text-xs text-gray-600 bg-white"
+                            value={iv.bimestre_label||''}
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (val === 'Personalizzato') {
+                                const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),periodoCustom:true,bimestre_label:''}:x); onChangePianoAnnuo(u);
+                              } else {
+                                const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),bimestre_label:val}:x); onChangePianoAnnuo(u);
+                              }
+                            }}
+                          >
+                            <option value="">— periodo —</option>
+                            {PERIODI_STANDARD.map(p => <option key={p} value={p}>{p}</option>)}
+                          </select>
+                        )}
+                        <button
+                          onClick={() => {
+                            const copia = { ...iv, numero: piano.length+1, funzione: iv.funzione?`${iv.funzione} (copia)`:'' };
+                            const u = [...piano.slice(0,i+1), copia, ...piano.slice(i+1)];
+                            onChangePianoAnnuo(u);
+                          }}
+                          className="text-amber-500 hover:text-amber-700 px-1 shrink-0" title="Duplica">⧉</button>
+                        <button
+                          onClick={() => { const u=piano.map((x,j)=>j===i?{...x,saltato:true}:x); onChangePianoAnnuo(u); }}
+                          className="text-red-400 hover:text-red-600 text-lg leading-none px-1 shrink-0" title="Rimuovi">×</button>
+                      </div>
+
+                      {/* Righe prodotti miscela */}
+                      {prodotti.map((riga, ri) => (
+                        <div key={ri} className="space-y-1">
+                          <div className="flex gap-2 items-center flex-wrap">
+                            {/* Select categoria */}
+                            <select
+                              className="text-xs border rounded-lg px-1 py-1 bg-gray-50 text-gray-600 font-semibold"
+                              value={riga.catKey||''}
+                              onChange={e => {
+                                const cat = CATALOGO_ESPERTO[e.target.value];
+                                if (!cat) return;
+                                const primo = cat.prodotti[0];
+                                const notaMem = getNoteMemoria()[primo.nome] || '';
+                                const nuovi = prodotti.map((r,ri2)=>ri2===ri?{...r,nomeProdotto:primo.nome,catKey:e.target.value,npk:primo.npk,micro:primo.micro||'',dose:primo.dose,unita:primo.unita||'g/m²'}:r);
+                                const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),prodotti:nuovi,prodotto:nuovi[0]?.nomeProdotto||'',note:ri===0?(notaMem||iv.note):iv.note}:x);
+                                onChangePianoAnnuo(u);
+                              }}
+                            >
+                              <option value="">— cat —</option>
+                              {Object.entries(CATALOGO_ESPERTO).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                            </select>
+                            {/* Select prodotto */}
+                            <select
+                              className="flex-1 min-w-0 border rounded-lg px-2 py-1 text-sm font-bold"
+                              value={riga.nomeProdotto||''}
+                              onChange={e => {
+                                const updated = aggiornaRigaProdotto(iv, ri, e.target.value, riga.catKey);
+                                const u=piano.map((x,j)=>j===i?updated:x);
+                                onChangePianoAnnuo(u);
+                              }}
+                            >
+                              {riga.catKey
+                                ? CATALOGO_ESPERTO[riga.catKey]?.prodotti.map(p=><option key={p.nome} value={p.nome}>{p.nome}</option>)
+                                : <option value={riga.nomeProdotto||''}>{riga.nomeProdotto||'— scegli categoria —'}</option>
+                              }
+                            </select>
+                            {/* Dose */}
+                            <input type="number" step="0.5"
+                              className="w-16 border rounded-lg px-2 py-1 text-sm font-bold text-right shrink-0"
+                              value={riga.dose??0}
+                              onChange={e => {
+                                const nuovi=prodotti.map((r,ri2)=>ri2===ri?{...r,dose:parseFloat(e.target.value)||0}:r);
+                                const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),prodotti:nuovi,dose:nuovi[0]?.dose||0}:x);
+                                onChangePianoAnnuo(u);
+                              }}
+                            />
+                            <span className="text-xs text-gray-400 shrink-0">{riga.unita||'g/m²'}</span>
+                            {/* Rimuovi riga miscela (solo se > 1) */}
+                            {prodotti.length > 1 && (
+                              <button
+                                onClick={() => {
+                                  const nuovi=prodotti.filter((_,ri2)=>ri2!==ri);
+                                  const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),prodotti:nuovi}:x);
+                                  onChangePianoAnnuo(u);
+                                }}
+                                className="text-red-300 hover:text-red-500 text-base leading-none px-1 shrink-0">×</button>
+                            )}
+                          </div>
+                          {/* NPK + micro */}
+                          {(riga.npk || riga.micro) && (
+                            <div className="flex flex-wrap gap-2 pl-1">
+                              {riga.npk && <span className="text-xs font-mono text-green-700 bg-green-50 px-2 py-0.5 rounded-full">NPK {riga.npk}</span>}
+                              {riga.micro && <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{riga.micro}</span>}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Pulsante + aggiungi prodotto in miscela */}
+                      <button
+                        onClick={() => {
+                          const nuovi=[...prodotti, nuovoRigaProdotto()];
+                          const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),prodotti:nuovi}:x);
+                          onChangePianoAnnuo(u);
+                        }}
+                        className="text-xs text-blue-500 hover:text-blue-700 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-full border border-dashed border-blue-200 hover:border-blue-400 transition-colors"
+                      >
+                        <span>+</span> Aggiungi prodotto in miscela
+                      </button>
+
+                      {/* Note con memoria per-prodotto */}
+                      {(() => {
+                        const noteMem = getNoteMemoria();
+                        const prodPrincipale = prodotti[0]?.nomeProdotto;
+                        const noteSalvate = Object.entries(noteMem);
+                        return (
+                          <div className="relative">
+                            <input
+                              className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic"
+                              value={iv.note||''} placeholder="Note / indicazioni utilizzo"
+                              onChange={e => {
+                                const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),note:e.target.value}:x);
+                                onChangePianoAnnuo(u);
+                              }}
+                              onBlur={() => {
+                                if (prodPrincipale && iv.note?.trim()) salvaNota(prodPrincipale, iv.note);
+                              }}
+                            />
+                            {/* Suggerimenti note salvate */}
+                            {noteSalvate.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {noteSalvate.slice(0,4).map(([prod, nota]) => (
+                                  <div key={prod} className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                                    <button
+                                      onClick={() => {
+                                        const u=piano.map((x,j)=>j===i?{...normalizzaIntervento(x),note:nota}:x);
+                                        onChangePianoAnnuo(u);
+                                      }}
+                                      className="text-xs text-amber-700 hover:text-amber-900 truncate max-w-32"
+                                      title={`${prod}: ${nota}`}
+                                    >
+                                      📌 {prod}
+                                    </button>
+                                    <button
+                                      onClick={() => { eliminaNota(prod); onChangePianoAnnuo([...piano]); }}
+                                      className="text-red-300 hover:text-red-500 text-xs leading-none">×</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Inserisci intervento qui sotto */}
+                    <div className="flex justify-center py-1">
+                      <button
+                        onClick={() => {
+                          const nuovo = nuovoIntervento();
+                          const u = [...piano.slice(0,i+1), nuovo, ...piano.slice(i+1)];
+                          onChangePianoAnnuo(u);
+                        }}
+                        className="text-xs text-amber-600 hover:text-amber-800 font-semibold flex items-center gap-1 px-3 py-0.5 rounded-full border border-dashed border-amber-300 hover:border-amber-500 hover:bg-amber-50 transition-colors"
+                      >
+                        <span className="text-base leading-none">+</span> Inserisci intervento qui
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={iv.prodotto||''} placeholder="Prodotto"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,prodotto:e.target.value, dati:{...(x.dati||{}), prodotto:e.target.value}}:x); onChangePianoAnnuo(u); }} />
-                    <input className="w-16 border rounded-lg px-2 py-1 text-xs" value={iv.npk||(iv.dati?.npk)||''} placeholder="NPK"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,npk:e.target.value, dati:{...(x.dati||{}), npk:e.target.value}}:x); onChangePianoAnnuo(u); }} />
-                    <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm font-bold text-right" value={iv.dose||0} placeholder="g/m²"
-                      onChange={e => { const u=piano.map((x,j)=>j===i?{...x,dose:parseFloat(e.target.value)||0}:x); onChangePianoAnnuo(u); }} />
-                    <span className="text-xs text-gray-400 self-center">g/m²</span>
-                  </div>
-                  <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={iv.note||''} placeholder="Note"
-                    onChange={e => { const u=piano.map((x,j)=>j===i?{...x,note:e.target.value}:x); onChangePianoAnnuo(u); }} />
-                </div>
-                {/* Pulsante "Inserisci qui sotto" tra un trattamento e l'altro */}
-                <div className="flex justify-center py-1">
-                  <button
-                    onClick={() => {
-                      const nuovo = { numero: piano.length + 1, funzione: '', bimestre_label: '', prodotto: '', npk: '', dose: 0, note: '', saltato: false, dati: { prodotto: '', npk: '—', dose_intenso: 0, dose_pallido: 0 } };
-                      const u = [...piano.slice(0, i + 1), nuovo, ...piano.slice(i + 1)];
-                      onChangePianoAnnuo(u);
-                    }}
-                    className="text-xs text-amber-600 hover:text-amber-800 font-semibold flex items-center gap-1 px-3 py-0.5 rounded-full border border-dashed border-amber-300 hover:border-amber-500 hover:bg-amber-50 transition-colors"
-                  >
-                    <span className="text-base leading-none">+</span> Inserisci intervento qui
-                  </button>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {terreno && colore && estendi12 !== null && piano.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">

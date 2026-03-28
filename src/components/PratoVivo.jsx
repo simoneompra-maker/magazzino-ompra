@@ -263,6 +263,76 @@ const TIPO_CLIENTE_LABEL = {
   speciale:    '🚚 Consegna diretta',
 };
 
+
+// ─── Catalogo prodotti per modalità Esperto ───────────────────────────────
+const CATALOGO_ESPERTO = {
+  granulare_albatros: {
+    label: '🌿 Granulare Albatros',
+    prodotti: [
+      { nome: 'Green 7',         npk: '15-5-6',   dose: 30, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Ripresa primaverile o settembre',      note: 'Rinverdimento rapido, durata ~2 mesi' },
+      { nome: 'Green 8 Prestige',npk: '10-6-14',  dose: 40, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Fine maggio o ottobre/novembre',        note: 'Antistress, alto potassio, durata ~3 mesi' },
+      { nome: 'Vigor Active',    npk: '7-9-16,5', dose: 50, doseMin: 30, doseMax: 50,  unita: 'g/m²', quando: 'Pre-semina o pre-posa zolle',           note: 'Starter + Bacillus subtilis, durata ~2 mesi' },
+    ]
+  },
+  granulare_mivena: {
+    label: '⚙️ Granulare Mivena',
+    prodotti: [
+      { nome: 'Universal Top',   npk: '22-5-9',   dose: 25, doseMin: 20, doseMax: 30,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 40% azoto in resina, durata 12-16 sett.' },
+      { nome: 'AllRound',        npk: '18-7-15',  dose: 30, doseMin: 25, doseMax: 35,  unita: 'g/m²', quando: 'Tutto l'anno, ideale mar-giu e set-nov', note: 'Bilanciato, durata 3-4 mesi' },
+      { nome: 'Pro Slow',        npk: '23-5-12',  dose: 50, doseMin: 40, doseMax: 60,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'CRF 75% azoto in resina, durata 5-6 mesi' },
+      { nome: 'Pro Green',       npk: '31-5-5',   dose: 30, doseMin: 25, doseMax: 30,  unita: 'g/m²', quando: 'Primavera — spinta fogliare',           note: 'Alto azoto, linea Mivena sportivo' },
+      { nome: 'Pro Starter',     npk: '16-25-12', dose: 30, doseMin: 30, doseMax: 30,  unita: 'g/m²', quando: 'Semina o rigenerazione apr/set',        note: 'Alto fosforo starter, linea Mivena' },
+      { nome: 'Pro Kappa',       npk: '12-5-24',  dose: 28, doseMin: 25, doseMax: 30,  unita: 'g/m²', quando: 'Estate o pre-invernale',               note: 'Alto potassio, indurimento tessuti' },
+      { nome: 'Bio Grow',        npk: '—',        dose: 50, doseMin: 50, doseMax: 50,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: 'Organico puro' },
+      { nome: 'Energy',          npk: '—',        dose: 30, doseMin: 30, doseMax: 30,  unita: 'g/m²', quando: 'Primavera',                            note: 'Spinta energetica' },
+      { nome: 'Granustar',       npk: '—',        dose: 30, doseMin: 30, doseMax: 30,  unita: 'g/m²', quando: 'Primavera o autunno',                  note: '' },
+      { nome: 'Iron Power',      npk: '—',        dose: 30, doseMin: 30, doseMax: 30,  unita: 'g/m²', quando: 'Primavera — carenza ferro',            note: 'Rinverdimento rapido' },
+    ]
+  },
+  liquido: {
+    label: '💧 Liquido / Biostimolante',
+    prodotti: [
+      { nome: 'Humifitos',       npk: 'N2 K6',    dose: 20, doseMin: 2,  doseMax: 20,  unita: 'g/m²', quando: 'Ogni 20-30 gg, irrigare subito dopo',  note: 'Biostimolante antistress, ammendante' },
+      { nome: 'LeoKare',         npk: '—',        dose: 6,  doseMin: 1.5,doseMax: 8,   unita: 'g/m²', quando: 'Terreni poveri o sabbiosi',            note: 'Acidi umici da leonardite, veicolante' },
+      { nome: 'Algapark',        npk: 'C14 N2',   dose: 1,  doseMin: 0.2,doseMax: 7,   unita: 'g/m²', quando: 'Post-semina o post-rigenerazione',     note: 'Estratto alghe Ecklonia, stimola accestimento' },
+      { nome: 'Root Speed',      npk: 'P2O5 30%', dose: 5,  doseMin: 0.2,doseMax: 7,   unita: 'g/m²', quando: 'Al momento della semina',              note: 'Attivatore radicale, funziona a basse temp.' },
+      { nome: 'Amino K',         npk: 'N7 AA44%', dose: 1,  doseMin: 0.5,doseMax: 4,   unita: 'g/m²', quando: 'Dopo stress o sbalzi termici',         note: 'Aminoacidi pronti, rapido recupero' },
+      { nome: 'Kalium Rush',     npk: 'K2O 20%',  dose: 1,  doseMin: 0.5,doseMax: 5,   unita: 'g/m²', quando: 'Pre-estivo o pre-invernale',           note: 'Alto potassio + Fe + Mn, resistenza tessuti' },
+      { nome: 'SevenKare',       npk: '12-5-6',   dose: 1,  doseMin: 0.7,doseMax: 5,   unita: 'g/m²', quando: 'Complemento concimazione granulare',   note: 'Organo-minerale liquido, aminoacidi 11,5%' },
+      { nome: 'Fe ULK',          npk: 'Fe 5%',    dose: 1,  doseMin: 0.25,doseMax: 2,  unita: 'g/m²', quando: 'Maggio–luglio ogni 15 gg',             note: 'Ferro complessato naturale, anti-clorosi' },
+      { nome: 'NPK Enduring',    npk: '10-5-7',   dose: 5,  doseMin: 5,  doseMax: 20,  unita: 'g/m²', quando: 'Fertirrigazione ciclica',              note: 'Azoto ureico a cessione graduale' },
+      { nome: 'Ca Kicker',       npk: 'CaO 9%',   dose: 4,  doseMin: 3,  doseMax: 5,   unita: 'g/m²', quando: 'Periodi siccitosi, lotta al feltro',   note: 'Calcio liquido, senza azoto' },
+      { nome: 'Wet Turf',        npk: '—',        dose: 1,  doseMin: 1,  doseMax: 1,   unita: 'g/m²', quando: 'Ogni 15 gg da maggio a luglio',        note: 'Umettante, contrasta idrorepellenza' },
+      { nome: 'Paint Turf',      npk: '—',        dose: 0.5,doseMin: 0.4,doseMax: 0.7, unita: 'g/m²', quando: 'A necessità per mascherare zone diradcate', note: 'Pigmento verde naturale, dura 30-40 gg' },
+    ]
+  },
+  coadiuvante: {
+    label: '🧪 Coadiuvanti',
+    prodotti: [
+      { nome: 'OARS PS',         npk: '—',        dose: 1.5,doseMin: 1.3,doseMax: 1.6, unita: 'ml/m²',quando: 'Terreni idrorepellenti',               note: 'Umettante surfattante, irrigare subito dopo' },
+      { nome: 'PBS 150',         npk: '—',        dose: 2,  doseMin: 1.3,doseMax: 2.5, unita: 'ml/m²',quando: 'Pre-estivo o in siccità',              note: 'Idratante prolungato fino a 150 giorni' },
+      { nome: 'FWY-ISP',         npk: '—',        dose: 0.35,doseMin:0.25,doseMax: 0.45,unita: 'ml/m²',quando: 'Al momento della semina',             note: 'Penetrante del suolo, favorisce germinazione' },
+      { nome: 'Solar',           npk: '—',        dose: 1,  doseMin: 1,  doseMax: 1,   unita: 'g/m²', quando: 'Estate su prato giovane',              note: 'Scudo UV, protezione raggi infrarossi' },
+      { nome: 'Dekal Vyro',      npk: 'N3 P18',   dose: 0,  doseMin: 0,  doseMax: 0,   unita: 'g/hl', quando: 'Aggiungere all'acqua dei trattamenti fogliare', note: 'Acidificante pH acqua — iniziare da 50 g/hl' },
+      { nome: 'Zefir Fe 4.8',   npk: 'Fe 6%',    dose: 0.5,doseMin: 0.2,doseMax: 2,   unita: 'g/m²', quando: 'Clorosi su terreni alcalini',           note: 'Chelato EDDHA, stabile anche ad alto pH' },
+      { nome: 'Zefir Micro',     npk: '—',        dose: 0.5,doseMin: 0.2,doseMax: 2,   unita: 'g/m²', quando: 'Carenze microelementi',                note: 'Mix oligoelementi chelati' },
+    ]
+  },
+  micorrize: {
+    label: '🍄 Micorrize Micosat F',
+    prodotti: [
+      { nome: 'Micosat F Prati e Giardini', npk: '—', dose: 1,   doseMin: 0.5,doseMax: 1,   unita: 'g/m²', quando: 'Semina, posa zolle, o mantenimento',  note: 'Specifico tappeto erboso, rete radicale fitta' },
+      { nome: 'Micosat F Uno',   npk: '—',        dose: 1,  doseMin: 0.5,doseMax: 2,   unita: 'g/m²', quando: 'Semina o trapianto ortofloricoltura',    note: 'Polivalente, intervento primario' },
+      { nome: 'Micosat F MO',    npk: '—',        dose: 1,  doseMin: 0.5,doseMax: 2,   unita: 'g/m²', quando: 'Trapianto o rigenerazione urgente',       note: '40% micorrize, supera crisi da trapianto' },
+      { nome: 'Micosat F TAB Plus', npk: '—',     dose: 0.2,doseMin: 0.2,doseMax: 0.5, unita: 'g/m²', quando: 'Dopo inoculo primario, fertirrigazione', note: 'Priming batterici, ampliamento radicale' },
+      { nome: 'Micosat F LEN',   npk: '—',        dose: 0.2,doseMin: 0.2,doseMax: 0.2, unita: 'g/m²', quando: 'Prevenzione stress, fertirrigazione',    note: 'Anticipa risposta agli stress' },
+      { nome: 'Micosat F XS200 Liquido', npk: '—',dose: 0.3,doseMin: 0.2,doseMax: 0.4, unita: 'ml/m²',quando: 'Richiamo liquido post-granulo',         note: 'Pre-innescato, agisce in pochi giorni' },
+      { nome: 'Micosat F RadiNET',npk: '—',       dose: 0.25,doseMin:0.25,doseMax:0.25, unita: 'g/m²',quando: 'Sviluppo radicale intensivo',            note: 'Solo per radicazione, fertirrigazione' },
+      { nome: 'Micosat F FIToNESS',npk: '—',      dose: 2,  doseMin: 2,  doseMax: 2,   unita: 'ml/m²',quando: 'Post-sterilizzazione suolo',             note: 'Ripristino vita utile dopo vuoto biologico' },
+    ]
+  },
+};
+
 function getPrezzoCliente(skuEntry, tipoCliente) {
   if (!skuEntry) return null;
   if (tipoCliente === 'speciale'    && skuEntry.prezzoD) return skuEntry.prezzoD;
@@ -1261,7 +1331,8 @@ export default function PratoVivo({ onNavigate }) {
         if (!isNaN(dose)) items.push({ prodotto: g.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
       }
       // Usa liquidiSabbioso se terreno sabbioso, altrimenti liquidi effettivi (con override esperto)
-      const liquidiAttivi = terrenoSem === 'sabbioso' ? (datiPianoAttivo.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi;
+      // Se c'è override esperto usa sempre liquidiEffettivi, altrimenti distingui sabbioso/normale
+      const liquidiAttivi = overrideLiquidi ? liquidiEffettivi : (terrenoSem === 'sabbioso' ? (datiPianoAttivo.liquidiSabbioso || liquidiEffettivi) : liquidiEffettivi);
       for (const l of liquidiAttivi) {
         const dose = parseFloat(String(l.dose).split('–')[0].replace(/[^\d.]/g,''));
         if (!isNaN(dose) && dose > 0) items.push({ prodotto: l.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
@@ -1282,7 +1353,12 @@ export default function PratoVivo({ onNavigate }) {
       const result = calcolaPreventivoConKgSeme(items, miscuglioSku, kgSeme, mq, tipoCliente);
       // Aggiungi primo concime se incluso
       if (result && primoConcimeIncluso) {
-        const pc = getPrimoConcime(terrenoSem, linea);
+        // Usa concimeRecupero se starter non applicato, altrimenti il primo concime standard
+        const haUsatoStarterVal = datiPianoAttivo?.haUsatoStarter;
+        const pcRaw = (haUsatoStarterVal === false)
+          ? getConcimeRecupero(terrenoSem === 'sabbioso' ? null : null)
+          : getPrimoConcime(terrenoSem, linea);
+        const pc = pcRaw;
         if (pc?.principale) {
           const entry = LISTINO[pc.principale.sku];
           if (entry) {
@@ -2352,76 +2428,149 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
       )}
 
       {/* ── MODALITÀ ESPERTO: editor granulari ──────────────── */}
-      {modalitaEsperto && (
-        <div className="bg-amber-50 rounded-2xl border-2 border-amber-400 overflow-hidden">
-          <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
-            <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Granulari</h2>
-            <button
-              onClick={() => onChangeGranulari([...granulari, { prodotto: '', npk: '', dose: 0, unita: 'g/m²', quando: '', note: '' }])}
-              className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg"
-            >+ Aggiungi</button>
+      {modalitaEsperto && (() => {
+        // Helper aggiungi prodotto da catalogo
+        const aggiungiDaCatalogo = (catKey, lista, onChange) => {
+          const cat = CATALOGO_ESPERTO[catKey];
+          if (!cat) return;
+          const primo = cat.prodotti[0];
+          onChange([...lista, {
+            prodotto: primo.nome, npk: primo.npk,
+            dose: primo.dose, doseMin: primo.doseMin, doseMax: primo.doseMax,
+            unita: primo.unita, quando: primo.quando, note: primo.note,
+            _catKey: catKey
+          }]);
+        };
+
+        const aggiornaProdottoCatalogo = (lista, i, nomeProdotto, catKey, onChange) => {
+          const cat = CATALOGO_ESPERTO[catKey];
+          const found = cat?.prodotti.find(p => p.nome === nomeProdotto);
+          if (!found) return;
+          const u = [...lista];
+          u[i] = { ...u[i], prodotto: found.nome, npk: found.npk, dose: found.dose,
+            doseMin: found.doseMin, doseMax: found.doseMax, unita: found.unita,
+            quando: found.quando, note: found.note, _catKey: catKey };
+          onChange(u);
+        };
+
+        const renderRiga = (p, i, lista, onChange, coloreBorder) => (
+          <div key={i} className={`bg-white rounded-xl p-3 space-y-2 border ${coloreBorder}`}>
+            {/* Riga 1: categoria + prodotto + × */}
+            <div className="flex gap-2 items-center flex-wrap">
+              <select
+                className="text-xs border rounded-lg px-2 py-1 bg-gray-50 text-gray-600 font-semibold"
+                value={p._catKey || ''}
+                onChange={e => {
+                  const cat = CATALOGO_ESPERTO[e.target.value];
+                  if (!cat) return;
+                  const primo = cat.prodotti[0];
+                  const u = [...lista];
+                  u[i] = { ...u[i], prodotto: primo.nome, npk: primo.npk, dose: primo.dose,
+                    doseMin: primo.doseMin, doseMax: primo.doseMax, unita: primo.unita,
+                    quando: primo.quando, note: primo.note, _catKey: e.target.value };
+                  onChange(u);
+                }}
+              >
+                <option value="">— categoria —</option>
+                {Object.entries(CATALOGO_ESPERTO).map(([k, v]) => (
+                  <option key={k} value={k}>{v.label}</option>
+                ))}
+              </select>
+              <select
+                className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold min-w-0"
+                value={p.prodotto || ''}
+                onChange={e => aggiornaProdottoCatalogo(lista, i, e.target.value, p._catKey, onChange)}
+              >
+                {p._catKey
+                  ? CATALOGO_ESPERTO[p._catKey]?.prodotti.map(pr => (
+                      <option key={pr.nome} value={pr.nome}>{pr.nome}</option>
+                    ))
+                  : <option value={p.prodotto || ''}>{p.prodotto || '— scegli categoria —'}</option>
+                }
+              </select>
+              <button onClick={() => onChange(lista.filter((_,j)=>j!==i))} className="text-red-400 text-lg leading-none px-1 flex-shrink-0">×</button>
+            </div>
+            {/* Riga 2: NPK + dose + unità */}
+            <div className="flex gap-2 items-center">
+              <span className="text-xs text-gray-400 font-mono w-20 shrink-0">{p.npk || '—'}</span>
+              <input
+                type="number" step="0.1"
+                className="w-20 border rounded-lg px-2 py-1 text-sm text-right font-bold"
+                value={p.dose ?? ''}
+                placeholder="Dose"
+                onChange={e => { const u=[...lista]; u[i]={...u[i],dose:parseFloat(e.target.value)||0}; onChange(u); }}
+              />
+              <span className="text-xs text-gray-500 shrink-0">{p.unita || 'g/m²'}</span>
+              {p.doseMin !== undefined && p.doseMax !== undefined && (
+                <span className="text-xs text-gray-400 shrink-0">({p.doseMin}–{p.doseMax})</span>
+              )}
+            </div>
+            {/* Riga 3: quando */}
+            <input
+              className="w-full border rounded-lg px-2 py-1 text-xs text-gray-600"
+              value={p.quando || ''} placeholder="Quando applicare"
+              onChange={e => { const u=[...lista]; u[i]={...u[i],quando:e.target.value}; onChange(u); }}
+            />
+            {/* Riga 4: note */}
+            <input
+              className="w-full border rounded-lg px-2 py-1 text-xs text-gray-400 italic"
+              value={p.note || ''} placeholder="Note"
+              onChange={e => { const u=[...lista]; u[i]={...u[i],note:e.target.value}; onChange(u); }}
+            />
           </div>
-          <div className="p-3 space-y-2">
-            {granulari.map((p, i) => (
-              <div key={i} className="bg-white rounded-xl p-3 space-y-2 border border-amber-200">
-                <div className="flex gap-2">
-                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={p.prodotto} placeholder="Prodotto"
-                    onChange={e => { const u=[...granulari]; u[i]={...u[i],prodotto:e.target.value}; onChangeGranulari(u); }} />
-                  <input className="w-20 border rounded-lg px-2 py-1 text-sm text-center" value={p.npk||''} placeholder="NPK"
-                    onChange={e => { const u=[...granulari]; u[i]={...u[i],npk:e.target.value}; onChangeGranulari(u); }} />
-                  <input type="number" className="w-16 border rounded-lg px-2 py-1 text-sm text-right font-bold" value={p.dose} placeholder="Dose"
-                    onChange={e => { const u=[...granulari]; u[i]={...u[i],dose:parseFloat(e.target.value)||0}; onChangeGranulari(u); }} />
-                  <span className="text-xs text-gray-400 self-center">g/m²</span>
-                  <button onClick={() => { const u=granulari.filter((_,j)=>j!==i); onChangeGranulari(u); }} className="text-red-400 text-lg leading-none px-1">×</button>
-                </div>
-                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-600" value={p.quando||''} placeholder="Quando applicare"
-                  onChange={e => { const u=[...granulari]; u[i]={...u[i],quando:e.target.value}; onChangeGranulari(u); }} />
-                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={p.note||''} placeholder="Note"
-                  onChange={e => { const u=[...granulari]; u[i]={...u[i],note:e.target.value}; onChangeGranulari(u); }} />
-              </div>
-            ))}
-          </div>
-          {/* Editor seme */}
-          {seme && (
-            <div className="px-3 pb-3">
-              <div className="bg-white rounded-xl p-3 border border-amber-200">
-                <p className="text-xs font-bold text-amber-700 mb-2">🌾 Dose seme</p>
-                <div className="flex gap-2">
-                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={seme.dose||seme.dose_grave||''} placeholder="Dose (es. 40 g/m²)"
-                    onChange={e => { onChangeSeme({...seme, dose: e.target.value, dose_ritocchi: e.target.value, dose_medio: e.target.value, dose_grave: e.target.value}); }} />
-                  <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-500" value={seme.note||''} placeholder="Note seme"
-                    onChange={e => { onChangeSeme({...seme, note: e.target.value}); }} />
-                </div>
+        );
+
+        return (
+          <div className="bg-amber-50 rounded-2xl border-2 border-amber-400 overflow-hidden">
+            {/* Header granulari */}
+            <div className="bg-amber-400 px-4 py-2 flex items-center justify-between">
+              <h2 className="text-amber-900 font-bold text-sm">🔬 Esperto — Granulari</h2>
+              <div className="flex gap-1">
+                <button onClick={() => aggiungiDaCatalogo('granulare_albatros', granulari, onChangeGranulari)}
+                  className="text-xs bg-white text-amber-800 font-bold px-2 py-1 rounded-lg">+ Albatros</button>
+                <button onClick={() => aggiungiDaCatalogo('granulare_mivena', granulari, onChangeGranulari)}
+                  className="text-xs bg-amber-100 text-amber-900 font-bold px-2 py-1 rounded-lg">+ Mivena</button>
               </div>
             </div>
-          )}
-          {/* Editor liquidi */}
-          <div className="bg-blue-50 border-t border-amber-200 px-3 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-blue-700">💧 Liquidi / Biostimolanti</p>
-              <button
-                onClick={() => onChangeLiquidi([...liquidi, { prodotto: '', dose: '', quando: '', note: '' }])}
-                className="text-xs bg-blue-500 text-white font-bold px-2 py-1 rounded-lg"
-              >+ Aggiungi</button>
+            <div className="p-3 space-y-2">
+              {granulari.map((p, i) => renderRiga(p, i, granulari, onChangeGranulari, 'border-amber-200'))}
             </div>
-            {liquidi.map((p, i) => (
-              <div key={i} className="bg-white rounded-xl p-3 space-y-2 mb-2 border border-blue-100">
-                <div className="flex gap-2">
-                  <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={p.prodotto||''} placeholder="Prodotto"
-                    onChange={e => { const u=[...liquidi]; u[i]={...u[i],prodotto:e.target.value}; onChangeLiquidi(u); }} />
-                  <input className="w-20 border rounded-lg px-2 py-1 text-sm text-right" value={p.dose||''} placeholder="Dose"
-                    onChange={e => { const u=[...liquidi]; u[i]={...u[i],dose:e.target.value}; onChangeLiquidi(u); }} />
-                  <button onClick={() => { const u=liquidi.filter((_,j)=>j!==i); onChangeLiquidi(u); }} className="text-red-400 text-lg leading-none px-1">×</button>
+
+            {/* Editor seme */}
+            {seme && (
+              <div className="px-3 pb-3">
+                <div className="bg-white rounded-xl p-3 border border-amber-200">
+                  <p className="text-xs font-bold text-amber-700 mb-2">🌾 Dose seme</p>
+                  <div className="flex gap-2">
+                    <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={seme.dose||seme.dose_grave||''} placeholder="Dose (es. 40 g/m²)"
+                      onChange={e => { onChangeSeme({...seme, dose: e.target.value, dose_ritocchi: e.target.value, dose_medio: e.target.value, dose_grave: e.target.value}); }} />
+                    <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-500" value={seme.note||''} placeholder="Note seme"
+                      onChange={e => { onChangeSeme({...seme, note: e.target.value}); }} />
+                  </div>
                 </div>
-                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-600" value={p.quando||''} placeholder="Quando"
-                  onChange={e => { const u=[...liquidi]; u[i]={...u[i],quando:e.target.value}; onChangeLiquidi(u); }} />
-                <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={p.note||''} placeholder="Note"
-                  onChange={e => { const u=[...liquidi]; u[i]={...u[i],note:e.target.value}; onChangeLiquidi(u); }} />
               </div>
-            ))}
+            )}
+
+            {/* Liquidi */}
+            <div className="bg-blue-50 border-t border-amber-200 px-3 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold text-blue-700">💧 Liquidi / Biostimolanti / Micorrize</p>
+                <div className="flex gap-1">
+                  <button onClick={() => aggiungiDaCatalogo('liquido', liquidi, onChangeLiquidi)}
+                    className="text-xs bg-blue-500 text-white font-bold px-2 py-1 rounded-lg">+ Liquido</button>
+                  <button onClick={() => aggiungiDaCatalogo('micorrize', liquidi, onChangeLiquidi)}
+                    className="text-xs bg-purple-500 text-white font-bold px-2 py-1 rounded-lg">+ Micorrize</button>
+                  <button onClick={() => aggiungiDaCatalogo('coadiuvante', liquidi, onChangeLiquidi)}
+                    className="text-xs bg-gray-500 text-white font-bold px-2 py-1 rounded-lg">+ Altro</button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {liquidi.map((p, i) => renderRiga(p, i, liquidi, onChangeLiquidi, 'border-blue-100'))}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Granulari */}
       <div className="bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">

@@ -330,6 +330,48 @@ function getBimestreCorrente(dataRif = null) {
 function getBimestreIdx(id) { return BIMESTRI.findIndex(b => b.id === id); }
 
 // Ritorna: 'futuro' | 'corrente' | 'ritardo' | 'passato'
+// Concime recupero — quando Vigor Active non è stato applicato dopo semina/rig
+// Logica: se ≤3 sett dalla semina E prima del 15 aprile → Vigor Active 50 g/m²
+//         altrimenti → Green 7 30 g/m² + poi Green 8 a fine maggio
+function getConcimeRecupero(dataInizio = null) {
+  const oggi = new Date();
+  const mese = oggi.getMonth() + 1; // 1-12
+  const giorno = oggi.getDate();
+  // Solo in primavera ha senso (mar-mag)
+  if (mese < 3 || mese > 5) return null;
+
+  // Calcola settimane dalla semina
+  let settimaneFromSemina = null;
+  if (dataInizio) {
+    const dataSem = new Date(dataInizio + 'T12:00:00');
+    const diffMs = oggi - dataSem;
+    settimaneFromSemina = diffMs / (1000 * 60 * 60 * 24 * 7);
+  }
+
+  const entroMetaAprile = mese < 4 || (mese === 4 && giorno <= 15);
+  const entro3Settimane = settimaneFromSemina !== null && settimaneFromSemina <= 3;
+
+  if (entroMetaAprile && entro3Settimane) {
+    return {
+      principale: {
+        nome: 'Vigor Active',
+        sku: 'Vigor Active 5kg',
+        dose: '50 g/m²',
+        note: 'Ancora in finestra starter — applica subito. Poi Green 8 a fine maggio/inizio giugno.'
+      }
+    };
+  } else {
+    return {
+      principale: {
+        nome: 'Green 7',
+        sku: 'Green 7 25kg',
+        dose: '30 g/m²',
+        note: 'Dose minima di recupero. Poi Green 8 a fine maggio/inizio giugno.'
+      }
+    };
+  }
+}
+
 // settimaneRitardo: finestra recupero (2-3 albatros, 4-5 mivena)
 function getStatoIntervento(id, dataRif = null, settimaneRitardo = 3) {
   if (!id) return 'futuro';
@@ -1003,6 +1045,7 @@ export default function PratoVivo({ onNavigate }) {
   const [miscuglio, setMiscuglio] = useState(null);       // { id, nome, sku } selezionato
   const [tipoCliente, setTipoCliente] = useState('privato'); // 'privato' | 'giardiniere' | 'fidelizzato' | 'speciale'
   const [primoConcimeIncluso, setPrimoConcimeIncluso] = useState(false);
+  const [haUsatoStarter, setHaUsatoStarter] = useState(null); // null | true | false
   const [usaAllRound, setUsaAllRound] = useState(false);
   const [showPreventivo, setShowPreventivo] = useState(false);
 
@@ -1060,7 +1103,7 @@ export default function PratoVivo({ onNavigate }) {
       if (colore !== null) { setColore(null); return; }
       if (terreno !== null) { setTerreno(null); return; }
     }
-    if (tipoIntervento === 'rigenerazione' && degradazione !== null) { setDegradazione(null); return; }
+    if (tipoIntervento === 'rigenerazione' && degradazione !== null) { setDegradazione(null); setHaUsatoStarter(null); return; }
     if (tipoIntervento === 'idrosemina') { setTipoIntervento(null); return; }
     if (irrigazione !== null) { setIrrigazione(null); setMq(''); return; }
     if (tipoIntervento !== null) { setTipoIntervento(null); return; }
@@ -1474,6 +1517,7 @@ export default function PratoVivo({ onNavigate }) {
             miscuglio={miscuglio} setMiscuglio={setMiscuglio}
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
+            haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi) => { generaPDF({ tipo: 'semina', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
@@ -1552,6 +1596,7 @@ export default function PratoVivo({ onNavigate }) {
             miscuglio={miscuglio} setMiscuglio={setMiscuglio}
             tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
             primoConcimeIncluso={primoConcimeIncluso} setPrimoConcimeIncluso={setPrimoConcimeIncluso}
+            haUsatoStarter={haUsatoStarter} setHaUsatoStarter={setHaUsatoStarter}
             dataInizio={dataInizio}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi) => { generaPDF({ tipo: 'rigenerazione', tipoPrato, livello, linea, terreno, colore: null, mq, irrigazione, spelacchiato: null, piano: datiPianoAttivo, pianoAnnuo: null, liquidiSab, estendi12: null, nomeCliente, dataInizio, includiIntestazione: includi }); salvaInBackground(); }}
@@ -2180,7 +2225,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme }) {
+function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, haUsatoStarter, setHaUsatoStarter, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
@@ -2211,6 +2256,10 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
 
   // Primo concime stagionale
   const primoConcime = getPrimoConcime(terreno || 'normale', linea, dataInizio);
+  // Concime recupero — quando starter non è stato usato
+  const concimeRecupero = getConcimeRecupero(dataInizio);
+  // Mostra domanda starter solo in primavera (mar-mag) e se c'è un suggerimento
+  const showDomandaStarter = concimeRecupero !== null;
 
   // Miscugli consigliati per tipo e livello
   const consigliatiCfg = SEMI_CONSIGLIATI[tipoPrato]?.[livello] || { consigliato: 'hurricane', altri: [] };
@@ -2440,8 +2489,31 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
         </div>
       )}
 
+      {/* Domanda starter — solo in primavera */}
+      {showDomandaStarter && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-200">
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">
+            🌱 Vigor Active (o altro concime Starter) già applicato dopo la semina?
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setHaUsatoStarter(true)}
+              className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-bold transition-colors ${haUsatoStarter === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-green-300'}`}
+            >
+              ✅ Sì
+            </button>
+            <button
+              onClick={() => setHaUsatoStarter(false)}
+              className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-bold transition-colors ${haUsatoStarter === false ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-red-300'}`}
+            >
+              ❌ No
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Nota primo concime post-attecchimento */}
-      {primoConcime && (
+      {primoConcime && haUsatoStarter !== false && (
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">🌱 Primo concime — dopo 6–8 settimane</p>
@@ -2472,6 +2544,26 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Concime recupero — quando starter NON è stato applicato */}
+      {haUsatoStarter === false && concimeRecupero && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-orange-300">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-bold text-orange-600 uppercase tracking-wide">🔄 Strategia di recupero</p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={primoConcimeIncluso} onChange={e => setPrimoConcimeIncluso(e.target.checked)} className="w-4 h-4 accent-orange-500" />
+              <span className="text-xs text-gray-600 font-semibold">Includi nel preventivo</span>
+            </label>
+          </div>
+          <div className="rounded-xl p-3 bg-orange-50 border-l-4 border-orange-400">
+            <div className="flex justify-between">
+              <p className="font-bold text-orange-800 text-sm">{concimeRecupero.principale.nome} <span className="text-xs font-normal text-orange-600 ml-1">✓ Consigliato ora</span></p>
+              <p className="font-bold text-orange-700 text-sm">{concimeRecupero.principale.dose}</p>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">{concimeRecupero.principale.note}</p>
+          </div>
         </div>
       )}
 

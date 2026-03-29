@@ -833,7 +833,7 @@ function SchermataPreventivoScreen({ preventivo, nomeCliente, mq, tipoIntervento
         {/* Tabella prodotti */}
         <div className="p-4 space-y-2">
           {righe.map((r, i) => (
-            <div key={i} className={`rounded-xl border p-3 ${r.isSeme ? 'border-emerald-300 bg-emerald-50' : r.isOttimale ? 'border-green-400 bg-green-50' : 'border-gray-100 bg-gray-50'}`}>
+            <div key={i} className={`rounded-xl border p-3 ${r.isSeme ? 'border-emerald-400 bg-emerald-50' : 'border-green-200 bg-green-50'}`}>
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 flex-wrap">
@@ -1169,7 +1169,7 @@ ${autoStampa ? '<script>window.onload=()=>{setTimeout(()=>window.print(),300)}</
 export default function PratoVivo({ onNavigate }) {
   // Step 0–2: wizard comune
   const [tipoPrato, setTipoPrato] = useState(null);       // ornamentale | sportivo
-  const [tipoIntervento, setTipoIntervento] = useState(null); // semina | rigenerazione | piano_annuo | singolo
+  const [tipoIntervento, setTipoIntervento] = useState(null); // semina | rigenerazione | piano_annuo | singolo | post_semina
   const [livello, setLivello] = useState('standard');     // base | standard | premium
   const [mq, setMq] = useState('');
   const [irrigazione, setIrrigazione] = useState(null);  // centralizzata | mano
@@ -1377,6 +1377,7 @@ export default function PratoVivo({ onNavigate }) {
   const showPianoRig = hasCommonConfig && tipoIntervento === 'rigenerazione' && degradazione !== null;
   const showPianoAnnuo = hasCommonConfig && tipoIntervento === 'piano_annuo' && terreno && colore && estendi12 !== null;
   const showSingolo = tipoIntervento === 'singolo';
+  const showPostSemina = tipoIntervento === 'post_semina';
   const showPianoIdrosemina = tipoPrato && tipoIntervento === 'idrosemina';
 
   const datiPianoAttivo = tipoIntervento === 'semina' ? PIANO_SEMINA[livello] : tipoIntervento === 'rigenerazione' ? PIANO_RIGENERAZIONE[livello] : null;
@@ -1567,12 +1568,13 @@ export default function PratoVivo({ onNavigate }) {
               <Btn emoji="💦" label="Idrosemina" desc="Semina idraulica a proiezione" onClick={() => setTipoIntervento('idrosemina')} selected={tipoIntervento==='idrosemina'} color="blue" />
               <Btn emoji="📅" label="Piano Annuo di Mantenimento" desc="Calendario completo 12 mesi" onClick={() => setTipoIntervento('piano_annuo')} selected={tipoIntervento==='piano_annuo'} />
               <Btn emoji="⚡" label="Intervento Singolo" desc="Cosa applico oggi?" onClick={() => setTipoIntervento('singolo')} selected={tipoIntervento==='singolo'} color="amber" />
+              <Btn emoji="🌿" label="Concimazione post-semina" desc="Ho già seminato, cosa applico adesso?" onClick={() => setTipoIntervento('post_semina')} selected={tipoIntervento==='post_semina'} color="amber" />
             </div>
           </Card>
         )}
 
         {/* STEP 3 — Livello (non per intervento singolo) */}
-        {tipoPrato && tipoIntervento && tipoIntervento !== 'singolo' && !livello && (
+        {tipoPrato && tipoIntervento && tipoIntervento !== 'singolo' && tipoIntervento !== 'post_semina' && !livello && (
           <Card title="Livello manutentivo">
             <div className="space-y-2">
               <Btn emoji="🌿" label="Base" desc="Solo granulari + seme" onClick={() => setLivello('base')} selected={livello==='base'} />
@@ -1583,7 +1585,7 @@ export default function PratoVivo({ onNavigate }) {
         )}
 
         {/* STEP 4 — mq + irrigazione */}
-        {tipoPrato && tipoIntervento && (livello || tipoIntervento === 'singolo') && !irrigazione && (
+        {tipoPrato && tipoIntervento && (livello || tipoIntervento === 'singolo' || tipoIntervento === 'post_semina') && !irrigazione && (
           <Card title="Dettagli cliente">
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -1789,6 +1791,11 @@ export default function PratoVivo({ onNavigate }) {
         {/* ── INTERVENTO SINGOLO ──────────────────────────────── */}
         {showSingolo && irrigazione && (
           <InterventoSingolo linea={linea} setLinea={setLinea} mq={mq} irrigazione={irrigazione} tipoCliente={tipoCliente} setTipoCliente={setTipoCliente} />
+        )}
+
+        {/* ── CONCIMAZIONE POST-SEMINA ─────────────────────────── */}
+        {showPostSemina && irrigazione && (
+          <ConcimazionePostSemina mq={mq} linea={linea} setLinea={setLinea} tipoCliente={tipoCliente} setTipoCliente={setTipoCliente} />
         )}
 
         {/* ── IDROSEMINA ─────────────────────────────────────── */}
@@ -3410,6 +3417,100 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
 }
 
 // ─── Sotto-componente: Intervento Singolo ─────────────────────
+// ─── Concimazione Post-Semina ──────────────────────────────────
+function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoCliente }) {
+  const [settimane, setSettimane] = React.useState(null);
+  const [haStarter, setHaStarter] = React.useState(null);
+
+  const oggi = new Date();
+  const mese = oggi.getMonth() + 1;
+  const giorno = oggi.getDate();
+  const entroMetaAprile = mese < 4 || (mese === 4 && giorno <= 15);
+
+  const getConsiglio = () => {
+    if (haStarter === true) {
+      if (mese <= 2 || mese === 12) return { tipo: 'attendi', msg: 'Periodo di riposo — nessun granulare ora. A marzo applicare Green 7 al risveglio.' };
+      if (mese >= 3 && mese <= 5) return { tipo: 'ok', prodotto: 'Green 8 Prestige', npk: '10-6-14', dose: 35, quando: 'Applicare ora, irrigare subito dopo', note: 'Antistress pre-estivo. Alto K per consolidare le radici del prato giovane.', micro: 'Fe 2% · MgO 2% · B 0.1%' };
+      return { tipo: 'ok', prodotto: 'Green 8 Prestige', npk: '10-6-14', dose: 40, quando: 'Applicare ora, irrigare dopo', note: 'Nutrimento base.', micro: 'Fe 2% · MgO 2% · B 0.1%' };
+    }
+    const sett = settimane === '1' ? 1 : settimane === '2' ? 2 : settimane === '3' ? 3 : 5;
+    if (entroMetaAprile && sett <= 3) {
+      return { tipo: 'ok', prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, quando: 'Distribuire in superficie senza incorporare. Irrigare subito dopo.', note: 'Ancora in finestra starter — non incorporare, il prato è già emerso.', micro: 'Zn 0.01% · SO3 8% · C 7.5% · Bacillus subtilis' };
+    }
+    return { tipo: 'ok', prodotto: 'Green 7', npk: '15-5-6', dose: 30, quando: 'Applicare ora, irrigare subito dopo', note: 'Dose minima di recupero. Poi Green 8 a fine maggio / inizio giugno.', micro: 'Fe 0.5% · B 0.05% · Zn 0.01% · SO3 20%' };
+  };
+
+  const consiglio = (settimane !== null && haStarter !== null) ? getConsiglio() : null;
+  const kgTot = consiglio?.dose && mq ? ((parseFloat(mq) * consiglio.dose) / 1000).toFixed(1) : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Linea concimi</p>
+        <div className="flex rounded-xl overflow-hidden border border-gray-200">
+          <button onClick={() => setLinea('albatros')} className={`flex-1 py-2 text-sm font-bold transition-colors ${linea==='albatros'?'bg-green-700 text-white':'bg-white text-gray-600'}`}>🌿 Albatros</button>
+          <button onClick={() => setLinea('mivena')} className={`flex-1 py-2 text-sm font-bold transition-colors ${linea==='mivena'?'bg-blue-700 text-white':'bg-white text-gray-600'}`}>🔬 Mivena</button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-200">
+        <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">🗓️ Quante settimane fa hai seminato o rigenerato?</p>
+        <div className="grid grid-cols-2 gap-2">
+          {[{val:'1',label:'Meno di 1 settimana'},{val:'2',label:'1–2 settimane'},{val:'3',label:'2–3 settimane'},{val:'4plus',label:'Più di 3 settimane'}].map(o => (
+            <button key={o.val} onClick={() => setSettimane(o.val)}
+              className={`rounded-xl py-2.5 px-3 text-sm font-semibold border-2 transition-colors ${settimane===o.val?'border-amber-500 bg-amber-50 text-amber-800':'border-gray-200 bg-gray-50 text-gray-600 hover:border-amber-300'}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {settimane && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-200">
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">🌱 Vigor Active (o altro Starter) già applicato dopo la semina?</p>
+          <div className="flex gap-2">
+            <button onClick={() => setHaStarter(true)} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-colors ${haStarter===true?'border-green-500 bg-green-50 text-green-800':'border-gray-200 bg-gray-50 text-gray-500 hover:border-green-300'}`}>✅ Sì</button>
+            <button onClick={() => setHaStarter(false)} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-colors ${haStarter===false?'border-red-400 bg-red-50 text-red-700':'border-gray-200 bg-gray-50 text-gray-500 hover:border-red-300'}`}>❌ No</button>
+          </div>
+        </div>
+      )}
+
+      {consiglio && (
+        consiglio.tipo === 'attendi'
+          ? <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4"><p className="text-sm font-bold text-amber-800 mb-1">⏳ Attendi</p><p className="text-sm text-amber-700">{consiglio.msg}</p></div>
+          : (
+            <div className="bg-green-50 border-2 border-green-400 rounded-2xl p-4 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-bold mb-1">✅ Consiglio adesso</p>
+                  <p className="text-xl font-bold text-green-800">{consiglio.prodotto}</p>
+                  <p className="text-xs font-mono text-green-600 mt-0.5">NPK {consiglio.npk}</p>
+                  {consiglio.micro && <p className="text-xs text-gray-400 mt-0.5">{consiglio.micro}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-green-700">{consiglio.dose} g/m²</p>
+                  {kgTot && <p className="text-xs text-gray-400">≈ {kgTot} kg totali</p>}
+                </div>
+              </div>
+              <div className="bg-white rounded-xl px-3 py-2 border border-green-200">
+                <p className="text-xs text-gray-600 font-semibold">{consiglio.quando}</p>
+                <p className="text-xs text-gray-500 mt-0.5 italic">{consiglio.note}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-semibold mb-1">Listino</p>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.entries({privato:'Privato',giardiniere:'Giardiniere',fidelizzato:'Fidelizzato',speciale:'Speciale'}).map(([k,v]) => (
+                    <button key={k} onClick={() => setTipoCliente(k)} className={`text-xs rounded-full px-3 py-1 border-2 font-semibold transition-colors ${tipoCliente===k?'border-green-500 bg-green-100 text-green-800':'border-gray-200 text-gray-500 hover:border-green-300'}`}>{v}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+      )}
+    </div>
+  );
+}
+
 function InterventoSingolo({ linea, setLinea, mq, irrigazione, tipoCliente, setTipoCliente }) {
   const [colore, setColore] = useState(null);
   const corrente = getBimestreCorrente();

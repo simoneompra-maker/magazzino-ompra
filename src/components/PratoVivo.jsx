@@ -3421,6 +3421,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
 function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoCliente }) {
   const [settimane, setSettimane] = useState(null);
   const [haStarter, setHaStarter] = useState(null);
+  const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
   const oggi = new Date();
   const mese = oggi.getMonth() + 1;
@@ -3442,6 +3443,43 @@ function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoClien
 
   const consiglio = (settimane !== null && haStarter !== null) ? getConsiglio() : null;
   const kgTot = consiglio?.dose && mq ? ((parseFloat(mq) * consiglio.dose) / 1000).toFixed(1) : null;
+
+  const apriPdfPostSemina = (autoStampa) => {
+    if (!consiglio || consiglio.tipo === 'attendi') return;
+    const w = window.open('', '_blank');
+    const oggi = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+    const mqLabel = mq ? parseFloat(mq).toLocaleString('it-IT') + ' m²' : '—';
+    const kgDisplay = kgTot ? '≈ ' + kgTot + ' kg' : '';
+    w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Concimazione post-semina</title>'
+      + '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:sans-serif;font-size:11px;color:#1a1a1a;padding:12mm 14mm}'
+      + 'h1{font-size:16px;font-weight:900;color:#15803d;margin-bottom:4px}'
+      + 'h2{font-size:12px;font-weight:700;color:#166534;margin:14px 0 6px;border-left:4px solid #4ade80;padding-left:8px}'
+      + '.meta{display:flex;flex-wrap:wrap;gap:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 14px;margin-bottom:14px}'
+      + '.meta-item label{font-weight:700;color:#15803d;font-size:8px;text-transform:uppercase;display:block}'
+      + '.meta-item span{font-size:11px;font-weight:700}'
+      + '.card{background:#f0fdf4;border:2px solid #4ade80;border-radius:8px;padding:12px;margin-bottom:12px;overflow:hidden}'
+      + '.prodotto{font-size:20px;font-weight:900;color:#15803d}'
+      + '.npk{font-size:10px;color:#16a34a;font-family:monospace}'
+      + '.micro{font-size:9px;color:#6b7280;margin-top:2px}'
+      + '.dose{font-size:22px;font-weight:900;color:#15803d;float:right}'
+      + '.note-box{background:#fff;border:1px solid #bbf7d0;border-radius:6px;padding:8px;margin-top:8px;font-size:10px;clear:both}'
+      + 'footer{margin-top:20px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:8px;color:#9ca3af}'
+      + '@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}'
+      + '</style></head><body>'
+      + (includiIntestazione ? '<h1>Concimazione Post-Semina</h1><p style="color:#6b7280;font-size:10px;margin-bottom:12px">Elaborato il ' + oggi + '</p>' : '')
+      + '<div class="meta"><div class="meta-item"><label>Superficie</label><span>' + mqLabel + '</span></div>'
+      + '<div class="meta-item"><label>Linea</label><span>' + (linea === 'albatros' ? 'Albatros' : 'Mivena') + '</span></div></div>'
+      + '<h2>Consiglio di concimazione</h2>'
+      + '<div class="card"><span class="dose">' + consiglio.dose + ' g/m² <small style="font-size:10px;color:#6b7280">' + kgDisplay + '</small></span>'
+      + '<p class="prodotto">' + consiglio.prodotto + '</p>'
+      + '<p class="npk">NPK ' + consiglio.npk + '</p>'
+      + (consiglio.micro ? '<p class="micro">' + consiglio.micro + '</p>' : '')
+      + '<div class="note-box"><strong>' + consiglio.quando + '</strong><br><em style="color:#6b7280">' + consiglio.note + '</em></div></div>'
+      + '<footer>Documento non fiscale — Solo per uso interno · OMPRA Gestionale</footer>'
+      + (autoStampa ? '<script>window.onload=()=>{setTimeout(()=>window.print(),300)}<\/script>' : '')
+      + '</body></html>');
+    w.document.close();
+  };
 
   return (
     <div className="space-y-4">
@@ -3506,6 +3544,24 @@ function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoClien
               </div>
             </div>
           )
+      )}
+
+      {/* Pulsanti PDF */}
+      {consiglio && consiglio.tipo !== 'attendi' && (
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-gray-200 cursor-pointer">
+            <input type="checkbox" checked={includiIntestazione} onChange={e => setIncludiIntestazione(e.target.checked)} className="w-4 h-4 accent-green-700 rounded" />
+            <span className="text-xs text-gray-600">Includi intestazione OMPRA nel PDF</span>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => apriPdfPostSemina(false)} className="bg-white border-2 border-green-700 text-green-700 hover:bg-green-50 font-bold py-3 rounded-xl flex items-center justify-center gap-1 text-xs transition-colors">
+              👁️ Anteprima
+            </button>
+            <button onClick={() => apriPdfPostSemina(true)} className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-1 text-xs transition-colors">
+              🖨️ Stampa
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

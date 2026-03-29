@@ -2005,8 +2005,10 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   // Reset botti effettive quando cambia mq
   useEffect(() => { setBottiEffettive(''); }, [mq]);
 
-  // Giornate e tariffa automatica
-  const nGiorni = mqNum > 0 ? Math.ceil(mqNum / GIORNO_MQ) : 0;
+  // Giorni noleggio — automatico ma editabile manualmente
+  const [nGiorniCustom, setNGiorniCustom] = useState('');
+  const nGiorniAuto = mqNum > 0 ? Math.ceil(mqNum / GIORNO_MQ) : 0;
+  const nGiorni = nGiorniCustom !== '' ? (parseInt(nGiorniCustom) || 1) : nGiorniAuto;
   const isOltre7 = nGiorni > 7;
   const tariffattaAuto = (() => {
     if (nGiorni <= 0) return 0;
@@ -2019,32 +2021,16 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   const [prezzoMulchLocale, setPrezzoMulchLocale] = useState(null);
   const prezzoMulch = prezzoMulchLocale !== null ? prezzoMulchLocale : (prezzi[mulch] || 0);
 
-  // ── Memoria prezzi in localStorage ──
-  const STORICO_KEY = 'ompra_idro_storico_prezzi';
-  const getStorico = () => { try { return JSON.parse(localStorage.getItem(STORICO_KEY) || '{}'); } catch { return {}; } };
-  const salvaStorico = (chiave, valore) => {
-    const st = getStorico();
-    const lista = st[chiave] || [];
-    const nuova = [valore, ...lista.filter(v => v !== valore)].slice(0, 1);
-    st[chiave] = nuova;
-    localStorage.setItem(STORICO_KEY, JSON.stringify(st));
-  };
-  const getPrezziStorico = (chiave) => getStorico()[chiave] || [];
-
   const aggiornaMulch = (val) => {
     const n = parseFloat(val);
     if (!isNaN(n)) {
       setPrezzoMulchLocale(n);
       setPrezzi(p => ({ ...p, [mulch]: n }));
-      salvaStorico('mulch_' + mulch, n);
     }
   };
   const aggiornaPrezzo = (chiave, val) => {
     const n = parseFloat(val);
-    if (!isNaN(n)) {
-      setPrezzi(p => ({ ...p, [chiave]: n }));
-      salvaStorico(chiave, n);
-    }
+    if (!isNaN(n)) setPrezzi(p => ({ ...p, [chiave]: n }));
   };
   // Reset locale quando cambia tipo mulch
   useEffect(() => { setPrezzoMulchLocale(null); }, [mulch]);
@@ -2070,11 +2056,21 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 
   const setPrezzo = (k, val) => setPrezzi(p => ({ ...p, [k]: parseFloat(val) || 0 }));
 
+  // Prezzo sementi dal listino (aggiornato quando cambia miscuglio o tipoCliente)
+  const prezzoSementiListino = (() => {
+    const semeObj = SEMI.find(s => s.nome === miscuglio);
+    if (!semeObj) return prezzi.sementi;
+    const sku = semeObj.skus?.[semeObj.skus.length - 1];
+    const entry = LISTINO[sku];
+    if (!entry) return prezzi.sementi;
+    return getPrezzoCliente(entry, 'privato') || entry.prezzoA || prezzi.sementi;
+  })();
+
   // Subtotali
   const sub = {
     mulch:     voci.mulch     ? sacchiMulch   * prezzoMulch       : 0,
     mulch2:    voci.mulch && mulch2 ? sacchiMulch2 * prezzoMulch2 : 0,
-    sementi:   voci.sementi   ? sacchiSementi * prezzi.sementi     : 0,
+    sementi:   voci.sementi   ? sacchiSementi * prezzoSementiListino : 0,
     algapark:  voci.algapark  ? tankAlga      * prezzi.algapark5   : 0,
     rootspeed: voci.rootspeed ? tankRoot      * prezzi.rootspeed5  : 0,
     collante:  voci.collante  ? busteCollante * prezzi.collante    : 0,
@@ -2103,28 +2099,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 
   const toggleVoce = (k) => setVoci(v => ({ ...v, [k]: !v[k] }));
 
-  // Helper: input prezzo + chip storico
-  const InputPrezzoStorico = ({ chiave, valore, onChange, step = 0.1 }) => {
-    const storico = getPrezziStorico(chiave);
-    return (
-      <div className="col-span-2 space-y-0.5">
-        <input type="number" step={step} value={valore}
-          onChange={e => onChange(e.target.value)}
-          onBlur={() => salvaStorico(chiave, parseFloat(valore) || 0)}
-          className="text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full focus:border-green-400 focus:outline-none" />
-        {storico.length > 0 && (
-          <div className="flex gap-0.5 justify-end flex-wrap">
-            {storico.map((v, i) => (
-              <button key={i} onClick={() => onChange(String(v))}
-                className="text-xs bg-green-50 text-green-700 border border-green-200 rounded px-1 leading-4 hover:bg-green-100">
-                {v.toFixed(2)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
+
   const rowStyle = (attiva) => `flex items-center gap-2 py-2 border-b border-gray-100 ${attiva ? '' : 'opacity-40'}`;
 
   // Fascia noleggio attiva
@@ -2189,7 +2164,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
       <tbody>
         ${rigaVoce(`Mulch ${mulchLabel} (${MULCH_TIPI[mulch]?.kg} kg/sacco)${mulch2?' - miscela':''}`, `${sacchiMulch} sacchi`, prezzoMulch, sub.mulch, 22, voci.mulch)}
         ${mulch2 && sub.mulch2>0 ? rigaVoce(`+ ${MULCH_TIPI[mulch2]?.label} (${MULCH_TIPI[mulch2]?.kg} kg/sacco)`, `${sacchiMulch2} sacchi`, prezzoMulch2, sub.mulch2, 22, voci.mulch) : ''}
-        ${rigaVoce(`Sementi ${miscuglio} (10 kg/sacco)`, `${sacchiSementi} sacchi`, prezzi.sementi, sub.sementi, 10, voci.sementi)}
+        ${rigaVoce(`Sementi ${miscuglio} (10 kg/sacco)`, `${sacchiSementi} sacchi`, prezzoSementiListino, sub.sementi, 10, voci.sementi)}
         ${rigaVoce('Algapark (tanica 5 kg)', `${tankAlga} taniche`, prezzi.algapark5, sub.algapark, 4, voci.algapark)}
         ${rigaVoce('Root Speed (tanica 5 kg)', `${tankRoot} taniche`, prezzi.rootspeed5, sub.rootspeed, 4, voci.rootspeed)}
         ${rigaVoce('Collante Green Tack (300 g)', `${busteCollante} buste`, prezzi.collante, sub.collante, 22, voci.collante)}
@@ -2281,13 +2256,9 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
                   <div>
                     <input type="number" step="0.10" value={prezzoMulch}
                       onChange={e => aggiornaMulch(e.target.value)}
-                      onBlur={() => salvaStorico('mulch_'+mulch, prezzoMulch)}
                       onClick={e => e.stopPropagation()}
                       className="w-16 text-sm font-bold text-right border border-green-300 rounded px-1 py-0.5 bg-white focus:outline-none focus:border-green-600" />
-                    {getPrezziStorico('mulch_'+mulch).map((v,i) => (
-                      <button key={i} onClick={e => { e.stopPropagation(); aggiornaMulch(String(v)); }}
-                        className="ml-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-1 hover:bg-green-100">{v.toFixed(2)}</button>
-                    ))}
+
                   </div>
                 </div>
               ) : (
@@ -2313,8 +2284,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
                           <input type="number" step="0.10"
                             value={prezzi[mk] || 0}
                             onChange={e => aggiornaPrezzo(mk, e.target.value)}
-                            onBlur={() => salvaStorico('mulch_'+mk, parseFloat(prezzi[mk])||0)}
-                            onClick={e => e.stopPropagation()}
+                                                        onClick={e => e.stopPropagation()}
                             className="w-14 text-xs text-right border border-gray-300 rounded px-1 py-0.5" />
                           <span className="text-xs text-gray-400">/sac</span>
                         </div>
@@ -2349,9 +2319,22 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
       {nBottiTeoriche > 0 && (
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Noleggio macchina</p>
+          {/* Giorni editabili */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-gray-500 font-semibold">Giorni:</span>
+            <input type="number" min="0.5" step="0.5"
+              value={nGiorniCustom !== '' ? nGiorniCustom : nGiorniAuto}
+              onChange={e => setNGiorniCustom(e.target.value)}
+              className="w-20 border-2 border-gray-200 rounded-xl px-2 py-1.5 text-sm font-bold text-center focus:border-green-500 focus:outline-none" />
+            {nGiorniCustom !== '' && nGiorni !== nGiorniAuto && (
+              <button onClick={() => setNGiorniCustom('')}
+                className="text-xs text-gray-400 hover:text-gray-600">↩ auto ({nGiorniAuto}gg)</button>
+            )}
+            <span className="text-xs text-gray-400">auto: {nGiorniAuto} gg</span>
+          </div>
           <div className="bg-green-50 rounded-xl px-3 py-2 mb-3">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-green-800">Fascia automatica: {fasciaLabel}</span>
+              <span className="text-xs font-semibold text-green-800">Fascia: {fasciaLabel}</span>
               {!isOltre7 && <span className="text-xs font-bold text-green-700">€ {tariffattaEffettiva.toFixed(2)}/gg</span>}
             </div>
             {!isOltre7 && <p className="text-xs text-green-600 mt-0.5">{nGiorni} gg × € {tariffattaEffettiva.toFixed(2)} = € {totaleNoleggio.toFixed(2)} imponibile</p>}
@@ -2405,7 +2388,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
                 <span className="text-gray-400 font-normal">22% IVA · {sacchiMulch} sac.</span>
               </span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiMulch} sac.</span>
-              <InputPrezzoStorico chiave={'mulch_'+mulch} valore={prezzoMulch} onChange={aggiornaMulch} />
+              <input type="number" step="0.10" value={prezzoMulch} onChange={e => aggiornaMulch(e.target.value)} className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.mulch.toFixed(0)}</span>
             </div>
           </div>
@@ -2419,7 +2402,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
                   <span className="text-gray-400 font-normal">22% IVA · miscela</span>
                 </span>
                 <span className="col-span-2 text-xs text-center text-gray-500">{sacchiMulch2} sac.</span>
-                <InputPrezzoStorico chiave={'mulch_'+mulch2} valore={prezzoMulch2} onChange={v => aggiornaPrezzo(mulch2, v)} />
+                <input type="number" step="0.10" value={prezzoMulch2} onChange={e => aggiornaPrezzo(mulch2, e.target.value)} className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
                 <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.mulch2.toFixed(0)}</span>
               </div>
             </div>
@@ -2429,9 +2412,9 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
           <div className={rowStyle(voci.sementi)}>
             <input type="checkbox" checked={voci.sementi} onChange={() => toggleVoce('sementi')} className="accent-green-600 flex-shrink-0" />
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
-              <span className="col-span-5 text-xs font-semibold text-gray-700">{miscuglio} (10 kg)<br/><span className="text-gray-400 font-normal">10% IVA</span></span>
+              <span className="col-span-5 text-xs font-semibold text-gray-700">{miscuglio} (10 kg)<br/><span className="text-gray-400 font-normal">10% IVA · € {prezzoSementiListino.toFixed(2)}/sac</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiSementi} sac.</span>
-              <InputPrezzoStorico chiave="sementi" valore={prezzi.sementi} onChange={v => aggiornaPrezzo('sementi', v)} />
+              <span className="col-span-2 text-xs text-right text-gray-400 italic">listino</span>
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.sementi.toFixed(0)}</span>
             </div>
           </div>
@@ -2442,7 +2425,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Algapark 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{tankAlga} tan.</span>
-              <InputPrezzoStorico chiave="algapark5" valore={prezzi.algapark5} onChange={v => aggiornaPrezzo('algapark5', v)} />
+              <input type="number" step="0.10" value={prezzi.algapark5} onChange={e => aggiornaPrezzo('algapark5', e.target.value)} className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.algapark.toFixed(0)}</span>
             </div>
           </div>
@@ -2453,7 +2436,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Root Speed 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{tankRoot} tan.</span>
-              <InputPrezzoStorico chiave="rootspeed5" valore={prezzi.rootspeed5} onChange={v => aggiornaPrezzo('rootspeed5', v)} />
+              <input type="number" step="0.10" value={prezzi.rootspeed5} onChange={e => aggiornaPrezzo('rootspeed5', e.target.value)} className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.rootspeed.toFixed(0)}</span>
             </div>
           </div>
@@ -2464,7 +2447,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Collante 300g/botte<br/><span className="text-gray-400 font-normal">22% IVA{terreno==='pendenza_alta'?' · auto':' · facoltativo'}</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{busteCollante} bus.</span>
-              <InputPrezzoStorico chiave="collante" valore={prezzi.collante} onChange={v => aggiornaPrezzo('collante', v)} />
+              <input type="number" step="0.10" value={prezzi.collante} onChange={e => aggiornaPrezzo('collante', e.target.value)} className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.collante.toFixed(0)}</span>
             </div>
           </div>

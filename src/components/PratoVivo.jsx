@@ -1847,6 +1847,7 @@ export default function PratoVivo({ onNavigate }) {
             voci={idroVoci} setVoci={setIdroVoci}
             prezzi={idroPrezzi} setPrezzi={setIdroPrezzi}
             tipoPrato={tipoPrato}
+            tipoCliente={tipoCliente} setTipoCliente={setTipoCliente}
           />
         )}
 
@@ -1974,7 +1975,7 @@ function TabArchivio({ data, loading, onElimina, onRidownload, onRipristina, onR
 }
 
 // ─── Sotto-componente: Idrosemina ─────────────────────────────
-function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch, mulch2, setMulch2, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
+function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch, mulch2, setMulch2, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato, tipoCliente = 'privato', setTipoCliente }) {
 
   const MULCH_TIPI = {
     premium_paper:    { label: 'Premium Paper',       kg: 15   },
@@ -2056,14 +2057,14 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 
   const setPrezzo = (k, val) => setPrezzi(p => ({ ...p, [k]: parseFloat(val) || 0 }));
 
-  // Prezzo sementi dal listino (aggiornato quando cambia miscuglio o tipoCliente)
+  // Prezzo sementi dal listino per tipoCliente
   const prezzoSementiListino = (() => {
     const semeObj = SEMI.find(s => s.nome === miscuglio);
     if (!semeObj) return prezzi.sementi;
     const sku = semeObj.skus?.[semeObj.skus.length - 1];
     const entry = LISTINO[sku];
     if (!entry) return prezzi.sementi;
-    return getPrezzoCliente(entry, 'privato') || entry.prezzoA || prezzi.sementi;
+    return getPrezzoCliente(entry, tipoCliente) || entry.prezzoA || prezzi.sementi;
   })();
 
   // Subtotali
@@ -2365,6 +2366,28 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
         </div>
       )}
 
+      {/* Tipo cliente — listino sementi */}
+      {nBottiTeoriche > 0 && setTipoCliente && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">👤 Listino sementi</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[['privato','🏠 Privato','A'],['giardiniere','🌿 Giardiniere','B'],['fidelizzato','⭐ Fidelizzato','C'],['speciale','🚛 Consegna diretta','D']].map(([k,label,lst]) => {
+              const semeObj = SEMI.find(s => s.nome === miscuglio);
+              const sku = semeObj?.skus?.[semeObj.skus.length-1];
+              const entry = LISTINO[sku];
+              const p = entry ? (getPrezzoCliente(entry, k) || entry.prezzoA) : null;
+              return (
+                <button key={k} onClick={() => setTipoCliente(k)}
+                  className={`rounded-xl px-3 py-2 text-left border-2 text-xs font-semibold transition-colors ${tipoCliente===k?'border-green-500 bg-green-50 text-green-800':'border-gray-200 text-gray-500 hover:border-green-300'}`}>
+                  <span className="block">{label} <span className="font-normal text-gray-400">List. {lst}</span></span>
+                  {p && <span className="text-green-700 font-bold">€ {p.toFixed(2)}/sac</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Preventivo voci */}
       {nBottiTeoriche > 0 && (
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
@@ -2414,7 +2437,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">{miscuglio} (10 kg)<br/><span className="text-gray-400 font-normal">10% IVA · € {prezzoSementiListino.toFixed(2)}/sac</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiSementi} sac.</span>
-              <span className="col-span-2 text-xs text-right text-gray-400 italic">listino</span>
+              <span className="col-span-2 text-xs text-right text-gray-400 italic">{tipoCliente === 'privato' ? 'A' : tipoCliente === 'giardiniere' ? 'B' : tipoCliente === 'fidelizzato' ? 'C' : 'D'}</span>
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.sementi.toFixed(0)}</span>
             </div>
           </div>

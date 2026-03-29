@@ -3462,7 +3462,7 @@ function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoClien
           tipo: 'ok',
           prodotto: 'Green 7', npk: '15-5-6', dose: 18,
           quando: 'Fine aprile — dose leggera, irrigare subito dopo',
-          note: 'Rinforzo primaverile minimo. Non esagerare con l'azoto su prato giovane. A fine maggio / giugno seguirà Green 8.',
+          note: "Rinforzo primaverile minimo. Non esagerare con l'azoto su prato giovane. A fine maggio / giugno seguirà Green 8.",
           micro: 'Fe 0.5% · B 0.05% · Zn 0.01% · SO3 20%'
         };
       }

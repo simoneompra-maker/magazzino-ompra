@@ -23,6 +23,10 @@ export default function ArchivioCommissioni({ onNavigate }) {
   // Filtro venditore (solo admin)
   const [filtroVenditore, setFiltroVenditore] = useState('');
 
+  // Filtro date export
+  const [filtroDataDa, setFiltroDataDa] = useState('');
+  const [filtroDataA, setFiltroDataA] = useState('');
+
   // Default a "Chiuse"
   const [filterStatus, setFilterStatus] = useState('completed');
   const [filtroTipoOperazione, setFiltroTipoOperazione] = useState(''); // '' | 'vendita' | 'reso' | 'cambio'
@@ -110,8 +114,21 @@ export default function ArchivioCommissioni({ onNavigate }) {
         }
         return true;
       })
+      .filter(c => {
+        if (filtroDataDa) {
+          const da = new Date(filtroDataDa);
+          da.setHours(0, 0, 0, 0);
+          if (new Date(c.createdAt) < da) return false;
+        }
+        if (filtroDataA) {
+          const a = new Date(filtroDataA);
+          a.setHours(23, 59, 59, 999);
+          if (new Date(c.createdAt) > a) return false;
+        }
+        return true;
+      })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [commissioni, filterStatus, filtroTipoOperazione, mostraPreventivi, searchTerm, isAdmin, operatoreLoggato, filtroVenditore]);
+  }, [commissioni, filterStatus, filtroTipoOperazione, mostraPreventivi, searchTerm, isAdmin, operatoreLoggato, filtroVenditore, filtroDataDa, filtroDataA]);
 
   // Formatta data
   const formatDate = (dateString) => {
@@ -879,109 +896,86 @@ export default function ArchivioCommissioni({ onNavigate }) {
     setRecovering(false);
   };
 
-  // Export Excel
-  const exportExcel = () => {
+  // Export Excel (SheetJS - .xlsx vero, nessun warning)
+  const exportExcel = async () => {
+    if (!window.XLSX) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    const XLSX = window.XLSX;
     const comms = filteredCommissioni;
-    let html = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-      <head><meta charset="UTF-8">
-      <style>
-        table { border-collapse: collapse; }
-        th, td { border: 1px solid #000; padding: 8px; }
-        th { background-color: #006B3F; color: white; font-weight: bold; }
-        .totale { font-weight: bold; background-color: #FFDD00; }
-        .prezzo { text-align: right; }
-      </style>
-      </head>
-      <body>
-      <h2>OMPRA - Archivio Commissioni</h2>
-      <p>Esportato il: ${new Date().toLocaleString('it-IT')}</p>
-      <p>Commissioni: ${comms.length} | Filtro: ${filterStatus === 'pending' ? 'In attesa' : filterStatus === 'completed' ? 'Completate' : 'Tutte'}</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Stato</th>
-            <th>Cliente</th>
-            <th>Telefono</th>
-            <th>Operatore</th>
-            <th>Prodotti</th>
-            <th>Accessori</th>
-            <th>Totale €</th>
-            <th>Caparra €</th>
-            <th>Da Saldare €</th>
-            <th>Metodo Pag.</th>
-            <th>Documento</th>
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    
+
+    const headers = [
+      'Data', 'Stato', 'Cliente', 'Telefono', 'Operatore',
+      'Prodotti', 'Accessori',
+      'Totale (IVA incl.)', 'Totale (IVA escl.)',
+      'Caparra €', 'Da Saldare €', 'Metodo Pag.', 'Documento', 'Note'
+    ];
+
     let totaleGen = 0;
     let totaleCaparre = 0;
-    
-    comms.forEach(comm => {
+
+    const rows = comms.map(comm => {
       const prodottiStr = (comm.prodotti || []).map(p => {
         let s = `${p.brand} ${p.model}`;
-        if (p.serialNumber) s += ` (SN: ${p.serialNumber})`;
+        if (p.serialNumber) s += ` SN:${p.serialNumber}`;
         if (p.isOmaggio) s += ' [OMAGGIO]';
         else if (p.prezzo) s += ` €${p.prezzo}`;
         return s;
       }).join('; ');
-      
+
       const accessoriStr = (comm.accessori || []).map(a => {
         const qta = a.quantita || 1;
         const tot = (parseFloat(a.prezzo) || 0) * qta;
         return qta > 1 ? `${a.nome} x${qta} €${tot.toFixed(2)}` : `${a.nome} €${tot.toFixed(2)}`;
       }).join('; ');
-      
-      const totale = comm.totale || 0;
+
+      const totaleIvato = comm.totale || 0;
+      const totaleEscl = Math.round((totaleIvato / 1.22) * 100) / 100;
       const caparra = comm.caparra || 0;
-      const daSaldare = totale - caparra;
-      totaleGen += totale;
+      const daSaldare = totaleIvato - caparra;
+      totaleGen += totaleIvato;
       totaleCaparre += caparra;
-      
-      html += `
-        <tr>
-          <td>${formatDate(comm.createdAt)}</td>
-          <td>${comm.status === 'completed' ? 'Completata' : 'In attesa'}</td>
-          <td>${comm.cliente || ''}</td>
-          <td>${comm.telefono || ''}</td>
-          <td>${comm.operatore || ''}</td>
-          <td>${prodottiStr}</td>
-          <td>${accessoriStr}</td>
-          <td class="prezzo">${totale.toFixed(2)}</td>
-          <td class="prezzo">${caparra > 0 ? caparra.toFixed(2) : ''}</td>
-          <td class="prezzo">${caparra > 0 ? daSaldare.toFixed(2) : ''}</td>
-          <td>${comm.metodoPagamento ? formatMetodoPagamento(comm.metodoPagamento) : ''}</td>
-          <td>${comm.tipoDocumento === 'fattura' ? 'Fattura' : 'Scontrino'}</td>
-          <td>${comm.note || ''}</td>
-        </tr>
-      `;
+
+      return [
+        new Date(comm.createdAt).toLocaleDateString('it-IT'),
+        comm.status === 'completed' ? 'Completata' : 'In attesa',
+        comm.cliente || '',
+        comm.telefono || '',
+        comm.operatore || '',
+        prodottiStr,
+        accessoriStr,
+        totaleIvato,
+        totaleEscl,
+        caparra > 0 ? caparra : '',
+        caparra > 0 ? daSaldare : '',
+        comm.metodoPagamento ? formatMetodoPagamento(comm.metodoPagamento) : '',
+        comm.tipoDocumento === 'fattura' ? 'Fattura' : 'Scontrino',
+        comm.note || ''
+      ];
     });
-    
-    html += `
-        <tr class="totale">
-          <td colspan="7" style="text-align: right;"><strong>TOTALE</strong></td>
-          <td class="prezzo"><strong>€ ${totaleGen.toFixed(2)}</strong></td>
-          <td class="prezzo"><strong>€ ${totaleCaparre.toFixed(2)}</strong></td>
-          <td class="prezzo"><strong>€ ${(totaleGen - totaleCaparre).toFixed(2)}</strong></td>
-          <td colspan="3"></td>
-        </tr>
-        </tbody>
-      </table>
-      </body>
-      </html>
-    `;
-    
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `commissioni_ompra_${new Date().toISOString().slice(0, 10)}.xls`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    const totaleEsclGen = Math.round((totaleGen / 1.22) * 100) / 100;
+    const rigaTotali = ['', '', '', '', '', '', 'TOTALE', totaleGen, totaleEsclGen, totaleCaparre, totaleGen - totaleCaparre, '', '', ''];
+
+    const wsData = [headers, ...rows, rigaTotali];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
+      { wch: 40 }, { wch: 30 }, { wch: 16 }, { wch: 16 },
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Commissioni');
+
+    const periodoLabel = filtroDataDa || filtroDataA ? `_${filtroDataDa || ''}_${filtroDataA || ''}` : '';
+    XLSX.writeFile(wb, `commissioni_ompra_${new Date().toISOString().slice(0, 10)}${periodoLabel}.xlsx`);
     setShowExportMenu(false);
   };
 
@@ -1055,7 +1049,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 >
                   <FileDown className="w-5 h-5 text-green-600" />
                   <div>
-                    <div className="font-medium">Excel (.xls)</div>
+                    <div className="font-medium">Excel (.xlsx)</div>
                     <div className="text-xs text-gray-500">Per Microsoft Excel</div>
                   </div>
                 </button>
@@ -1133,6 +1127,43 @@ export default function ArchivioCommissioni({ onNavigate }) {
               <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">{operatoreLoggato}</span>
             </div>
           )}
+        {/* Filtro date */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Periodo:</span>
+            <input
+              type="date"
+              value={filtroDataDa}
+              onChange={e => setFiltroDataDa(e.target.value)}
+              className="flex-1 border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <span className="text-xs text-gray-400">→</span>
+            <input
+              type="date"
+              value={filtroDataA}
+              onChange={e => setFiltroDataA(e.target.value)}
+              className="flex-1 border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            {(filtroDataDa || filtroDataA) && (
+              <button
+                onClick={() => { setFiltroDataDa(''); setFiltroDataA(''); }}
+                className="text-xs text-red-400 hover:text-red-600 font-bold px-1"
+                title="Cancella filtro date"
+              >✕</button>
+            )}
+            <button
+              onClick={() => {
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                setFiltroDataDa(`${y}-${m}-01`);
+                const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+                setFiltroDataA(`${y}-${m}-${lastDay}`);
+              }}
+              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg whitespace-nowrap hover:bg-green-200"
+            >
+              Mese
+            </button>
+          </div>
         {/* Ricerca */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

@@ -8,7 +8,7 @@ import {
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 const OMPRA = {
   nome: 'OMPRA Srl',
@@ -18,22 +18,32 @@ const OMPRA = {
   web: 'www.ompra.it',
 };
 
-// ── Gemini helper ────────────────────────────────────────────
-async function geminiText(prompt) {
-  const res = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
-    }),
-  });
-  if (!res.ok) {
-    if (res.status === 429) throw new Error('Gemini errore 429: limite richieste raggiunto. Attendi 30 secondi e riprova.');
+// ── Gemini helper con retry e backoff ────────────────────────
+async function geminiText(prompt, retries = 3) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+      }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
+    if (res.status === 429) {
+      if (attempt < retries - 1) {
+        // Backoff: 5s, 15s, 30s
+        const wait = [5000, 15000, 30000][attempt];
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      throw new Error('Quota Gemini esaurita (429). Riprova tra qualche minuto o scrivi la relazione manualmente.');
+    }
     throw new Error(`Gemini error ${res.status}`);
   }
-  const d = await res.json();
-  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 // ── Genera relazione ─────────────────────────────────────────
@@ -436,7 +446,23 @@ function Passo3({ form, setForm }) {
 }
 
 // ── Passo 4: Riepilogo & AI ───────────────────────────────────
-function Passo4({ form, pianiScelti, relazione, setRelazione, onGenera, loadingAI, errorAI }) {
+function Passo4({ form, piani, pianiScelti, setPianiScelti, setInterventiNutrizione, setInterventiPrevTerreno, relazione, setRelazione, onGenera, loadingAI, errorAI }) {
+  const [manualeMode, setManualeMode] = useState(false);
+
+  // Piani nutrizione disponibili (tutti, non solo quello auto-scelto)
+  const pianiNutrizioneDisp = piani.filter(p => p.fase === 'nutrizione');
+
+  const handleChangePianoNutrizione = async (pianoId) => {
+    const piano = piani.find(p => p.id === pianoId);
+    if (!piano) return;
+    setPianiScelti(prev => ({ ...prev, nutrizione: piano }));
+    // ricarica interventi via prop callback
+    try {
+      const intNutr = await getInterventiPiano(piano.id);
+      setInterventiNutrizione(intNutr);
+    } catch(e) { console.error(e); }
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Riepilogo & Generazione relazione</p>
@@ -457,36 +483,69 @@ function Passo4({ form, pianiScelti, relazione, setRelazione, onGenera, loadingA
         ) : null)}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-3">
-        <p className="text-xs font-bold text-gray-700 mb-2">PIANO CONSIGLIATO</p>
-        <p className="text-xs text-gray-600">🌱 <span className="font-semibold text-green-700">{pianiScelti.nutrizione?.label || '—'}</span></p>
-        <p className="text-xs text-gray-600">🪱 <span className="font-semibold">{pianiScelti.prev_terreno?.label || '—'}</span></p>
-        <p className="text-xs text-gray-600">🌿 <span className="font-semibold">{pianiScelti.prev_fogliare?.label || '—'}</span></p>
-        <p className="text-xs text-gray-400 mt-1">Terreno: <span className="font-medium capitalize">{pianiScelti.terreno}</span></p>
+      {/* Selettore piano nutrizione */}
+      <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+        <p className="text-xs font-bold text-gray-700">PIANO DI CONCIMAZIONE</p>
+        <p className="text-xs text-gray-400">Auto-selezionato da tessitura. Modifica se necessario:</p>
+        <select
+          value={pianiScelti.nutrizione?.id || ''}
+          onChange={e => handleChangePianoNutrizione(e.target.value)}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-600 bg-white">
+          <option value="">— nessun piano nutrizione —</option>
+          {pianiNutrizioneDisp.map(p => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500">🪱 {pianiScelti.prev_terreno?.label || '—'}</p>
+        <p className="text-xs text-gray-500">🌿 {pianiScelti.prev_fogliare?.label || '—'}</p>
       </div>
 
+      {/* Errore AI */}
       {errorAI && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           <p className="text-xs text-red-600">{errorAI}</p>
         </div>
       )}
 
+      {/* Bottoni generazione */}
       {!relazione ? (
-        <Btn onClick={onGenera} disabled={loadingAI} fullWidth>
-          {loadingAI ? '⏳ Generazione in corso...' : '✨ Genera relazione con AI'}
-        </Btn>
+        <div className="space-y-2">
+          <Btn onClick={onGenera} disabled={loadingAI} fullWidth>
+            {loadingAI ? '⏳ Generazione in corso (retry automatico)...' : '✨ Genera relazione con AI'}
+          </Btn>
+          <button
+            onClick={() => { setManualeMode(true); setRelazione(''); }}
+            className="w-full text-xs text-gray-500 underline py-1">
+            Scrivi relazione manualmente (senza AI)
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <p className="text-xs font-bold text-gray-700">RELAZIONE GENERATA — editabile</p>
-            <button onClick={onGenera} disabled={loadingAI}
-              className="text-xs text-blue-600 underline disabled:opacity-40">
-              {loadingAI ? '...' : 'Rigenera'}
-            </button>
+            <p className="text-xs font-bold text-gray-700">RELAZIONE — editabile</p>
+            {!manualeMode && (
+              <button onClick={onGenera} disabled={loadingAI}
+                className="text-xs text-blue-600 underline disabled:opacity-40">
+                {loadingAI ? '...' : 'Rigenera AI'}
+              </button>
+            )}
           </div>
           <textarea value={relazione} onChange={e => setRelazione(e.target.value)} rows={10}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-green-600 resize-none font-mono" />
-          <p className="text-xs text-gray-400">Puoi modificare il testo prima di salvare.</p>
+          <p className="text-xs text-gray-400">Modifica il testo poi premi Salva e apri.</p>
+        </div>
+      )}
+
+      {/* Scrittura manuale se AI non disponibile */}
+      {manualeMode && !relazione && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-700">RELAZIONE MANUALE</p>
+          <textarea
+            placeholder="Scrivi qui la relazione tecnica..."
+            value={relazione}
+            onChange={e => setRelazione(e.target.value)}
+            rows={10}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-green-600 resize-none" />
         </div>
       )}
     </div>
@@ -872,7 +931,12 @@ export default function Sopralluogo({ onNavigate }) {
           {step === 3 && <Passo3 form={form} setForm={setForm} />}
           {step === 4 && (
             <Passo4
-              form={form} pianiScelti={pianiScelti}
+              form={form}
+              piani={piani}
+              pianiScelti={pianiScelti}
+              setPianiScelti={setPianiScelti}
+              setInterventiNutrizione={setInterventiNutrizione}
+              setInterventiPrevTerreno={setInterventiPrevTerreno}
               relazione={relazione} setRelazione={setRelazione}
               onGenera={handleGenera} loadingAI={loadingAI} errorAI={errorAI}
             />

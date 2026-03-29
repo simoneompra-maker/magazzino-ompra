@@ -2022,6 +2022,11 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   const [prezzoMulchLocale, setPrezzoMulchLocale] = useState(null);
   const prezzoMulch = prezzoMulchLocale !== null ? prezzoMulchLocale : (prezzi[mulch] || 0);
 
+  const MULCH_PRICE_KEY = 'ompra_idro_mulch_prezzi';
+  const getMulchPriceMemory = () => { try { return JSON.parse(localStorage.getItem(MULCH_PRICE_KEY) || '{}'); } catch { return {}; } };
+  const saveMulchPrice = (k, v) => { try { const m = getMulchPriceMemory(); m[k] = v; localStorage.setItem(MULCH_PRICE_KEY, JSON.stringify(m)); } catch {} };
+  const getLastMulchPrice = (k) => getMulchPriceMemory()[k] || null;
+
   const aggiornaMulch = (val) => {
     const n = parseFloat(val);
     if (!isNaN(n)) {
@@ -2033,6 +2038,21 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
     const n = parseFloat(val);
     if (!isNaN(n)) setPrezzi(p => ({ ...p, [chiave]: n }));
   };
+  const aggiornaPrezzoMulch = (k, val) => {
+    const n = parseFloat(val);
+    if (!isNaN(n)) {
+      setPrezzi(p => ({ ...p, [k]: n }));
+      saveMulchPrice(k, n);
+      if (k === mulch) { setPrezzoMulchLocale(n); }
+    }
+  };
+  // Carica prezzi memorizzati all'avvio
+  useEffect(() => {
+    const mem = getMulchPriceMemory();
+    if (Object.keys(mem).length > 0) {
+      setPrezzi(p => ({ ...p, ...Object.fromEntries(Object.entries(mem).filter(([k]) => k in p)) }));
+    }
+  }, []);
   // Reset locale quando cambia tipo mulch
   useEffect(() => { setPrezzoMulchLocale(null); }, [mulch]);
 
@@ -2242,68 +2262,72 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 
       {/* Tipo mulch */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo mulch (2 sacchi/botte)</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Tipo mulch (2 sacchi/botte)</p>
+        <p className="text-xs text-gray-400 mb-3">Fibra de Madeira + Verdeflex possono essere abbinati (2+2 sacchi/botte)</p>
         <div className="space-y-2">
-          {Object.entries(MULCH_TIPI).map(([k, m]) => (
-            <div key={k} className={`rounded-xl border-2 transition-colors ${mulch===k?'border-green-500 bg-green-50':'border-gray-200'}`}>
-              <div className="flex justify-between items-center px-3 py-2.5">
-              <button className="flex-1 text-left" onClick={() => { setMulch(k); if (mulch2 === k) setMulch2(null); }}>
-                <span className="font-bold text-sm text-gray-800">{m.label} </span>
-                <span className="text-gray-400 text-xs">({m.kg} kg/sacco)</span>
-              </button>
-              {mulch === k ? (
-                <div className="flex items-center gap-1">
+          {Object.entries(MULCH_TIPI).map(([k, m]) => {
+            const isSelected = mulch === k || mulch2 === k;
+            const isMixCompatible = k === 'fibra_madeira' || k === 'verdeflex';
+            const lastPrice = getLastMulchPrice(k);
+            return (
+              <div key={k} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 transition-colors ${isSelected ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                {/* Spunta selezione */}
+                <button
+                  onClick={() => {
+                    if (k === mulch) {
+                      // Deseleziona primario — se mulch2 esiste diventa primario
+                      if (mulch2) { setMulch(mulch2); setMulch2(null); }
+                      // non permettere di deselezionare se è l'unico
+                    } else if (k === mulch2) {
+                      // Deseleziona secondo
+                      setMulch2(null);
+                    } else {
+                      // Seleziona
+                      if (!mulch) {
+                        setMulch(k);
+                      } else if (isMixCompatible && (mulch === 'fibra_madeira' || mulch === 'verdeflex') && !mulch2) {
+                        // Abbina in miscela
+                        setMulch2(k);
+                      } else {
+                        // Sostituisce il primario
+                        setMulch(k); setMulch2(null);
+                      }
+                    }
+                  }}
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 text-transparent hover:border-green-400'}`}>
+                  ✓
+                </button>
+                {/* Nome e kg */}
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-sm text-gray-800">{m.label}</span>
+                  <span className="text-xs text-gray-400 ml-1.5">({m.kg} kg/sacco)</span>
+                  {mulch === k && mulch2 && <span className="text-xs text-green-600 ml-1.5 font-semibold">primario</span>}
+                  {mulch2 === k && <span className="text-xs text-emerald-600 ml-1.5 font-semibold">+ miscela</span>}
+                </div>
+                {/* Prezzo */}
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <span className="text-xs text-gray-400">€</span>
-                  <div>
-                    <input type="number" step="0.10" value={prezzoMulch}
-                      onChange={e => aggiornaMulch(e.target.value)}
-                      onClick={e => e.stopPropagation()}
-                      className="w-16 text-sm font-bold text-right border border-green-300 rounded px-1 py-0.5 bg-white focus:outline-none focus:border-green-600" />
-
-                  </div>
+                  <input
+                    type="number" step="0.10"
+                    value={k === mulch ? prezzoMulch : (prezzi[k] || 0)}
+                    onChange={e => aggiornaPrezzoMulch(k, e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    className="w-16 text-sm font-bold text-right border border-gray-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:border-green-500"
+                  />
                 </div>
-              ) : (
-                <span className="text-sm font-bold text-gray-400">€ {(prezzi[k]||0).toFixed(2)}</span>
-              )}
               </div>
-              {/* Abbina secondo mulch — solo per Fibra de Madeira e Verdeflex */}
-              {mulch === k && (k === 'fibra_madeira' || k === 'verdeflex') && (
-                <div className="px-3 pb-2 pt-1 border-t border-green-100">
-                  <p className="text-xs text-green-700 font-semibold mb-1.5">🔗 Abbina in miscela (2+2 sacchi/botte)</p>
-                  {Object.entries(MULCH_TIPI)
-                    .filter(([mk]) => mk !== k && (mk === 'fibra_madeira' || mk === 'verdeflex'))
-                    .map(([mk, mm]) => (
-                      <label key={mk} className="flex items-center gap-2 cursor-pointer flex-wrap">
-                        <input type="checkbox"
-                          checked={mulch2 === mk}
-                          onChange={e => setMulch2(e.target.checked ? mk : null)}
-                          className="accent-green-600 w-4 h-4 flex-shrink-0" />
-                        <span className="text-xs font-semibold text-gray-700">{mm.label}</span>
-                        <span className="text-xs text-gray-400">({mm.kg} kg/sacco)</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-400">€</span>
-                          <input type="number" step="0.10"
-                            value={prezzi[mk] || 0}
-                            onChange={e => aggiornaPrezzo(mk, e.target.value)}
-                                                        onClick={e => e.stopPropagation()}
-                            className="w-14 text-xs text-right border border-gray-300 rounded px-1 py-0.5" />
-                          <span className="text-xs text-gray-400">/sac</span>
-                        </div>
-                      </label>
-                  ))}
-                  {mulch2 && (
-                    <p className="text-xs text-gray-400 mt-1.5">
-                      → {Math.floor(bottiEffettive * 2)} sac. {MULCH_TIPI[mulch]?.label} + {Math.floor(bottiEffettive * 2)} sac. {MULCH_TIPI[mulch2]?.label}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
+        {/* Riepilogo miscela */}
+        {mulch && mulch2 && (
+          <p className="text-xs text-green-700 font-semibold mt-3 bg-green-50 rounded-lg px-3 py-2">
+            🔗 Miscela: {Math.floor(bottiEffettive * 2)} sac. {MULCH_TIPI[mulch]?.label} + {Math.floor(bottiEffettive * 2)} sac. {MULCH_TIPI[mulch2]?.label}
+          </p>
+        )}
       </div>
 
-      {/* Miscuglio */}
+            {/* Miscuglio */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Miscuglio sementi (2 sacchi 10 kg/botte)</p>
         <input type="text" value={miscuglio} onChange={e => setMiscuglio(e.target.value)}

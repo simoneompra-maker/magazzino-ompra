@@ -2135,7 +2135,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 
   // PDF
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
-  const stampaPDF = () => {
+  const stampaPDF = (autoStampa = false) => {
     const w = window.open('', '_blank');
     const oggi = new Date().toLocaleDateString('it-IT');
     const terrenoLabel = { piano: 'Piano', pendenza: 'Pendenza media', pendenza_alta: 'Pendenza alta' }[terreno];
@@ -2539,9 +2539,14 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <input type="checkbox" checked={includiIntestazione} onChange={e => setIncludiIntestazione(e.target.checked)} className="accent-green-600" />
             <span className="text-xs font-semibold text-gray-600">Includi intestazione OMPRA nel PDF</span>
           </label>
-          <button onClick={stampaPDF} className="w-full py-3 rounded-2xl bg-green-700 text-white font-bold text-sm">
-            📄 PDF preventivo idrosemina
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => stampaPDF(false)} className="py-3 rounded-2xl bg-white border-2 border-green-700 text-green-700 font-bold text-sm hover:bg-green-50 transition-colors">
+              👁️ Anteprima
+            </button>
+            <button onClick={() => stampaPDF(true)} className="py-3 rounded-2xl bg-green-700 text-white font-bold text-sm hover:bg-green-800 transition-colors">
+              🖨️ Stampa
+            </button>
+          </div>
         </div>
       )}
     </div>

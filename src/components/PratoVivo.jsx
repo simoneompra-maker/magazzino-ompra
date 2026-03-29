@@ -1568,7 +1568,7 @@ export default function PratoVivo({ onNavigate }) {
               <Btn emoji="💦" label="Idrosemina" desc="Semina idraulica a proiezione" onClick={() => setTipoIntervento('idrosemina')} selected={tipoIntervento==='idrosemina'} color="blue" />
               <Btn emoji="📅" label="Piano Annuo di Mantenimento" desc="Calendario completo 12 mesi" onClick={() => setTipoIntervento('piano_annuo')} selected={tipoIntervento==='piano_annuo'} />
               <Btn emoji="⚡" label="Intervento Singolo" desc="Cosa applico oggi?" onClick={() => setTipoIntervento('singolo')} selected={tipoIntervento==='singolo'} color="amber" />
-              <Btn emoji="🌿" label="Concimazione post-semina" desc="Ho già seminato, cosa applico adesso?" onClick={() => setTipoIntervento('post_semina')} selected={tipoIntervento==='post_semina'} color="amber" />
+              <Btn emoji="🌿" label="Concimazione post-semina" desc="Ho già seminato, cosa applico adesso?" onClick={() => { setTipoIntervento('post_semina'); setHaUsatoStarter(null); setLivello('standard'); }} selected={tipoIntervento==='post_semina'} color="amber" />
             </div>
           </Card>
         )}
@@ -3419,8 +3419,8 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
 // ─── Sotto-componente: Intervento Singolo ─────────────────────
 // ─── Concimazione Post-Semina ──────────────────────────────────
 function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoCliente }) {
-  const [settimane, setSettimane] = React.useState(null);
-  const [haStarter, setHaStarter] = React.useState(null);
+  const [settimane, setSettimane] = useState(null);
+  const [haStarter, setHaStarter] = useState(null);
 
   const oggi = new Date();
   const mese = oggi.getMonth() + 1;

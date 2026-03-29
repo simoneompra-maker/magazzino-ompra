@@ -294,6 +294,14 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <div className="text-xs font-bold">PRATOVIVO</div>
           </button>
           <button
+            onClick={() => onNavigate('sopralluogo')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
+          >
+            <Leaf className="w-6 h-6" />
+            <div className="text-xs font-bold">SOPRALLUOGO</div>
+          </button>
+          <button
             onClick={() => onNavigate('noleggio')}
             className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
             style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}

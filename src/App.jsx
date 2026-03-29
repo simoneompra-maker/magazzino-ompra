@@ -11,6 +11,7 @@ import PoliticheCommerciali from './components/PoliticheCommerciali';
 import BudgetAdmin from './components/BudgetAdmin';
 import SelezionaOperatore from './components/SelezionaOperatore';
 import PratoVivo from './components/PratoVivo';
+import Sopralluogo from './components/Sopralluogo';
 import Noleggio from './components/Noleggio';
 import RubricaClienti from './components/RubricaClienti';
 import StihlCatalog from './components/StihlCatalog';
@@ -104,6 +105,8 @@ function App() {
         return <BudgetAdmin onNavigate={navigate} />;
       case 'pratovivo':
         return <PratoVivo onNavigate={navigate} />;
+      case 'sopralluogo':
+        return <Sopralluogo onNavigate={navigate} />;
       case 'noleggio':
         return <Noleggio onNavigate={navigate} />;
       case 'rubrica-clienti':

@@ -1211,7 +1211,7 @@ export default function PratoVivo({ onNavigate }) {
   const [idroMulch, setIdroMulch] = useState('premium_paper');
   const [idroVoci, setIdroVoci] = useState({ mulch: true, sementi: true, algapark: true, rootspeed: true, collante: false, noleggio: true });
   const [idroPrezzi, setIdroPrezzi] = useState({
-    premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50,
+    premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, fibra_madeira: 20.70, verdeflex: 6.25,
     sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00,
     collante: 12.00, noleggio: 350.00
   });
@@ -1232,7 +1232,7 @@ export default function PratoVivo({ onNavigate }) {
     setMiscuglio(null); setTipoCliente('privato'); setPrimoConcimeIncluso(false); setShowPreventivo(false);
     setIdroTerreno('piano'); setIdroMiscuglio('Ecograss'); setIdroMulch('premium_paper');
     setIdroVoci({ mulch: true, sementi: true, algapark: true, rootspeed: true, collante: false, noleggio: true });
-    setIdroPrezzi({ premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00, collante: 12.00, noleggio: 350.00 });
+    setIdroPrezzi({ premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, fibra_madeira: 20.70, verdeflex: 6.25, sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00, collante: 12.00, noleggio: 350.00 });
     // Reset override modalità esperto
     setOverrideGranulari(null); setOverrideLiquidi(null); setOverrideSeme(null); setOverridePianoAnnuo(null);
   };
@@ -1975,9 +1975,11 @@ function TabArchivio({ data, loading, onElimina, onRidownload, onRipristina, onR
 function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch, miscuglio, setMiscuglio, voci, setVoci, prezzi, setPrezzi, tipoPrato }) {
 
   const MULCH_TIPI = {
-    premium_paper: { label: 'Premium Paper',      kg: 15   },
-    hidro_mulch:   { label: 'Hidro Mulch UE Verde', kg: 18 },
-    wood_lok:      { label: 'Wood-Lok Blend',      kg: 22.7 },
+    premium_paper:    { label: 'Premium Paper',       kg: 15   },
+    hidro_mulch:      { label: 'Hidro Mulch UE Verde', kg: 18  },
+    wood_lok:         { label: 'Wood-Lok Blend',       kg: 22.7 },
+    fibra_madeira:    { label: 'Fibra de Madeira',     kg: 18   },
+    verdeflex:        { label: 'Verdeflex',            kg: 5    },
   };
 
   // Tariffe noleggio per fascia giornaliera (€/giornata)
@@ -2014,11 +2016,32 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   // Stato locale per il prezzo mulch (fix editabilità)
   const [prezzoMulchLocale, setPrezzoMulchLocale] = useState(null);
   const prezzoMulch = prezzoMulchLocale !== null ? prezzoMulchLocale : (prezzi[mulch] || 0);
+
+  // ── Memoria prezzi in localStorage ──
+  const STORICO_KEY = 'ompra_idro_storico_prezzi';
+  const getStorico = () => { try { return JSON.parse(localStorage.getItem(STORICO_KEY) || '{}'); } catch { return {}; } };
+  const salvaStorico = (chiave, valore) => {
+    const st = getStorico();
+    const lista = st[chiave] || [];
+    const nuova = [valore, ...lista.filter(v => v !== valore)].slice(0, 2);
+    st[chiave] = nuova;
+    localStorage.setItem(STORICO_KEY, JSON.stringify(st));
+  };
+  const getPrezziStorico = (chiave) => getStorico()[chiave] || [];
+
   const aggiornaMulch = (val) => {
     const n = parseFloat(val);
     if (!isNaN(n)) {
       setPrezzoMulchLocale(n);
       setPrezzi(p => ({ ...p, [mulch]: n }));
+      salvaStorico('mulch_' + mulch, n);
+    }
+  };
+  const aggiornaPrezzo = (chiave, val) => {
+    const n = parseFloat(val);
+    if (!isNaN(n)) {
+      setPrezzi(p => ({ ...p, [chiave]: n }));
+      salvaStorico(chiave, n);
     }
   };
   // Reset locale quando cambia tipo mulch
@@ -2072,6 +2095,29 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
   const imp22 = sub.mulch + sub.collante + sub.noleggio;
 
   const toggleVoce = (k) => setVoci(v => ({ ...v, [k]: !v[k] }));
+
+  // Helper: input prezzo + chip storico
+  const InputPrezzoStorico = ({ chiave, valore, onChange, step = 0.1 }) => {
+    const storico = getPrezziStorico(chiave);
+    return (
+      <div className="col-span-2 space-y-0.5">
+        <input type="number" step={step} value={valore}
+          onChange={e => onChange(e.target.value)}
+          onBlur={() => salvaStorico(chiave, parseFloat(valore) || 0)}
+          className="text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full focus:border-green-400 focus:outline-none" />
+        {storico.length > 0 && (
+          <div className="flex gap-0.5 justify-end flex-wrap">
+            {storico.map((v, i) => (
+              <button key={i} onClick={() => onChange(String(v))}
+                className="text-xs bg-green-50 text-green-700 border border-green-200 rounded px-1 leading-4 hover:bg-green-100">
+                {v.toFixed(2)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
   const rowStyle = (attiva) => `flex items-center gap-2 py-2 border-b border-gray-100 ${attiva ? '' : 'opacity-40'}`;
 
   // Fascia noleggio attiva
@@ -2223,10 +2269,17 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
               {mulch === k ? (
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-gray-400">€</span>
-                  <input type="number" step="0.10" value={prezzoMulch}
-                    onChange={e => aggiornaMulch(e.target.value)}
-                    onClick={e => e.stopPropagation()}
-                    className="w-16 text-sm font-bold text-right border border-green-300 rounded px-1 py-0.5 bg-white focus:outline-none focus:border-green-600" />
+                  <div>
+                    <input type="number" step="0.10" value={prezzoMulch}
+                      onChange={e => aggiornaMulch(e.target.value)}
+                      onBlur={() => salvaStorico('mulch_'+mulch, prezzoMulch)}
+                      onClick={e => e.stopPropagation()}
+                      className="w-16 text-sm font-bold text-right border border-green-300 rounded px-1 py-0.5 bg-white focus:outline-none focus:border-green-600" />
+                    {getPrezziStorico('mulch_'+mulch).map((v,i) => (
+                      <button key={i} onClick={e => { e.stopPropagation(); aggiornaMulch(String(v)); }}
+                        className="ml-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-1 hover:bg-green-100">{v.toFixed(2)}</button>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <span className="text-sm font-bold text-gray-400">€ {(prezzi[k]||0).toFixed(2)}</span>
@@ -2306,9 +2359,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Mulch {MULCH_TIPI[mulch]?.label}<br/><span className="text-gray-400 font-normal">22% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiMulch} sac.</span>
-              <input type="number" step="0.10" value={prezzoMulch}
-                onChange={e => aggiornaMulch(e.target.value)}
-                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <InputPrezzoStorico chiave={'mulch_'+mulch} valore={prezzoMulch} onChange={aggiornaMulch} />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.mulch.toFixed(0)}</span>
             </div>
           </div>
@@ -2319,9 +2370,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">{miscuglio} (10 kg)<br/><span className="text-gray-400 font-normal">10% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{sacchiSementi} sac.</span>
-              <input type="number" step="0.10" value={prezzi.sementi}
-                onChange={e => setPrezzo('sementi', e.target.value)}
-                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <InputPrezzoStorico chiave="sementi" valore={prezzi.sementi} onChange={v => aggiornaPrezzo('sementi', v)} />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.sementi.toFixed(0)}</span>
             </div>
           </div>
@@ -2332,9 +2381,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Algapark 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{tankAlga} tan.</span>
-              <input type="number" step="0.10" value={prezzi.algapark5}
-                onChange={e => setPrezzo('algapark5', e.target.value)}
-                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <InputPrezzoStorico chiave="algapark5" valore={prezzi.algapark5} onChange={v => aggiornaPrezzo('algapark5', v)} />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.algapark.toFixed(0)}</span>
             </div>
           </div>
@@ -2345,9 +2392,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Root Speed 5 kg<br/><span className="text-gray-400 font-normal">4% IVA</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{tankRoot} tan.</span>
-              <input type="number" step="0.10" value={prezzi.rootspeed5}
-                onChange={e => setPrezzo('rootspeed5', e.target.value)}
-                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <InputPrezzoStorico chiave="rootspeed5" valore={prezzi.rootspeed5} onChange={v => aggiornaPrezzo('rootspeed5', v)} />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.rootspeed.toFixed(0)}</span>
             </div>
           </div>
@@ -2358,9 +2403,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
             <div className="flex-1 grid grid-cols-12 items-center gap-1">
               <span className="col-span-5 text-xs font-semibold text-gray-700">Collante 300g/botte<br/><span className="text-gray-400 font-normal">22% IVA{terreno==='pendenza_alta'?' · auto':' · facoltativo'}</span></span>
               <span className="col-span-2 text-xs text-center text-gray-500">{busteCollante} bus.</span>
-              <input type="number" step="0.10" value={prezzi.collante}
-                onChange={e => setPrezzo('collante', e.target.value)}
-                className="col-span-2 text-xs text-right border border-gray-200 rounded px-1 py-0.5 w-full" />
+              <InputPrezzoStorico chiave="collante" valore={prezzi.collante} onChange={v => aggiornaPrezzo('collante', v)} />
               <span className="col-span-2 text-xs text-right font-bold text-gray-700">€ {sub.collante.toFixed(0)}</span>
             </div>
           </div>

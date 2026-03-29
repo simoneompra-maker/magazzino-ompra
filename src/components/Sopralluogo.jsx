@@ -5,6 +5,7 @@ import {
   salvaSopralluogo, aggiornaSopralluogo, getSopralluoghi, eliminaSopralluogo,
   getPianiSopralluogo, getInterventiPiano, scegliPiani,
 } from '../services/sopralluoghiService';
+import { LISTINO, PRODOTTO_CONFIG, FASCE_CLIENTE, getPrezzoCliente, risolviProdotto, suggerisciNoleggio } from '../data/listino';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -603,44 +604,119 @@ function TabPiano({ pianiScelti, interventiNutrizione, interventiPrevTerreno, fo
   );
 }
 
-// ── Tab Quantità ─────────────────────────────────────────────
+// ── Tab Preventivo ───────────────────────────────────────────
 function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
+  const [tipoCliente, setTipoCliente] = useState('privato');
   const superficie = parseFloat(form.superficie) || 0;
+
   if (!superficie) {
     return <p className="text-xs text-gray-400 text-center py-8">Inserisci la superficie nel passo 1 per calcolare le quantità.</p>;
   }
 
+  // Raggruppa prodotti da tutti gli interventi
   const prodMap = {};
   [...interventiNutrizione, ...interventiPrevTerreno].forEach(i => {
-    if (!i.dose_effettiva) return;
+    if (!i.dose_effettiva || !i.label) return;
     if (!prodMap[i.label]) prodMap[i.label] = { label: i.label, tipo: i.tipo, dose_totale: 0 };
     prodMap[i.label].dose_totale += i.dose_effettiva;
   });
 
-  const prodotti = Object.values(prodMap);
-  if (!prodotti.length) return <p className="text-xs text-gray-400 text-center py-8">Nessun prodotto con dose definita.</p>;
+  // Calcola righe preventivo con prezzi
+  const righe = Object.values(prodMap)
+    .filter(p => p.dose_totale > 0)
+    .map(p => {
+      const kgTot = (p.dose_totale * superficie) / 1000;
+      const prezzoInfo = risolviProdotto(p.label, kgTot, tipoCliente);
+      return { ...p, kgTot: +kgTot.toFixed(1), prezzoInfo };
+    });
+
+  const totale = righe.reduce((s, r) => s + (r.prezzoInfo?.prezzoTot || 0), 0);
+  const totalePerMq = superficie > 0 ? totale / superficie : 0;
+
+  // Suggerimenti noleggio
+  const noleggi = suggerisciNoleggio(form.compattamento, form.drenaggio, form.stato_vegetativo);
+
+  if (!righe.length) return <p className="text-xs text-gray-400 text-center py-8">Nessun prodotto con dose definita.</p>;
 
   return (
-    <div>
-      <p className="text-xs text-gray-400 mb-3">Calcolate per <span className="font-semibold">{superficie} m²</span> · dosi cumulative annue</p>
-      <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-3 bg-green-700 text-white text-xs font-bold px-3 py-2">
-          <span>Prodotto</span>
-          <span className="text-center">kg/anno</span>
-          <span className="text-right">Tipo</span>
+    <div className="space-y-4">
+      {/* Selettore tipo cliente */}
+      <div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tipo cliente</p>
+        <div className="flex gap-1.5 flex-wrap">
+          {Object.entries(FASCE_CLIENTE).map(([k, v]) => (
+            <button key={k} onClick={() => setTipoCliente(k)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                tipoCliente === k ? 'bg-green-700 text-white border-green-700' : 'bg-white text-gray-600 border-gray-300'
+              }`}>
+              {v.label}
+            </button>
+          ))}
         </div>
-        {prodotti.map((p, idx) => {
-          const kg = (p.dose_totale * superficie) / 1000;
-          return (
-            <div key={p.label} className={`grid grid-cols-3 px-3 py-2.5 text-xs border-b border-gray-100 last:border-0 ${idx % 2 ? 'bg-gray-50' : 'bg-white'}`}>
-              <span className="font-semibold text-gray-800 truncate pr-1">{p.label}</span>
-              <span className="text-center font-bold text-green-700">{kg.toFixed(1)} kg</span>
-              <span className="text-right text-gray-500 capitalize">{p.tipo}</span>
-            </div>
-          );
-        })}
       </div>
-      <p className="text-xs text-gray-400 mt-2">* Dosi indicate per 100 m² — arrotonda per eccesso negli ordini.</p>
+
+      {/* Tabella prodotti */}
+      <div>
+        <p className="text-xs text-gray-400 mb-2">
+          Superficie: <span className="font-semibold">{superficie} m²</span> · dosi cumulative annue
+        </p>
+        <div className="border border-gray-200 rounded-xl overflow-hidden">
+          {/* Header */}
+          <div className="grid bg-green-700 text-white text-xs font-bold px-3 py-2" style={{gridTemplateColumns:'1fr 60px 80px 50px 70px'}}>
+            <span>Prodotto</span>
+            <span className="text-center">kg/anno</span>
+            <span className="text-center">Formato</span>
+            <span className="text-center">N°</span>
+            <span className="text-right">Totale</span>
+          </div>
+          {/* Righe */}
+          {righe.map((r, idx) => (
+            <div key={r.label} className={`px-3 py-2.5 border-b border-gray-100 last:border-0 ${idx % 2 ? 'bg-gray-50' : 'bg-white'}`}>
+              <div className="grid items-center gap-1" style={{gridTemplateColumns:'1fr 60px 80px 50px 70px'}}>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 truncate">{r.label}</p>
+                  {r.prezzoInfo && (
+                    <p className="text-xs text-gray-400">{r.prezzoInfo.sku} · €{r.prezzoInfo.prezzoUnit.toFixed(2)}/conf</p>
+                  )}
+                </div>
+                <span className="text-center text-xs font-bold text-green-700">{r.kgTot} kg</span>
+                <span className="text-center text-xs text-gray-500">{r.prezzoInfo?.formato || '—'}</span>
+                <span className="text-center text-xs font-semibold">{r.prezzoInfo?.nConfezioni ?? '—'}</span>
+                <span className="text-right text-xs font-bold text-gray-800">
+                  {r.prezzoInfo ? `€ ${r.prezzoInfo.prezzoTot.toFixed(2)}` : '—'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Totale */}
+      <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+        <div className="flex justify-between items-center">
+          <p className="text-sm font-bold text-green-800">Totale prodotti</p>
+          <p className="text-lg font-black text-green-700">€ {totale.toFixed(2)}</p>
+        </div>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-xs text-green-600">Costo per m²</p>
+          <p className="text-xs font-bold text-green-600">€ {totalePerMq.toFixed(3)}/m²</p>
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">Prezzi netti IVA esclusa · arrotonda per eccesso negli ordini</p>
+      </div>
+
+      {/* Suggerimenti noleggio */}
+      {noleggi.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <p className="text-xs font-bold text-amber-800 mb-2">🚜 NOLEGGIO CONSIGLIATO</p>
+          {noleggi.map((n, i) => (
+            <div key={i} className="mb-1.5">
+              <p className="text-xs font-semibold text-amber-700">{n.macchina}</p>
+              <p className="text-xs text-amber-600">{n.motivo}</p>
+            </div>
+          ))}
+          <p className="text-xs text-gray-400 mt-2">Consulta il modulo Noleggio per tariffe e disponibilità.</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -2887,83 +2887,123 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
         </div>
       )}
 
-      {/* Domanda starter — solo in primavera */}
-      {showDomandaStarter && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-200">
-          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-3">
-            🌱 Vigor Active (o altro concime Starter) già applicato dopo la semina?
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setHaUsatoStarter(true)}
-              className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-bold transition-colors ${haUsatoStarter === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-green-300'}`}
-            >
-              ✅ Sì
-            </button>
-            <button
-              onClick={() => setHaUsatoStarter(false)}
-              className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-bold transition-colors ${haUsatoStarter === false ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-red-300'}`}
-            >
-              ❌ No
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── SEZIONE PRIMO CONCIME INTELLIGENTE ── */}
+      {(() => {
+        // Calcola settimane dalla dataInizio a oggi
+        const oggi = new Date();
+        const mese = oggi.getMonth() + 1;
+        const giorno = oggi.getDate();
+        const dataSem = dataInizio ? new Date(dataInizio + 'T12:00:00') : null;
+        const settimane = dataSem ? (oggi - dataSem) / (1000 * 60 * 60 * 24 * 7) : null;
+        const inPrimavera = mese >= 3 && mese <= 5;
+        const entroMetaAprile = mese < 4 || (mese === 4 && giorno <= 15);
+        const dopoFineAprile = (mese === 4 && giorno >= 20) || mese >= 5;
 
-      {/* Nota primo concime post-attecchimento */}
-      {primoConcime && haUsatoStarter !== false && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-200">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">🌱 Primo concime — dopo 6–8 settimane</p>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={primoConcimeIncluso} onChange={e => setPrimoConcimeIncluso(e.target.checked)} className="w-4 h-4 accent-green-600" />
-              <span className="text-xs text-gray-600 font-semibold">Includi nel preventivo</span>
-            </label>
-          </div>
-          {primoConcime.alert === 'rimandare' ? (
-            <p className="text-xs text-amber-600 font-semibold">⚠️ {primoConcime.msg}</p>
-          ) : (
-            <div className="space-y-2">
-              <div className="rounded-xl p-3 bg-green-50 border-l-4 border-green-400">
-                <div className="flex justify-between">
-                  <p className="font-bold text-green-800 text-sm">{primoConcime.principale.nome} <span className="text-xs font-normal text-green-600 ml-1">✓ Consigliato</span></p>
-                  <p className="font-bold text-green-700 text-sm">{primoConcime.principale.dose}</p>
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">{primoConcime.principale.note}</p>
+        // Mostra sezione solo in primavera o se dataInizio è impostata
+        if (!inPrimavera && !dataSem) return null;
+
+        // Consiglio intelligente in base a settimane + starter
+        const getConsiglio = () => {
+          if (haUsatoStarter === null) return null;
+
+          if (haUsatoStarter === true) {
+            // Starter già dato
+            if (settimane !== null && settimane < 5) {
+              const mancanti = Math.ceil(5 - settimane);
+              const prossimo = !dopoFineAprile
+                ? 'Fine aprile: Green 7 — 15–20 g/m²'
+                : 'Fine maggio / giugno: Green 8 Prestige — 35 g/m²';
+              return { tipo: 'attendi', msg: 'Vigor Active ancora attivo — aspetta ancora circa ' + mancanti + ' settimane.', prossimo };
+            }
+            if (!dopoFineAprile) {
+              return { tipo: 'ok', borderColor: 'border-green-400', bg: 'bg-green-50', labelColor: 'text-green-800',
+                prodotto: 'Green 7', npk: '15-5-6', dose: '15–20 g/m²',
+                quando: 'Fine aprile — dose leggera, irrigare subito dopo',
+                note: 'Rinforzo primaverile minimo. A fine maggio / giugno seguirà Green 8.' };
+            }
+            return { tipo: 'ok', borderColor: 'border-green-400', bg: 'bg-green-50', labelColor: 'text-green-800',
+              prodotto: 'Green 8 Prestige', npk: '10-6-14', dose: '35 g/m²',
+              quando: 'Fine maggio / inizio giugno — irrigare subito dopo',
+              note: 'Antistress pre-estivo. Green 7 non più necessario.' };
+          }
+
+          // Starter NON dato
+          if (settimane !== null && entroMetaAprile && settimane <= 3) {
+            return { tipo: 'ok', borderColor: 'border-amber-400', bg: 'bg-amber-50', labelColor: 'text-amber-800',
+              prodotto: 'Vigor Active', npk: '7-9-16,5', dose: '50 g/m²',
+              quando: 'Applicare ora in superficie — non incorporare. Irrigare subito dopo.',
+              note: 'Ancora in finestra starter. Poi Green 8 a fine maggio / giugno.' };
+          }
+          return { tipo: 'ok', borderColor: 'border-orange-400', bg: 'bg-orange-50', labelColor: 'text-orange-800',
+            prodotto: 'Green 7', npk: '15-5-6', dose: '30 g/m²',
+            quando: 'Applicare ora, irrigare subito dopo',
+            note: 'Dose minima di recupero. Poi Green 8 a fine maggio / inizio giugno.' };
+        };
+
+        const consiglio = getConsiglio();
+        const settLabel = settimane !== null ? Math.floor(settimane) + ' sett. fa' : null;
+
+        return (
+          <>
+            {/* Domanda starter */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-200">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+                  🌱 Vigor Active (o altro Starter) già applicato?
+                </p>
+                {settLabel && <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Semina: {settLabel}</span>}
               </div>
-              {primoConcime.alternativa && (
-                <div className="rounded-xl p-3 bg-gray-50 border-l-4 border-gray-300">
-                  <div className="flex justify-between">
-                    <p className="font-semibold text-gray-600 text-sm">{primoConcime.alternativa.nome} <span className="text-xs font-normal text-gray-400 ml-1">alternativa</span></p>
-                    <p className="font-semibold text-gray-500 text-sm">{primoConcime.alternativa.dose}</p>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{primoConcime.alternativa.note}</p>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <button onClick={() => setHaUsatoStarter(true)}
+                  className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-bold transition-colors ${haUsatoStarter === true ? 'border-green-500 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-green-300'}`}>
+                  ✅ Sì
+                </button>
+                <button onClick={() => setHaUsatoStarter(false)}
+                  className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-bold transition-colors ${haUsatoStarter === false ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-red-300'}`}>
+                  ❌ No
+                </button>
+              </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Concime recupero — quando starter NON è stato applicato */}
-      {haUsatoStarter === false && concimeRecupero && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-orange-300">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-orange-600 uppercase tracking-wide">🔄 Strategia di recupero</p>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={primoConcimeIncluso} onChange={e => setPrimoConcimeIncluso(e.target.checked)} className="w-4 h-4 accent-orange-500" />
-              <span className="text-xs text-gray-600 font-semibold">Includi nel preventivo</span>
-            </label>
-          </div>
-          <div className="rounded-xl p-3 bg-orange-50 border-l-4 border-orange-400">
-            <div className="flex justify-between">
-              <p className="font-bold text-orange-800 text-sm">{concimeRecupero.principale.nome} <span className="text-xs font-normal text-orange-600 ml-1">✓ Consigliato ora</span></p>
-              <p className="font-bold text-orange-700 text-sm">{concimeRecupero.principale.dose}</p>
-            </div>
-            <p className="text-xs text-gray-500 mt-0.5">{concimeRecupero.principale.note}</p>
-          </div>
-        </div>
-      )}
+            {/* Risultato */}
+            {consiglio && (
+              consiglio.tipo === 'attendi' ? (
+                <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 space-y-2">
+                  <p className="text-sm font-bold text-amber-800">⏳ Aspetta ancora</p>
+                  <p className="text-sm text-amber-700">{consiglio.msg}</p>
+                  {consiglio.prossimo && (
+                    <div className="pt-2 border-t border-amber-200">
+                      <p className="text-xs text-amber-600 font-semibold uppercase mb-1">Prossimo intervento</p>
+                      <p className="text-sm font-bold text-green-800">→ {consiglio.prossimo}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className={`rounded-2xl p-4 border-2 ${consiglio.borderColor} ${consiglio.bg}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">✅ Primo concime consigliato</p>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={primoConcimeIncluso} onChange={e => setPrimoConcimeIncluso(e.target.checked)} className="w-4 h-4 accent-green-600" />
+                      <span className="text-xs text-gray-600 font-semibold">Includi nel preventivo</span>
+                    </label>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className={`font-bold text-base ${consiglio.labelColor}`}>{consiglio.prodotto}</p>
+                      <p className="text-xs font-mono text-gray-500 mt-0.5">NPK {consiglio.npk}</p>
+                    </div>
+                    <p className={`font-bold text-lg ${consiglio.labelColor}`}>{consiglio.dose}</p>
+                  </div>
+                  <div className="mt-2 bg-white rounded-xl px-3 py-2 border border-gray-200">
+                    <p className="text-xs font-semibold text-gray-700">{consiglio.quando}</p>
+                    <p className="text-xs text-gray-400 italic mt-0.5">{consiglio.note}</p>
+                  </div>
+                </div>
+              )
+            )}
+          </>
+        );
+      })()}
 
       {/* Tipo cliente */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">

@@ -28,7 +28,10 @@ async function geminiText(prompt) {
       generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
     }),
   });
-  if (!res.ok) throw new Error(`Gemini error ${res.status}`);
+  if (!res.ok) {
+    if (res.status === 429) throw new Error('Gemini errore 429: limite richieste raggiunto. Attendi 30 secondi e riprova.');
+    throw new Error(`Gemini error ${res.status}`);
+  }
   const d = await res.json();
   return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
@@ -877,11 +880,19 @@ export default function Sopralluogo({ onNavigate }) {
         </div>
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
           <div className="flex gap-2 max-w-lg mx-auto">
-            {step > 1 && <Btn color="gray" onClick={() => setStep(s => s - 1)} fullWidth>← Indietro</Btn>}
+            {step > 1 && (
+              <Btn color="gray" onClick={() => setStep(s => s - 1)}>← Indietro</Btn>
+            )}
             <Btn onClick={step < 4 ? () => setStep(s => s + 1) : handleSalvaEProcedi}
               disabled={!canProceed() || salvando} fullWidth>
               {step < 4 ? 'Avanti →' : salvando ? 'Salvataggio...' : '💾 Salva e apri'}
             </Btn>
+            {step === 4 && (
+              <Btn color="gray" outline onClick={() => { reset(); setVista('home'); }}
+                title="Ricomincia da capo">
+                ✕
+              </Btn>
+            )}
           </div>
         </div>
       </div>

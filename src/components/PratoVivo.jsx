@@ -3429,12 +3429,53 @@ function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoClien
   const entroMetaAprile = mese < 4 || (mese === 4 && giorno <= 15);
 
   const getConsiglio = () => {
-    if (haStarter === true) {
-      if (mese <= 2 || mese === 12) return { tipo: 'attendi', msg: 'Periodo di riposo — nessun granulare ora. A marzo applicare Green 7 al risveglio.' };
-      if (mese >= 3 && mese <= 5) return { tipo: 'ok', prodotto: 'Green 8 Prestige', npk: '10-6-14', dose: 35, quando: 'Applicare ora, irrigare subito dopo', note: 'Antistress pre-estivo. Alto K per consolidare le radici del prato giovane.', micro: 'Fe 2% · MgO 2% · B 0.1%' };
-      return { tipo: 'ok', prodotto: 'Green 8 Prestige', npk: '10-6-14', dose: 40, quando: 'Applicare ora, irrigare dopo', note: 'Nutrimento base.', micro: 'Fe 2% · MgO 2% · B 0.1%' };
-    }
     const sett = settimane === '1' ? 1 : settimane === '2' ? 2 : settimane === '3' ? 3 : 5;
+
+    if (haStarter === true) {
+      // Definisci finestre temporali
+      const invernale = mese <= 2 || mese === 12;
+      const fineAprile = (mese === 4 && giorno >= 20) || mese >= 5; // dopo il 20 aprile
+      const giugnoInPoi = (mese === 6) || (mese === 5 && giorno >= 25); // fine maggio / giugno
+
+      // Periodo invernale — nessun intervento
+      if (invernale) return { tipo: 'attendi', msg: 'Periodo di riposo — nessun granulare necessario. Al risveglio primaverile (marzo) valutare il primo intervento.' };
+
+      // Troppo presto — Vigor Active ancora attivo (< 5 settimane)
+      if (sett < 5) {
+        const settMancanti = 5 - sett;
+        let prossimo;
+        if (!fineAprile) {
+          prossimo = 'Fine aprile: Green 7 — 15–20 g/m² (dose leggera). Poi Green 8 a fine maggio / inizio giugno.';
+        } else {
+          prossimo = 'Fine maggio / inizio giugno: Green 8 Prestige — 35 g/m² (antistress pre-estivo).';
+        }
+        return {
+          tipo: 'attendi',
+          msg: 'Vigor Active ancora attivo — aspetta ancora ' + settMancanti + '–' + (settMancanti + 1) + ' settimane. Il prodotto dura circa 2 mesi.',
+          prossimo
+        };
+      }
+
+      // 5+ settimane passate, siamo ancora entro fine aprile → Green 7 leggero
+      if (!fineAprile) {
+        return {
+          tipo: 'ok',
+          prodotto: 'Green 7', npk: '15-5-6', dose: 18,
+          quando: 'Fine aprile — dose leggera, irrigare subito dopo',
+          note: 'Rinforzo primaverile minimo. Non esagerare con l'azoto su prato giovane. A fine maggio / giugno seguirà Green 8.',
+          micro: 'Fe 0.5% · B 0.05% · Zn 0.01% · SO3 20%'
+        };
+      }
+
+      // Siamo già a fine aprile / maggio / giugno → salta Green 7, vai diretto Green 8
+      return {
+        tipo: 'ok',
+        prodotto: 'Green 8 Prestige', npk: '10-6-14', dose: 35,
+        quando: 'Fine maggio / inizio giugno — irrigare subito dopo',
+        note: 'Antistress pre-estivo. Alto K per consolidare radici e resistenza al caldo. Green 7 non più necessario.',
+        micro: 'Fe 2% · MgO 2% · B 0.1%'
+      };
+    }
     if (entroMetaAprile && sett <= 3) {
       return { tipo: 'ok', prodotto: 'Vigor Active', npk: '7-9-16,5', dose: 50, quando: 'Distribuire in superficie senza incorporare. Irrigare subito dopo.', note: 'Ancora in finestra starter — non incorporare, il prato è già emerso.', micro: 'Zn 0.01% · SO3 8% · C 7.5% · Bacillus subtilis' };
     }
@@ -3515,7 +3556,18 @@ function ConcimazionePostSemina({ mq, linea, setLinea, tipoCliente, setTipoClien
 
       {consiglio && (
         consiglio.tipo === 'attendi'
-          ? <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4"><p className="text-sm font-bold text-amber-800 mb-1">⏳ Attendi</p><p className="text-sm text-amber-700">{consiglio.msg}</p></div>
+          ? (
+            <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 space-y-2">
+              <p className="text-sm font-bold text-amber-800">⏳ Aspetta ancora</p>
+              <p className="text-sm text-amber-700">{consiglio.msg}</p>
+              {consiglio.prossimo && (
+                <div className="mt-2 pt-2 border-t border-amber-200">
+                  <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-1">Prossimo intervento consigliato</p>
+                  <p className="text-sm font-bold text-green-800">→ {consiglio.prossimo}</p>
+                </div>
+              )}
+            </div>
+          )
           : (
             <div className="bg-green-50 border-2 border-green-400 rounded-2xl p-4 space-y-3">
               <div className="flex justify-between items-start">

@@ -271,7 +271,7 @@ const CATALOGO_ESPERTO = {
     prodotti: [
       { nome: 'Green 7',         npk: '15-5-6',   dose: 30, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Ripresa primaverile o settembre',      note: 'Rinverdimento rapido, durata ~2 mesi', micro: 'Fe 0.5% · B 0.05% · Zn 0.01% · SO3 20%' },
       { nome: 'Green 8 Prestige',npk: '10-6-14',  dose: 40, doseMin: 25, doseMax: 50,  unita: 'g/m²', quando: 'Fine maggio o ottobre/novembre',        note: 'Antistress, alto potassio, durata ~3 mesi', micro: 'Fe 2% · B 0.1% · Zn 0.01% · MgO 2% · SO3 18%' },
-      { nome: 'Vigor Active',    npk: '7-9-16,5', dose: 50, doseMin: 30, doseMax: 50,  unita: 'g/m²', quando: 'Pre-semina o pre-posa zolle',           note: 'Starter + Bacillus subtilis, durata ~2 mesi', micro: 'Zn 0.01% · SO3 8% · C 7.5%' },
+      { nome: 'Vigor Active',    npk: '7-9-16,5', dose: 50, doseMin: 30, doseMax: 50,  unita: 'g/m²', quando: 'Pre-semina / pre-trasemina — incorporare leggermente', note: 'Starter + Bacillus subtilis, durata ~2 mesi', micro: 'Zn 0.01% · SO3 8% · C 7.5%' },
     ]
   },
   granulare_mivena: {
@@ -1022,7 +1022,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
     const doseS = tipo === 'rigenerazione' ? (s.dose_grave || s.dose) : s.dose;
     // Miscuglio selezionato
     const mixNome = miscuglio?.nome || null;
-    const mixDose = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); return sd?.dose || doseS; })() : null;
+    const mixDose = miscuglio ? (miscuglio.doseCustom ?? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); return sd?.dose || doseS; })()) : null;
     const mixComp = miscuglio ? (() => { const sd = SEMI.find(sm => sm.id === miscuglio.id); if (!sd) return ''; return [['Festuca arundinacea',sd.festuca],['Lolium perenne',sd.lolium],['Poa pratensis',sd.poa],['Festuca rubra',sd.rubra]].filter(([,v])=>v).map(([k,v])=>v+'% '+k).join(', '); })() : null;
     sezioneSeme = `
       <h2>Seme</h2>
@@ -1182,7 +1182,8 @@ export default function PratoVivo({ onNavigate }) {
   const [colore, setColore] = useState(null);
   const [estendi12, setEstendi12] = useState(null);
   const [liquidiSab, setLiquidiSab] = useState(true);
-  const [degradazione, setDegradazione] = useState(null); // 'ritocchi' | 'medio' | 'grave'
+  const [degradazione, setDegradazione] = useState(null); // 'ritocchi' | 'medio' | 'grave' | 'custom'
+  const [degradazioneCustomPct, setDegradazioneCustomPct] = useState(30); // % personalizzata
   const [miscuglio, setMiscuglio] = useState(null);       // { id, nome, sku } selezionato
   const [tipoCliente, setTipoCliente] = useState('privato'); // 'privato' | 'giardiniere' | 'fidelizzato' | 'speciale'
   const [primoConcimeIncluso, setPrimoConcimeIncluso] = useState(false);
@@ -1374,7 +1375,7 @@ export default function PratoVivo({ onNavigate }) {
   // Determina step corrente
   const hasCommonConfig = tipoPrato && tipoIntervento && livello && irrigazione;
   const showPianoSemina = hasCommonConfig && tipoIntervento === 'semina';
-  const showPianoRig = hasCommonConfig && tipoIntervento === 'rigenerazione' && degradazione !== null;
+  const showPianoRig = hasCommonConfig && tipoIntervento === 'rigenerazione' && degradazione !== null && (degradazione !== 'custom' || degradazioneCustomPct > 0);
   const showPianoAnnuo = hasCommonConfig && tipoIntervento === 'piano_annuo' && terreno && colore && estendi12 !== null;
   const showSingolo = tipoIntervento === 'singolo';
   const showPostSemina = tipoIntervento === 'post_semina';
@@ -1412,13 +1413,13 @@ export default function PratoVivo({ onNavigate }) {
       // Calcolo seme: per rigenerazione usa m² degradati
       let kgSeme = 0;
       if (tipoIntervento === 'rigenerazione' && degradazione) {
-        const pct = DEGRADAZIONE_PCT[degradazione] || 0;
-        const doseS = DEGRADAZIONE_DOSE[degradazione] || 0;
+        const pct = degradazione === 'custom' ? (degradazioneCustomPct / 100) : (DEGRADAZIONE_PCT[degradazione] || 0);
+        const doseS = degradazione === 'custom' ? 30 : (DEGRADAZIONE_DOSE[degradazione] || 0);
         const mqDeg = pct * mqN;
         kgSeme = doseS > 0 ? (doseS * mqDeg) / 1000 : 0;
       } else if (tipoIntervento === 'semina' && miscuglio) {
         const semeData = SEMI.find(s => s.id === miscuglio.id);
-        const doseS = semeData?.dose || 40;
+        const doseS = miscuglio.doseCustom ?? semeData?.dose ?? 40;
         kgSeme = (doseS * mqN) / 1000;
       }
       const miscuglioSku = miscuglio?.sku || null;
@@ -1719,10 +1720,44 @@ export default function PratoVivo({ onNavigate }) {
                   🪣 Diradamento grave
                   <div className="text-xs font-normal mt-1 text-orange-700">Muschio, chiazze estese, &gt;60% da ricostruire — seme su ~70% m²</div>
                 </button>
+                <button onClick={() => setDegradazione('custom')}
+                  className="w-full rounded-xl p-4 text-left font-bold text-sm transition-all hover:scale-[1.01] border-2"
+                  style={{ background: 'linear-gradient(135deg,#f8fafc,#e2e8f0)', color:'#334155', borderColor:'#94a3b8' }}>
+                  ✏️ Percentuale personalizzata
+                  <div className="text-xs font-normal mt-1 text-slate-500">Inserisci la % di superficie degradata manualmente</div>
+                </button>
               </div>
             </Card>
           );
         })()}
+
+        {/* Input % personalizzata */}
+        {tipoIntervento === 'rigenerazione' && degradazione === 'custom' && (
+          <Card title="Percentuale superficie degradata">
+            <p className="text-xs text-gray-400 mb-3">Inserisci la % stimata di superficie che necessita di trasemina</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number" min="1" max="100" step="1"
+                className="w-24 border-2 border-slate-300 rounded-xl px-3 py-2 text-xl font-bold text-center text-slate-700 focus:border-green-500 focus:outline-none"
+                value={degradazioneCustomPct}
+                onChange={e => setDegradazioneCustomPct(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
+              />
+              <span className="text-2xl font-bold text-slate-500">%</span>
+              <div className="text-xs text-gray-500">
+                <p>→ Seme su <strong>{mq ? Math.round(parseFloat(mq) * degradazioneCustomPct / 100) : '—'} m²</strong></p>
+                <p className="text-gray-400">su {mq || '—'} m² totali</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              {[10,20,30,40,50,60,70,80].map(v => (
+                <button key={v} onClick={() => setDegradazioneCustomPct(v)}
+                  className={`text-xs rounded-full px-2 py-1 border font-semibold transition-colors ${degradazioneCustomPct===v?'border-green-500 bg-green-100 text-green-800':'border-gray-200 text-gray-500 hover:border-green-300'}`}>
+                  {v}%
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {showPianoRig && !showPreventivo && (
           <PianoSeminaRig
@@ -1739,6 +1774,7 @@ export default function PratoVivo({ onNavigate }) {
             onChangeLiquidi={setOverrideLiquidi}
             onChangeSeme={setOverrideSeme}
             degradazione={degradazione}
+            degradazioneCustomPct={degradazioneCustomPct}
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
             terreno={terreno} setTerreno={setTerreno}
@@ -2379,13 +2415,13 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, haUsatoStarter, setHaUsatoStarter, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme }) {
+function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, degradazioneCustomPct = 30, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, haUsatoStarter, setHaUsatoStarter, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
 
   const degradazioneLabel = { ritocchi: 'Ritocchi puntuali', medio: 'Diradamento medio', grave: 'Diradamento grave' };
-  const pct = degradazione ? DEGRADAZIONE_PCT[degradazione] : 0;
+  const pct = degradazione === 'custom' ? (degradazioneCustomPct / 100) : (degradazione ? DEGRADAZIONE_PCT[degradazione] : 0);
   const mqDeg = degradazione && mq ? Math.round(parseFloat(mq) * pct) : 0;
 
   // Usa liquidi corretti per terreno
@@ -2614,17 +2650,45 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
               {granulari.map((p, i) => renderRiga(p, i, granulari, onChangeGranulari, 'border-amber-200'))}
             </div>
 
-            {/* Editor seme */}
+            {/* Editor seme — select miscuglio + dose editabile */}
             {seme && (
               <div className="px-3 pb-3">
-                <div className="bg-white rounded-xl p-3 border border-amber-200">
-                  <p className="text-xs font-bold text-amber-700 mb-2">🌾 Dose seme</p>
-                  <div className="flex gap-2">
-                    <input className="flex-1 border rounded-lg px-2 py-1 text-sm font-bold" value={seme.dose||seme.dose_grave||''} placeholder="Dose (es. 40 g/m²)"
+                <div className="bg-white rounded-xl p-3 border border-amber-200 space-y-2">
+                  <p className="text-xs font-bold text-amber-700">🌾 Seme — miscuglio e dose</p>
+                  {/* Select miscuglio */}
+                  <select
+                    className="w-full border rounded-lg px-2 py-1.5 text-sm font-bold text-gray-700 bg-white"
+                    value={miscuglio?.id || ''}
+                    onChange={e => {
+                      const found = SEMI.find(s => s.id === e.target.value);
+                      if (!found) { setMiscuglio(null); return; }
+                      setMiscuglio({ id: found.id, nome: found.nome, sku: found.skus[found.skus.length-1] });
+                      onChangeSeme({...seme, dose: String(found.dose), dose_ritocchi: String(found.dose), dose_medio: String(found.dose), dose_grave: String(found.dose)});
+                    }}
+                  >
+                    <option value="">— Seleziona miscuglio —</option>
+                    {SEMI.filter(s => s.tipi?.includes(tipoPrato) || !s.tipi).map(s => (
+                      <option key={s.id} value={s.id}>{s.nome} — {s.dose} g/m²</option>
+                    ))}
+                  </select>
+                  {/* Dose editabile */}
+                  <div className="flex gap-2 items-center">
+                    <span className="text-xs text-gray-500 font-semibold shrink-0">Dose:</span>
+                    <input type="number" step="1" min="1"
+                      className="w-20 border rounded-lg px-2 py-1 text-sm font-bold text-center"
+                      value={seme.dose || seme.dose_grave || ''}
+                      placeholder="g/m²"
                       onChange={e => { onChangeSeme({...seme, dose: e.target.value, dose_ritocchi: e.target.value, dose_medio: e.target.value, dose_grave: e.target.value}); }} />
-                    <input className="flex-1 border rounded-lg px-2 py-1 text-xs text-gray-500" value={seme.note||''} placeholder="Note seme"
-                      onChange={e => { onChangeSeme({...seme, note: e.target.value}); }} />
+                    <span className="text-xs text-gray-400">g/m²</span>
+                    {miscuglio && (
+                      <span className="text-xs text-gray-400">
+                        (std: {SEMI.find(s=>s.id===miscuglio.id)?.dose} g/m²)
+                      </span>
+                    )}
                   </div>
+                  {/* Note */}
+                  <input className="w-full border rounded-lg px-2 py-1 text-xs text-gray-500 italic" value={seme.note||''} placeholder="Note seme"
+                    onChange={e => { onChangeSeme({...seme, note: e.target.value}); }} />
                 </div>
               </div>
             )}
@@ -2676,8 +2740,27 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
             );
           })}
           {miscuglio && (
-            <div className="mt-2">
-              <p className="text-xs text-gray-500 mb-1.5 font-semibold">Formato seme</p>
+            <div className="mt-2 space-y-2">
+              {/* Dose personalizzabile */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 font-semibold">Dose:</span>
+                <input
+                  type="number" step="1" min="1"
+                  className="w-20 border border-emerald-300 rounded-lg px-2 py-1 text-sm font-bold text-center text-emerald-800 focus:outline-none focus:border-emerald-500"
+                  value={miscuglio.doseCustom ?? SEMI.find(s => s.id === miscuglio.id)?.dose ?? 40}
+                  onClick={e => e.stopPropagation()}
+                  onChange={e => setMiscuglio(prev => ({ ...prev, doseCustom: parseFloat(e.target.value) || 40 }))}
+                />
+                <span className="text-xs text-gray-400">g/m²</span>
+                {miscuglio.doseCustom && miscuglio.doseCustom !== SEMI.find(s => s.id === miscuglio.id)?.dose && (
+                  <button
+                    onClick={() => setMiscuglio(prev => ({ ...prev, doseCustom: null }))}
+                    className="text-xs text-gray-400 hover:text-gray-600"
+                    title="Ripristina dose standard">↩ reset</button>
+                )}
+              </div>
+              {/* Formato seme */}
+              <p className="text-xs text-gray-500 font-semibold">Formato confezione</p>
               <div className="flex gap-2 flex-wrap">
                 {SEMI.find(s => s.id === miscuglio.id)?.skus.map(sku => {
                   const entry = LISTINO[sku];

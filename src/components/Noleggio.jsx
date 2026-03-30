@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, X, FileText, Upload, Check, AlertCircle, MessageCircle, ChevronDown, ChevronRight, ArrowLeft, Trash2, Archive } from 'lucide-react';
 import { supabase } from '../store';
+import WidgetConsegna from './WidgetConsegna';
 
 // ─── Costanti ────────────────────────────────────────────────────────────────
 const FASCE = [
@@ -190,6 +191,7 @@ export default function Noleggio({ onNavigate }) {
   const [dataDa, setDataDa] = useState('');
   const [dataA, setDataA] = useState('');
   const [noteNoleggio, setNoteNoleggio] = useState('');
+  const [costoConsegna, setCostoConsegna] = useState(0);
   const [carrello, setCarrello] = useState([]);
   const [importFile, setImportFile] = useState(null);
   const [importTipo, setImportTipo] = useState('std_iva');
@@ -277,6 +279,7 @@ export default function Noleggio({ onNavigate }) {
   }, [macchinaSelezionata, fasciaScelta, listino, nGiorni, accessoriSelezionati]);
 
   const totaleCarrello = useMemo(() => carrello.reduce((s, v) => s + (v.subtotale || 0), 0), [carrello]);
+  const totaleFinale = totaleCarrello + costoConsegna;
 
   function aggiungiAlCarrello() {
     if (!macchinaSelezionata || !fasciaScelta || totale == null) return;
@@ -730,23 +733,34 @@ export default function Noleggio({ onNavigate }) {
                   );
                 })}
                 <div className="bg-white rounded-xl border overflow-hidden">
+                  {/* Widget consegna */}
+                  <div className="p-4 border-b">
+                    <WidgetConsegna onChange={setCostoConsegna} />
+                  </div>
                   <div className="p-4 border-b flex justify-between items-center">
-                    <span className="font-bold text-gray-800">TOTALE COMPLESSIVO</span>
-                    <span className="text-2xl font-bold" style={{color:GREEN}}>{fmt(totaleCarrello)}</span>
+                    <div>
+                      <span className="font-bold text-gray-800">TOTALE COMPLESSIVO</span>
+                      {costoConsegna > 0 && (
+                        <p className="text-xs text-gray-500">
+                          Noleggio {fmt(totaleCarrello)} + Trasporto {fmt(costoConsegna)}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-2xl font-bold" style={{color:GREEN}}>{fmt(totaleFinale)}</span>
                   </div>
                   <div className="p-4 flex gap-3">
                     <button onClick={async()=>{
-                        const blob = await generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello});
+                        const blob = await generaPDFCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello:totaleFinale});
                         const ng = dataDa&&dataA ? Math.max(1,Math.round((new Date(dataA)-new Date(dataDa))/(1000*60*60*24))) : 1;
                         const nomeFile = `preventivo_${Date.now()}.pdf`;
                         const pdfUrl = await uploadEApriPDF(blob, nomeFile);
-                        await salvaArchivioNoleggio({ nome_cliente:cliente||null, data_da:dataDa||null, data_a:dataA||null, n_giorni:ng, totale_preventivo:totaleCarrello, note:noteNoleggio||null, carrello, pdf_url:pdfUrl });
+                        await salvaArchivioNoleggio({ nome_cliente:cliente||null, data_da:dataDa||null, data_a:dataA||null, n_giorni:ng, totale_preventivo:totaleFinale, note:noteNoleggio||null, carrello, pdf_url:pdfUrl });
                         showToast('✅ Preventivo salvato in archivio');
                       }}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-white font-bold text-sm" style={{backgroundColor:GREEN}}>
                       <FileText className="w-4 h-4"/> PDF
                     </button>
-                    <button onClick={()=>generaWhatsAppCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello})}
+                    <button onClick={()=>generaWhatsAppCarrello({carrello,cliente,dataDa,dataA,note:noteNoleggio,totaleCarrello:totaleFinale})}
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm bg-[#25D366] text-white">
                       <MessageCircle className="w-4 h-4"/> WhatsApp
                     </button>

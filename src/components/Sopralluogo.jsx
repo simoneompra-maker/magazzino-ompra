@@ -6,6 +6,7 @@ import {
   getPianiSopralluogo, getInterventiPiano, scegliPiani,
 } from '../services/sopralluoghiService';
 import useAgroListino, { FASCE_CLIENTE, suggerisciNoleggio } from '../hooks/useAgroListino';
+import WidgetConsegna from './WidgetConsegna';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -725,12 +726,13 @@ function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
 
 // ── Tab Noleggio ─────────────────────────────────────────────
 function TabNoleggio({ form, sopralluogoId, onSalvato }) {
-  const [macchine, setMacchine]   = useState([]);
-  const [carrello, setCarrello]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [salvando, setSalvando]   = useState(false);
-  const [saved, setSaved]         = useState(false);
-  const [cerca, setCerca]         = useState('');
+  const [macchine, setMacchine]       = useState([]);
+  const [carrello, setCarrello]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [salvando, setSalvando]       = useState(false);
+  const [saved, setSaved]             = useState(false);
+  const [cerca, setCerca]             = useState('');
+  const [costoConsegna, setCostoConsegna] = useState(0);
 
   const FASCIA_DEFAULT = 'uno_giorno';
   const LISTINO_DEFAULT = 'std_iva';
@@ -832,6 +834,7 @@ function TabNoleggio({ form, sopralluogoId, onSalvato }) {
   }
 
   const totale = carrello.reduce((s, v) => s + (v.subtotale || 0), 0);
+  const totaleFinale = totale + costoConsegna;
 
   async function handleSalva() {
     if (!carrello.length) return;
@@ -847,7 +850,7 @@ function TabNoleggio({ form, sopralluogoId, onSalvato }) {
           subtotale:   v.subtotale,
           accessori:   [],
         })),
-        totale_preventivo: totale,
+        totale_preventivo: totaleFinale,
         sopralluogo_id:    sopralluogoId || null,
         note:              `Sopralluogo ${form.cliente || ''} — ${form.data_sopralluogo || ''}`,
       };
@@ -902,10 +905,22 @@ function TabNoleggio({ form, sopralluogoId, onSalvato }) {
             </div>
           ))}
 
+          {/* Widget consegna */}
+          <WidgetConsegna onChange={setCostoConsegna} />
+
           {/* Totale + salva */}
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex justify-between items-center">
-            <p className="text-sm font-bold text-green-800">Totale noleggio</p>
-            <p className="text-lg font-black text-green-700">€ {totale.toFixed(2)}</p>
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-bold text-green-800">Totale noleggio</p>
+                {costoConsegna > 0 && (
+                  <p className="text-xs text-green-600">
+                    Macchine € {totale.toFixed(2)} + Trasporto € {costoConsegna.toFixed(2)}
+                  </p>
+                )}
+              </div>
+              <p className="text-lg font-black text-green-700">€ {totaleFinale.toFixed(2)}</p>
+            </div>
           </div>
           <button onClick={handleSalva} disabled={salvando || saved}
             className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${
@@ -982,6 +997,10 @@ export default function Sopralluogo({ onNavigate }) {
   const [archivioRecord, setArchivioRecord]   = useState(null);
 
   const [activeTab, setActiveTab] = useState('relazione');
+
+  // Archivio — vista cartelle
+  const [vistaCartelle, setVistaCartelle] = useState(true);
+  const [clienteAperto, setClienteAperto] = useState(null);
 
   // Carica piani DB al mount
   useEffect(() => {
@@ -1168,9 +1187,6 @@ export default function Sopralluogo({ onNavigate }) {
   // ════════════════════════════════════════════════════════════
   if (vista === 'archivio') {
     // Raggruppa per cliente (stringa)
-    const [vistaCartelle, setVistaCartelle] = useState(true);
-    const [clienteAperto, setClienteAperto] = useState(null);
-
     const gruppi = archivio.reduce((acc, r) => {
       const key = r.cliente || '(cliente non specificato)';
       if (!acc[key]) acc[key] = [];

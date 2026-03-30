@@ -1,11 +1,11 @@
 // src/components/Sopralluogo.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, Archive, ChevronRight, Leaf, FileText, Package, Calendar, Trash2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Archive, ChevronRight, Leaf, FileText, Package, Calendar, Trash2, RefreshCw, Wrench, ChevronDown, Users } from 'lucide-react';
 import {
   salvaSopralluogo, aggiornaSopralluogo, getSopralluoghi, eliminaSopralluogo,
   getPianiSopralluogo, getInterventiPiano, scegliPiani,
 } from '../services/sopralluoghiService';
-import { LISTINO, PRODOTTO_CONFIG, FASCE_CLIENTE, getPrezzoCliente, risolviProdotto, suggerisciNoleggio } from '../data/listino';
+import useAgroListino, { FASCE_CLIENTE, suggerisciNoleggio } from '../hooks/useAgroListino';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -607,10 +607,14 @@ function TabPiano({ pianiScelti, interventiNutrizione, interventiPrevTerreno, fo
 // ── Tab Preventivo ───────────────────────────────────────────
 function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
   const [tipoCliente, setTipoCliente] = useState('privato');
+  const { risolviProdotto, loading: listinoLoading } = useAgroListino();
   const superficie = parseFloat(form.superficie) || 0;
 
   if (!superficie) {
     return <p className="text-xs text-gray-400 text-center py-8">Inserisci la superficie nel passo 1 per calcolare le quantità.</p>;
+  }
+  if (listinoLoading) {
+    return <p className="text-xs text-gray-400 text-center py-8">Caricamento prezzi...</p>;
   }
 
   // Raggruppa prodotti da tutti gli interventi
@@ -633,7 +637,7 @@ function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
   const totale = righe.reduce((s, r) => s + (r.prezzoInfo?.prezzoTot || 0), 0);
   const totalePerMq = superficie > 0 ? totale / superficie : 0;
 
-  // Suggerimenti noleggio
+  // Suggerimenti noleggio (ora solo testo, la tab Noleggio ha i prezzi)
   const noleggi = suggerisciNoleggio(form.compattamento, form.drenaggio, form.stato_vegetativo);
 
   if (!righe.length) return <p className="text-xs text-gray-400 text-center py-8">Nessun prodotto con dose definita.</p>;
@@ -661,7 +665,6 @@ function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
           Superficie: <span className="font-semibold">{superficie} m²</span> · dosi cumulative annue
         </p>
         <div className="border border-gray-200 rounded-xl overflow-hidden">
-          {/* Header */}
           <div className="grid bg-green-700 text-white text-xs font-bold px-3 py-2" style={{gridTemplateColumns:'1fr 60px 80px 50px 70px'}}>
             <span>Prodotto</span>
             <span className="text-center">kg/anno</span>
@@ -669,7 +672,6 @@ function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
             <span className="text-center">N°</span>
             <span className="text-right">Totale</span>
           </div>
-          {/* Righe */}
           {righe.map((r, idx) => (
             <div key={r.label} className={`px-3 py-2.5 border-b border-gray-100 last:border-0 ${idx % 2 ? 'bg-gray-50' : 'bg-white'}`}>
               <div className="grid items-center gap-1" style={{gridTemplateColumns:'1fr 60px 80px 50px 70px'}}>
@@ -704,19 +706,243 @@ function TabPreventivo({ interventiNutrizione, interventiPrevTerreno, form }) {
         <p className="text-xs text-gray-400 mt-1.5">Prezzi netti IVA esclusa · arrotonda per eccesso negli ordini</p>
       </div>
 
-      {/* Suggerimenti noleggio */}
+      {/* Suggerimenti noleggio (rimanda alla tab) */}
       {noleggi.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
           <p className="text-xs font-bold text-amber-800 mb-2">🚜 NOLEGGIO CONSIGLIATO</p>
           {noleggi.map((n, i) => (
             <div key={i} className="mb-1.5">
-              <p className="text-xs font-semibold text-amber-700">{n.macchina}</p>
+              <p className="text-xs font-semibold text-amber-700">{n.nome}</p>
               <p className="text-xs text-amber-600">{n.motivo}</p>
             </div>
           ))}
-          <p className="text-xs text-gray-400 mt-2">Consulta il modulo Noleggio per tariffe e disponibilità.</p>
+          <p className="text-xs text-gray-400 mt-2">→ Vedi tab Noleggio per tariffe e salvataggio.</p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Tab Noleggio ─────────────────────────────────────────────
+function TabNoleggio({ form, sopralluogoId, onSalvato }) {
+  const [macchine, setMacchine]   = useState([]);
+  const [carrello, setCarrello]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [salvando, setSalvando]   = useState(false);
+  const [saved, setSaved]         = useState(false);
+  const [cerca, setCerca]         = useState('');
+
+  const FASCIA_DEFAULT = 'uno_giorno';
+  const LISTINO_DEFAULT = 'std_iva';
+
+  const FASCE = [
+    { key: 'mezzo_giorno',         label: '½ giornata',     giorni: 0.5 },
+    { key: 'uno_giorno',           label: '1 giornata',     giorni: 1   },
+    { key: 'due_tre_giorni',       label: '2–3 giorni',     giorni: 2   },
+    { key: 'quattro_sette_giorni', label: '4–7 giorni',     giorni: 4   },
+    { key: 'oltre_sette_giorni',   label: 'Oltre 7 giorni', giorni: 8   },
+  ];
+  const LISTINI = [
+    { key: 'std_iva',   label: 'Con IVA',   tipo: 'std', netto: false },
+    { key: 'std_netto', label: 'Senza IVA', tipo: 'std', netto: true  },
+    { key: 'b_iva',     label: 'Abb. B',    tipo: 'b',   netto: false },
+    { key: 'c_iva',     label: 'Abb. C',    tipo: 'c',   netto: false },
+  ];
+
+  function getPrezzo(macchina, fasciaKey, listinoKey) {
+    const lc = LISTINI.find(l => l.key === listinoKey);
+    if (!lc || !macchina?.noleggio_listini) return null;
+    const r = macchina.noleggio_listini.find(x => x.fascia === fasciaKey && x.tipo_listino === lc.tipo);
+    if (!r) return null;
+    return lc.netto ? r.prezzo_netto : r.prezzo_iva;
+  }
+
+  // Carica macchine tappeto_erboso + pre-popola carrello dai suggerimenti
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('noleggio_macchine')
+          .select(`id, nome, note_tecniche, categoria, famiglia, is_accessorio, attiva,
+                   noleggio_listini ( fascia, tipo_listino, prezzo_iva, prezzo_netto )`)
+          .eq('attiva', true)
+          .eq('categoria', 'tappeto_erboso')
+          .eq('is_accessorio', false)
+          .order('nome');
+        if (error) throw error;
+
+        setMacchine(data || []);
+
+        // Pre-popola con suggerimenti
+        const suggeriti = suggerisciNoleggio(form.compattamento, form.drenaggio, form.stato_vegetativo);
+        const ids = new Set(suggeriti.map(s => s.id));
+        const preCarico = (data || [])
+          .filter(m => ids.has(m.id))
+          .map(m => {
+            const sug = suggeriti.find(s => s.id === m.id);
+            const prezzo = getPrezzo(m, FASCIA_DEFAULT, LISTINO_DEFAULT);
+            return {
+              id: m.id,
+              macchina: m,
+              fasciaScelta: FASCIA_DEFAULT,
+              listinoKey: LISTINO_DEFAULT,
+              nGiorni: 1,
+              motivo: sug?.motivo || '',
+              subtotale: prezzo ?? 0,
+            };
+          });
+        setCarrello(preCarico);
+      } catch(e) { console.error(e); }
+      finally { setLoading(false); }
+    }
+    load();
+  }, [form.compattamento, form.drenaggio, form.stato_vegetativo]);
+
+  function updateVoce(id, campo, valore) {
+    setCarrello(prev => prev.map(v => {
+      if (v.id !== id) return v;
+      const updated = { ...v, [campo]: valore };
+      const prezzo = getPrezzo(v.macchina, updated.fasciaScelta, updated.listinoKey);
+      const g = updated.fasciaScelta === 'mezzo_giorno' ? 0.5 : updated.nGiorni;
+      updated.subtotale = prezzo != null ? +(prezzo * g).toFixed(2) : 0;
+      return updated;
+    }));
+    setSaved(false);
+  }
+
+  function rimuovi(id) {
+    setCarrello(prev => prev.filter(v => v.id !== id));
+    setSaved(false);
+  }
+
+  function aggiungiDaLista(macchina) {
+    if (carrello.find(v => v.id === macchina.id)) return;
+    const prezzo = getPrezzo(macchina, FASCIA_DEFAULT, LISTINO_DEFAULT);
+    setCarrello(prev => [...prev, {
+      id: macchina.id,
+      macchina,
+      fasciaScelta: FASCIA_DEFAULT,
+      listinoKey: LISTINO_DEFAULT,
+      nGiorni: 1,
+      motivo: 'Aggiunta manuale',
+      subtotale: prezzo ?? 0,
+    }]);
+    setSaved(false);
+  }
+
+  const totale = carrello.reduce((s, v) => s + (v.subtotale || 0), 0);
+
+  async function handleSalva() {
+    if (!carrello.length) return;
+    setSalvando(true);
+    try {
+      const record = {
+        nome_cliente:      form.cliente || null,
+        carrello:          carrello.map(v => ({
+          macchina:    { id: v.macchina.id, nome: v.macchina.nome },
+          fasciaScelta: v.fasciaScelta,
+          listino:     v.listinoKey,
+          nGiorni:     v.nGiorni,
+          subtotale:   v.subtotale,
+          accessori:   [],
+        })),
+        totale_preventivo: totale,
+        sopralluogo_id:    sopralluogoId || null,
+        note:              `Sopralluogo ${form.cliente || ''} — ${form.data_sopralluogo || ''}`,
+      };
+      await supabase.from('noleggio_archivio').insert(record);
+      setSaved(true);
+      onSalvato?.();
+    } catch(e) { alert('Errore salvataggio: ' + e.message); }
+    finally { setSalvando(false); }
+  }
+
+  const macchinaFiltrate = macchine.filter(m =>
+    !cerca || m.nome.toLowerCase().includes(cerca.toLowerCase())
+  );
+  const inCarrello = new Set(carrello.map(v => v.id));
+
+  if (loading) return <p className="text-xs text-gray-400 text-center py-8">Caricamento macchine...</p>;
+
+  return (
+    <div className="space-y-4">
+      {/* Carrello */}
+      {carrello.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Macchine selezionate</p>
+          {carrello.map(v => (
+            <div key={v.id} className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-800 truncate">{v.macchina.nome}</p>
+                  <p className="text-xs text-amber-600 italic">{v.motivo}</p>
+                </div>
+                <button onClick={() => rimuovi(v.id)} className="p-1 text-red-400 hover:text-red-600 shrink-0">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <select value={v.fasciaScelta}
+                  onChange={e => updateVoce(v.id, 'fasciaScelta', e.target.value)}
+                  className="flex-1 border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-green-600 bg-white">
+                  {FASCE.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+                </select>
+                <select value={v.listinoKey}
+                  onChange={e => updateVoce(v.id, 'listinoKey', e.target.value)}
+                  className="border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-green-600 bg-white">
+                  {LISTINI.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <p className="text-sm font-black text-green-700">
+                  {v.subtotale > 0 ? `€ ${v.subtotale.toFixed(2)}` : '—'}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* Totale + salva */}
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex justify-between items-center">
+            <p className="text-sm font-bold text-green-800">Totale noleggio</p>
+            <p className="text-lg font-black text-green-700">€ {totale.toFixed(2)}</p>
+          </div>
+          <button onClick={handleSalva} disabled={salvando || saved}
+            className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${
+              saved ? 'bg-green-100 text-green-700 border border-green-300' :
+              'bg-green-700 text-white active:scale-95'
+            } disabled:opacity-60`}>
+            {salvando ? 'Salvataggio...' : saved ? '✓ Noleggio salvato' : '💾 Salva noleggio'}
+          </button>
+        </div>
+      ) : (
+        <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-6 text-center">
+          <Wrench className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-xs text-gray-400">Nessuna macchina suggerita per le condizioni rilevate.</p>
+          <p className="text-xs text-gray-400 mt-1">Aggiungi manualmente dalla lista sotto.</p>
+        </div>
+      )}
+
+      {/* Lista per aggiunta manuale */}
+      <div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Aggiungi macchina</p>
+        <input value={cerca} onChange={e => setCerca(e.target.value)}
+          placeholder="Cerca..."
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs mb-2 focus:outline-none focus:border-green-600" />
+        <div className="space-y-1 max-h-56 overflow-y-auto">
+          {macchinaFiltrate.map(m => (
+            <button key={m.id} onClick={() => aggiungiDaLista(m)}
+              disabled={inCarrello.has(m.id)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-xs border transition-all ${
+                inCarrello.has(m.id)
+                  ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
+                  : 'bg-white border-gray-200 text-gray-700 hover:border-green-400'
+              }`}>
+              {inCarrello.has(m.id) ? '✓ ' : '+ '}{m.nome}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -940,57 +1166,153 @@ export default function Sopralluogo({ onNavigate }) {
   // ════════════════════════════════════════════════════════════
   // ARCHIVIO
   // ════════════════════════════════════════════════════════════
-  if (vista === 'archivio') return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Archivio Sopralluoghi" onBack={() => setVista('home')} />
-      <div className="px-4 pt-4 pb-8 max-w-lg mx-auto">
-        <div className="flex justify-between items-center mb-3">
-          <p className="text-xs text-gray-400">{archivio.length} sopralluoghi</p>
-          <button onClick={loadArchivio} className="p-1.5 rounded-lg hover:bg-gray-100">
-            <RefreshCw className="w-4 h-4 text-gray-500" />
-          </button>
-        </div>
-        {archivioLoading && <p className="text-xs text-center text-gray-400 py-8">Caricamento...</p>}
-        {!archivioLoading && !archivio.length && (
-          <div className="text-center py-12">
-            <Archive className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">Nessun sopralluogo salvato</p>
+  if (vista === 'archivio') {
+    // Raggruppa per cliente (stringa)
+    const [vistaCartelle, setVistaCartelle] = useState(true);
+    const [clienteAperto, setClienteAperto] = useState(null);
+
+    const gruppi = archivio.reduce((acc, r) => {
+      const key = r.cliente || '(cliente non specificato)';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(r);
+      return acc;
+    }, {});
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header title="Archivio Sopralluoghi" onBack={() => setVista('home')} />
+        <div className="px-4 pt-4 pb-8 max-w-lg mx-auto">
+          {/* Toolbar */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-1.5">
+              <button onClick={() => setVistaCartelle(true)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${vistaCartelle ? 'bg-green-700 text-white border-green-700' : 'bg-white text-gray-600 border-gray-200'}`}>
+                <Users className="w-3.5 h-3.5 inline mr-1" />Cartelle
+              </button>
+              <button onClick={() => setVistaCartelle(false)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${!vistaCartelle ? 'bg-green-700 text-white border-green-700' : 'bg-white text-gray-600 border-gray-200'}`}>
+                Lista
+              </button>
+            </div>
+            <button onClick={loadArchivio} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <RefreshCw className="w-4 h-4 text-gray-500" />
+            </button>
           </div>
-        )}
-        <div className="space-y-2">
-          {archivio.map(r => (
-            <div key={r.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-              <div className="flex justify-between items-start gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-800 truncate">{r.cliente || 'Cliente non specificato'}</p>
-                  <p className="text-xs text-gray-500 truncate">{r.luogo || '—'}</p>
-                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                    {r.data_sopralluogo && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                        {new Date(r.data_sopralluogo + 'T12:00').toLocaleDateString('it-IT')}
+
+          {archivioLoading && <p className="text-xs text-center text-gray-400 py-8">Caricamento...</p>}
+          {!archivioLoading && !archivio.length && (
+            <div className="text-center py-12">
+              <Archive className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-400">Nessun sopralluogo salvato</p>
+            </div>
+          )}
+
+          {/* ── Vista cartelle cliente ── */}
+          {vistaCartelle && !archivioLoading && (
+            <div className="space-y-2">
+              {Object.entries(gruppi).map(([cliente, schede]) => (
+                <div key={cliente} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                  {/* Header cartella */}
+                  <button
+                    onClick={() => setClienteAperto(clienteAperto === cliente ? null : cliente)}
+                    className="w-full px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Users className="w-4 h-4 text-green-700 shrink-0" />
+                      <span className="text-sm font-bold text-gray-800 truncate">{cliente}</span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">
+                        {schede.length}
                       </span>
-                    )}
-                    {r.superficie && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{r.superficie} m²</span>}
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${r.stato === 'completata' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {r.stato}
-                    </span>
+                    </div>
+                    {clienteAperto === cliente
+                      ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                      : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                  </button>
+
+                  {/* Schede della cartella */}
+                  {clienteAperto === cliente && (
+                    <div className="border-t border-gray-100 divide-y divide-gray-100">
+                      {schede.map(r => (
+                        <div key={r.id} className="px-4 py-3">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex gap-1.5 flex-wrap mb-1">
+                                {r.data_sopralluogo && (
+                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                    {new Date(r.data_sopralluogo + 'T12:00').toLocaleDateString('it-IT')}
+                                  </span>
+                                )}
+                                {r.superficie && (
+                                  <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                                    {r.superficie} m²
+                                  </span>
+                                )}
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${r.stato === 'completata' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {r.stato}
+                                </span>
+                                {r.luogo && (
+                                  <span className="text-xs text-gray-400 truncate">{r.luogo}</span>
+                                )}
+                              </div>
+                              {r.note_tecniche && (
+                                <p className="text-xs text-gray-400 italic truncate">{r.note_tecniche.slice(0, 60)}…</p>
+                              )}
+                            </div>
+                            <div className="flex gap-1 shrink-0">
+                              <button onClick={() => handleRiapri(r)} className="p-2 rounded-lg bg-green-50 hover:bg-green-100" title="Apri">
+                                <FileText className="w-4 h-4 text-green-700" />
+                              </button>
+                              <button onClick={() => handleElimina(r.id)} className="p-2 rounded-lg bg-red-50 hover:bg-red-100" title="Elimina">
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Vista lista piatta ── */}
+          {!vistaCartelle && !archivioLoading && (
+            <div className="space-y-2">
+              {archivio.map(r => (
+                <div key={r.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-800 truncate">{r.cliente || 'Cliente non specificato'}</p>
+                      <p className="text-xs text-gray-500 truncate">{r.luogo || '—'}</p>
+                      <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                        {r.data_sopralluogo && (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            {new Date(r.data_sopralluogo + 'T12:00').toLocaleDateString('it-IT')}
+                          </span>
+                        )}
+                        {r.superficie && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{r.superficie} m²</span>}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${r.stato === 'completata' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {r.stato}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => handleRiapri(r)} className="p-2 rounded-lg bg-green-50 hover:bg-green-100">
+                        <FileText className="w-4 h-4 text-green-700" />
+                      </button>
+                      <button onClick={() => handleElimina(r.id)} className="p-2 rounded-lg bg-red-50 hover:bg-red-100">
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <button onClick={() => handleRiapri(r)} className="p-2 rounded-lg bg-green-50 hover:bg-green-100">
-                    <FileText className="w-4 h-4 text-green-700" />
-                  </button>
-                  <button onClick={() => handleElimina(r.id)} className="p-2 rounded-lg bg-red-50 hover:bg-red-100">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   // ════════════════════════════════════════════════════════════
   // WIZARD
@@ -1047,6 +1369,7 @@ export default function Sopralluogo({ onNavigate }) {
       { id: 'relazione', icon: FileText, label: 'Relazione' },
       { id: 'piano',     icon: Calendar, label: 'Piano'     },
       { id: 'quantita',  icon: Package,  label: 'Quantità'  },
+      { id: 'noleggio',  icon: Wrench,   label: 'Noleggio'  },
     ];
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -1095,6 +1418,13 @@ export default function Sopralluogo({ onNavigate }) {
           {activeTab === 'quantita' && (
             <TabPreventivo interventiNutrizione={interventiNutrizione}
               interventiPrevTerreno={interventiPrevTerreno} form={form} />
+          )}
+          {activeTab === 'noleggio' && (
+            <TabNoleggio
+              form={form}
+              sopralluogoId={archivioRecord?.id || null}
+              onSalvato={() => {}}
+            />
           )}
         </div>
 

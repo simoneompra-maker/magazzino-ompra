@@ -490,11 +490,61 @@ export default function Vendita({ onNavigate }) {
 
           // Non trovato neanche come Honda parziale → auto-carico normale
           setSearchQuery(matricola);
+
+          // Normalizza brand: Yamabiko → Echo, varianti casing
+          const BRAND_NORM = {
+            'yamabiko': 'Echo', 'echo': 'Echo',
+            'weibang': 'Weibang', 'honda': 'Honda',
+            'stihl': 'Stihl', 'husqvarna': 'Husqvarna',
+            'viking': 'Viking', 'pellenc': 'Pellenc',
+          };
+          const rawBrand = result.brand || '';
+          const brandNorm = BRAND_NORM[rawBrand.toLowerCase()] || rawBrand;
+
+          // Funzione: ricava tipo macchina dalla descrizione listino
+          const tipoFromDescrizione = (desc) => {
+            const d = (desc || '').toLowerCase();
+            if (d.includes('motosega'))                          return 'Motosega';
+            if (d.includes('potatore') || d.includes('potatr')) return 'Potatore';
+            if (d.includes('decespugliatore'))                   return 'Decespugliatore';
+            if (d.includes('tagliasiepi'))                       return 'Tagliasiepi';
+            if (d.includes('soffiatore') || d.includes('aspiratore')) return 'Soffiatore';
+            if (d.includes('tagliaerba') || d.includes('rasaerba'))   return 'Rasaerba';
+            if (d.includes('arieggiatore') || d.includes('scarific')) return 'Arieggiatore';
+            if (d.includes('multifunzione'))                     return 'Motore multifunzione';
+            if (d.includes('troncatrice'))                       return 'Troncatrice';
+            if (d.includes('biotrituratore') || d.includes('cippatore')) return 'Biotrituratore';
+            if (d.includes('trivella'))                          return 'Trivella';
+            if (d.includes('irroratore') || d.includes('atomizzatore')) return 'Irroratore';
+            if (d.includes('idropulitrice'))                     return 'Idropulitrice';
+            if (d.includes('pompa'))                             return 'Pompa acqua';
+            if (d.includes('robot'))                             return 'Robot tosaerba';
+            if ((d.includes('caricabatterie') || d.includes('caricabatteria'))) return 'Caricabatteria';
+            if (d.includes('batteria') && !d.includes('carica')) return 'Batteria';
+            return '';
+          };
+
+          // Cerca tipo automaticamente dal codice modello in listini
+          let tipoAuto = '';
+          const modello = result.modello || '';
+          if (brandNorm && modello) {
+            try {
+              const codNorm = modello.replace(/[\s\-_.]/g, '').toUpperCase();
+              const { data: hits } = await supabase
+                .from('listini')
+                .select('descrizione')
+                .ilike('brand', `%${brandNorm}%`)
+                .ilike('codice', `%${codNorm}%`)
+                .limit(1);
+              if (hits?.length) tipoAuto = tipoFromDescrizione(hits[0].descrizione);
+            } catch (_) {}
+          }
+
           setAutoAddData({
-            brand: result.brand || '',
-            model: result.modello || '',
+            brand: brandNorm,
+            model: modello,
             serialNumber: matricola,
-            tipo: ''
+            tipo: tipoAuto
           });
           setShowAutoAdd(true);
         }

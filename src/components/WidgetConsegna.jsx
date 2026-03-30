@@ -20,9 +20,23 @@ const TARIFFE_DEFAULT = {
 function loadTariffe() {
   try {
     const saved = localStorage.getItem(LS_KEY);
-    if (saved) return { ...TARIFFE_DEFAULT, ...JSON.parse(saved) };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validazione: tariffa deve essere tra 0.10 e 5 €/km
+      const isValid = obj =>
+        obj && typeof obj.tariffa === 'number' &&
+        obj.tariffa >= 0.10 && obj.tariffa <= 5.00;
+      if (isValid(parsed.leggero) && isValid(parsed.pesante)) {
+        return { ...TARIFFE_DEFAULT, ...parsed };
+      }
+    }
   } catch {}
-  return TARIFFE_DEFAULT;
+  return { ...TARIFFE_DEFAULT };
+}
+
+function resetTariffe() {
+  try { localStorage.removeItem(LS_KEY); } catch {}
+  return { ...TARIFFE_DEFAULT };
 }
 
 function saveTariffe(t) {
@@ -100,12 +114,30 @@ export default function WidgetConsegna({ onChange }) {
 
   // Salva tariffe modificate
   function salvaEdit() {
+    const parseT = (v) => {
+      // Accetta sia virgola che punto come separatore decimale
+      const n = parseFloat(String(v).replace(',', '.'));
+      if (isNaN(n) || n < 0.10 || n > 5.00) return null;
+      return Math.round(n * 100) / 100; // arrotonda a 2 decimali
+    };
+    const t1 = parseT(editTemp.leggero);
+    const t2 = parseT(editTemp.pesante);
+    if (!t1 || !t2) {
+      alert('Inserisci valori validi tra € 0.10 e € 5.00 per km');
+      return;
+    }
     const nuove = {
-      leggero: { ...tariffe.leggero, tariffa: parseFloat(editTemp.leggero) || tariffe.leggero.tariffa },
-      pesante: { ...tariffe.pesante, tariffa: parseFloat(editTemp.pesante) || tariffe.pesante.tariffa },
+      leggero: { ...tariffe.leggero, tariffa: t1 },
+      pesante: { ...tariffe.pesante, tariffa: t2 },
     };
     setTariffe(nuove);
     saveTariffe(nuove);
+    setEditando(false);
+  }
+
+  function handleReset() {
+    const def = resetTariffe();
+    setTariffe(def);
     setEditando(false);
   }
 
@@ -197,12 +229,15 @@ export default function WidgetConsegna({ onChange }) {
                   <Edit2 className="w-3 h-3" /> modifica tariffe
                 </button>
               ) : (
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   <button onClick={salvaEdit} className="text-xs text-green-700 underline flex items-center gap-0.5">
                     <Check className="w-3 h-3" /> salva
                   </button>
                   <button onClick={() => setEditando(false)} className="text-xs text-gray-400 underline flex items-center gap-0.5">
                     <X className="w-3 h-3" /> annulla
+                  </button>
+                  <button onClick={handleReset} className="text-xs text-red-400 underline">
+                    reset
                   </button>
                 </div>
               )}

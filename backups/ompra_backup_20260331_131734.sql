@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6AQ8Yn7l56gBELaSzYxis07sDn3DSyXRGT6dmlTbHtYJfiHfCGrFHs7Aw1uhCFo
+\restrict 12dcUfc5NcyEbuHVndXgwbx4po2VaoVOlJyydBFmzwXt3UIjArwJIqNJtfvLLAB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Ubuntu 17.9-1.pgdg24.04+1)
@@ -44,6 +44,7 @@ DROP POLICY IF EXISTS "Allow all on app_config" ON public.app_config;
 DROP POLICY IF EXISTS "Allow all" ON public.pratovivo_archivio;
 DROP POLICY IF EXISTS "Allow all" ON public.operatori;
 DROP POLICY IF EXISTS "Allow all" ON public.listini_log;
+DROP POLICY IF EXISTS "Accesso libero noleggio_archivio" ON public.noleggio_archivio;
 DROP POLICY IF EXISTS "Accesso completo listini" ON public.listini;
 DROP POLICY IF EXISTS "Accesso autenticati liquidi prodotti" ON public.pv_liquidi_prodotti;
 DROP POLICY IF EXISTS "Accesso autenticati liquidi" ON public.pv_liquidi_programmati;
@@ -53,6 +54,7 @@ ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads_parts DROP CONSTRAINT IF
 ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads DROP CONSTRAINT IF EXISTS s3_multipart_uploads_bucket_id_fkey;
 ALTER TABLE IF EXISTS ONLY storage.objects DROP CONSTRAINT IF EXISTS "objects_bucketId_fkey";
 ALTER TABLE IF EXISTS ONLY public.stihl_promo DROP CONSTRAINT IF EXISTS stihl_promo_codice_fkey;
+ALTER TABLE IF EXISTS ONLY public.sopralluoghi DROP CONSTRAINT IF EXISTS sopralluoghi_piano_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.pv_preventivo_righe DROP CONSTRAINT IF EXISTS pv_preventivo_righe_prodotto_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.pv_preventivo_righe DROP CONSTRAINT IF EXISTS pv_preventivo_righe_preventivo_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.pv_preventivi DROP CONSTRAINT IF EXISTS pv_preventivi_piano_id_fkey;
@@ -65,6 +67,11 @@ ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXIS
 ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXISTS pv_intervento_prodotti_intervento_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.pv_interventi DROP CONSTRAINT IF EXISTS pv_interventi_piano_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_listini DROP CONSTRAINT IF EXISTS noleggio_listini_macchina_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.noleggio_archivio DROP CONSTRAINT IF EXISTS noleggio_archivio_sopralluogo_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_sku_piccolo_fkey;
+ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_sku_grande_fkey;
+ALTER TABLE IF EXISTS ONLY auth.webauthn_credentials DROP CONSTRAINT IF EXISTS webauthn_credentials_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY auth.webauthn_challenges DROP CONSTRAINT IF EXISTS webauthn_challenges_user_id_fkey;
 ALTER TABLE IF EXISTS ONLY auth.sso_domains DROP CONSTRAINT IF EXISTS sso_domains_sso_provider_id_fkey;
 ALTER TABLE IF EXISTS ONLY auth.sessions DROP CONSTRAINT IF EXISTS sessions_user_id_fkey;
 ALTER TABLE IF EXISTS ONLY auth.sessions DROP CONSTRAINT IF EXISTS sessions_oauth_client_id_fkey;
@@ -122,6 +129,10 @@ DROP INDEX IF EXISTS public.idx_clienti_search_text;
 DROP INDEX IF EXISTS public.idx_clienti_piva;
 DROP INDEX IF EXISTS public.idx_clienti_deleted_at;
 DROP INDEX IF EXISTS public.idx_clienti_cf;
+DROP INDEX IF EXISTS auth.webauthn_credentials_user_id_idx;
+DROP INDEX IF EXISTS auth.webauthn_credentials_credential_id_key;
+DROP INDEX IF EXISTS auth.webauthn_challenges_user_id_idx;
+DROP INDEX IF EXISTS auth.webauthn_challenges_expires_at_idx;
 DROP INDEX IF EXISTS auth.users_is_anonymous_idx;
 DROP INDEX IF EXISTS auth.users_instance_id_idx;
 DROP INDEX IF EXISTS auth.users_instance_id_email_idx;
@@ -183,19 +194,20 @@ ALTER TABLE IF EXISTS ONLY storage.buckets DROP CONSTRAINT IF EXISTS buckets_pke
 ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS buckets_analytics_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_19 DROP CONSTRAINT IF EXISTS messages_2026_03_19_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_18 DROP CONSTRAINT IF EXISTS messages_2026_03_18_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_17 DROP CONSTRAINT IF EXISTS messages_2026_03_17_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_16 DROP CONSTRAINT IF EXISTS messages_2026_03_16_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_15 DROP CONSTRAINT IF EXISTS messages_2026_03_15_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_14 DROP CONSTRAINT IF EXISTS messages_2026_03_14_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_13 DROP CONSTRAINT IF EXISTS messages_2026_03_13_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_03 DROP CONSTRAINT IF EXISTS messages_2026_04_03_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_02 DROP CONSTRAINT IF EXISTS messages_2026_04_02_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_01 DROP CONSTRAINT IF EXISTS messages_2026_04_01_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_31 DROP CONSTRAINT IF EXISTS messages_2026_03_31_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_30 DROP CONSTRAINT IF EXISTS messages_2026_03_30_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_29 DROP CONSTRAINT IF EXISTS messages_2026_03_29_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_28 DROP CONSTRAINT IF EXISTS messages_2026_03_28_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
 ALTER TABLE IF EXISTS ONLY public.stihl_promo DROP CONSTRAINT IF EXISTS stihl_promo_pkey;
 ALTER TABLE IF EXISTS ONLY public.stihl_prodotti DROP CONSTRAINT IF EXISTS stihl_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.stihl_prodotti DROP CONSTRAINT IF EXISTS stihl_prodotti_codice_key;
+ALTER TABLE IF EXISTS ONLY public.sopralluoghi DROP CONSTRAINT IF EXISTS sopralluoghi_pkey;
 ALTER TABLE IF EXISTS ONLY public.pv_prodotti DROP CONSTRAINT IF EXISTS pv_prodotti_slug_key;
 ALTER TABLE IF EXISTS ONLY public.pv_prodotti DROP CONSTRAINT IF EXISTS pv_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.pv_preventivo_righe DROP CONSTRAINT IF EXISTS pv_preventivo_righe_pkey;
@@ -218,6 +230,7 @@ ALTER TABLE IF EXISTS ONLY public.operatori DROP CONSTRAINT IF EXISTS operatori_
 ALTER TABLE IF EXISTS ONLY public.noleggio_macchine DROP CONSTRAINT IF EXISTS noleggio_macchine_pkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_listini DROP CONSTRAINT IF EXISTS noleggio_listini_pkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_listini DROP CONSTRAINT IF EXISTS noleggio_listini_macchina_id_fascia_tipo_listino_key;
+ALTER TABLE IF EXISTS ONLY public.noleggio_archivio DROP CONSTRAINT IF EXISTS noleggio_archivio_pkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_abbonamenti DROP CONSTRAINT IF EXISTS noleggio_abbonamenti_pkey;
 ALTER TABLE IF EXISTS ONLY public.listini DROP CONSTRAINT IF EXISTS listini_pkey;
 ALTER TABLE IF EXISTS ONLY public.listini_log DROP CONSTRAINT IF EXISTS listini_log_pkey;
@@ -227,6 +240,10 @@ ALTER TABLE IF EXISTS ONLY public.commissioni DROP CONSTRAINT IF EXISTS commissi
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_search_text_unique;
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_pkey;
 ALTER TABLE IF EXISTS ONLY public.app_config DROP CONSTRAINT IF EXISTS app_config_pkey;
+ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_pkey;
+ALTER TABLE IF EXISTS ONLY public.agro_listino DROP CONSTRAINT IF EXISTS agro_listino_pkey;
+ALTER TABLE IF EXISTS ONLY auth.webauthn_credentials DROP CONSTRAINT IF EXISTS webauthn_credentials_pkey;
+ALTER TABLE IF EXISTS ONLY auth.webauthn_challenges DROP CONSTRAINT IF EXISTS webauthn_challenges_pkey;
 ALTER TABLE IF EXISTS ONLY auth.users DROP CONSTRAINT IF EXISTS users_pkey;
 ALTER TABLE IF EXISTS ONLY auth.users DROP CONSTRAINT IF EXISTS users_phone_key;
 ALTER TABLE IF EXISTS ONLY auth.sso_providers DROP CONSTRAINT IF EXISTS sso_providers_pkey;
@@ -273,17 +290,18 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_03_19;
-DROP TABLE IF EXISTS realtime.messages_2026_03_18;
-DROP TABLE IF EXISTS realtime.messages_2026_03_17;
-DROP TABLE IF EXISTS realtime.messages_2026_03_16;
-DROP TABLE IF EXISTS realtime.messages_2026_03_15;
-DROP TABLE IF EXISTS realtime.messages_2026_03_14;
-DROP TABLE IF EXISTS realtime.messages_2026_03_13;
+DROP TABLE IF EXISTS realtime.messages_2026_04_03;
+DROP TABLE IF EXISTS realtime.messages_2026_04_02;
+DROP TABLE IF EXISTS realtime.messages_2026_04_01;
+DROP TABLE IF EXISTS realtime.messages_2026_03_31;
+DROP TABLE IF EXISTS realtime.messages_2026_03_30;
+DROP TABLE IF EXISTS realtime.messages_2026_03_29;
+DROP TABLE IF EXISTS realtime.messages_2026_03_28;
 DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
 DROP TABLE IF EXISTS public.stihl_prodotti;
+DROP TABLE IF EXISTS public.sopralluoghi;
 DROP TABLE IF EXISTS public.pv_prodotti;
 DROP TABLE IF EXISTS public.pv_preventivo_righe;
 DROP TABLE IF EXISTS public.pv_preventivi;
@@ -301,6 +319,7 @@ DROP SEQUENCE IF EXISTS public.noleggio_macchine_id_seq;
 DROP TABLE IF EXISTS public.noleggio_macchine;
 DROP SEQUENCE IF EXISTS public.noleggio_listini_id_seq;
 DROP TABLE IF EXISTS public.noleggio_listini;
+DROP TABLE IF EXISTS public.noleggio_archivio;
 DROP SEQUENCE IF EXISTS public.noleggio_abbonamenti_id_seq;
 DROP TABLE IF EXISTS public.noleggio_abbonamenti;
 DROP TABLE IF EXISTS public.listini_log;
@@ -310,6 +329,10 @@ DROP TABLE IF EXISTS public.inventory;
 DROP TABLE IF EXISTS public.commissioni;
 DROP TABLE IF EXISTS public.clienti;
 DROP TABLE IF EXISTS public.app_config;
+DROP TABLE IF EXISTS public.agro_mapping;
+DROP TABLE IF EXISTS public.agro_listino;
+DROP TABLE IF EXISTS auth.webauthn_credentials;
+DROP TABLE IF EXISTS auth.webauthn_challenges;
 DROP TABLE IF EXISTS auth.users;
 DROP TABLE IF EXISTS auth.sso_providers;
 DROP TABLE IF EXISTS auth.sso_domains;
@@ -3512,6 +3535,75 @@ COMMENT ON COLUMN auth.users.is_sso_user IS 'Auth: Set this column to true when 
 
 
 --
+-- Name: webauthn_challenges; Type: TABLE; Schema: auth; Owner: -
+--
+
+CREATE TABLE auth.webauthn_challenges (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid,
+    challenge_type text NOT NULL,
+    session_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    CONSTRAINT webauthn_challenges_challenge_type_check CHECK ((challenge_type = ANY (ARRAY['signup'::text, 'registration'::text, 'authentication'::text])))
+);
+
+
+--
+-- Name: webauthn_credentials; Type: TABLE; Schema: auth; Owner: -
+--
+
+CREATE TABLE auth.webauthn_credentials (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    credential_id bytea NOT NULL,
+    public_key bytea NOT NULL,
+    attestation_type text DEFAULT ''::text NOT NULL,
+    aaguid uuid,
+    sign_count bigint DEFAULT 0 NOT NULL,
+    transports jsonb DEFAULT '[]'::jsonb NOT NULL,
+    backup_eligible boolean DEFAULT false NOT NULL,
+    backed_up boolean DEFAULT false NOT NULL,
+    friendly_name text DEFAULT ''::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_used_at timestamp with time zone
+);
+
+
+--
+-- Name: agro_listino; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agro_listino (
+    sku text NOT NULL,
+    formato text NOT NULL,
+    kg_per_conf numeric NOT NULL,
+    prezzo_a numeric NOT NULL,
+    prezzo_b numeric,
+    prezzo_c numeric,
+    prezzo_d numeric,
+    iva_pct integer DEFAULT 4 NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: agro_mapping; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agro_mapping (
+    label_intervento text NOT NULL,
+    sku_piccolo text NOT NULL,
+    kg_piccolo numeric NOT NULL,
+    sku_grande text,
+    kg_grande numeric,
+    soglia integer,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
 -- Name: app_config; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3573,7 +3665,8 @@ CREATE TABLE public.commissioni (
     tipo_operazione text DEFAULT 'vendita'::text,
     privacy_required boolean DEFAULT false,
     privacy_acknowledged boolean DEFAULT false,
-    is_preventivo boolean DEFAULT false
+    is_preventivo boolean DEFAULT false,
+    stato_preventivo text DEFAULT 'in_attesa'::text
 );
 
 
@@ -3694,6 +3787,26 @@ ALTER SEQUENCE public.noleggio_abbonamenti_id_seq OWNED BY public.noleggio_abbon
 
 
 --
+-- Name: noleggio_archivio; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.noleggio_archivio (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    nome_cliente text,
+    data_da date,
+    data_a date,
+    n_giorni integer,
+    totale_preventivo numeric,
+    note text,
+    carrello jsonb,
+    pdf_url text,
+    sopralluogo_id uuid,
+    cliente_id uuid
+);
+
+
+--
 -- Name: noleggio_listini; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3804,7 +3917,8 @@ CREATE TABLE public.pratovivo_archivio (
     miscuglio_nome text,
     totale_preventivo numeric,
     pdf_params jsonb,
-    note text
+    note text,
+    data_inizio date
 );
 
 
@@ -3937,14 +4051,14 @@ CREATE TABLE public.pv_piani (
     is_active boolean DEFAULT true,
     sort_order integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now(),
-    linea text DEFAULT 'albatros'::text NOT NULL,
+    linea text DEFAULT 'albatros'::text,
     terreno text DEFAULT 'normale'::text NOT NULL,
     data_inizio date,
     data_fine date,
     esteso_12_mesi boolean DEFAULT false NOT NULL,
     colore_prato text,
     CONSTRAINT pv_piani_colore_prato_check CHECK ((colore_prato = ANY (ARRAY['intenso'::text, 'pallido'::text]))),
-    CONSTRAINT pv_piani_linea_check CHECK ((linea = ANY (ARRAY['albatros'::text, 'mivena'::text]))),
+    CONSTRAINT pv_piani_linea_check CHECK ((linea = ANY (ARRAY['albatros'::text, 'mivena'::text, 'eden'::text]))),
     CONSTRAINT pv_piani_terreno_check CHECK ((terreno = ANY (ARRAY['normale'::text, 'sabbioso'::text])))
 );
 
@@ -4006,6 +4120,36 @@ CREATE TABLE public.pv_prodotti (
     linea text,
     su_ordinazione boolean DEFAULT false NOT NULL,
     CONSTRAINT pv_prodotti_linea_check CHECK ((linea = ANY (ARRAY['albatros'::text, 'mivena'::text, 'kare'::text, 'zefir'::text, 'coadiuvanti'::text, 'ares_seed'::text, 'altro'::text])))
+);
+
+
+--
+-- Name: sopralluoghi; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sopralluoghi (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    operatore text,
+    stato text DEFAULT 'bozza'::text,
+    cliente text,
+    luogo text,
+    data_sopralluogo date,
+    superficie integer,
+    irrigazione text,
+    tessitura text,
+    compattamento text,
+    drenaggio text,
+    lavorazioni_preg text,
+    infestanti text,
+    ph text,
+    stato_vegetativo text,
+    note_tecniche text,
+    relazione_ai text,
+    piano_id uuid,
+    foto_urls text[],
+    ce_terreno text,
+    cliente_id uuid
 );
 
 
@@ -4079,10 +4223,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_03_13; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_03_28; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_13 (
+CREATE TABLE realtime.messages_2026_03_28 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4095,10 +4239,10 @@ CREATE TABLE realtime.messages_2026_03_13 (
 
 
 --
--- Name: messages_2026_03_14; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_03_29; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_14 (
+CREATE TABLE realtime.messages_2026_03_29 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4111,10 +4255,10 @@ CREATE TABLE realtime.messages_2026_03_14 (
 
 
 --
--- Name: messages_2026_03_15; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_03_30; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_15 (
+CREATE TABLE realtime.messages_2026_03_30 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4127,10 +4271,10 @@ CREATE TABLE realtime.messages_2026_03_15 (
 
 
 --
--- Name: messages_2026_03_16; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_03_31; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_16 (
+CREATE TABLE realtime.messages_2026_03_31 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4143,10 +4287,10 @@ CREATE TABLE realtime.messages_2026_03_16 (
 
 
 --
--- Name: messages_2026_03_17; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_01; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_17 (
+CREATE TABLE realtime.messages_2026_04_01 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4159,10 +4303,10 @@ CREATE TABLE realtime.messages_2026_03_17 (
 
 
 --
--- Name: messages_2026_03_18; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_02; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_18 (
+CREATE TABLE realtime.messages_2026_04_02 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4175,10 +4319,10 @@ CREATE TABLE realtime.messages_2026_03_18 (
 
 
 --
--- Name: messages_2026_03_19; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_03; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_19 (
+CREATE TABLE realtime.messages_2026_04_03 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4376,52 +4520,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_03_13; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_28; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_13 FOR VALUES FROM ('2026-03-13 00:00:00') TO ('2026-03-14 00:00:00');
-
-
---
--- Name: messages_2026_03_14; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_14 FOR VALUES FROM ('2026-03-14 00:00:00') TO ('2026-03-15 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_28 FOR VALUES FROM ('2026-03-28 00:00:00') TO ('2026-03-29 00:00:00');
 
 
 --
--- Name: messages_2026_03_15; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_29; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_15 FOR VALUES FROM ('2026-03-15 00:00:00') TO ('2026-03-16 00:00:00');
-
-
---
--- Name: messages_2026_03_16; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_16 FOR VALUES FROM ('2026-03-16 00:00:00') TO ('2026-03-17 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_29 FOR VALUES FROM ('2026-03-29 00:00:00') TO ('2026-03-30 00:00:00');
 
 
 --
--- Name: messages_2026_03_17; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_30; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_17 FOR VALUES FROM ('2026-03-17 00:00:00') TO ('2026-03-18 00:00:00');
-
-
---
--- Name: messages_2026_03_18; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_18 FOR VALUES FROM ('2026-03-18 00:00:00') TO ('2026-03-19 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_30 FOR VALUES FROM ('2026-03-30 00:00:00') TO ('2026-03-31 00:00:00');
 
 
 --
--- Name: messages_2026_03_19; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_31; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_19 FOR VALUES FROM ('2026-03-19 00:00:00') TO ('2026-03-20 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_31 FOR VALUES FROM ('2026-03-31 00:00:00') TO ('2026-04-01 00:00:00');
+
+
+--
+-- Name: messages_2026_04_01; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_01 FOR VALUES FROM ('2026-04-01 00:00:00') TO ('2026-04-02 00:00:00');
+
+
+--
+-- Name: messages_2026_04_02; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_02 FOR VALUES FROM ('2026-04-02 00:00:00') TO ('2026-04-03 00:00:00');
+
+
+--
+-- Name: messages_2026_04_03; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_03 FOR VALUES FROM ('2026-04-03 00:00:00') TO ('2026-04-04 00:00:00');
 
 
 --
@@ -4667,6 +4811,7 @@ COPY auth.schema_migrations (version) FROM stdin;
 20260115000000
 20260121000000
 20260219120000
+20260302000000
 \.
 
 
@@ -4703,6 +4848,77 @@ COPY auth.users (instance_id, id, aud, role, email, encrypted_password, email_co
 
 
 --
+-- Data for Name: webauthn_challenges; Type: TABLE DATA; Schema: auth; Owner: -
+--
+
+COPY auth.webauthn_challenges (id, user_id, challenge_type, session_data, created_at, expires_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: webauthn_credentials; Type: TABLE DATA; Schema: auth; Owner: -
+--
+
+COPY auth.webauthn_credentials (id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, transports, backup_eligible, backed_up, friendly_name, created_at, updated_at, last_used_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: agro_listino; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.agro_listino (sku, formato, kg_per_conf, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva_pct, created_at) FROM stdin;
+Eden 7 5kg	5 kg	5	14.90	14.20	\N	\N	4	2026-03-30 06:03:54.895192+00
+Eden 8 5kg	5 kg	5	17.30	16.50	\N	\N	4	2026-03-30 06:03:54.895192+00
+Green 7 25kg	25 kg	25	45.30	43.00	38.70	34.90	4	2026-03-30 06:03:54.895192+00
+Green 8 25kg	25 kg	25	57.70	54.80	49.30	44.40	4	2026-03-30 06:03:54.895192+00
+Vigor Active 5kg	5 kg	5	13.80	13.10	\N	\N	4	2026-03-30 06:03:54.895192+00
+Vigor Active 25kg	25 kg	25	50.40	47.90	43.00	38.70	4	2026-03-30 06:03:54.895192+00
+AllRound 20kg	20 kg	20	61.30	58.30	54.20	51.50	4	2026-03-30 06:03:54.895192+00
+Universal Top 20kg	20 kg	20	59.40	56.50	52.60	50.00	4	2026-03-30 06:03:54.895192+00
+Pro Starter 20kg	20 kg	20	72.20	68.60	63.80	60.60	4	2026-03-30 06:03:54.895192+00
+Pro Slow 20kg	20 kg	20	71.30	67.80	63.00	59.90	4	2026-03-30 06:03:54.895192+00
+Humifitos 5kg	5 kg	5	34.20	30.80	\N	\N	4	2026-03-30 06:03:54.895192+00
+Humifitos 25kg	25 kg	25	115.00	103.00	\N	\N	4	2026-03-30 06:03:54.895192+00
+Root Speed 5kg	5 kg	5	49.00	44.10	\N	\N	4	2026-03-30 06:03:54.895192+00
+Algapark 1kg	1 kg	1	32.90	29.60	\N	\N	4	2026-03-30 06:03:54.895192+00
+Algapark 5kg	5 kg	5	140.00	126.00	\N	\N	4	2026-03-30 06:03:54.895192+00
+Wet Turf 1lt	1 lt	1	65.90	62.60	\N	\N	22	2026-03-30 06:03:54.895192+00
+Wet Turf 5lt	5 lt	5	230.60	219.00	\N	\N	22	2026-03-30 06:03:54.895192+00
+Micosat F MO 5kg	5 kg	5	140.40	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat F PG 1kg	1 kg	1	31.20	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat F Uno 200g	200 g	0.2	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat Tab Plus Mini 100g	100 g	0.1	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat Len Mini 100g	100 g	0.1	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+\.
+
+
+--
+-- Data for Name: agro_mapping; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.agro_mapping (label_intervento, sku_piccolo, kg_piccolo, sku_grande, kg_grande, soglia, created_at) FROM stdin;
+Green 7	Eden 7 5kg	5	Green 7 25kg	25	3	2026-03-30 06:03:54.895192+00
+Green 8	Eden 8 5kg	5	Green 8 25kg	25	3	2026-03-30 06:03:54.895192+00
+Green 8 Prestige	Eden 8 5kg	5	Green 8 25kg	25	3	2026-03-30 06:03:54.895192+00
+Vigor Active	Vigor Active 5kg	5	Vigor Active 25kg	25	3	2026-03-30 06:03:54.895192+00
+AllRound	AllRound 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+AllRound 19-5-14	AllRound 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Universal Top	Universal Top 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Pro Starter	Pro Starter 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Pro Slow	Pro Slow 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Humifitos	Humifitos 5kg	5	Humifitos 25kg	25	3	2026-03-30 06:03:54.895192+00
+Root Speed	Root Speed 5kg	5	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Algapark	Algapark 1kg	1	Algapark 5kg	5	\N	2026-03-30 06:03:54.895192+00
+Wet Turf	Wet Turf 1lt	1	Wet Turf 5lt	5	\N	2026-03-30 06:03:54.895192+00
+Micosat F PG	Micosat F PG 1kg	1	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Micosat F MO	Micosat F MO 5kg	5	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Micosat F MO/PG	Micosat F PG 1kg	1	Micosat F MO 5kg	5	2	2026-03-30 06:03:54.895192+00
+Humifitos + Micosat F	Humifitos 5kg	5	Humifitos 25kg	25	3	2026-03-30 06:03:54.895192+00
+\.
+
+
+--
 -- Data for Name: app_config; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -4720,13 +4936,14 @@ COPY public.clienti (id, created_at, updated_at, nome, cognome, nome_completo, i
 261a7915-ee90-4765-8365-fe199a9205bc	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	AZ. AGR. Vivai Piante Di Dragancea Andrei			VIA ARRIGO BOITO, 10 - BIANCADE	31056	RONCADE	TV	3282670287	andrei.dragancea@gmail.com		\N	\N	az. agr. vivai piante di dragancea andrei roncade 	migrazione	\N	\N
 801e707a-242b-4c15-ad22-0b6e1fe776f5	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Bergamo Nello - Impresa Edile			VIA G. GALILEI N. 19	31048	SAN BIAGIO DI CALLALTA	TV	0422 897964			\N	\N	bergamo nello - impresa edile san biagio di callalta 	migrazione	\N	\N
 aab0f8c6-cd23-40a0-bb56-3d2137d0591a	2026-03-09 09:53:17.719742+00	2026-03-09 09:53:17.719742+00	Denis	Battistel	Battistel Denis	Via Francescata 6	31048	San Biagio di Callalta	TV	3280864412	battisteldenis@gmail.com	\N	\N	\N	Battistel Denis	manuale	\N	\N
-9782a688-1195-441c-92fa-8c588bff588a	2026-03-11 09:23:07.636654+00	2026-03-11 09:23:07.636654+00	Claudio	Apvan	Apvan Claudio	Via Rovigo 10	30024	Musile Di Piave	VE	3246197179	\N	\N	\N	\N	Apvan Claudio	manuale	\N	\N
 3f80ed4d-467a-445b-bec1-68899a8248bb	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Buffon Giancarlo			VIA MARONCELLI 6	31038	PAESE	TV	3496148085			\N	\N	buffon giancarlo paese 	migrazione	\N	\N
 3d0adf61-de7a-4a05-a014-e84f0303f9d7	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Cadorin Roberto			VIA PARIS BORDONE, 39 - BIANCADE	31056	RONCADE	TV	3479715095			\N	\N	cadorin roberto roncade 	migrazione	\N	\N
 a168c56d-e577-4eb2-b83c-1a4a61df1cd5	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Camarotto Michele			VIA PASSO LAMPOL, 27/A	30020	FOSSALTA DI PIAVE	VE	3484460983	saradilegui@libero.it		\N	\N	camarotto michele fossalta di piave 	migrazione	\N	\N
 ab516c2b-278b-493d-9a04-574dbaefb17b	2026-03-11 16:13:22.44597+00	2026-03-11 16:13:22.44597+00	Sergio	Zanetti	Zanetti Sergio	Via Fornace 24	\N	Marcon	VE	3477341198	magali.ditadi@virgilio.it	\N	\N	\N	Zanetti Sergio	manuale	\N	\N
 3dba584f-8c09-4aed-92f5-a797ad7ab50b	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Chiericati Massimo			VIA SEBASTIANO CABOTO, 13 - SELVANA	31100	TREVISO	TV	3407860739		Fronte Hotel Carletto	\N	\N	chiericati massimo treviso fronte hotel carletto	migrazione	\N	\N
 07f49ea8-5d4e-4703-8ffb-33ad02dd8f34	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	D'AMELIO Vincenzo			VIA PRINCIPE, 85/A - MUSESTRE	31056	RONCADE	TV	3450818865			\N	\N	d'amelio vincenzo roncade 	migrazione	\N	\N
+9782a688-1195-441c-92fa-8c588bff588a	2026-03-11 09:23:07.636654+00	2026-03-24 18:38:23.743693+00	Claudio	Apvan	Apvan Claudio	Via Rovigo 10	30024	Musile Di Piave	VE	3246197179	\N	\N	\N	\N	Apvan Claudio	manuale	2026-03-24 18:38:23.581+00	\N
+2f866dfb-266b-415a-b6d3-ed7e6cf0861f	2026-03-19 16:19:36.745988+00	2026-03-24 18:38:38.409958+00	toni	pozzobon	pozzobon toni	\N	\N	\N	\N	\N	\N	\N	\N	\N	pozzobon toni	manuale	2026-03-24 18:38:38.235+00	\N
 5a838744-02ab-4e62-bb27-c957ac1ff732	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Moretti Marco			VIA TIMAVO	31100	TREVISO	TV	3392050119	moretti72.marco@libero.it		\N	\N	moretti marco treviso 	migrazione	\N	\N
 a30d71c6-49e4-4587-adc2-d9cb771e0186	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Nico Giardini Di Bastarolo Nicola			VIA G.B. GUIDINI, 29	31059	ZERO BRANCO	TV	3498200169	nickbast74@gmail.com		\N	\N	nico giardini di bastarolo nicola zero branco 	migrazione	\N	\N
 1796fc21-d0ea-49ad-88f8-6408fedd44f3	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Piovesan Andrea			VIA PAVANI, 37A	31050	MONASTIER DI TREVISO	TV	3202725545			\N	\N	piovesan andrea monastier di treviso 	migrazione	\N	\N
@@ -4738,11 +4955,13 @@ a30d71c6-49e4-4587-adc2-d9cb771e0186	2026-03-01 18:24:01.415968+00	2026-03-01 18
 a0f77d7b-6122-46c8-afb6-ce56c6356b80	2026-03-09 17:02:25.77655+00	2026-03-09 17:02:25.77655+00	MARCO	BROLLO	BROLLO MARCO	VIA FRIULI	31048	SAN BIAGIO DI CALLALTA	\N	\N	\N	\N	\N	\N	BROLLO MARCO	manuale	\N	\N
 0df8653c-097f-41e7-87c9-01ba2d8f9c11	2026-03-01 18:24:21.558338+00	2026-03-01 18:24:21.558338+00	M&A Saterini Snc			VIA UGO FOSCOLO, 19	31100	TREVISO	TV	3341760622	saterinisnc@libero.it		\N	\N	m&a saterini snc treviso 	migrazione	\N	\N
 6bf65e71-0cb6-4772-a26c-085a7619a0ff	2026-03-11 09:25:28.664558+00	2026-03-11 09:25:28.664558+00	Claudio	Pavan	Pavan Claudio	Via Rovigo 10	\N	Musile Di Piave	VE	3246197179	\N	\N	\N	\N	Pavan Claudio	manuale	\N	\N
+c7ba5eea-06d8-4641-9bd5-4209c4a00bdc	2026-03-19 12:55:30.082495+00	2026-03-19 12:55:30.082495+00	Andrea	Marcon	Marcon Andrea	piazza 2 giugno 7	\N	Roncade	TV	3474535632	\N	\N	\N	\N	Marcon Andrea	manuale	\N	\N
 2a4a4dd3-de02-4d91-a66d-75f51bf18ef6	2026-03-01 18:24:21.558338+00	2026-03-01 18:24:21.558338+00	Patruno Franco			VIA TREVISO MARE, 8	31048	SAN BIAGIO DI CALLALTA	TV	3935553311			\N	\N	patruno franco san biagio di callalta 	migrazione	\N	\N
+1b22bb1d-dcdf-4af7-af74-02311a3dda35	2026-03-01 18:24:36.226009+00	2026-03-24 18:37:55.527263+00	Habitat Natura Di Simone Taffarello			VIA SAN FLORIANO, 11/A - OLMI	31048	SAN BIAGIO DI CALLALTA	TV	335312402	info@habitatnatura.it		\N	\N	habitat natura di simone taffarello san biagio di callalta 	migrazione	2026-03-24 18:37:55.373+00	\N
+2982b789-8cef-4b17-9fbe-c0636bfb60d5	2026-03-24 18:35:44.21738+00	2026-03-24 18:38:29.740017+00	Pallino	Pinco	Pinco Pallino	via  verdi 10	\N	treviso	\N	\N	\N	\N	\N	\N	Pinco Pallino	manuale	2026-03-24 18:38:29.551+00	\N
 9329ffa1-03e3-4100-9df4-7abcd8afbbfa	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Bisetto Mario			VIA CODALUNGA, 135	31030	CARBONERA	TV	3493730882			\N	\N	bisetto mario carbonera 	migrazione	\N	\N
 45b79d4b-f42b-4ea0-a3ec-c5632485cb69	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Bonetto Franco			VIA ORTIGARA, 7 - FAGARE'	31048	SAN BIAGIO DI CALLALTA	TV	3452383445			\N	\N	bonetto franco san biagio di callalta 	migrazione	\N	\N
 a78ddf9e-9b8e-4a33-9450-11e09edb35a8	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Eos Cooperativa Sociale			VIA OSPEDALE, 10	31033	CASTELFRANCO VENETO	TV	3402249187	info@eoscooperativa.it		\N	\N	eos cooperativa sociale castelfranco veneto 	migrazione	\N	\N
-1b22bb1d-dcdf-4af7-af74-02311a3dda35	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Habitat Natura Di Simone Taffarello			VIA SAN FLORIANO, 11/A - OLMI	31048	SAN BIAGIO DI CALLALTA	TV	335312402	info@habitatnatura.it		\N	\N	habitat natura di simone taffarello san biagio di callalta 	migrazione	\N	\N
 16b3b51f-d6df-46b0-8c27-7aa926ed023b	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Mareverde Srls			Via Zuccarini, 11	30016	JESOLO	VE	0421230013	info@vivaisorgon.it	Simone 335490390	\N	\N	mareverde srls jesolo simone 335490390	migrazione	\N	\N
 1580243e-3528-49a9-aba1-ffb58a3c6067	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Scomparin Pierino			VIA BELVEDERE, 71	31057	SILEA	TV	3394191177			\N	\N	scomparin pierino silea 	migrazione	\N	\N
 8af0ed4c-1596-4504-bb74-151868b8b448	2026-03-07 03:59:52.034349+00	2026-03-07 04:03:11.935774+00	Simone	Taffarello	Taffarello Simone	VIA PIAVE 71	31023	Resana	TV	335312402	simonetaffarello@gmail.com	\N	\N	\N	Taffarello Simone	manuale	2026-03-07 04:03:11.781+00	\N
@@ -4753,121 +4972,179 @@ a78ddf9e-9b8e-4a33-9450-11e09edb35a8	2026-03-01 18:24:36.226009+00	2026-03-01 18
 -- Data for Name: commissioni; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.commissioni (id, created_at, cliente, cliente_info, telefono, operatore, prodotti, accessori, totale, caparra, metodo_pagamento, note, tipo_documento, status, completed_at, iva_compresa, user_id, tipo_operazione, privacy_required, privacy_acknowledged, is_preventivo) FROM stdin;
-1773154024602	2026-03-10 14:47:04.601+00	Cenedese Paolo	{"id": "501568", "cap": "31057", "nome": "Cenedese Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3393170646", "indirizzo": "VIA CRETA, 2", "provincia": "TV", "searchText": "cenedese paolo silea ", "telefonoOriginale": "3393170646"}	3393170646	Simone	[]	[{"id": 1773154012039, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-10 14:47:04.601+00	f	user_1773139186105	vendita	f	f	f
-1773245655924	2026-03-11 16:14:15.315+00	Zanetti Sergio	{"cf": null, "id": "ab516c2b-278b-493d-9a04-574dbaefb17b", "cap": null, "sdi": null, "nome": "Zanetti Sergio", "piva": null, "email": "magali.ditadi@virgilio.it", "nomeP": "Zanetti Sergio", "localita": "Marcon", "telefono": "3477341198", "indirizzo": "Via Fornace 24", "provincia": "VE", "searchText": "Zanetti Sergio"}	3477341198	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 55 R", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838434202"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-11 16:14:15.315+00	t	user_1769961017929	vendita	f	f	f
-1771333556925	2026-02-17 11:00:00+00	Eos Cooperativa Sociale	{"id": "508412", "cap": "31033", "nome": "Eos Cooperativa Sociale", "email": "info@eoscooperativa.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3402249187", "indirizzo": "VIA OSPEDALE, 10", "provincia": "TV", "searchText": "eos cooperativa sociale castelfranco veneto ", "telefonoOriginale": "3402249187"}	3402249187	Simone	[]	[{"id": 1771333442068, "nome": "Stihl bobina filo tondo 2,7 MT 208 art. 0000 930 2227", "prezzo": 29.28, "quantita": 51, "matricola": null, "aliquotaIva": 22}]	0	\N	\N	Consegnare e ritirare 36 bobine filo 2,7 347 MT art. 0000 930 2289 per cambio articolo	fattura	completed	2026-02-17 11:00:00+00	t	user_1769961017929	cambio	f	f	f
-1772470754631	2026-03-02 16:59:14.321+00	Edil Demi Di Covassin Demido	{"id": "502529", "cap": "31048", "nome": "Edil Demi Di Covassin Demido", "email": "edil-demi@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3482652180", "indirizzo": "VIA POSTUMIA CENTRO , 16/A", "provincia": "TV", "searchText": "edil demi di covassin demido san biagio di callalta ", "telefonoOriginale": "3482652180"}	3482652180	Simone	[{"brand": "STIHL", "model": "Troncatrice TS 910.0i, 400mm/16\\"", "prezzo": 1980, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196978666"}]	[{"id": 1772470732908, "nome": "Motomix 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2007	\N	\N	\N	fattura	completed	2026-03-02 16:59:14.321+00	t	user_1769961017929	vendita	f	f	f
-1772698454042	2026-03-05 08:14:14.042+00	Visentin Roberto	{"id": "509469", "cap": "31030", "nome": "Visentin Roberto", "email": "spazzioverde1@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3467443956", "indirizzo": "VIA ANGELA VERONESE, 22", "provincia": "TV", "searchText": "visentin roberto breda di piave ", "telefonoOriginale": "3467443956"}	3467443956	Simone	[]	[{"id": 1772698447121, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	81.5	\N	\N	\N	scontrino	completed	2026-03-05 08:14:14.042+00	t	user_1770584612559	vendita	f	f	f
-1772810660020	2026-03-06 15:24:20.02+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1772810629122, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	86	\N	\N	\N	scontrino	completed	2026-03-06 15:24:20.02+00	f	user_1772789533838	vendita	f	f	f
-1773050032197	2026-03-09 11:00:00+00	Battistel Denis	{"cf": null, "id": "aab0f8c6-cd23-40a0-bb56-3d2137d0591a", "cap": "31048", "sdi": null, "nome": "Battistel Denis", "piva": null, "email": "battisteldenis@gmail.com", "nomeP": "Battistel Denis", "localita": "San Biagio di Callalta", "telefono": "3280864412", "indirizzo": "Via Francescata 6", "provincia": "TV", "searchText": "Battistel Denis"}	3280864412	Simone	[]	[{"id": 1773050023366, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1773050391718, "nome": "HURRICANE KG 5", "prezzo": 54.45, "quantita": 1}]	149.85	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1773331552845	2026-03-12 16:05:52.845+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773331548714, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-12 16:05:52.845+00	t	user_1773313248876	vendita	f	f	f
-1773393167815	2026-03-13 09:12:47.063+00	Massolin Franco	{"id": "511612", "cap": "31030", "nome": "Massolin Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3332889392", "indirizzo": "VIA SILE, 9", "provincia": "TV", "searchText": "massolin franco casier ", "telefonoOriginale": "3332889392"}	3332889392	Simone	[{"brand": "VOLPI", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0633NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-13 09:12:47.063+00	t	user_1769961017929	vendita	f	f	f
-1773479195906	2026-03-14 09:06:35.507+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451614118"}]	[{"id": 1773479187913, "nome": "Cuffia Peltor", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	204	\N	\N	\N	scontrino	completed	2026-03-14 09:06:35.507+00	t	user_1769961017929	vendita	f	f	f
-1773482595511	2026-03-14 10:03:15.133+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80.R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548926738"}]	[{"id": 1773482575778, "nome": "Zaino Volpi Vita 12", "prezzo": 119, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	498	\N	\N	\N	scontrino	completed	2026-03-14 10:03:15.133+00	t	user_1769961017929	vendita	f	f	f
-1772193413182	2026-02-27 11:56:52.399+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[{"brand": "Volpi", "model": "Decespugliatore Ciao", "prezzo": 36, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	36	\N	\N	\N	scontrino	completed	2026-02-27 11:56:52.399+00	f	user_1769961017929	vendita	f	f	f
-1772471899116	2026-03-02 17:18:18.951+00	Viviani Antonio	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS-280TES", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C75138079230"}]	[{"id": 1772471856132, "nome": "Marline 2 T 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772471886378, "nome": "Olio catena Pro Up 2 litri", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	337	\N	\N	\N	scontrino	completed	2026-03-02 17:18:18.951+00	t	user_1769961017929	vendita	f	f	f
-1772814552841	2026-03-06 16:29:12.841+00	Lombardi Pietro	\N	\N	Simone	[{"brand": "Stocker", "model": "Irroratore Geyser Pro", "prezzo": 1590, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "2541572916785"}]	[{"id": 1772814456411, "nome": "Alimentatore", "prezzo": 124, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1714	\N	\N	\N	fattura	completed	2026-03-06 16:29:53.647+00	t	user_1770584612559	vendita	f	f	f
-1773052842702	2026-03-09 10:40:42.702+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773052836762, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-09 10:40:42.702+00	t	user_1773043211070	vendita	f	f	f
-1773159163790	2026-03-10 16:12:43.197+00	Il Filo D'ERBA Di De Bernardo Sebastiano	{"id": "202718", "cap": "30020", "nome": "Il Filo D'ERBA Di De Bernardo Sebastiano", "email": "sebastiano.ilfiloderba@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MARCON", "telefono": "3395274358", "indirizzo": "VIA MONTE PELMO, 8", "provincia": "VE", "searchText": "il filo d'erba di de bernardo sebastiano marcon ", "telefonoOriginale": "3395274358"}	3395274358	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1069705"}]	[]	959	\N	\N	\N	fattura	completed	2026-03-10 16:12:43.197+00	t	user_1769961017929	vendita	f	f	f
-1773248038153	2026-03-11 16:53:58.152+00	CARDIN SIMONE	\N	\N	Simone	[]	[{"id": 1773247391717, "nome": "NEBUZAN REPELLENTE LT. 5", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1773247441666, "nome": "PIREKRAFT INSETTICIDA CON CONCENTRATO", "prezzo": 42, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	182	\N	\N	\N	scontrino	completed	2026-03-11 16:53:58.152+00	f	user_1773240946720	vendita	f	f	f
-1772699565277	2026-03-05 08:32:45.274+00	Fantuzzo Luca	\N	\N	Simone	[{"brand": "Honda", "model": "Trattorino HF2625 HME", "prezzo": 6199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBWF-1600622"}]	[]	6199	3000	pos	Consegna a domicilio appena pronto. Saldo con bonifico bancario	scontrino	completed	2026-03-12 13:28:13.02+00	t	user_1769961017929	vendita	f	f	f
-1773336328776	2026-03-12 17:25:28.775+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1773336279404, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	104	\N	\N	\N	scontrino	completed	2026-03-12 17:25:28.775+00	t	user_1773313248876	vendita	f	f	f
-1773396968435	2026-03-13 10:16:08.435+00	Rizzo Ennio	\N	\N	Simone	[]	[{"id": 1773396950449, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773396959427, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	162	\N	\N	\N	scontrino	completed	2026-03-13 10:16:08.435+00	t	user_1770584612559	vendita	f	f	f
-recovered-131	2026-01-28 11:00:00+00	Favero Giardini Di Favero Mirco	\N	\N	Simone	[]	[{"nome": "GANCIO TRAINO AVANT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	200	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-130	2026-01-28 11:00:00+00	Haprilla Kola	\N	\N	Simone	[]	[{"nome": "Trattorino John Deere x 165 usato, visto e piaciuto nello stato in cui si trova", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	1350	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f
-1773479316134	2026-03-14 09:08:35.998+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 100.0 PLUS CONTROL", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "970360968"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-14 09:08:35.998+00	t	user_1769961017929	vendita	f	f	f
-1773481363098	2026-03-14 09:42:42.231+00	Bortolato Franco	{"id": "512977", "cap": "30173", "nome": "Bortolato Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3461355202", "indirizzo": "VIA CA' FORNONI, 84", "provincia": "VE", "searchText": "bortolato franco favaro veneto ", "telefonoOriginale": "3461355202"}	3461355202	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519976"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "701192870"}, {"brand": "STIHL", "model": "Batteria AK 30.0 S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937874"}]	[{"id": 1773481125813, "nome": "Ritiro Vs decespugliatore usato ", "prezzo": -49, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	500	\N	\N	\N	scontrino	completed	2026-03-14 09:42:42.231+00	t	user_1769961017929	vendita	f	f	f
-1772267744154	2026-02-28 08:35:43.824+00	Bergamo Nello - Impresa Edile	{"id": "202992", "cap": "31048", "nome": "Bergamo Nello - Impresa Edile", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422 897964", "indirizzo": "VIA G. GALILEI N. 19", "provincia": "TV", "searchText": "bergamo nello - impresa edile san biagio di callalta ", "telefonoOriginale": "0422 897964"}	0422 897964	Simone	[{"brand": "NEGRI", "model": "Biotrituratore R95BRAHP65", "prezzo": 1600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "27489101"}]	[]	1600	\N	\N	\N	fattura	completed	2026-02-28 08:35:43.824+00	t	user_1769961017929	vendita	f	f	f
-1772529500057	2026-03-03 09:18:18.637+00	Ortolan Sara	\N	\N	Simone	[{"brand": "STIHL", "model": "Tosaerba RMA 239.1", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451990095"}, {"brand": "STIHL", "model": "AL 101", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "986413411"}, {"brand": "STIHL", "model": "AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736954"}, {"brand": "STIHL", "model": "Tagliabordi FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451521369"}, {"brand": "STIHL", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452100454"}]	[]	807	\N	\N	\N	scontrino	completed	2026-03-03 09:18:18.637+00	f	user_1769961017929	vendita	f	f	f
-1772706224154	2026-03-05 10:23:43.113+00	Tegon Sergio	{"id": "508520", "cap": "31048", "nome": "Tegon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422790312", "indirizzo": "VIA GOITO, 7 - SANT'ANDREA D I BARBARANA", "provincia": "TV", "searchText": "tegon sergio san biagio di callalta ", "telefonoOriginale": "0422790312"}	0422790312	Simone	[{"brand": "Honda", "model": "Motozappa F220K1 GET2", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "FAAJ-3620207"}]	[]	999	50	contanti	\N	scontrino	completed	2026-03-05 10:23:43.113+00	t	user_1769961017929	vendita	f	f	f
-1772869167515	2026-03-07 07:39:27.513+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1772869122905, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-07 07:39:27.513+00	f	user_1772867117490	vendita	f	f	f
-recovered-165	2026-02-14 11:00:00+00	Osan Emil Augustin	\N	\N	Simone	[{"brand": "STIHL", "model": "Tagliasiepi HL 92 C-E", "prezzo": 790, "aliquotaIva": 22, "serialNumber": "542187474"}]	[]	790	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-143	2026-02-07 11:00:00+00	Menegaldo Bruno	\N	\N	Simone	[{"brand": "Stihl", "model": "MOTOSEGA STIHL MS 661", "prezzo": 1630, "aliquotaIva": 22, "serialNumber": "193 545 593"}]	[]	1630	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-144	2026-02-07 11:00:00+00	XHELAJ REMZI	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "POTATORE KVS 8000", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "SL3325 371 NB"}, {"brand": "ACCESSORI", "model": "FORBICE KV 390", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "PZ 2925 390NB"}]	[{"nome": "1 CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	840	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-145	2026-02-07 11:00:00+00	Xhelaj Kreshnik	\N	\N	Simone	[{"brand": "ECHO", "model": "Motosega CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C 74638144456"}]	[]	439	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-140	2026-02-06 11:00:00+00	COMMISSATI FRANCESCA	\N	\N	Simone	[{"brand": "STIHL", "model": "BIOTRITURATORE GHE 105", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "451998874"}]	[{"nome": "Stihl POTATORE GTA 26 942966195", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AS 2 937201708", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 1 718061245", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	609	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-141	2026-02-06 11:00:00+00	CARRARO PAOLO	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 231", "prezzo": 539, "aliquotaIva": 22, "serialNumber": "194 053 082"}]	[]	539	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-142	2026-02-05 11:00:00+00	AZ. AGR. SEMPREVERDE DI TOFFOLI SONIA	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HLA 135", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "449925313"}]	[{"nome": "CUFFIA OPTIME", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "CUFFIA KRAMP", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	704.1	\N	\N	\N	scontrino	completed	2026-02-05 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HS82 R cm 75", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "197814730"}, {"brand": "Stihl", "model": "TOSASIEPI HSA140R cm 75", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "451286601"}]	[{"nome": "PALETTA MANUALE", "prezzo": 0, "quantita": 4, "aliquotaIva": 22}, {"nome": "MANICO ZM-V4", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}]	1677.14	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-162	2026-02-02 11:00:00+00	Bimetal	\N	\N	Simone	[]	[{"nome": "61 PMM3 Piccolo Micro Mini Catena", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "catena m47-91", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA 91 - 53M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "CATENA 1/4 1,1 52M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}]	132.55	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-136	2026-01-30 11:00:00+00	Tonini Srl	\N	\N	Simone	[]	[{"nome": "Pantalone Echo antitaglio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	95	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-134	2026-01-30 11:00:00+00	Taffarello Daniele	\N	\N	Simone	[{"brand": "Volpi", "model": "POTATORE VOLPI KVS 7100P", "prezzo": 409, "aliquotaIva": 22, "serialNumber": "SRØ123 Ø773LS"}]	[]	409	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-135	2026-01-30 11:00:00+00	Piovesan Andrea	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "Motosega MS 231", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "194053039"}]	[{"nome": "TANICA MOTOMIX 5 L", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	566.5	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-132	2026-01-28 11:00:00+00	Vacilotto Valerio	\N	\N	Simone	[{"brand": "STIHL", "model": "FORBICE STIHL ASA 20", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "707610915"}]	[{"nome": "BATTERIA AS 2", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	219	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-133	2026-01-28 11:00:00+00	AZ. AGR. POSSAMAI GIULIANO e C.	\N	\N	Simone	[{"brand": "ECHO", "model": "MOTOSEGA DCS 2500 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "T 91435039178"}]	[{"nome": "BATTERIA LBP 50-150", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ-560", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-128	2026-01-23 11:00:00+00	TONINI SRL	\N	\N	Simone	[{"brand": "Echo", "model": "MOTOSEGA CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C87940041531"}]	[]	439	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-124	2026-01-20 11:00:00+00	CORTESE MIRCO	\N	\N	Simone	[]	[{"nome": "POTATORE HTA 50", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATTERIA AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK2O", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	459	\N	\N	\N	scontrino	completed	2026-01-20 11:00:00+00	t	Simone	vendita	f	f	f
-1772269324233	2026-02-28 09:02:04.233+00	M&A Saterini Snc	{"id": "512498", "cap": "31100", "nome": "M&A Saterini Snc", "email": "saterinisnc@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3341760622", "indirizzo": "VIA UGO FOSCOLO, 19", "provincia": "TV", "searchText": "m&a saterini snc treviso ", "telefonoOriginale": "3341760622"}	3341760622	Simone	[]	[{"id": 1772269310543, "nome": "Svettatoio RCM Wolf", "prezzo": 82, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	82	\N	\N	\N	fattura	completed	2026-02-28 09:02:04.233+00	t	user_1769961017929	vendita	f	f	f
-1772530049616	2026-03-03 09:27:29.616+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[]	[{"id": 1772530032547, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-03 09:27:29.616+00	t	user_1772521427039	vendita	f	f	f
-1773217623696	2026-03-11 08:27:03.352+00	Boccardelli Alessandro	{"id": "501331", "cap": "31030", "nome": "Boccardelli Alessandro", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3477767769", "indirizzo": "VIA PER CAVRIE, 16 - SAN BARTOLOMEO", "provincia": "TV", "searchText": "boccardelli alessandro breda di piave ", "telefonoOriginale": "3477767769"}	3477767769	Simone	[{"brand": "Honda", "model": "Rasaerba HRX476C2 HYEH", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBYF1064510"}]	[]	1250	\N	\N	\N	scontrino	completed	2026-03-11 08:27:03.352+00	t	user_1769961017929	vendita	f	f	f
-recovered-129	2026-01-26 11:00:00+00	PAOLO BARBON	\N	\N	Simone	[]	[{"nome": "WEIBANG TRINCIAERBA CARDANO 3 VELOCITA WBBC537SCV", "prezzo": 1350, "quantita": 1, "aliquotaIva": 22}]	1350	100	contanti	cell. 3464744611	scontrino	completed	2026-01-26 11:00:00+00	t	Simone	vendita	f	f	f
-1772785776569	2026-03-06 08:29:36.569+00	Taffarello Giuliano	{"id": "504173", "cap": "31030", "nome": "Taffarello Giuliano", "email": "giuliano.taffarello@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3356947922", "indirizzo": "VIA GRANDE DI MIGNAGOLA, 73", "provincia": "TV", "searchText": "taffarello giuliano carbonera ", "telefonoOriginale": "3356947922"}	3356947922	Simone	[{"brand": "Segway", "model": "Robot tosaerba X430E", "prezzo": 3500, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	3500	500	pos	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f
-1772872572362	2026-03-07 08:36:11.624+00	Favaro Arnaldo	{"id": "512983", "cap": "31056", "nome": "Favaro Arnaldo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3391572851", "indirizzo": "VIA GALLI, 39/B", "provincia": "TV", "searchText": "favaro arnaldo roncade ", "telefonoOriginale": "3391572851"}	3391572851	Admin	[{"brand": "STIHL", "model": " MSA 70.0 C", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200572"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "45204006535AE021G02910599504"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702287103"}]	[]	398	\N	\N	\N	scontrino	completed	2026-03-07 08:36:11.624+00	t	user_1772723709793	vendita	f	f	f
-1773068231847	2026-03-09 11:00:00+00	vivai lovisetto marco	\N	\N	Simone	[]	[{"id": 1773068091299, "nome": "MOLLA A TAZZA 40 X20,4X0,5", "prezzo": 1.56, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091300, "nome": "PERNO LAMA FD", "prezzo": 7.95, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091301, "nome": "LAMA PIATTO CLS9/CLS10/TRINCIA", "prezzo": 16.8, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091302, "nome": "RONDELLA 35 X 12,5 X 6", "prezzo": 2.05, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091303, "nome": "DADO 12X1,75 AUTUBL BASSO", "prezzo": 0.33, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	57.38	\N	\N	\N	fattura	completed	2026-03-09 11:00:00+00	f	user_1769961017929	vendita	f	f	f
-1773338235441	2026-03-12 17:57:15.441+00	CENEDESE FABRIZIO	\N	\N	Simone	[]	[{"id": 1773338206431, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-12 17:57:15.441+00	t	user_1773313248876	vendita	f	f	f
-1773419112396	2026-03-13 16:25:12.044+00	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	{"id": "511430", "cap": "31056", "nome": "Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS", "email": "amministrazione@castellodironcade.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3336023178 GEROMEL", "indirizzo": "VIA ROMA, 141- INT.8", "provincia": "TV", "searchText": "castello di roncade soc.agr.di ciani bassetti claudio e c.ss roncade ", "telefonoOriginale": "3336023178 GEROMEL"}	3336023178 GEROMEL	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105586"}]	[]	599	\N	\N	\N	fattura	completed	2026-03-13 16:25:12.044+00	t	user_1769961017929	vendita	f	f	f
-recovered-126	2026-01-23 11:00:00+00	AZ. AGR. Moz Moreno	\N	\N	Simone	[]	[{"nome": "SET CINTURA ADVANCE X-FLEX N°4", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	98	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-127	2026-01-23 11:00:00+00	Bortolato Alessandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "1 Motosega MS 182", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "837 262 464"}]	[{"nome": "1 Mix Marline 5LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "1 Olio PRO-UP 2LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	417	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-125	2026-01-22 11:00:00+00	BIANCO DAVIDE	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS3410", "prezzo": 269, "aliquotaIva": 22, "serialNumber": "F09238003622"}]	[]	269	\N	\N	\N	scontrino	completed	2026-01-22 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-123	2026-01-19 11:00:00+00	Toffolo Alessandro	\N	\N	Simone	[]	[{"nome": "Pantalone Stihl Function", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	119	\N	\N	\N	scontrino	completed	2026-01-19 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-119	2026-01-17 11:00:00+00	Gardin Adriano	\N	\N	Simone	[{"brand": "VARIE", "model": "POTATORE VOLPI KVS 8000", "prezzo": 220, "aliquotaIva": 22, "serialNumber": "SL 2025.165NB"}]	[]	220	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-120	2026-01-17 11:00:00+00	WALTER RIZZATO	\N	\N	Simone	[{"brand": "STIHL", "model": "MOTOSGA MS 182", "prezzo": 379, "aliquotaIva": 22, "serialNumber": "837 262 267"}]	[]	379	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-122	2026-01-17 11:00:00+00	Fossaluzza Sandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "MOTOSEGA MS 194 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "547317805"}]	[{"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	359	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-121	2026-01-17 11:00:00+00	CARNIEL MARCO	\N	\N	Simone	[]	[{"nome": "IMPIANTO ANTIZANZARE GEYSER PRO, 43 UGELLI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	2350	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-118	2026-01-16 11:00:00+00	Moretti Marco	\N	\N	Simone	[{"brand": "VARIE", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "aliquotaIva": 22, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f
-1772269630211	2026-02-28 09:07:10.21+00	Gobbo Pietro	\N	\N	Simone	[]	[{"id": 1772269574702, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772269588707, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	100.8	\N	\N	\N	scontrino	completed	2026-02-28 09:07:10.21+00	t	user_1769961017929	vendita	f	f	f
-recovered-114	2026-01-16 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	\N	\N	Simone	[]	[{"nome": "CATENE 52 MAGLIE 1,1 mm", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "BIOPLUS 20 LITRI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "HP ULTRA LT 5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	203.8	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-112	2026-01-14 11:00:00+00	Zanardo Fabio	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "ECHO MOTOSEGA CS 2511 TES", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C87940041634"}]	[{"nome": "FORBICE", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	488	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-113	2026-01-14 11:00:00+00	GRACIS PAOLO VIA C. BATTIISTI 47/A VOLPAGO	\N	\N	Simone	[]	[{"nome": "SPACCALEGNA SUG 700 7 TONN.", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-108	2026-01-12 11:00:00+00	Green Style Srl	\N	\N	Simone	[{"brand": "VARIE", "model": "Tosasiepi Stihl HLA 66", "prezzo": 405, "aliquotaIva": 22, "serialNumber": "452306770"}]	[]	405	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-110	2026-01-12 11:00:00+00	MORO ENRICO	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega ECHO DCS 2500T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C 81535021918"}]	[{"nome": "BATTERIA LBP 56V 125  E83935013630", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-111	2026-01-12 11:00:00+00	IFAF SPA VIA CALNOVA 105 30020 NOVENTA DIP.	\N	\N	Simone	[]	[{"nome": "SNOWEX SPARGISALS SNOWEX", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "VEE PRO 6000", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	7900	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-116	2026-01-10 11:00:00+00	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	\N	\N	Simone	[{"brand": "WEIBANG", "model": "TRINCIAERBA WEIBANG 3. VEL. WBBC 532 SCV", "prezzo": 1350, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&250103036"}]	[]	1350	\N	\N	\N	scontrino	completed	2026-01-10 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-115	2026-01-09 11:00:00+00	De Zottis sas	\N	\N	Simone	[]	[{"nome": "SOFFIATORE BGA 60 452325465", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK30 912721072", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATTERIE AL 101 702817745", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	369	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-105	2026-01-09 11:00:00+00	MICHELE GOLFETTO	\N	\N	Simone	[]	[{"nome": "TRONCARAMI RS 750", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}]	134	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-104	2026-01-07 11:00:00+00	Battistel Thomas	\N	\N	Simone	[{"brand": "STIHL", "model": "SOFFIATORI BGA 160", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "450906088"}]	[{"nome": "SPRAY SUPERCLEAN", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	360	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f
-recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "SEGACCIO ARS 470mm", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "MANICO TELES. EXP 5.5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	190	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f
-1772270715735	2026-02-28 09:25:15.284+00	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRG466C1 SKEP", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1301493"}]	[]	669	\N	\N	\N	scontrino	completed	2026-02-28 09:25:15.284+00	t	user_1769961017929	vendita	f	f	f
-1772531425040	2026-03-03 09:50:25.04+00	Uliana Giovanni	{"id": "511193", "cap": "31100", "nome": "Uliana Giovanni", "email": "uligio.uliana@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3515565939", "indirizzo": "VIALE TRENTO TRIESTE, 10/A", "provincia": "TV", "searchText": "uliana giovanni treviso ", "telefonoOriginale": "3515565939"}	3515565939	Simone	[{"brand": "Weibang", "model": "Tosaerba WBC537SCV", "prezzo": 1425, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&251212012"}]	[]	1425	425	contanti	\N	scontrino	completed	2026-03-05 12:54:46.828+00	t	user_1769961017929	vendita	f	f	f
-1771139919865	2026-02-14 11:00:00+00	Piovesan Andrea	{"id": "513052", "cap": "31050", "nome": "Piovesan Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3202725545", "indirizzo": "VIA PAVANI, 37A", "provincia": "TV", "searchText": "piovesan andrea monastier di treviso ", "telefonoOriginale": "3202725545"}	3202725545	Simone	[]	[{"id": 1771139908345, "nome": "Affilatore catena Stihl", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	user_1770584612559	vendita	f	f	f
-1772791614338	2026-03-06 10:06:54.338+00	Pasquali Silvano	{"id": "501948", "cap": "31048", "nome": "Pasquali Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3493238900", "indirizzo": "VIA SAN FRANCESCO, 28 -ROVARE'", "provincia": "TV", "searchText": "pasquali silvano san biagio di callalta ", "telefonoOriginale": "3493238900"}	3493238900	Simone	[]	[{"id": 1772791609911, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-06 10:06:54.338+00	t	user_1770584612559	vendita	f	f	f
-1772872964693	2026-03-07 08:42:42.893+00	Caredi S.R.L.	{"id": "503694", "cap": "31057", "nome": "Caredi S.R.L.", "email": "info@caredi.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294073", "indirizzo": "VIA S. ELENA, 52", "provincia": "TV", "searchText": "caredi s.r.l. silea ", "telefonoOriginale": "042294073"}	042294073	Admin	[{"brand": "STIHL", "model": " HSA 60.1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452246465"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "910695337"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644370"}]	[]	390	\N	\N	\N	fattura	completed	2026-03-07 08:42:42.893+00	t	user_1772723709793	vendita	f	f	f
-1773069322800	2026-03-09 15:15:22.799+00	Bresolin Andrea	{"id": "511309", "cap": "31034", "nome": "Bresolin Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVASO DEL TOMBA", "telefono": "", "indirizzo": "VIA SAN PIO X 197 I 5", "provincia": "TV", "searchText": "bresolin andrea cavaso del tomba ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1773069220485, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}, {"id": 1773069249381, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1773069296739, "nome": "Albatros Vigor Active Kg 25 kg", "prezzo": 47.9, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	595.3	\N	\N	\N	fattura	completed	2026-03-09 15:15:22.799+00	t	user_1769961017929	vendita	f	f	f
-1773221325833	2026-03-11 09:28:45.472+00	Pavan Claudio	{"cf": null, "id": "6bf65e71-0cb6-4772-a26c-085a7619a0ff", "cap": null, "sdi": null, "nome": "Pavan Claudio", "piva": null, "email": null, "nomeP": "Pavan Claudio", "localita": "Musile Di Piave", "telefono": "3246197179", "indirizzo": "Via Rovigo 10", "provincia": "VE", "searchText": "Pavan Claudio"}	3246197179	Simone	[{"brand": "Grillo", "model": " Trimmer HWT600", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "695024"}]	[]	1250	300	contanti	\N	scontrino	completed	2026-03-11 09:28:45.472+00	t	user_1769961017929	vendita	f	f	f
-1773388672091	2026-03-13 11:00:00+00	De Zottis A. Sas REALIZZAZ. Del Verde	{"id": "201872", "cap": "31030", "nome": "De Zottis A. Sas REALIZZAZ. Del Verde", "email": "", "nomeP": "", "cognome": "", "contatto": "Andrea / Erica", "localita": "SALETTO DI PIAVE", "telefono": "348-4526755 ANDREA", "indirizzo": "VIA ARGINE 13", "provincia": "TV", "searchText": "de zottis a. sas realizzaz. del verde saletto di piave andrea / erica", "telefonoOriginale": "348-4526755 ANDREA"}	348-4526755 ANDREA	Simone	[{"brand": "Honda", "model": "Rasaerba HRX537C7 HYEH", "prezzo": 1479, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "1035893"}]	[]	1479	\N	\N	\N	fattura	completed	2026-03-13 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1773421198889	2026-03-13 16:59:58.889+00	Urban Sandro	{"id": "506872", "cap": "31020", "nome": "Urban Sandro", "email": "urban.sandro@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "3280187377", "indirizzo": "VIA SANTA GIUSTINA, 3", "provincia": "TV", "searchText": "urban sandro san fior ", "telefonoOriginale": "3280187377"}	3280187377	Simone	[]	[{"id": 1773421188921, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 10, "matricola": null, "aliquotaIva": 4}]	583	\N	\N	\N	fattura	completed	2026-03-13 16:59:58.889+00	t	user_1769961017929	vendita	f	f	f
-1773481059548	2026-03-14 09:37:39.548+00	BROLLO MARCO	{"cf": "", "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": "", "nome": "BROLLO MARCO", "piva": "", "email": "", "nomeP": "MARCO", "_fonte": "db", "cognome": "BROLLO", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "", "indirizzo": "VIA FRIULI", "provincia": "", "searchText": "brollo marco"}	\N	Simone	[]	[{"id": 1773481045921, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	15.7	\N	\N	\N	scontrino	completed	2026-03-14 09:37:39.548+00	t	user_1773478718487	vendita	f	f	f
-1770385464630	2026-02-06 13:44:24.631+00	AZ. AGR. Moz Moreno	{"id": "510801", "cap": "30100", "nome": "AZ. AGR. Moz Moreno", "email": "fattoriaimpronta@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VENEZIA", "telefono": "3408032699", "indirizzo": "VIA PASSO CAMPALTO, 15A - CAMPALTO", "provincia": "VE", "searchText": "az. agr. moz moreno venezia ", "telefonoOriginale": "3408032699"}	3408032699	Simone	[]	[{"id": 1770385435974, "nome": "Zaino supporto tosasiepi", "prezzo": 400, "quantita": 1, "descrizione": "ZAINO SUPPORTO TOSASIEPI"}]	400	\N	\N	I.C.	fattura	completed	2026-02-06 13:44:24.631+00	t	user_1769961017929	vendita	f	f	f
-1772274248500	2026-02-28 10:24:07.909+00	Buscato Mattia via Ca' Memo 29 Noventa di Piave 340 4519357 mbuschy04@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1028729"}]	[]	959	\N	\N	\N	scontrino	completed	2026-02-28 10:24:07.909+00	t	user_1769961017929	vendita	f	f	f
-1770626009165	2026-02-09 08:33:29.165+00	Moretti Marco	{"id": "202904", "cap": "31100", "nome": "Moretti Marco", "email": "moretti72.marco@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3392050119", "indirizzo": "VIA TIMAVO", "provincia": "TV", "searchText": "moretti marco treviso ", "telefonoOriginale": "3392050119"}	3392050119	Simone	[{"brand": "", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "isOmaggio": false, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	fattura	completed	2026-02-09 08:33:29.165+00	t	user_1769961017929	vendita	f	f	f
-1770744173693	2026-02-10 17:22:53.693+00	Camarotto Michele	{"id": "502091", "cap": "30020", "nome": "Camarotto Michele", "email": "saradilegui@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3484460983", "indirizzo": "VIA PASSO LAMPOL, 27/A", "provincia": "VE", "searchText": "camarotto michele fossalta di piave ", "telefonoOriginale": "3484460983"}	3484460983	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV295", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "ZA1625.124NB"}]	[]	199	\N	\N	\N	scontrino	completed	2026-02-10 17:22:53.693+00	t	user_1769961017929	vendita	f	f	f
-1770801828120	2026-02-11 09:23:48.12+00	Nico Giardini Di Bastarolo Nicola	{"id": "504139", "cap": "31059", "nome": "Nico Giardini Di Bastarolo Nicola", "email": "nickbast74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco ", "telefonoOriginale": "3498200169"}	3498200169	Simone	[]	[{"id": 1770801600789, "nome": "Manicotti antitaglio ", "prezzo": 48, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801636352, "nome": "Ricambio Archman svettatoio ", "prezzo": 16, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801660760, "nome": "Visiera completa", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801714594, "nome": "Cosciale copri pantaloni ", "prezzo": 17, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801775018, "nome": "Filo dice 3 mm 50 metri quadro R304342", "prezzo": 13.9, "quantita": 3, "matricola": null, "aliquotaIva": 22}, {"id": 1770801796561, "nome": "Svettatoio Archman ", "prezzo": 120, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	252.7	\N	\N	\N	fattura	completed	2026-02-11 09:23:48.12+00	t	user_1769961017929	vendita	f	f	f
-1770997818464	2026-02-13 15:50:18.464+00	Scomparin Pierino	{"id": "502251", "cap": "31057", "nome": "Scomparin Pierino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3394191177", "indirizzo": "VIA BELVEDERE, 71", "provincia": "TV", "searchText": "scomparin pierino silea ", "telefonoOriginale": "3394191177"}	3394191177	Simone	[{"brand": "STIHL", "model": "Batteria AS2 (28 Wh)", "prezzo": 42, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "950420572"}]	[]	42	\N	\N	\N	scontrino	completed	2026-02-13 15:50:18.464+00	t	user_1769961017929	vendita	f	f	f
-1772791840067	2026-03-06 10:10:40.067+00	Torresan Silvano	{"id": "504548", "cap": "31050", "nome": "Torresan Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3280309741", "indirizzo": "VIA EMILIA, 24", "provincia": "TV", "searchText": "torresan silvano monastier di treviso ", "telefonoOriginale": "3280309741"}	3280309741	Simone	[{"brand": "Stiga", "model": "Trattorino Rider usato con cambio manuale e piatto da 72 cm", "prezzo": 1100, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "usato giallo"}]	[]	1100	\N	\N	Preparare e chiamare per consegna appena pronto	scontrino	completed	2026-03-06 10:11:09.298+00	t	user_1770584612559	vendita	f	f	f
-1771231859301	2026-02-16 11:00:00+00	Bisetto Mario	{"id": "502153", "cap": "31030", "nome": "Bisetto Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3493730882", "indirizzo": "VIA CODALUNGA, 135", "provincia": "TV", "searchText": "bisetto mario carbonera ", "telefonoOriginale": "3493730882"}	3493730882	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 509, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519977"}, {"brand": "STIHL", "model": "Caricabatterie AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817744"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736933"}]	[]	509	\N	\N	\N	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1773044516572	2026-03-09 08:21:56.571+00	Piave Service Srl	{"id": "503141", "cap": "31030", "nome": "Piave Service Srl", "email": "piave-service@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3488994157", "indirizzo": "VIA SAN GIACOMO, 5", "provincia": "TV", "searchText": "piave service srl breda di piave ", "telefonoOriginale": "3488994157"}	3488994157	Simone	[]	[{"id": 1773044495289, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1773044503779, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	156	\N	\N	\N	fattura	completed	2026-03-09 08:21:56.571+00	t	user_1773043211070	vendita	f	f	f
-1773240850390	2026-03-11 14:54:10.39+00	Palma Paolo	\N	\N	Simone	[]	[{"id": 1773240834044, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773240842536, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-03-11 14:54:10.39+00	t	user_1769961017929	vendita	f	f	f
-1771258833161	2026-02-16 11:00:00+00	Balanza Marino	{"id": "509979", "cap": "31048", "nome": "Balanza Marino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3466323236", "indirizzo": "VIA CLAUDIA AUGUSTA, 6", "provincia": "TV", "searchText": "balanza marino san biagio di callalta ", "telefonoOriginale": "3466323236"}	3466323236	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV390", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PZ2925.389NB"}, {"brand": "VOLPI", "model": "Potatore KVS6000", "prezzo": 200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SM4222498LS"}]	[{"id": 1771258823114, "nome": "Occhiali ", "prezzo": 5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	664	\N	\N	Potatore senza batterie	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1771492465151	2026-02-19 11:00:00+00	Sartori Luca	{"id": "203045", "cap": "31100", "nome": "Sartori Luca", "email": "sartoriluca74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494968896", "indirizzo": "VIA S.ANTONINO 288", "provincia": "TV", "searchText": "sartori luca treviso ", "telefonoOriginale": "3494968896"}	3494968896	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310977"}]	[]	350	\N	\N	Pagamento BB fine mese	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1771493646908	2026-02-19 11:00:00+00	Buffon Giancarlo	{"id": "512986", "cap": "31038", "nome": "Buffon Giancarlo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3496148085", "indirizzo": "VIA MARONCELLI 6", "provincia": "TV", "searchText": "buffon giancarlo paese ", "telefonoOriginale": "3496148085"}	3496148085	Simone	[{"brand": "STIHL", "model": "Tagliabordi FSA 30.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838110682"}, {"brand": "STIHL", "model": "Caricabatterie AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "935280185"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "937056842"}]	[{"id": 1771493623647, "nome": "Ricambio polycut", "prezzo": 4, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	167	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	f	user_1769961017929	vendita	f	f	f
-1771498408037	2026-02-19 11:00:00+00	AZ. AGR. Vivai Piante Di Dragancea Andrei	{"id": "202724", "cap": "31056", "nome": "AZ. AGR. Vivai Piante Di Dragancea Andrei", "email": "andrei.dragancea@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3282670287", "indirizzo": "VIA ARRIGO BOITO, 10 - BIANCADE", "provincia": "TV", "searchText": "az. agr. vivai piante di dragancea andrei roncade ", "telefonoOriginale": "3282670287"}	3282670287	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310979"}]	[]	350	\N	\N	\N	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1771514517527	2026-02-19 11:00:00+00	Gasparini Francesco	{"id": "505627", "cap": "30020", "nome": "Gasparini Francesco", "email": "gasparini.francesco@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3939936820", "indirizzo": "VIA CA' CORNER SUD, 49", "provincia": "VE", "searchText": "gasparini francesco meolo ", "telefonoOriginale": "3939936820"}	3939936820	Simone	[{"brand": "Stihl", "model": "Atomizzatore SR 430 Mistblower", "prezzo": 760, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370193762"}]	[]	760	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f
-1771667848261	2026-02-21 11:00:00+00	Cadorin Roberto	{"id": "514044", "cap": "31056", "nome": "Cadorin Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3479715095", "indirizzo": "VIA PARIS BORDONE, 39 - BIANCADE", "provincia": "TV", "searchText": "cadorin roberto roncade ", "telefonoOriginale": "3479715095"}	3479715095	Simone	[]	[{"id": 1771667799331, "nome": "CONCIME GREEN 7", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	45.3	\N	\N	\N	scontrino	completed	2026-02-21 11:00:00+00	t	user_1771659500533	vendita	f	f	f
-1771596591121	2026-02-20 14:09:50.604+00	Bonetto Franco	{"id": "511303", "cap": "31048", "nome": "Bonetto Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3452383445", "indirizzo": "VIA ORTIGARA, 7 - FAGARE'", "provincia": "TV", "searchText": "bonetto franco san biagio di callalta ", "telefonoOriginale": "3452383445"}	3452383445	Simone	[{"brand": "VOLPI", "model": "Potatore KVS8000", "prezzo": 370, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SL3325.372NB"}]	[]	370	\N	\N	\N	scontrino	completed	2026-02-20 14:09:50.604+00	t	user_1769961017929	vendita	f	f	f
-1771670427449	2026-02-21 10:40:26.358+00	Chiericati Massimo	{"id": "505901", "cap": "31100", "nome": "Chiericati Massimo", "email": "", "nomeP": "", "cognome": "", "contatto": "Fronte Hotel Carletto", "localita": "TREVISO", "telefono": "3407860739", "indirizzo": "VIA SEBASTIANO CABOTO, 13 - SELVANA", "provincia": "TV", "searchText": "chiericati massimo treviso fronte hotel carletto", "telefonoOriginale": "3407860739"}	3407860739	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 1/4 P Chainsaw", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "540455888"}]	[{"id": 1771670392224, "nome": "Olio catena bioplus 1 litro", "prezzo": 6, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1771670408727, "nome": "Guanti ", "prezzo": 3.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	358.9	\N	\N	\N	scontrino	completed	2026-02-21 10:40:26.358+00	t	user_1769961017929	vendita	f	f	f
-1771664967655	2026-02-21 09:09:27.655+00	D'AMELIO Vincenzo	{"id": "502893", "cap": "31056", "nome": "D'AMELIO Vincenzo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3450818865", "indirizzo": "VIA PRINCIPE, 85/A - MUSESTRE", "provincia": "TV", "searchText": "d'amelio vincenzo roncade ", "telefonoOriginale": "3450818865"}	3450818865	Simone	[{"brand": "GGP", "model": "Trattorino XF 135 HD", "prezzo": 2200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "25CA3RON005540"}]	[]	2200	400	pos	Contattare il cliente appena pronto per la consegna. Ritirare rider del cliente per rottamazione	scontrino	completed	2026-03-12 08:38:36.1+00	t	user_1770584612559	vendita	f	f	f
-1772276586896	2026-02-28 11:03:06.587+00	Patruno Franco	{"id": "506125", "cap": "31048", "nome": "Patruno Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3935553311", "indirizzo": "VIA TREVISO MARE, 8", "provincia": "TV", "searchText": "patruno franco san biagio di callalta ", "telefonoOriginale": "3935553311"}	3935553311	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 60 R", "prezzo": 185, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450921356"}]	[]	185	\N	\N	\N	scontrino	completed	2026-02-28 11:03:06.587+00	t	user_1769961017929	vendita	f	f	f
-1771836731318	2026-02-23 08:52:11.318+00	Mareverde Srls	{"id": "501758", "cap": "30016", "nome": "Mareverde Srls", "email": "info@vivaisorgon.it", "nomeP": "", "cognome": "", "contatto": "Simone 335490390", "localita": "JESOLO", "telefono": "0421230013", "indirizzo": "Via Zuccarini, 11", "provincia": "VE", "searchText": "mareverde srls jesolo simone 335490390", "telefonoOriginale": "0421230013"}	0421230013	Simone	[{"brand": "Grillo", "model": "Trattorino FD500", "prezzo": 22326, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[{"id": 1771836586694, "nome": "Ritiro Vs trattorino usato GF PG280D", "prezzo": -14640, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	7686	1300	bonifico	consegna a febbraio (il cliente è stato avvisato che la consegna sarà spostata a marzo). Pagamento con ricevuta bancaria a 30-60 giorni	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f
-1772698023760	2026-03-05 08:07:03.759+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1772697630789, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1772697650836, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697668935, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697688240, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1772697704749, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	654.9	\N	\N	\N	fattura	completed	2026-03-05 08:07:03.759+00	t	user_1770584612559	vendita	f	f	f
-1771857311156	2026-02-23 14:35:10.084+00	Cenedese Andrea	{"id": "500594", "cap": "31048", "nome": "Cenedese Andrea", "email": "andrea.cenedese@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[{"brand": "Volpi", "model": "Forbice elettronica KV360", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	299	\N	\N	\N	scontrino	completed	2026-02-23 14:35:10.084+00	t	user_1769961017929	vendita	f	f	f
-1771837124604	2026-02-23 11:00:00+00	COOP. Sociale Idee Verdi	{"id": "501441", "cap": "35030", "nome": "COOP. Sociale Idee Verdi", "email": "areacontabile@ideeverdi.it", "nomeP": "", "cognome": "", "contatto": "CEL. Marco Neve", "localita": "SELVAZZANO DENTRO", "telefono": "3450914123", "indirizzo": "VIA GALVANI, 16", "provincia": "PD", "searchText": "coop. sociale idee verdi selvazzano dentro cel. marco neve", "telefonoOriginale": "3450914123"}	3450914123	Simone	[{"brand": "Altro", "model": "Trattorino Ferris ISX 3300", "prezzo": 20740, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[{"id": 1772079631434, "nome": "Kit lame di ricambio ad alto lancio", "prezzo": 0, "quantita": 1}]	20740	1830	bonifico	\N	fattura	pending	\N	t	user_1770584612559	vendita	f	f	f
-1772794749226	2026-03-06 10:59:07.036+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[{"brand": "STIHL", "model": "Potatore HTA 86", "prezzo": 530, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449457136"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989674"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008377"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001603"}]	[{"id": 1772794630440, "nome": "Testina Polycut Stihl 28-2", "prezzo": 21, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772794675699, "nome": "Testina Autocut 27-2", "prezzo": 14.1, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1792.98	\N	\N	\N	fattura	completed	2026-03-06 10:59:07.036+00	f	user_1769961017929	vendita	f	f	f
-1773045271126	2026-03-09 11:00:00+00	BARBON IVAN	\N	\N	Simone	[]	[{"id": 1773045119753, "nome": "Universal Top 20 kg", "prezzo": 59.4, "quantita": 11, "matricola": null, "aliquotaIva": 4}]	653.4	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1773043211070	vendita	f	f	f
-1773075750834	2026-03-09 17:02:30.833+00	BROLLO MARCO	{"cf": null, "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": null, "nome": "BROLLO MARCO", "piva": null, "email": null, "nomeP": "BROLLO MARCO", "localita": "SAN BIAGIO DI CALLALTA", "telefono": null, "indirizzo": "VIA FRIULI", "provincia": null, "searchText": "BROLLO MARCO"}	\N	Simone	[]	[{"id": 1773075593716, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773075700238, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	46.9	\N	\N	\N	scontrino	completed	2026-03-09 17:02:30.833+00	t	user_1773043211070	vendita	f	f	f
-1773244078788	2026-03-11 15:47:58.787+00	Romanello Umberto	{"id": "508068", "cap": "31048", "nome": "Romanello Umberto", "email": "umbe.roma@yahoo.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3463719100", "indirizzo": "VIA FORNASATTA, 5", "provincia": "TV", "searchText": "romanello umberto san biagio di callalta ", "telefonoOriginale": "3463719100"}	3463719100	Simone	[]	[{"id": 1773244071793, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-11 15:47:58.787+00	t	user_1769961017929	vendita	f	f	f
-1773649605393	2026-03-16 08:26:45.108+00	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	{"id": "510978", "cap": "31020", "nome": "AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.", "email": "giuliano.possamai@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "", "indirizzo": "VIA SAN MACARIO DEI PALU 33", "provincia": "TV", "searchText": "az. agr. possamai di possamai giuliano & c. s.s. san fior ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 375, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452134555"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245642"}]	[]	704	\N	\N	\N	fattura	completed	2026-03-16 08:26:45.108+00	t	user_1769961017929	vendita	f	f	f
-1773330444130	2026-02-16 11:00:00+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Simone	[]	[{"id": 1773330333121, "nome": "Green 7 25 kg", "prezzo": 38.7, "quantita": 30, "matricola": null, "aliquotaIva": 4}, {"id": 1773330347033, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	1900.5	\N	\N	\N	fattura	completed	2026-02-16 11:00:00+00	t	user_1770584612559	vendita	f	f	f
+COPY public.commissioni (id, created_at, cliente, cliente_info, telefono, operatore, prodotti, accessori, totale, caparra, metodo_pagamento, note, tipo_documento, status, completed_at, iva_compresa, user_id, tipo_operazione, privacy_required, privacy_acknowledged, is_preventivo, stato_preventivo) FROM stdin;
+1773154024602	2026-03-10 14:47:04.601+00	Cenedese Paolo	{"id": "501568", "cap": "31057", "nome": "Cenedese Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3393170646", "indirizzo": "VIA CRETA, 2", "provincia": "TV", "searchText": "cenedese paolo silea ", "telefonoOriginale": "3393170646"}	3393170646	Simone	[]	[{"id": 1773154012039, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-10 14:47:04.601+00	f	user_1773139186105	vendita	f	f	f	in_attesa
+1773245655924	2026-03-11 16:14:15.315+00	Zanetti Sergio	{"cf": null, "id": "ab516c2b-278b-493d-9a04-574dbaefb17b", "cap": null, "sdi": null, "nome": "Zanetti Sergio", "piva": null, "email": "magali.ditadi@virgilio.it", "nomeP": "Zanetti Sergio", "localita": "Marcon", "telefono": "3477341198", "indirizzo": "Via Fornace 24", "provincia": "VE", "searchText": "Zanetti Sergio"}	3477341198	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 55 R", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838434202"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-11 16:14:15.315+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771333556925	2026-02-17 11:00:00+00	Eos Cooperativa Sociale	{"id": "508412", "cap": "31033", "nome": "Eos Cooperativa Sociale", "email": "info@eoscooperativa.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3402249187", "indirizzo": "VIA OSPEDALE, 10", "provincia": "TV", "searchText": "eos cooperativa sociale castelfranco veneto ", "telefonoOriginale": "3402249187"}	3402249187	Simone	[]	[{"id": 1771333442068, "nome": "Stihl bobina filo tondo 2,7 MT 208 art. 0000 930 2227", "prezzo": 29.28, "quantita": 51, "matricola": null, "aliquotaIva": 22}]	0	\N	\N	Consegnare e ritirare 36 bobine filo 2,7 347 MT art. 0000 930 2289 per cambio articolo	fattura	completed	2026-02-17 11:00:00+00	t	user_1769961017929	cambio	f	f	f	in_attesa
+1772470754631	2026-03-02 16:59:14.321+00	Edil Demi Di Covassin Demido	{"id": "502529", "cap": "31048", "nome": "Edil Demi Di Covassin Demido", "email": "edil-demi@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3482652180", "indirizzo": "VIA POSTUMIA CENTRO , 16/A", "provincia": "TV", "searchText": "edil demi di covassin demido san biagio di callalta ", "telefonoOriginale": "3482652180"}	3482652180	Simone	[{"brand": "STIHL", "model": "Troncatrice TS 910.0i, 400mm/16\\"", "prezzo": 1980, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196978666"}]	[{"id": 1772470732908, "nome": "Motomix 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2007	\N	\N	\N	fattura	completed	2026-03-02 16:59:14.321+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772698454042	2026-03-05 08:14:14.042+00	Visentin Roberto	{"id": "509469", "cap": "31030", "nome": "Visentin Roberto", "email": "spazzioverde1@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3467443956", "indirizzo": "VIA ANGELA VERONESE, 22", "provincia": "TV", "searchText": "visentin roberto breda di piave ", "telefonoOriginale": "3467443956"}	3467443956	Simone	[]	[{"id": 1772698447121, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	81.5	\N	\N	\N	scontrino	completed	2026-03-05 08:14:14.042+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1772810660020	2026-03-06 15:24:20.02+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1772810629122, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	86	\N	\N	\N	scontrino	completed	2026-03-06 15:24:20.02+00	f	user_1772789533838	vendita	f	f	f	in_attesa
+1773050032197	2026-03-09 11:00:00+00	Battistel Denis	{"cf": null, "id": "aab0f8c6-cd23-40a0-bb56-3d2137d0591a", "cap": "31048", "sdi": null, "nome": "Battistel Denis", "piva": null, "email": "battisteldenis@gmail.com", "nomeP": "Battistel Denis", "localita": "San Biagio di Callalta", "telefono": "3280864412", "indirizzo": "Via Francescata 6", "provincia": "TV", "searchText": "Battistel Denis"}	3280864412	Simone	[]	[{"id": 1773050023366, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1773050391718, "nome": "HURRICANE KG 5", "prezzo": 54.45, "quantita": 1}]	149.85	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773331552845	2026-03-12 16:05:52.845+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773331548714, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-12 16:05:52.845+00	t	user_1773313248876	vendita	f	f	f	in_attesa
+1773393167815	2026-03-13 09:12:47.063+00	Massolin Franco	{"id": "511612", "cap": "31030", "nome": "Massolin Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3332889392", "indirizzo": "VIA SILE, 9", "provincia": "TV", "searchText": "massolin franco casier ", "telefonoOriginale": "3332889392"}	3332889392	Simone	[{"brand": "VOLPI", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0633NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-13 09:12:47.063+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773479195906	2026-03-14 09:06:35.507+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451614118"}]	[{"id": 1773479187913, "nome": "Cuffia Peltor", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	204	\N	\N	\N	scontrino	completed	2026-03-14 09:06:35.507+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773482595511	2026-03-14 10:03:15.133+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80.R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548926738"}]	[{"id": 1773482575778, "nome": "Zaino Volpi Vita 12", "prezzo": 119, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	498	\N	\N	\N	scontrino	completed	2026-03-14 10:03:15.133+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772193413182	2026-02-27 11:56:52.399+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[{"brand": "Volpi", "model": "Decespugliatore Ciao", "prezzo": 36, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	36	\N	\N	\N	scontrino	completed	2026-02-27 11:56:52.399+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1772471899116	2026-03-02 17:18:18.951+00	Viviani Antonio	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS-280TES", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C75138079230"}]	[{"id": 1772471856132, "nome": "Marline 2 T 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772471886378, "nome": "Olio catena Pro Up 2 litri", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	337	\N	\N	\N	scontrino	completed	2026-03-02 17:18:18.951+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772814552841	2026-03-06 16:29:12.841+00	Lombardi Pietro	\N	\N	Simone	[{"brand": "Stocker", "model": "Irroratore Geyser Pro", "prezzo": 1590, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "2541572916785"}]	[{"id": 1772814456411, "nome": "Alimentatore", "prezzo": 124, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1714	\N	\N	\N	fattura	completed	2026-03-06 16:29:53.647+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1773052842702	2026-03-09 10:40:42.702+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773052836762, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-09 10:40:42.702+00	t	user_1773043211070	vendita	f	f	f	in_attesa
+1773159163790	2026-03-10 16:12:43.197+00	Il Filo D'ERBA Di De Bernardo Sebastiano	{"id": "202718", "cap": "30020", "nome": "Il Filo D'ERBA Di De Bernardo Sebastiano", "email": "sebastiano.ilfiloderba@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MARCON", "telefono": "3395274358", "indirizzo": "VIA MONTE PELMO, 8", "provincia": "VE", "searchText": "il filo d'erba di de bernardo sebastiano marcon ", "telefonoOriginale": "3395274358"}	3395274358	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1069705"}]	[]	959	\N	\N	\N	fattura	completed	2026-03-10 16:12:43.197+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773248038153	2026-03-11 16:53:58.152+00	CARDIN SIMONE	\N	\N	Simone	[]	[{"id": 1773247391717, "nome": "NEBUZAN REPELLENTE LT. 5", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1773247441666, "nome": "PIREKRAFT INSETTICIDA CON CONCENTRATO", "prezzo": 42, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	182	\N	\N	\N	scontrino	completed	2026-03-11 16:53:58.152+00	f	user_1773240946720	vendita	f	f	f	in_attesa
+1772699565277	2026-03-05 08:32:45.274+00	Fantuzzo Luca	\N	\N	Simone	[{"brand": "Honda", "model": "Trattorino HF2625 HME", "prezzo": 6199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBWF-1600622"}]	[]	6199	3000	pos	Consegna a domicilio appena pronto. Saldo con bonifico bancario	scontrino	completed	2026-03-12 13:28:13.02+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773336328776	2026-03-12 17:25:28.775+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1773336279404, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	104	\N	\N	\N	scontrino	completed	2026-03-12 17:25:28.775+00	t	user_1773313248876	vendita	f	f	f	in_attesa
+1773396968435	2026-03-13 10:16:08.435+00	Rizzo Ennio	\N	\N	Simone	[]	[{"id": 1773396950449, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773396959427, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	162	\N	\N	\N	scontrino	completed	2026-03-13 10:16:08.435+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+recovered-131	2026-01-28 11:00:00+00	Favero Giardini Di Favero Mirco	\N	\N	Simone	[]	[{"nome": "GANCIO TRAINO AVANT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	200	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-130	2026-01-28 11:00:00+00	Haprilla Kola	\N	\N	Simone	[]	[{"nome": "Trattorino John Deere x 165 usato, visto e piaciuto nello stato in cui si trova", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	1350	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+1773479316134	2026-03-14 09:08:35.998+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 100.0 PLUS CONTROL", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "970360968"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-14 09:08:35.998+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773481363098	2026-03-14 09:42:42.231+00	Bortolato Franco	{"id": "512977", "cap": "30173", "nome": "Bortolato Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3461355202", "indirizzo": "VIA CA' FORNONI, 84", "provincia": "VE", "searchText": "bortolato franco favaro veneto ", "telefonoOriginale": "3461355202"}	3461355202	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519976"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "701192870"}, {"brand": "STIHL", "model": "Batteria AK 30.0 S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937874"}]	[{"id": 1773481125813, "nome": "Ritiro Vs decespugliatore usato ", "prezzo": -49, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	500	\N	\N	\N	scontrino	completed	2026-03-14 09:42:42.231+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772267744154	2026-02-28 08:35:43.824+00	Bergamo Nello - Impresa Edile	{"id": "202992", "cap": "31048", "nome": "Bergamo Nello - Impresa Edile", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422 897964", "indirizzo": "VIA G. GALILEI N. 19", "provincia": "TV", "searchText": "bergamo nello - impresa edile san biagio di callalta ", "telefonoOriginale": "0422 897964"}	0422 897964	Simone	[{"brand": "NEGRI", "model": "Biotrituratore R95BRAHP65", "prezzo": 1600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "27489101"}]	[]	1600	\N	\N	\N	fattura	completed	2026-02-28 08:35:43.824+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772529500057	2026-03-03 09:18:18.637+00	Ortolan Sara	\N	\N	Simone	[{"brand": "STIHL", "model": "Tosaerba RMA 239.1", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451990095"}, {"brand": "STIHL", "model": "AL 101", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "986413411"}, {"brand": "STIHL", "model": "AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736954"}, {"brand": "STIHL", "model": "Tagliabordi FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451521369"}, {"brand": "STIHL", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452100454"}]	[]	807	\N	\N	\N	scontrino	completed	2026-03-03 09:18:18.637+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1772706224154	2026-03-05 10:23:43.113+00	Tegon Sergio	{"id": "508520", "cap": "31048", "nome": "Tegon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422790312", "indirizzo": "VIA GOITO, 7 - SANT'ANDREA D I BARBARANA", "provincia": "TV", "searchText": "tegon sergio san biagio di callalta ", "telefonoOriginale": "0422790312"}	0422790312	Simone	[{"brand": "Honda", "model": "Motozappa F220K1 GET2", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "FAAJ-3620207"}]	[]	999	50	contanti	\N	scontrino	completed	2026-03-05 10:23:43.113+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772869167515	2026-03-07 07:39:27.513+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1772869122905, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-07 07:39:27.513+00	f	user_1772867117490	vendita	f	f	f	in_attesa
+recovered-165	2026-02-14 11:00:00+00	Osan Emil Augustin	\N	\N	Simone	[{"brand": "STIHL", "model": "Tagliasiepi HL 92 C-E", "prezzo": 790, "aliquotaIva": 22, "serialNumber": "542187474"}]	[]	790	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-143	2026-02-07 11:00:00+00	Menegaldo Bruno	\N	\N	Simone	[{"brand": "Stihl", "model": "MOTOSEGA STIHL MS 661", "prezzo": 1630, "aliquotaIva": 22, "serialNumber": "193 545 593"}]	[]	1630	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-144	2026-02-07 11:00:00+00	XHELAJ REMZI	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "POTATORE KVS 8000", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "SL3325 371 NB"}, {"brand": "ACCESSORI", "model": "FORBICE KV 390", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "PZ 2925 390NB"}]	[{"nome": "1 CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	840	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-145	2026-02-07 11:00:00+00	Xhelaj Kreshnik	\N	\N	Simone	[{"brand": "ECHO", "model": "Motosega CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C 74638144456"}]	[]	439	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-140	2026-02-06 11:00:00+00	COMMISSATI FRANCESCA	\N	\N	Simone	[{"brand": "STIHL", "model": "BIOTRITURATORE GHE 105", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "451998874"}]	[{"nome": "Stihl POTATORE GTA 26 942966195", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AS 2 937201708", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 1 718061245", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	609	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-141	2026-02-06 11:00:00+00	CARRARO PAOLO	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 231", "prezzo": 539, "aliquotaIva": 22, "serialNumber": "194 053 082"}]	[]	539	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-142	2026-02-05 11:00:00+00	AZ. AGR. SEMPREVERDE DI TOFFOLI SONIA	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HLA 135", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "449925313"}]	[{"nome": "CUFFIA OPTIME", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "CUFFIA KRAMP", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	704.1	\N	\N	\N	scontrino	completed	2026-02-05 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-162	2026-02-02 11:00:00+00	Bimetal	\N	\N	Simone	[]	[{"nome": "61 PMM3 Piccolo Micro Mini Catena", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "catena m47-91", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA 91 - 53M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "CATENA 1/4 1,1 52M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}]	132.55	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-136	2026-01-30 11:00:00+00	Tonini Srl	\N	\N	Simone	[]	[{"nome": "Pantalone Echo antitaglio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	95	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-134	2026-01-30 11:00:00+00	Taffarello Daniele	\N	\N	Simone	[{"brand": "Volpi", "model": "POTATORE VOLPI KVS 7100P", "prezzo": 409, "aliquotaIva": 22, "serialNumber": "SRØ123 Ø773LS"}]	[]	409	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-135	2026-01-30 11:00:00+00	Piovesan Andrea	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "Motosega MS 231", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "194053039"}]	[{"nome": "TANICA MOTOMIX 5 L", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	566.5	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-132	2026-01-28 11:00:00+00	Vacilotto Valerio	\N	\N	Simone	[{"brand": "STIHL", "model": "FORBICE STIHL ASA 20", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "707610915"}]	[{"nome": "BATTERIA AS 2", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	219	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-133	2026-01-28 11:00:00+00	AZ. AGR. POSSAMAI GIULIANO e C.	\N	\N	Simone	[{"brand": "ECHO", "model": "MOTOSEGA DCS 2500 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "T 91435039178"}]	[{"nome": "BATTERIA LBP 50-150", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ-560", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-128	2026-01-23 11:00:00+00	TONINI SRL	\N	\N	Simone	[{"brand": "Echo", "model": "MOTOSEGA CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C87940041531"}]	[]	439	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-124	2026-01-20 11:00:00+00	CORTESE MIRCO	\N	\N	Simone	[]	[{"nome": "POTATORE HTA 50", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATTERIA AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK2O", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	459	\N	\N	\N	scontrino	completed	2026-01-20 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+1772269324233	2026-02-28 09:02:04.233+00	M&A Saterini Snc	{"id": "512498", "cap": "31100", "nome": "M&A Saterini Snc", "email": "saterinisnc@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3341760622", "indirizzo": "VIA UGO FOSCOLO, 19", "provincia": "TV", "searchText": "m&a saterini snc treviso ", "telefonoOriginale": "3341760622"}	3341760622	Simone	[]	[{"id": 1772269310543, "nome": "Svettatoio RCM Wolf", "prezzo": 82, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	82	\N	\N	\N	fattura	completed	2026-02-28 09:02:04.233+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772530049616	2026-03-03 09:27:29.616+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[]	[{"id": 1772530032547, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-03 09:27:29.616+00	t	user_1772521427039	vendita	f	f	f	in_attesa
+1773217623696	2026-03-11 08:27:03.352+00	Boccardelli Alessandro	{"id": "501331", "cap": "31030", "nome": "Boccardelli Alessandro", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3477767769", "indirizzo": "VIA PER CAVRIE, 16 - SAN BARTOLOMEO", "provincia": "TV", "searchText": "boccardelli alessandro breda di piave ", "telefonoOriginale": "3477767769"}	3477767769	Simone	[{"brand": "Honda", "model": "Rasaerba HRX476C2 HYEH", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBYF1064510"}]	[]	1250	\N	\N	\N	scontrino	completed	2026-03-11 08:27:03.352+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+recovered-129	2026-01-26 11:00:00+00	PAOLO BARBON	\N	\N	Simone	[]	[{"nome": "WEIBANG TRINCIAERBA CARDANO 3 VELOCITA WBBC537SCV", "prezzo": 1350, "quantita": 1, "aliquotaIva": 22}]	1350	100	contanti	cell. 3464744611	scontrino	completed	2026-01-26 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+1772785776569	2026-03-06 08:29:36.569+00	Taffarello Giuliano	{"id": "504173", "cap": "31030", "nome": "Taffarello Giuliano", "email": "giuliano.taffarello@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3356947922", "indirizzo": "VIA GRANDE DI MIGNAGOLA, 73", "provincia": "TV", "searchText": "taffarello giuliano carbonera ", "telefonoOriginale": "3356947922"}	3356947922	Simone	[{"brand": "Segway", "model": "Robot tosaerba X430E", "prezzo": 3500, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	3500	500	pos	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa
+1772872572362	2026-03-07 08:36:11.624+00	Favaro Arnaldo	{"id": "512983", "cap": "31056", "nome": "Favaro Arnaldo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3391572851", "indirizzo": "VIA GALLI, 39/B", "provincia": "TV", "searchText": "favaro arnaldo roncade ", "telefonoOriginale": "3391572851"}	3391572851	Admin	[{"brand": "STIHL", "model": " MSA 70.0 C", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200572"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "45204006535AE021G02910599504"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702287103"}]	[]	398	\N	\N	\N	scontrino	completed	2026-03-07 08:36:11.624+00	t	user_1772723709793	vendita	f	f	f	in_attesa
+1773068231847	2026-03-09 11:00:00+00	vivai lovisetto marco	\N	\N	Simone	[]	[{"id": 1773068091299, "nome": "MOLLA A TAZZA 40 X20,4X0,5", "prezzo": 1.56, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091300, "nome": "PERNO LAMA FD", "prezzo": 7.95, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091301, "nome": "LAMA PIATTO CLS9/CLS10/TRINCIA", "prezzo": 16.8, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091302, "nome": "RONDELLA 35 X 12,5 X 6", "prezzo": 2.05, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091303, "nome": "DADO 12X1,75 AUTUBL BASSO", "prezzo": 0.33, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	57.38	\N	\N	\N	fattura	completed	2026-03-09 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1773338235441	2026-03-12 17:57:15.441+00	CENEDESE FABRIZIO	\N	\N	Simone	[]	[{"id": 1773338206431, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-12 17:57:15.441+00	t	user_1773313248876	vendita	f	f	f	in_attesa
+1773419112396	2026-03-13 16:25:12.044+00	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	{"id": "511430", "cap": "31056", "nome": "Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS", "email": "amministrazione@castellodironcade.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3336023178 GEROMEL", "indirizzo": "VIA ROMA, 141- INT.8", "provincia": "TV", "searchText": "castello di roncade soc.agr.di ciani bassetti claudio e c.ss roncade ", "telefonoOriginale": "3336023178 GEROMEL"}	3336023178 GEROMEL	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105586"}]	[]	599	\N	\N	\N	fattura	completed	2026-03-13 16:25:12.044+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+recovered-126	2026-01-23 11:00:00+00	AZ. AGR. Moz Moreno	\N	\N	Simone	[]	[{"nome": "SET CINTURA ADVANCE X-FLEX N°4", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	98	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-127	2026-01-23 11:00:00+00	Bortolato Alessandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "1 Motosega MS 182", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "837 262 464"}]	[{"nome": "1 Mix Marline 5LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "1 Olio PRO-UP 2LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	417	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-125	2026-01-22 11:00:00+00	BIANCO DAVIDE	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS3410", "prezzo": 269, "aliquotaIva": 22, "serialNumber": "F09238003622"}]	[]	269	\N	\N	\N	scontrino	completed	2026-01-22 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-123	2026-01-19 11:00:00+00	Toffolo Alessandro	\N	\N	Simone	[]	[{"nome": "Pantalone Stihl Function", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	119	\N	\N	\N	scontrino	completed	2026-01-19 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-119	2026-01-17 11:00:00+00	Gardin Adriano	\N	\N	Simone	[{"brand": "VARIE", "model": "POTATORE VOLPI KVS 8000", "prezzo": 220, "aliquotaIva": 22, "serialNumber": "SL 2025.165NB"}]	[]	220	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-120	2026-01-17 11:00:00+00	WALTER RIZZATO	\N	\N	Simone	[{"brand": "STIHL", "model": "MOTOSGA MS 182", "prezzo": 379, "aliquotaIva": 22, "serialNumber": "837 262 267"}]	[]	379	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-122	2026-01-17 11:00:00+00	Fossaluzza Sandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "MOTOSEGA MS 194 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "547317805"}]	[{"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	359	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-121	2026-01-17 11:00:00+00	CARNIEL MARCO	\N	\N	Simone	[]	[{"nome": "IMPIANTO ANTIZANZARE GEYSER PRO, 43 UGELLI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	2350	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-118	2026-01-16 11:00:00+00	Moretti Marco	\N	\N	Simone	[{"brand": "VARIE", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "aliquotaIva": 22, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+1772269630211	2026-02-28 09:07:10.21+00	Gobbo Pietro	\N	\N	Simone	[]	[{"id": 1772269574702, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772269588707, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	100.8	\N	\N	\N	scontrino	completed	2026-02-28 09:07:10.21+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+recovered-114	2026-01-16 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	\N	\N	Simone	[]	[{"nome": "CATENE 52 MAGLIE 1,1 mm", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "BIOPLUS 20 LITRI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "HP ULTRA LT 5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	203.8	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-112	2026-01-14 11:00:00+00	Zanardo Fabio	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "ECHO MOTOSEGA CS 2511 TES", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C87940041634"}]	[{"nome": "FORBICE", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	488	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-113	2026-01-14 11:00:00+00	GRACIS PAOLO VIA C. BATTIISTI 47/A VOLPAGO	\N	\N	Simone	[]	[{"nome": "SPACCALEGNA SUG 700 7 TONN.", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-108	2026-01-12 11:00:00+00	Green Style Srl	\N	\N	Simone	[{"brand": "VARIE", "model": "Tosasiepi Stihl HLA 66", "prezzo": 405, "aliquotaIva": 22, "serialNumber": "452306770"}]	[]	405	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-110	2026-01-12 11:00:00+00	MORO ENRICO	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega ECHO DCS 2500T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C 81535021918"}]	[{"nome": "BATTERIA LBP 56V 125  E83935013630", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-111	2026-01-12 11:00:00+00	IFAF SPA VIA CALNOVA 105 30020 NOVENTA DIP.	\N	\N	Simone	[]	[{"nome": "SNOWEX SPARGISALS SNOWEX", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "VEE PRO 6000", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	7900	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-116	2026-01-10 11:00:00+00	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	\N	\N	Simone	[{"brand": "WEIBANG", "model": "TRINCIAERBA WEIBANG 3. VEL. WBBC 532 SCV", "prezzo": 1350, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&250103036"}]	[]	1350	\N	\N	\N	scontrino	completed	2026-01-10 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-115	2026-01-09 11:00:00+00	De Zottis sas	\N	\N	Simone	[]	[{"nome": "SOFFIATORE BGA 60 452325465", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK30 912721072", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATTERIE AL 101 702817745", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	369	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-105	2026-01-09 11:00:00+00	MICHELE GOLFETTO	\N	\N	Simone	[]	[{"nome": "TRONCARAMI RS 750", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}]	134	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-104	2026-01-07 11:00:00+00	Battistel Thomas	\N	\N	Simone	[{"brand": "STIHL", "model": "SOFFIATORI BGA 160", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "450906088"}]	[{"nome": "SPRAY SUPERCLEAN", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	360	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "SEGACCIO ARS 470mm", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "MANICO TELES. EXP 5.5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	190	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+1772270715735	2026-02-28 09:25:15.284+00	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRG466C1 SKEP", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1301493"}]	[]	669	\N	\N	\N	scontrino	completed	2026-02-28 09:25:15.284+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772531425040	2026-03-03 09:50:25.04+00	Uliana Giovanni	{"id": "511193", "cap": "31100", "nome": "Uliana Giovanni", "email": "uligio.uliana@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3515565939", "indirizzo": "VIALE TRENTO TRIESTE, 10/A", "provincia": "TV", "searchText": "uliana giovanni treviso ", "telefonoOriginale": "3515565939"}	3515565939	Simone	[{"brand": "Weibang", "model": "Tosaerba WBC537SCV", "prezzo": 1425, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&251212012"}]	[]	1425	425	contanti	\N	scontrino	completed	2026-03-05 12:54:46.828+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771139919865	2026-02-14 11:00:00+00	Piovesan Andrea	{"id": "513052", "cap": "31050", "nome": "Piovesan Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3202725545", "indirizzo": "VIA PAVANI, 37A", "provincia": "TV", "searchText": "piovesan andrea monastier di treviso ", "telefonoOriginale": "3202725545"}	3202725545	Simone	[]	[{"id": 1771139908345, "nome": "Affilatore catena Stihl", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1772791614338	2026-03-06 10:06:54.338+00	Pasquali Silvano	{"id": "501948", "cap": "31048", "nome": "Pasquali Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3493238900", "indirizzo": "VIA SAN FRANCESCO, 28 -ROVARE'", "provincia": "TV", "searchText": "pasquali silvano san biagio di callalta ", "telefonoOriginale": "3493238900"}	3493238900	Simone	[]	[{"id": 1772791609911, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-06 10:06:54.338+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1772872964693	2026-03-07 08:42:42.893+00	Caredi S.R.L.	{"id": "503694", "cap": "31057", "nome": "Caredi S.R.L.", "email": "info@caredi.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294073", "indirizzo": "VIA S. ELENA, 52", "provincia": "TV", "searchText": "caredi s.r.l. silea ", "telefonoOriginale": "042294073"}	042294073	Admin	[{"brand": "STIHL", "model": " HSA 60.1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452246465"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "910695337"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644370"}]	[]	390	\N	\N	\N	fattura	completed	2026-03-07 08:42:42.893+00	t	user_1772723709793	vendita	f	f	f	in_attesa
+1773069322800	2026-03-09 15:15:22.799+00	Bresolin Andrea	{"id": "511309", "cap": "31034", "nome": "Bresolin Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVASO DEL TOMBA", "telefono": "", "indirizzo": "VIA SAN PIO X 197 I 5", "provincia": "TV", "searchText": "bresolin andrea cavaso del tomba ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1773069220485, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}, {"id": 1773069249381, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1773069296739, "nome": "Albatros Vigor Active Kg 25 kg", "prezzo": 47.9, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	595.3	\N	\N	\N	fattura	completed	2026-03-09 15:15:22.799+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773221325833	2026-03-11 09:28:45.472+00	Pavan Claudio	{"cf": null, "id": "6bf65e71-0cb6-4772-a26c-085a7619a0ff", "cap": null, "sdi": null, "nome": "Pavan Claudio", "piva": null, "email": null, "nomeP": "Pavan Claudio", "localita": "Musile Di Piave", "telefono": "3246197179", "indirizzo": "Via Rovigo 10", "provincia": "VE", "searchText": "Pavan Claudio"}	3246197179	Simone	[{"brand": "Grillo", "model": " Trimmer HWT600", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "695024"}]	[]	1250	300	contanti	\N	scontrino	completed	2026-03-11 09:28:45.472+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773388672091	2026-03-13 11:00:00+00	De Zottis A. Sas REALIZZAZ. Del Verde	{"id": "201872", "cap": "31030", "nome": "De Zottis A. Sas REALIZZAZ. Del Verde", "email": "", "nomeP": "", "cognome": "", "contatto": "Andrea / Erica", "localita": "SALETTO DI PIAVE", "telefono": "348-4526755 ANDREA", "indirizzo": "VIA ARGINE 13", "provincia": "TV", "searchText": "de zottis a. sas realizzaz. del verde saletto di piave andrea / erica", "telefonoOriginale": "348-4526755 ANDREA"}	348-4526755 ANDREA	Simone	[{"brand": "Honda", "model": "Rasaerba HRX537C7 HYEH", "prezzo": 1479, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "1035893"}]	[]	1479	\N	\N	\N	fattura	completed	2026-03-13 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773421198889	2026-03-13 16:59:58.889+00	Urban Sandro	{"id": "506872", "cap": "31020", "nome": "Urban Sandro", "email": "urban.sandro@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "3280187377", "indirizzo": "VIA SANTA GIUSTINA, 3", "provincia": "TV", "searchText": "urban sandro san fior ", "telefonoOriginale": "3280187377"}	3280187377	Simone	[]	[{"id": 1773421188921, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 10, "matricola": null, "aliquotaIva": 4}]	583	\N	\N	\N	fattura	completed	2026-03-13 16:59:58.889+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773481059548	2026-03-14 09:37:39.548+00	BROLLO MARCO	{"cf": "", "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": "", "nome": "BROLLO MARCO", "piva": "", "email": "", "nomeP": "MARCO", "_fonte": "db", "cognome": "BROLLO", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "", "indirizzo": "VIA FRIULI", "provincia": "", "searchText": "brollo marco"}	\N	Simone	[]	[{"id": 1773481045921, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	15.7	\N	\N	\N	scontrino	completed	2026-03-14 09:37:39.548+00	t	user_1773478718487	vendita	f	f	f	in_attesa
+1770385464630	2026-02-06 13:44:24.631+00	AZ. AGR. Moz Moreno	{"id": "510801", "cap": "30100", "nome": "AZ. AGR. Moz Moreno", "email": "fattoriaimpronta@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VENEZIA", "telefono": "3408032699", "indirizzo": "VIA PASSO CAMPALTO, 15A - CAMPALTO", "provincia": "VE", "searchText": "az. agr. moz moreno venezia ", "telefonoOriginale": "3408032699"}	3408032699	Simone	[]	[{"id": 1770385435974, "nome": "Zaino supporto tosasiepi", "prezzo": 400, "quantita": 1, "descrizione": "ZAINO SUPPORTO TOSASIEPI"}]	400	\N	\N	I.C.	fattura	completed	2026-02-06 13:44:24.631+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772274248500	2026-02-28 10:24:07.909+00	Buscato Mattia via Ca' Memo 29 Noventa di Piave 340 4519357 mbuschy04@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1028729"}]	[]	959	\N	\N	\N	scontrino	completed	2026-02-28 10:24:07.909+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1770626009165	2026-02-09 08:33:29.165+00	Moretti Marco	{"id": "202904", "cap": "31100", "nome": "Moretti Marco", "email": "moretti72.marco@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3392050119", "indirizzo": "VIA TIMAVO", "provincia": "TV", "searchText": "moretti marco treviso ", "telefonoOriginale": "3392050119"}	3392050119	Simone	[{"brand": "", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "isOmaggio": false, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	fattura	completed	2026-02-09 08:33:29.165+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1770744173693	2026-02-10 17:22:53.693+00	Camarotto Michele	{"id": "502091", "cap": "30020", "nome": "Camarotto Michele", "email": "saradilegui@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3484460983", "indirizzo": "VIA PASSO LAMPOL, 27/A", "provincia": "VE", "searchText": "camarotto michele fossalta di piave ", "telefonoOriginale": "3484460983"}	3484460983	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV295", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "ZA1625.124NB"}]	[]	199	\N	\N	\N	scontrino	completed	2026-02-10 17:22:53.693+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1770801828120	2026-02-11 09:23:48.12+00	Nico Giardini Di Bastarolo Nicola	{"id": "504139", "cap": "31059", "nome": "Nico Giardini Di Bastarolo Nicola", "email": "nickbast74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco ", "telefonoOriginale": "3498200169"}	3498200169	Simone	[]	[{"id": 1770801600789, "nome": "Manicotti antitaglio ", "prezzo": 48, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801636352, "nome": "Ricambio Archman svettatoio ", "prezzo": 16, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801660760, "nome": "Visiera completa", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801714594, "nome": "Cosciale copri pantaloni ", "prezzo": 17, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801775018, "nome": "Filo dice 3 mm 50 metri quadro R304342", "prezzo": 13.9, "quantita": 3, "matricola": null, "aliquotaIva": 22}, {"id": 1770801796561, "nome": "Svettatoio Archman ", "prezzo": 120, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	252.7	\N	\N	\N	fattura	completed	2026-02-11 09:23:48.12+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1770997818464	2026-02-13 15:50:18.464+00	Scomparin Pierino	{"id": "502251", "cap": "31057", "nome": "Scomparin Pierino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3394191177", "indirizzo": "VIA BELVEDERE, 71", "provincia": "TV", "searchText": "scomparin pierino silea ", "telefonoOriginale": "3394191177"}	3394191177	Simone	[{"brand": "STIHL", "model": "Batteria AS2 (28 Wh)", "prezzo": 42, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "950420572"}]	[]	42	\N	\N	\N	scontrino	completed	2026-02-13 15:50:18.464+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772791840067	2026-03-06 10:10:40.067+00	Torresan Silvano	{"id": "504548", "cap": "31050", "nome": "Torresan Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3280309741", "indirizzo": "VIA EMILIA, 24", "provincia": "TV", "searchText": "torresan silvano monastier di treviso ", "telefonoOriginale": "3280309741"}	3280309741	Simone	[{"brand": "Stiga", "model": "Trattorino Rider usato con cambio manuale e piatto da 72 cm", "prezzo": 1100, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "usato giallo"}]	[]	1100	\N	\N	Preparare e chiamare per consegna appena pronto	scontrino	completed	2026-03-06 10:11:09.298+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1771231859301	2026-02-16 11:00:00+00	Bisetto Mario	{"id": "502153", "cap": "31030", "nome": "Bisetto Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3493730882", "indirizzo": "VIA CODALUNGA, 135", "provincia": "TV", "searchText": "bisetto mario carbonera ", "telefonoOriginale": "3493730882"}	3493730882	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 509, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519977"}, {"brand": "STIHL", "model": "Caricabatterie AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817744"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736933"}]	[]	509	\N	\N	\N	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773044516572	2026-03-09 08:21:56.571+00	Piave Service Srl	{"id": "503141", "cap": "31030", "nome": "Piave Service Srl", "email": "piave-service@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3488994157", "indirizzo": "VIA SAN GIACOMO, 5", "provincia": "TV", "searchText": "piave service srl breda di piave ", "telefonoOriginale": "3488994157"}	3488994157	Simone	[]	[{"id": 1773044495289, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1773044503779, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	156	\N	\N	\N	fattura	completed	2026-03-09 08:21:56.571+00	t	user_1773043211070	vendita	f	f	f	in_attesa
+1773240850390	2026-03-11 14:54:10.39+00	Palma Paolo	\N	\N	Simone	[]	[{"id": 1773240834044, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773240842536, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-03-11 14:54:10.39+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773669150174	2026-03-16 13:52:30.174+00	Cibin Omar	{"id": "514092", "cap": "", "nome": "Cibin Omar", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "", "telefono": "3463790667", "indirizzo": "", "provincia": "", "searchText": "cibin omar  ", "telefonoOriginale": "3463790667"}	3463790667	Simone	[]	[{"id": 1773669143245, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-16 13:52:30.174+00	t	user_1773667360453	vendita	f	f	f	in_attesa
+1771258833161	2026-02-16 11:00:00+00	Balanza Marino	{"id": "509979", "cap": "31048", "nome": "Balanza Marino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3466323236", "indirizzo": "VIA CLAUDIA AUGUSTA, 6", "provincia": "TV", "searchText": "balanza marino san biagio di callalta ", "telefonoOriginale": "3466323236"}	3466323236	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV390", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PZ2925.389NB"}, {"brand": "VOLPI", "model": "Potatore KVS6000", "prezzo": 200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SM4222498LS"}]	[{"id": 1771258823114, "nome": "Occhiali ", "prezzo": 5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	664	\N	\N	Potatore senza batterie	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771492465151	2026-02-19 11:00:00+00	Sartori Luca	{"id": "203045", "cap": "31100", "nome": "Sartori Luca", "email": "sartoriluca74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494968896", "indirizzo": "VIA S.ANTONINO 288", "provincia": "TV", "searchText": "sartori luca treviso ", "telefonoOriginale": "3494968896"}	3494968896	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310977"}]	[]	350	\N	\N	Pagamento BB fine mese	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771493646908	2026-02-19 11:00:00+00	Buffon Giancarlo	{"id": "512986", "cap": "31038", "nome": "Buffon Giancarlo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3496148085", "indirizzo": "VIA MARONCELLI 6", "provincia": "TV", "searchText": "buffon giancarlo paese ", "telefonoOriginale": "3496148085"}	3496148085	Simone	[{"brand": "STIHL", "model": "Tagliabordi FSA 30.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838110682"}, {"brand": "STIHL", "model": "Caricabatterie AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "935280185"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "937056842"}]	[{"id": 1771493623647, "nome": "Ricambio polycut", "prezzo": 4, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	167	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1771498408037	2026-02-19 11:00:00+00	AZ. AGR. Vivai Piante Di Dragancea Andrei	{"id": "202724", "cap": "31056", "nome": "AZ. AGR. Vivai Piante Di Dragancea Andrei", "email": "andrei.dragancea@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3282670287", "indirizzo": "VIA ARRIGO BOITO, 10 - BIANCADE", "provincia": "TV", "searchText": "az. agr. vivai piante di dragancea andrei roncade ", "telefonoOriginale": "3282670287"}	3282670287	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310979"}]	[]	350	\N	\N	\N	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771514517527	2026-02-19 11:00:00+00	Gasparini Francesco	{"id": "505627", "cap": "30020", "nome": "Gasparini Francesco", "email": "gasparini.francesco@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3939936820", "indirizzo": "VIA CA' CORNER SUD, 49", "provincia": "VE", "searchText": "gasparini francesco meolo ", "telefonoOriginale": "3939936820"}	3939936820	Simone	[{"brand": "Stihl", "model": "Atomizzatore SR 430 Mistblower", "prezzo": 760, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370193762"}]	[]	760	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771667848261	2026-02-21 11:00:00+00	Cadorin Roberto	{"id": "514044", "cap": "31056", "nome": "Cadorin Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3479715095", "indirizzo": "VIA PARIS BORDONE, 39 - BIANCADE", "provincia": "TV", "searchText": "cadorin roberto roncade ", "telefonoOriginale": "3479715095"}	3479715095	Simone	[]	[{"id": 1771667799331, "nome": "CONCIME GREEN 7", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	45.3	\N	\N	\N	scontrino	completed	2026-02-21 11:00:00+00	t	user_1771659500533	vendita	f	f	f	in_attesa
+1771596591121	2026-02-20 14:09:50.604+00	Bonetto Franco	{"id": "511303", "cap": "31048", "nome": "Bonetto Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3452383445", "indirizzo": "VIA ORTIGARA, 7 - FAGARE'", "provincia": "TV", "searchText": "bonetto franco san biagio di callalta ", "telefonoOriginale": "3452383445"}	3452383445	Simone	[{"brand": "VOLPI", "model": "Potatore KVS8000", "prezzo": 370, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SL3325.372NB"}]	[]	370	\N	\N	\N	scontrino	completed	2026-02-20 14:09:50.604+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771670427449	2026-02-21 10:40:26.358+00	Chiericati Massimo	{"id": "505901", "cap": "31100", "nome": "Chiericati Massimo", "email": "", "nomeP": "", "cognome": "", "contatto": "Fronte Hotel Carletto", "localita": "TREVISO", "telefono": "3407860739", "indirizzo": "VIA SEBASTIANO CABOTO, 13 - SELVANA", "provincia": "TV", "searchText": "chiericati massimo treviso fronte hotel carletto", "telefonoOriginale": "3407860739"}	3407860739	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 1/4 P Chainsaw", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "540455888"}]	[{"id": 1771670392224, "nome": "Olio catena bioplus 1 litro", "prezzo": 6, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1771670408727, "nome": "Guanti ", "prezzo": 3.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	358.9	\N	\N	\N	scontrino	completed	2026-02-21 10:40:26.358+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771664967655	2026-02-21 09:09:27.655+00	D'AMELIO Vincenzo	{"id": "502893", "cap": "31056", "nome": "D'AMELIO Vincenzo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3450818865", "indirizzo": "VIA PRINCIPE, 85/A - MUSESTRE", "provincia": "TV", "searchText": "d'amelio vincenzo roncade ", "telefonoOriginale": "3450818865"}	3450818865	Simone	[{"brand": "GGP", "model": "Trattorino XF 135 HD", "prezzo": 2200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "25CA3RON005540"}]	[]	2200	400	pos	Contattare il cliente appena pronto per la consegna. Ritirare rider del cliente per rottamazione	scontrino	completed	2026-03-12 08:38:36.1+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1772276586896	2026-02-28 11:03:06.587+00	Patruno Franco	{"id": "506125", "cap": "31048", "nome": "Patruno Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3935553311", "indirizzo": "VIA TREVISO MARE, 8", "provincia": "TV", "searchText": "patruno franco san biagio di callalta ", "telefonoOriginale": "3935553311"}	3935553311	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 60 R", "prezzo": 185, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450921356"}]	[]	185	\N	\N	\N	scontrino	completed	2026-02-28 11:03:06.587+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772698023760	2026-03-05 08:07:03.759+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1772697630789, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1772697650836, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697668935, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697688240, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1772697704749, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	654.9	\N	\N	\N	fattura	completed	2026-03-05 08:07:03.759+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1771857311156	2026-02-23 14:35:10.084+00	Cenedese Andrea	{"id": "500594", "cap": "31048", "nome": "Cenedese Andrea", "email": "andrea.cenedese@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[{"brand": "Volpi", "model": "Forbice elettronica KV360", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	299	\N	\N	\N	scontrino	completed	2026-02-23 14:35:10.084+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773045271126	2026-03-09 11:00:00+00	BARBON IVAN	\N	\N	Simone	[]	[{"id": 1773045119753, "nome": "Universal Top 20 kg", "prezzo": 59.4, "quantita": 11, "matricola": null, "aliquotaIva": 4}]	653.4	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1773043211070	vendita	f	f	f	in_attesa
+1773075750834	2026-03-09 17:02:30.833+00	BROLLO MARCO	{"cf": null, "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": null, "nome": "BROLLO MARCO", "piva": null, "email": null, "nomeP": "BROLLO MARCO", "localita": "SAN BIAGIO DI CALLALTA", "telefono": null, "indirizzo": "VIA FRIULI", "provincia": null, "searchText": "BROLLO MARCO"}	\N	Simone	[]	[{"id": 1773075593716, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773075700238, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	46.9	\N	\N	\N	scontrino	completed	2026-03-09 17:02:30.833+00	t	user_1773043211070	vendita	f	f	f	in_attesa
+1773244078788	2026-03-11 15:47:58.787+00	Romanello Umberto	{"id": "508068", "cap": "31048", "nome": "Romanello Umberto", "email": "umbe.roma@yahoo.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3463719100", "indirizzo": "VIA FORNASATTA, 5", "provincia": "TV", "searchText": "romanello umberto san biagio di callalta ", "telefonoOriginale": "3463719100"}	3463719100	Simone	[]	[{"id": 1773244071793, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-11 15:47:58.787+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1771836731318	2026-02-23 11:00:00+00	Mareverde Srls	{"id": "501758", "cap": "30016", "nome": "Mareverde Srls", "email": "info@vivaisorgon.it", "nomeP": "", "cognome": "", "contatto": "Simone 335490390", "localita": "JESOLO", "telefono": "0421230013", "indirizzo": "Via Zuccarini, 11", "provincia": "VE", "searchText": "mareverde srls jesolo simone 335490390", "telefonoOriginale": "0421230013"}	0421230013	Simone	[{"brand": "Grillo", "model": "Trattorino FD500", "prezzo": 22326, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "772900"}]	[{"id": 1771836586694, "nome": "Ritiro Vs trattorino usato GF PG280D", "prezzo": -14640, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	7686	1300	bonifico	consegna a febbraio (il cliente è stato avvisato che la consegna sarà spostata a marzo). Pagamento con ricevuta bancaria a 30-60 giorni	fattura	completed	2026-03-24 10:48:14.169+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1773649605393	2026-03-16 08:26:45.108+00	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	{"id": "510978", "cap": "31020", "nome": "AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.", "email": "giuliano.possamai@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "", "indirizzo": "VIA SAN MACARIO DEI PALU 33", "provincia": "TV", "searchText": "az. agr. possamai di possamai giuliano & c. s.s. san fior ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 375, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452134555"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245642"}]	[]	704	\N	\N	\N	fattura	completed	2026-03-16 08:26:45.108+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773330444130	2026-02-16 11:00:00+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Simone	[]	[{"id": 1773330333121, "nome": "Green 7 25 kg", "prezzo": 38.7, "quantita": 30, "matricola": null, "aliquotaIva": 4}, {"id": 1773330347033, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	1900.5	\N	\N	\N	fattura	completed	2026-02-16 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1773762228782	2026-03-17 15:43:48.782+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1773762180768, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773762223076, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	127.7	\N	\N	\N	fattura	completed	2026-03-17 15:43:48.782+00	t	user_1773757201306	vendita	f	f	f	in_attesa
+1773829190451	2026-03-18 10:19:49.852+00	Gheller Giovanni	{"id": "501565", "cap": "31030", "nome": "Gheller Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3493203938", "indirizzo": "VIA MASERADE, 23", "provincia": "TV", "searchText": "gheller giovanni breda di piave ", "telefonoOriginale": "3493203938"}	3493203938	Simone	[{"brand": "Stihl", "model": "Potatore GTA 40.0", "prezzo": 399, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449980336"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511941"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511944"}, {"brand": "STIHL", "model": "Caricabatteria AL 5-2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "709055579"}]	[]	399	\N	\N	\N	scontrino	completed	2026-03-18 10:19:49.852+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773841339358	2026-03-18 13:42:18.807+00	Bergamo Pietro	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416XBPEEA", "prezzo": 700, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCEF1003260"}, {"brand": "Honda", "model": "Batteria 4.0 li-Ion", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY-1002910"}, {"brand": "Honda", "model": "Caricabatteria CV3620XA EM", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027252"}]	[]	700	\N	\N	\N	scontrino	completed	2026-03-18 13:42:18.807+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773843081488	2026-03-18 14:11:21.488+00	Battistel Stefano	{"id": "508028", "cap": "31030", "nome": "Battistel Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3479082926", "indirizzo": "VIA DEL PASSO, 10 - SALETTO", "provincia": "TV", "searchText": "battistel stefano breda di piave ", "telefonoOriginale": "3479082926"}	3479082926	Simone	[]	[{"id": 1773843061461, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773843072195, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	103.82	\N	\N	\N	scontrino	completed	2026-03-18 14:11:21.488+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1773846534889	2026-03-18 11:00:00+00	Collodo Vladimiro	{"id": "502882", "cap": "31021", "nome": "Collodo Vladimiro", "email": "vladimiro.collodo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MOGLIANO VENETO", "telefono": "041457189", "indirizzo": "VIA ROETTE, 5 - ZERMAN", "provincia": "TV", "searchText": "collodo vladimiro mogliano veneto ", "telefonoOriginale": "041457189"}	041457189	Simone	[{"brand": "ECHO", "model": "Tagliasiepi DHCA-310", "prezzo": 145, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E80435001582"}, {"brand": "ECHO", "model": "Caricabatteria LC-3604 EU35", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61535107521"}, {"brand": "ECHO", "model": "Batteria LBP-36-80 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61235054310"}]	[]	294	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773906930973	2026-03-19 07:55:30.973+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Admin	[]	[{"id": 1773906913033, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-19 07:55:30.973+00	f	user_1772446347578	vendita	f	f	f	in_attesa
+1773830769841	2026-03-18 11:00:00+00	Fontana Antonio	{"id": "512828", "cap": "31100", "nome": "Fontana Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3383385190", "indirizzo": "", "provincia": "TV", "searchText": "fontana antonio treviso ", "telefonoOriginale": "3383385190"}	3383385190	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0696N"}]	[]	179	\N	\N	Parrocchia S. Maria Ausiliatrice. Chiamare appena arriva	scontrino	completed	2026-03-27 11:07:22.782+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1773825316633	2026-03-18 11:00:00+00	Cavana 88	{"id": "514034", "cap": "30173", "nome": "Cavana 88", "email": "info@cavana88.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3772390407", "indirizzo": "VIA TRIESTINA, 54/24", "provincia": "VE", "searchText": "cavana 88 favaro veneto ", "telefonoOriginale": "3772390407"}	3394798537 Loris	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 4112 SZ", "prezzo": 3649, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "980361852"}]	[]	3649	\N	\N	Consegnare prima possibile. Chiamare Loris per consegna (Simone) Al ritorno scaricare il loro trattorino usato da un socio a Quarto d'Altino	fattura	completed	2026-03-27 14:06:13.924+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1773848793676	2026-03-18 11:00:00+00	Carrer Gino via Monte Pelmo 1 Casale sul Sile	\N	\N	Simone	[{"brand": "STIHL", "model": "Rasaerba RMA 248.0", "prezzo": 315, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "446454562"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937876"}, {"brand": "STIHL", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706460476"}, {"brand": "Stihl", "model": "Decespugliatore FSA50", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452390479"}, {"brand": "STIHL", "model": "Batteria AK 10", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "918924002"}, {"brand": "STIHL", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817738"}]	[]	774	475	carta	\N	scontrino	completed	2026-03-31 09:19:18.715+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HS82 R cm 75", "prezzo": 779, "aliquotaIva": 22, "serialNumber": "197814730"}, {"brand": "Stihl", "model": "TOSASIEPI HSA140R cm 75", "prezzo": 618.54, "aliquotaIva": 22, "serialNumber": "451286601"}]	[{"nome": "PALETTA MANUALE", "prezzo": 9.15, "quantita": 4, "aliquotaIva": 22}, {"nome": "MANICO ZM-V4", "prezzo": 81, "quantita": 3, "aliquotaIva": 22}]	1677.14	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
+1773917546685	2026-03-19 11:00:00+00	Marcon Andrea Piazza 2 Giugno 7 Roncade 3474535632	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA 235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "956698916"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948817207"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644372"}]	[{"nome": "Decespugliatore FSA 50 MATR. 452391137", "prezzo": 179, "quantita": 1, "aliquotaIva": 22}]	567	\N	\N	\N	scontrino	completed	2026-03-31 09:10:34.306+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773851463035	2026-03-18 11:00:00+00	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	\N	\N	Simone	[{"brand": "STIHL", "model": "Forbice elettronica ASA 20.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955836076"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773932783539	2026-03-19 15:06:23.539+00	.	\N	\N	Simone	[]	[{"id": 1773932729267, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-03-19 15:06:23.539+00	t	user_1773914846608	vendita	f	f	f	in_attesa
+1773936767474	2026-03-19 16:12:47.199+00	Pozzobon Johnny	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540013827"}]	[]	219	\N	\N	\N	scontrino	completed	2026-03-19 16:12:47.199+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1773850831948	2026-03-18 11:00:00+00	Uliana Cesare	{"id": "512723", "cap": "", "nome": "Uliana Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA", "telefono": "3474435875", "indirizzo": "", "provincia": "", "searchText": "uliana cesare maserada ", "telefonoOriginale": "3474435875"}	3474435875	Simone	[{"brand": "Stihl", "model": "Motosega MSA 80", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452156493"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937882"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706053487"}]	[]	559	\N	\N	Affilatore 2 in 1 in omaggio	scontrino	completed	2026-03-19 16:26:03.002+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1774002466996	2026-03-20 10:27:46.995+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1774002417747, "nome": "Green 7 25 kg", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774002446843, "nome": "BOBINA DI FILO COD. R303612", "prezzo": 12, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774002460270, "nome": "CARCASSA TESTINA", "prezzo": 5.2, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	62.5	\N	\N	\N	scontrino	completed	2026-03-20 10:27:46.995+00	t	user_1773995761120	vendita	f	f	f	in_attesa
+1774013807798	2026-03-20 13:36:47.184+00	Mariuzzo Francesco	{"id": "501909", "cap": "30020", "nome": "Mariuzzo Francesco", "email": "francesco.mariuzzo@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3358473755", "indirizzo": "VIA ROMA, 123", "provincia": "VE", "searchText": "mariuzzo francesco meolo ", "telefonoOriginale": "3358473755"}	3358473755	Simone	[{"brand": "STIHL", "model": "Forbice elettronica HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "942794191"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "949709835"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707132101"}]	[]	139	\N	\N	\N	scontrino	completed	2026-03-20 13:36:47.184+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774017494489	2026-03-20 14:38:14.3+00	Dossini Annalisa	{"id": "513303", "cap": "31030", "nome": "Dossini Annalisa", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3404622945", "indirizzo": "VICOLO TIEPOLO, 41", "provincia": "TV", "searchText": "dossini annalisa carbonera ", "telefonoOriginale": "3404622945"}	3404622945	Simone	[{"brand": "STIHL", "model": "Motosega MSA 70.0 C", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200582"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-20 14:38:14.3+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774029748667	2026-03-20 18:02:28.667+00	Lombardi Pietro	\N	\N	Simone	[]	[{"id": 1774029680871, "nome": "Ugelli anti-gocciolamento Ø 6 mm", "prezzo": 3.3, "quantita": 4, "matricola": null, "aliquotaIva": 22}, {"id": 1774029706883, "nome": "Raccordo a T Ø 8-6-8 mm", "prezzo": 1.8, "quantita": 4, "matricola": null, "aliquotaIva": 22}, {"id": 1774029719369, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774029726667, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	345.4	\N	\N	\N	scontrino	completed	2026-03-20 18:02:28.667+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1771837124604	2026-03-21 11:00:00+00	COOP. Sociale Idee Verdi	{"id": "501441", "cap": "35030", "nome": "COOP. Sociale Idee Verdi", "email": "areacontabile@ideeverdi.it", "nomeP": "", "cognome": "", "contatto": "CEL. Marco Neve", "localita": "SELVAZZANO DENTRO", "telefono": "3450914123", "indirizzo": "VIA GALVANI, 16", "provincia": "PD", "searchText": "coop. sociale idee verdi selvazzano dentro cel. marco neve", "telefonoOriginale": "3450914123"}	3450914123	Simone	[{"brand": "Altro", "model": "Trattorino Ferris ISX 3300", "prezzo": 20740, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "4002455332"}]	[{"id": 1772079631434, "nome": "Kit lame di ricambio ad alto lancio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	20740	1830	bonifico	Saldo prima della consegna	fattura	completed	2026-03-21 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1774077613580	2026-03-21 07:20:13.58+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774077608358, "nome": "Amino K 5 Kg 5 kg", "prezzo": 51, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	51	\N	\N	\N	fattura	completed	2026-03-21 07:20:13.58+00	f	user_1774077521447	vendita	f	f	f	in_attesa
+1774077856238	2026-03-21 07:24:15.812+00	Dametto Giulio	\N	\N	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "547285150"}]	[]	339	\N	\N	\N	scontrino	completed	2026-03-21 07:24:15.812+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1772794749226	2026-03-06 11:00:00+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[{"brand": "STIHL", "model": "Potatore HTA 86", "prezzo": 530, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449457136"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989674"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008377"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001603"}]	[{"id": 1772794630440, "nome": "Testina Polycut Stihl 28-2", "prezzo": 21, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772794675699, "nome": "Testina Autocut 27-2", "prezzo": 14.1, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"nome": "Ugello rotore", "prezzo": 21.8, "quantita": 1, "aliquotaIva": 22}]	1814.7800000000002	\N	\N	\N	fattura	completed	2026-03-06 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1774084657146	2026-03-21 09:17:36.944+00	Bonotto Franco	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3611T", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65140005458"}]	[]	669	\N	\N	\N	scontrino	completed	2026-03-21 09:17:36.944+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774086075538	2026-03-21 09:41:14.645+00	Daniel Enrico	{"id": "505262", "cap": "30020", "nome": "Daniel Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3402878607", "indirizzo": "VIA CALVISANO, 44", "provincia": "VE", "searchText": "daniel enrico fossalta di piave ", "telefonoOriginale": "3402878607"}	3402878607	Simone	[{"brand": "THE TORO COMPANY", "model": "Arieggiatore", "prezzo": 650, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "325000333"}]	[]	650	200	contanti	Ritira lunedì sera o martedì mattina	scontrino	completed	2026-03-21 09:41:14.645+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774088170002	2026-03-21 10:16:09.751+00	Bergamo Nello	\N	\N	Simone	[{"brand": "STIHL", "model": "Rasaerba RM 453.3 V", "prezzo": 699, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451098503"}]	[]	699	\N	\N	\N	scontrino	completed	2026-03-21 10:16:09.751+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774090454237	2026-03-21 10:54:14.236+00	Sabrina Botter	\N	\N	Simone	[]	[{"id": 1774090450357, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-03-21 10:54:14.236+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1774258633933	2026-03-23 09:37:13.932+00	Guerra Marco	{"id": "501368", "cap": "31100", "nome": "Guerra Marco", "email": "marco@guerra.tv.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3463219454", "indirizzo": "VIA S. PELAIO 1/B", "provincia": "TV", "searchText": "guerra marco treviso ", "telefonoOriginale": "3463219454"}	3463219454	Simone	[]	[{"id": 1774258619431, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-03-23 09:37:13.932+00	t	user_1774253083870	vendita	f	f	f	in_attesa
+1774271453115	2026-03-23 13:10:53.115+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774271430091, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	50	\N	\N	\N	fattura	completed	2026-03-23 13:10:53.115+00	t	user_1774264782378	vendita	f	f	f	in_attesa
+1774284270579	2026-03-23 16:44:30.578+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774284258060, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-23 16:44:30.578+00	t	user_1774264782378	vendita	f	f	f	in_attesa
+1774343263601	2026-03-24 09:07:43.6+00	DEL  FABBRO	\N	\N	Admin	[]	[{"id": 1774343198654, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774343220892, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1774343233664, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 40.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774343252936, "nome": "Micosat F Uno gr.200", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	119.25	\N	\N	\N	scontrino	completed	2026-03-24 09:07:43.6+00	f	user_1772446347578	vendita	f	f	f	in_attesa
+1774343996171	2026-03-24 09:19:55.237+00	Piovesan Aldo 3289160851 0422708651	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466XB", "prezzo": 630, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCDF1005757"}, {"brand": "Honda", "model": "Caricabatteria", "prezzo": 39, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027253"}, {"brand": "Honda", "model": "Batteria DP3640XA", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY1002444"}]	[]	818	\N	\N	\N	scontrino	completed	2026-03-24 09:19:55.237+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774880649187	2026-03-30 14:24:07.753+00	Tuon Adriano	{"id": "501316", "cap": "31030", "nome": "Tuon Adriano", "email": "adrianotuon@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3472767486", "indirizzo": "VIA DON A ANTONIO ASTI 49", "provincia": "TV", "searchText": "tuon adriano breda di piave ", "telefonoOriginale": "3472767486"}	3472767486	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-267", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U4843B006692"}]	[]	269	\N	\N	\N	scontrino	completed	2026-03-30 14:24:07.753+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774364278232	2026-03-24 14:57:57.456+00	Deoni Giardinaggio S.R.L.	{"id": "203570", "cap": "31038", "nome": "Deoni Giardinaggio S.R.L.", "email": "info@deonigiardinaggio.it", "nomeP": "", "cognome": "", "contatto": "CEL:FRANCESCO/GIANLUCA/MANUELE-FIS.LUCIA", "localita": "PAESE", "telefono": "3497600981", "indirizzo": "VIA POSTUMIA, 49", "provincia": "TV", "searchText": "deoni giardinaggio s.r.l. paese cel:francesco/gianluca/manuele-fis.lucia", "telefonoOriginale": "3497600981"}	3497600981	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545073124"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997510"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997501"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "952262635"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245641"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008378"}]	[]	1814.76	\N	\N	\N	fattura	completed	2026-03-24 14:57:57.456+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1774365827810	2026-03-24 15:23:47.16+00	Lava Edo Autotrasporti	{"id": "203026", "cap": "30020", "nome": "Lava Edo Autotrasporti", "email": "lavaedo@gmail.com", "nomeP": "", "cognome": "", "contatto": "1 -SABRINA Moglie 2 -MARITO", "localita": "MEOLO", "telefono": "3480998841", "indirizzo": "VIA DELLE BALDANE 1", "provincia": "VE", "searchText": "lava edo autotrasporti meolo 1 -sabrina moglie 2 -marito", "telefonoOriginale": "3480998841"}	3480998841	Simone	[{"brand": "STIHL", "model": " MS 212 3/8\\" P", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "837888152"}]	[{"id": 1774365578646, "nome": "Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774365621530, "nome": "Filo decespugliatore 2.7 mm", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	465.5	\N	\N	\N	fattura	completed	2026-03-24 15:23:47.16+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774373885963	2026-03-24 17:38:05.963+00	MATTIOLI ANDREA	\N	\N	Simone	[]	[{"id": 1774373868505, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 3, "matricola": null, "aliquotaIva": 4}, {"id": 1774373880492, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 3, "matricola": null, "aliquotaIva": 4}]	325.5	\N	\N	\N	scontrino	completed	2026-03-24 17:38:05.963+00	t	user_1774361283783	vendita	f	f	f	in_attesa
+1774373917720	2026-03-24 17:38:37.72+00	TREVISAN	\N	\N	Simone	[]	[{"id": 1774373914236, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-24 17:38:37.72+00	t	user_1774361283783	vendita	f	f	f	in_attesa
+1774424302603	2026-03-25 07:38:22.602+00	Spinola Domenico - Il Prato	{"id": "401305", "cap": "31027", "nome": "Spinola Domenico - Il Prato", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SPRESIANO", "telefono": "3356951355", "indirizzo": "VIA ARGINE SAN MARCO, 21 - LOVADINA", "provincia": "TV", "searchText": "spinola domenico - il prato spresiano ", "telefonoOriginale": "3356951355"}	3356951355	Simone	[]	[{"id": 1774424294991, "nome": "rullo spanditerriccio", "prezzo": 260, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	260	\N	\N	\N	fattura	completed	2026-03-25 07:38:22.602+00	f	user_1770584612559	vendita	f	f	f	in_attesa
+1774428273167	2026-03-25 08:44:33.167+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774428223154, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1774428268252, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	262.9	\N	\N	\N	fattura	completed	2026-03-25 08:44:33.167+00	t	user_1774428129575	vendita	f	f	f	in_attesa
+1774446958655	2026-03-25 13:55:58.655+00	.	\N	\N	Simone	[]	[{"id": 1774446952697, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	60.8	\N	\N	\N	scontrino	completed	2026-03-25 13:55:58.655+00	t	user_1774428129575	vendita	f	f	f	in_attesa
+1774456521482	2026-03-25 16:35:21.481+00	De Demo Daniele	{"id": "500278", "cap": "31030", "nome": "De Demo Daniele", "email": "polo.chiara@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3480880270", "indirizzo": "VIA VALDEMONEGHE, 18/A", "provincia": "TV", "searchText": "de demo daniele carbonera ", "telefonoOriginale": "3480880270"}	3480880270	Simone	[]	[{"id": 1774456513616, "nome": "Granustar 20 kg", "prezzo": 70.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	351.5	\N	\N	\N	scontrino	completed	2026-03-25 16:35:21.481+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774456568253	2026-03-25 16:36:08.253+00	Global Service Di Salvalaio Denis	{"id": "501590", "cap": "30013", "nome": "Global Service Di Salvalaio Denis", "email": "salvalaiodenis76@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3384199774", "indirizzo": "VIA DELLA FONTE 9", "provincia": "VE", "searchText": "global service di salvalaio denis cavallino-treporti ", "telefonoOriginale": "3384199774"}	3384199774	Simone	[]	[{"id": 1774456559648, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	874.5	\N	\N	\N	fattura	completed	2026-03-25 16:36:08.253+00	f	user_1769961017929	vendita	f	f	f	in_attesa
+1774368267558	2026-03-24 11:00:00+00	Gastaldo Rossella	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "956698926"}, {"brand": "Stihl", "model": "Batteria AK20", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948666076"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644364"}]	[]	358	100	pos	\N	scontrino	completed	2026-03-31 09:14:30.786+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774522518663	2026-03-26 10:55:15.372+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 250.0", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452027047"}, {"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BA0601159"}, {"brand": "Stihl", "model": "Tagliasiepi MSA 140.0 R", "prezzo": 545, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451286599"}, {"brand": "Stihl", "model": "Tagliasiepi HSA 140.0 T", "prezzo": 545, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "HA0201135"}, {"brand": "Stihl", "model": "Motosega MSA 190.0 T", "prezzo": 286, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452311136"}, {"brand": "STIHL", "model": "Motore multifunzione KMA 120.0 R", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "542315700"}, {"brand": "STIHL", "model": "Caricabatteria AL 301-4", "prezzo": 291, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711612931"}, {"brand": "STIHL", "model": "Caricabatteria AL 301-4", "prezzo": 291, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711612935"}, {"brand": "STIHL", "model": "Caricabatterie AL501", "prezzo": 154.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "987011256"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001602"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001605"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001606"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008375"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008379"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921009376"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255776"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255780"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255781"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256589"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256593"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256596"}]	[{"id": 1774521750509, "nome": "Accessorio reciprocatore RG-KM", "prezzo": 291, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774521787365, "nome": "Asta stelo completa, ricambio per KM", "prezzo": 49, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1774521927531, "nome": "box portabatterie M", "prezzo": 53.7, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	6230	\N	\N	Pagamento 5 rate uguali, acconto alla consegna e poi 30-60-90-120 gg	fattura	completed	2026-03-26 10:55:15.372+00	f	user_1770584612559	vendita	f	f	f	in_attesa
+1774523155609	2026-03-26 11:05:55.608+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774523136448, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	54.8	\N	\N	\N	fattura	completed	2026-03-26 11:05:55.608+00	t	user_1774523116559	vendita	f	f	f	in_attesa
+1774532748335	2026-03-26 13:45:48.335+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[]	[{"id": 1774532700558, "nome": "Catena 40 M ", "prezzo": 9.3, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1774532733303, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	181.6	\N	\N	\N	scontrino	completed	2026-03-26 13:45:48.335+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774601809741	2026-03-27 08:56:49.74+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774601790529, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-27 08:56:49.74+00	t	user_1774595787870	vendita	f	f	f	in_attesa
+1774608201588	2026-03-27 10:43:21.588+00	Moro Monica 3482993659	\N	\N	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 6112 ZL", "prezzo": 5600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Rasaerba RMA 453 PV", "prezzo": 1149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Decespugliatore FSA135", "prezzo": 465, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria Al301-4", "prezzo": 360, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	8890	\N	\N	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774947376114	2026-03-31 08:56:16.114+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1774947361909, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1774947370877, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	141.8	\N	\N	\N	scontrino	completed	2026-03-31 08:56:16.114+00	t	user_1771232846694	vendita	f	f	f	in_attesa
+1774607711937	2026-03-27 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Echo", "model": "Motosega DCS2500T", "prezzo": 736, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535019972"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935010924"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935009404"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435022949"}, {"brand": "Bluebird", "model": "Trivella NEA560 T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BBLP1002585001"}]	[{"nome": "Rasaerba Stihl RM 655 V matr. 447005979", "prezzo": 901.6, "quantita": 1, "aliquotaIva": 22}, {"nome": "Trivella mm 100", "prezzo": 81, "quantita": 1, "aliquotaIva": 22}]	2177.6	\N	\N	\N	fattura	completed	2026-03-27 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1774629897606	2026-03-27 16:44:57.606+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774629894903, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-27 16:44:57.606+00	t	user_1774595787870	vendita	f	f	f	in_attesa
+1774630000147	2026-03-27 16:46:39.785+00	Maggiolo Roberto	{"id": "501465", "cap": "31030", "nome": "Maggiolo Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3923770865", "indirizzo": "VIA CAL DEL BROLO", "provincia": "TV", "searchText": "maggiolo roberto breda di piave ", "telefonoOriginale": "3923770865"}	3923770865	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466C1 PKEH", "prezzo": 489, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1227945"}]	[]	489	\N	\N	\N	scontrino	completed	2026-03-27 16:46:39.785+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774681347971	2026-03-28 07:02:27.97+00	Morellato Ugo REALIZ. Giardini	{"id": "202390", "cap": "31040", "nome": "Morellato Ugo REALIZ. Giardini", "email": "ugomorellato@tiscali.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVIGNANO", "telefono": "3471368331", "indirizzo": "VIA ALTA 41/A", "provincia": "TV", "searchText": "morellato ugo realiz. giardini trevignano ", "telefonoOriginale": "3471368331"}	3471368331	Simone	[]	[{"id": 1774681341119, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 89.3, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	89.3	\N	\N	\N	scontrino	completed	2026-03-28 07:02:27.97+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774682853729	2026-03-28 07:27:33.728+00	Scarabello Roberto	{"id": "508514", "cap": "31050", "nome": "Scarabello Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "VILLORBA", "telefono": "3779576217", "indirizzo": "VIA 2 GIUGNO 16/2", "provincia": "TV", "searchText": "scarabello roberto villorba ", "telefonoOriginale": "3779576217"}	3779576217	Simone	[]	[{"id": 1774682821215, "nome": "motopompa usata", "prezzo": 500, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774682831071, "nome": "palo iniettore", "prezzo": 360, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-03-28 07:27:33.728+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1774685003800	2026-03-28 08:03:23.8+00	Il giardino Astrologico	\N	\N	Simone	[]	[{"id": 1774684934955, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774684944653, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774684956743, "nome": "Amino K 5 Kg 5 kg", "prezzo": 56.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	160.62	\N	\N	\N	fattura	completed	2026-03-28 08:03:23.8+00	t	user_1770584612559	vendita	f	f	f	in_attesa
+1774689844346	2026-03-28 09:24:03.286+00	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105573"}]	[]	559	\N	\N	\N	scontrino	completed	2026-03-28 09:24:03.286+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774693001885	2026-03-28 11:00:00+00	Serafin Ermes Giardiniere	{"id": "203366", "cap": "31052", "nome": "Serafin Ermes Giardiniere", "email": "martesfaina@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3493648574", "indirizzo": "VIA CASTELLA, 47", "provincia": "TV", "searchText": "serafin ermes giardiniere maserada sul piave ", "telefonoOriginale": "3493648574"}	3493648574	Simone	[]	[{"nome": "BLIZZARD", "prezzo": 52, "quantita": 1, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-03-28 11:00:00+00	t	user_1774683423770	vendita	f	f	f	in_attesa
+1774693702297	2026-03-28 10:28:21.664+00	Cicutto Roberto loc. Mattonaia 315 Sandorligo della Valle TS 347 8062220 roberto.cicutto@gmail.com	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-301TES", "prezzo": 319, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U48738203070"}]	[]	319	\N	\N	\N	scontrino	completed	2026-03-28 10:28:21.664+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774694659761	2026-03-28 10:44:19.217+00	Tollardo Palmerino	{"id": "507322", "cap": "31056", "nome": "Tollardo Palmerino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3488221359", "indirizzo": "VIA GALLI, 103 - BIANCADE", "provincia": "TV", "searchText": "tollardo palmerino roncade ", "telefonoOriginale": "3488221359"}	3488221359	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 130 PLUS", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "495001145"}]	[]	449	\N	\N	\N	scontrino	completed	2026-03-28 10:44:19.217+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+1774864402107	2026-03-30 09:53:22.106+00	Imberti	\N	\N	Simone	[]	[{"id": 1774864382784, "nome": "AllRound 20 kg", "prezzo": 61.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	61.3	\N	\N	\N	scontrino	completed	2026-03-30 09:53:22.106+00	t	user_1769961017929	vendita	f	f	f	in_attesa
 \.
 
 
@@ -5043,6 +5320,118 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 312	2026-03-16 08:26:22.69+00	CARICO	STIHL	Batteria AP 300.0 S	953245642	\N	\N	\N	available	user_1769961017929	main	t
 313	2026-03-16 08:26:45.108+00	SCARICO	STIHL	Soffiatore BGA 250.0	452134555	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1769961017929	main	f
 314	2026-03-16 08:26:45.285+00	SCARICO	STIHL	Batteria AP 300.0 S	953245642	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1769961017929	main	f
+315	2026-03-18 10:17:20.232+00	CARICO	Stihl	Potatore GTA 40.0	449980336	\N	\N	\N	available	user_1769961017929	main	t
+316	2026-03-18 10:18:15.455+00	CARICO	STIHL	Batteria AS 2	951511941	\N	\N	\N	available	user_1769961017929	main	t
+317	2026-03-18 10:18:37.245+00	CARICO	STIHL	Batteria AS 2	951511944	\N	\N	\N	available	user_1769961017929	main	t
+318	2026-03-18 10:19:36.691+00	CARICO	STIHL	Caricabatteria AL 5-2	709055579	\N	\N	\N	available	user_1769961017929	main	t
+319	2026-03-18 10:19:49.853+00	SCARICO	Stihl	Potatore GTA 40.0	449980336	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
+320	2026-03-18 10:19:50.063+00	SCARICO	STIHL	Batteria AS 2	951511941	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
+321	2026-03-18 10:19:50.165+00	SCARICO	STIHL	Batteria AS 2	951511944	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
+322	2026-03-18 10:19:50.325+00	SCARICO	STIHL	Caricabatteria AL 5-2	709055579	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
+323	2026-03-18 13:37:53.43+00	CARICO	Honda	Rasaerba HRG416XBPEEA	MCEF1003260	\N	\N	\N	available	user_1769961017929	main	t
+324	2026-03-18 13:41:22.074+00	CARICO	Honda	Batteria 4.0 li-Ion	UADY-1002910	\N	\N	\N	available	user_1769961017929	main	t
+325	2026-03-18 13:41:51.655+00	CARICO	Honda	Caricabatteria CV3620XA EM	CAAEY1027252	\N	\N	\N	available	user_1769961017929	main	t
+326	2026-03-18 13:42:18.808+00	SCARICO	Honda	Rasaerba HRG416XBPEEA	MCEF1003260	Bergamo Pietro	0	0	sold	user_1769961017929	main	f
+327	2026-03-18 13:42:19.083+00	SCARICO	Honda	Batteria 4.0 li-Ion	UADY-1002910	Bergamo Pietro	0	0	sold	user_1769961017929	main	f
+328	2026-03-18 13:42:19.193+00	SCARICO	Honda	Caricabatteria CV3620XA EM	CAAEY1027252	Bergamo Pietro	0	0	sold	user_1769961017929	main	f
+329	2026-03-18 15:07:01.395+00	CARICO	ECHO	Tagliasiepi DHCA-310	E80435001582	\N	\N	\N	available	user_1769961017929	main	t
+330	2026-03-18 15:08:01.41+00	CARICO	ECHO	Caricabatteria LC-3604 EU35	U61535107521	\N	\N	\N	available	user_1769961017929	main	t
+331	2026-03-18 15:08:40.408+00	CARICO	ECHO	Batteria LBP-36-80 EU35	U61235054310	\N	\N	\N	available	user_1769961017929	main	t
+332	2026-03-18 15:08:54.207+00	SCARICO	ECHO	Tagliasiepi DHCA-310	E80435001582	Collodo Vladimiro	0	0	sold	user_1769961017929	main	f
+333	2026-03-18 15:08:54.486+00	SCARICO	ECHO	Caricabatteria LC-3604 EU35	U61535107521	Collodo Vladimiro	0	0	sold	user_1769961017929	main	f
+334	2026-03-18 15:08:54.661+00	SCARICO	ECHO	Batteria LBP-36-80 EU35	U61235054310	Collodo Vladimiro	0	0	sold	user_1769961017929	main	f
+340	2026-03-18 16:30:51.209+00	CARICO	STIHL	Forbice elettronica ASA 20.0	955836076	\N	\N	\N	available	user_1769961017929	main	t
+341	2026-03-18 16:31:02.759+00	SCARICO	STIHL	Forbice elettronica ASA 20.0	955836076	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	0	0	sold	user_1769961017929	main	f
+342	2026-03-19 16:12:30.106+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540013827	\N	\N	\N	available	user_1769961017929	main	t
+343	2026-03-19 16:12:47.199+00	SCARICO	Echo	Decespugliatore SRM-222ES	U64540013827	Pozzobon Johnny	0	0	sold	user_1769961017929	main	f
+344	2026-03-20 13:35:23.446+00	CARICO	STIHL	Forbice elettronica HSA 26	942794191	\N	\N	\N	available	user_1769961017929	main	t
+345	2026-03-20 13:35:48.851+00	CARICO	STIHL	Batteria AS 2	949709835	\N	\N	\N	available	user_1769961017929	main	t
+346	2026-03-20 13:36:36.619+00	CARICO	Stihl	Caricabatteria AL 1	707132101	\N	\N	\N	available	user_1769961017929	main	t
+347	2026-03-20 13:36:47.184+00	SCARICO	STIHL	Forbice elettronica HSA 26	942794191	Mariuzzo Francesco	0	0	sold	user_1769961017929	main	f
+348	2026-03-20 13:36:47.44+00	SCARICO	STIHL	Batteria AS 2	949709835	Mariuzzo Francesco	0	0	sold	user_1769961017929	main	f
+349	2026-03-20 13:36:47.539+00	SCARICO	Stihl	Caricabatteria AL 1	707132101	Mariuzzo Francesco	0	0	sold	user_1769961017929	main	f
+350	2026-03-20 13:47:19.285+00	CARICO	Stihl	Soffiatore BGA 250.0	452027047	\N	\N	\N	available	user_1769961017929	main	t
+351	2026-03-20 13:48:00.971+00	CARICO	STIHL	Soffiatore BGA 250.0	BA0601159	\N	\N	\N	available	user_1769961017929	main	t
+352	2026-03-20 13:49:19.221+00	CARICO	STIHL	Caricabatteria AL 301-4	711612935	\N	\N	\N	available	user_1769961017929	main	t
+353	2026-03-20 13:49:50.136+00	CARICO	STIHL	Caricabatteria AL 301-4	711612931	\N	\N	\N	available	user_1769961017929	main	t
+354	2026-03-20 13:55:22.377+00	CARICO	Stihl	Tagliasiepi HSA 140.0 T	HA0201135	\N	\N	\N	available	user_1769961017929	main	t
+355	2026-03-20 13:59:08.87+00	CARICO	Stihl	Tagliasiepi MSA 140.0 R	451286599	\N	\N	\N	available	user_1769961017929	main	t
+356	2026-03-20 14:22:56.819+00	CARICO	Stihl	Motosega MSA 190.0 T	452311136	\N	\N	\N	available	user_1769961017929	main	t
+357	2026-03-20 14:37:57.28+00	CARICO	STIHL	Motosega MSA 70.0 C	452200582	\N	\N	\N	available	user_1769961017929	main	t
+358	2026-03-20 14:38:14.301+00	SCARICO	STIHL	Motosega MSA 70.0 C	452200582	Dossini Annalisa	0	0	sold	user_1769961017929	main	f
+359	2026-03-21 07:23:55.587+00	CARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	\N	\N	\N	available	user_1769961017929	main	t
+360	2026-03-21 07:24:15.813+00	SCARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	Dametto Giulio	0	0	sold	user_1769961017929	main	f
+361	2026-03-21 09:17:21.899+00	CARICO	Echo	Decespugliatore SRM-3611T	U65140005458	\N	\N	\N	available	user_1769961017929	main	t
+362	2026-03-21 09:17:36.946+00	SCARICO	Echo	Decespugliatore SRM-3611T	U65140005458	Bonotto Franco	0	0	sold	user_1769961017929	main	f
+363	2026-03-21 09:40:19.032+00	CARICO	THE TORO COMPANY	Arieggiatore	325000333	\N	\N	\N	available	user_1769961017929	main	t
+364	2026-03-21 09:41:14.645+00	SCARICO	THE TORO COMPANY	Arieggiatore	325000333	Daniel Enrico	0	0	sold	user_1769961017929	main	f
+365	2026-03-21 10:15:57.677+00	CARICO	STIHL	Rasaerba RM 453.3 V	451098503	\N	\N	\N	available	user_1769961017929	main	t
+366	2026-03-21 10:16:09.752+00	SCARICO	STIHL	Rasaerba RM 453.3 V	451098503	Bergamo Nello	0	0	sold	user_1769961017929	main	f
+367	2026-03-24 09:16:21.982+00	CARICO	Honda	Rasaerba HRG466XB	MCDF1005757	\N	\N	\N	available	user_1769961017929	main	t
+368	2026-03-24 09:17:18.702+00	CARICO	Honda	Caricabatteria	CAAEY1027253	\N	\N	\N	available	user_1769961017929	main	t
+369	2026-03-24 09:19:10.57+00	CARICO	Honda	Batteria DP3640XA	UADY1002444	\N	\N	\N	available	user_1769961017929	main	t
+370	2026-03-24 09:19:55.238+00	SCARICO	Honda	Rasaerba HRG466XB	MCDF1005757	Piovesan Aldo 3289160851 0422708651	0	0	sold	user_1769961017929	main	f
+371	2026-03-24 09:19:55.667+00	SCARICO	Honda	Caricabatteria	CAAEY1027253	Piovesan Aldo 3289160851 0422708651	0	0	sold	user_1769961017929	main	f
+372	2026-03-24 09:19:55.839+00	SCARICO	Honda	Batteria DP3640XA	UADY1002444	Piovesan Aldo 3289160851 0422708651	0	0	sold	user_1769961017929	main	f
+373	2026-03-24 14:54:11.862+00	CARICO	Stihl	Decespugliatore FSA 120.0 R	545073124	\N	\N	\N	available	user_1769961017929	main	t
+374	2026-03-24 14:55:07.299+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	548997510	\N	\N	\N	available	user_1769961017929	main	t
+375	2026-03-24 14:55:58.078+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	548997501	\N	\N	\N	available	user_1769961017929	main	t
+376	2026-03-24 14:56:29.721+00	CARICO	STIHL	Batteria AP 300S	952262635	\N	\N	\N	available	user_1769961017929	main	t
+377	2026-03-24 14:56:59.706+00	CARICO	STIHL	Batteria AP 300S	953245641	\N	\N	\N	available	user_1769961017929	main	t
+378	2026-03-24 14:57:35.057+00	CARICO	STIHL	Batteria AP 300.0 S	921008378	\N	\N	\N	available	user_1769961017929	main	t
+379	2026-03-24 14:57:57.456+00	SCARICO	Stihl	Decespugliatore FSA 120.0 R	545073124	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
+380	2026-03-24 14:57:57.671+00	SCARICO	STIHL	Decespugliatore FSA 120.0 R	548997510	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
+381	2026-03-24 14:57:57.796+00	SCARICO	STIHL	Decespugliatore FSA 120.0 R	548997501	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
+382	2026-03-24 14:57:57.91+00	SCARICO	STIHL	Batteria AP 300S	952262635	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
+383	2026-03-24 14:57:58.021+00	SCARICO	STIHL	Batteria AP 300S	953245641	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
+384	2026-03-24 14:57:58.12+00	SCARICO	STIHL	Batteria AP 300.0 S	921008378	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
+385	2026-03-24 15:18:56.818+00	CARICO	STIHL	 MS 212 3/8" P	837888152	\N	\N	\N	available	user_1769961017929	main	t
+386	2026-03-24 15:23:47.16+00	SCARICO	STIHL	 MS 212 3/8" P	837888152	Lava Edo Autotrasporti	0	0	sold	user_1769961017929	main	f
+387	2026-03-25 15:39:07.009+00	CARICO	STIHL	Motore multifunzione KMA 120.0 R	542315700	\N	\N	\N	available	user_1769961017929	main	f
+388	2026-03-25 15:39:07.009+00	CARICO	STIHL	Caricabatterie AL501	987011256	\N	\N	\N	available	user_1769961017929	main	f
+389	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S (187 Wh)	953256596	\N	\N	\N	available	user_1769961017929	main	f
+390	2026-03-25 15:44:06.678+00	CARICO	Stihl	Batteria AP 200S	953256589	\N	\N	\N	available	user_1769961017929	main	f
+391	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953256593	\N	\N	\N	available	user_1769961017929	main	f
+392	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953255776	\N	\N	\N	available	user_1769961017929	main	f
+393	2026-03-25 15:44:06.678+00	CARICO	Stihl	Batteria AP 200S	953255781	\N	\N	\N	available	user_1769961017929	main	f
+394	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953255780	\N	\N	\N	available	user_1769961017929	main	f
+395	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 300.0 S (281Wh)	920001602	\N	\N	\N	available	user_1769961017929	main	f
+396	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 300.0 S (281 Wh)	920001606	\N	\N	\N	available	user_1769961017929	main	f
+397	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 300.0 S (281Wh) 4850-400-6575	921009376	\N	\N	\N	available	user_1769961017929	main	f
+398	2026-03-25 15:50:12.998+00	CARICO	STIHL	Batteria AP 300.0 S	920001605	\N	\N	\N	available	user_1769961017929	main	f
+399	2026-03-25 15:50:12.998+00	CARICO	Stihl	Batteria AP 300.0 S	921008379	\N	\N	\N	available	user_1769961017929	main	f
+400	2026-03-25 15:50:12.998+00	CARICO	Stihl	Batteria AP 300.0 S	921008375	\N	\N	\N	available	user_1769961017929	main	f
+401	2026-03-26 10:55:15.372+00	SCARICO	Stihl	Soffiatore BGA 250.0	452027047	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+402	2026-03-26 10:55:16.249+00	SCARICO	STIHL	Soffiatore BGA 250.0	BA0601159	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+403	2026-03-26 10:55:16.393+00	SCARICO	Stihl	Tagliasiepi MSA 140.0 R	451286599	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+404	2026-03-26 10:55:16.542+00	SCARICO	Stihl	Tagliasiepi HSA 140.0 T	HA0201135	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+405	2026-03-26 10:55:16.668+00	SCARICO	Stihl	Motosega MSA 190.0 T	452311136	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+406	2026-03-26 10:55:16.856+00	SCARICO	STIHL	Motore multifunzione KMA 120.0 R	542315700	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+407	2026-03-26 10:55:16.984+00	SCARICO	STIHL	Caricabatteria AL 301-4	711612931	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+409	2026-03-26 10:55:17.185+00	SCARICO	STIHL	Caricabatterie AL501	987011256	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+412	2026-03-26 10:55:17.513+00	SCARICO	STIHL	Batteria AP 300.0 S (281 Wh)	920001606	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+414	2026-03-26 10:55:17.744+00	SCARICO	Stihl	Batteria AP 300.0 S	921008379	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+415	2026-03-26 10:55:17.851+00	SCARICO	STIHL	Batteria AP 300.0 S (281Wh) 4850-400-6575	921009376	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+418	2026-03-26 10:55:18.207+00	SCARICO	Stihl	Batteria AP 200S	953255781	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+420	2026-03-26 10:55:18.405+00	SCARICO	STIHL	Batteria AP 200S	953256593	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+408	2026-03-26 10:55:17.086+00	SCARICO	STIHL	Caricabatteria AL 301-4	711612935	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+410	2026-03-26 10:55:17.282+00	SCARICO	STIHL	Batteria AP 300.0 S (281Wh)	920001602	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+411	2026-03-26 10:55:17.402+00	SCARICO	STIHL	Batteria AP 300.0 S	920001605	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+413	2026-03-26 10:55:17.621+00	SCARICO	Stihl	Batteria AP 300.0 S	921008375	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+416	2026-03-26 10:55:17.971+00	SCARICO	STIHL	Batteria AP 200S	953255776	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+417	2026-03-26 10:55:18.076+00	SCARICO	STIHL	Batteria AP 200S	953255780	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+419	2026-03-26 10:55:18.308+00	SCARICO	Stihl	Batteria AP 200S	953256589	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+421	2026-03-26 10:55:18.532+00	SCARICO	STIHL	Batteria AP 200S (187 Wh)	953256596	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+422	2026-03-27 16:46:16.848+00	CARICO	Honda	Rasaerba HRG466C1 PKEH	MCCF1227945	\N	\N	\N	available	user_1769961017929	main	t
+423	2026-03-27 16:46:39.786+00	SCARICO	Honda	Rasaerba HRG466C1 PKEH	MCCF1227945	Maggiolo Roberto	0	0	sold	user_1769961017929	main	f
+424	2026-03-28 09:23:25.86+00	CARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	\N	\N	\N	available	user_1769961017929	main	t
+425	2026-03-28 09:24:03.287+00	SCARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	0	0	sold	user_1769961017929	main	f
+426	2026-03-28 10:27:49.366+00	CARICO	Echo	Decespugliatore SRM-301TES	U48738203070	\N	\N	\N	available	user_1769961017929	main	t
+427	2026-03-28 10:28:21.664+00	SCARICO	Echo	Decespugliatore SRM-301TES	U48738203070	Cicutto Roberto loc. Mattonaia 315 Sandorligo della Valle TS 347 8062220 roberto.cicutto@gmail.com	0	0	sold	user_1769961017929	main	f
+428	2026-03-28 10:41:56.067+00	CARICO	STIHL	Idropulitrice RE 130 PLUS	495001145	\N	\N	\N	available	user_1769961017929	main	t
+429	2026-03-28 10:44:19.218+00	SCARICO	STIHL	Idropulitrice RE 130 PLUS	495001145	Tollardo Palmerino	0	0	sold	user_1769961017929	main	f
+430	2026-03-30 14:20:14.637+00	CARICO	Echo	Decespugliatore SRM-267	U4843B006692	\N	\N	\N	available	user_1769961017929	main	t
+431	2026-03-30 14:24:07.754+00	SCARICO	Echo	Decespugliatore SRM-267	U4843B006692	Tuon Adriano	0	0	sold	user_1769961017929	main	f
 \.
 
 
@@ -6045,6 +6434,16 @@ COPY public.noleggio_abbonamenti (id, cliente_nome, cliente_tel, tipo, credito_r
 
 
 --
+-- Data for Name: noleggio_archivio; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.noleggio_archivio (id, created_at, nome_cliente, data_da, data_a, n_giorni, totale_preventivo, note, carrello, pdf_url, sopralluogo_id, cliente_id) FROM stdin;
+86a311dc-d272-405d-9483-1d7ed5f4a6ed	2026-03-20 17:47:57.923036+00	\N	\N	\N	1	402	\N	[{"id": 1774028731966, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 142, "nome": "Carotatrice/Bucatrice PL 2501", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "B", "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 128, "prezzo_netto": 104.92, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 99.4, "prezzo_netto": 81.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 104, "prezzo_netto": 85.25, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 115, "prezzo_netto": 94.27, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 142, "prezzo_netto": 116.4, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 142, "fasciaScelta": "uno_giorno"}, {"id": 1774028758327, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 191, "nome": "Rete livella.76x10kg 122x30kg - 183x56kg", "attiva": true, "famiglia": null, "categoria": "tagliaerba", "carburante": null, "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 18, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 14, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 16, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 20, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 20, "fasciaScelta": "uno_giorno"}, {"id": 1774028830675, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 179, "nome": "Seminatrice SEMBDNER RS-60N", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "LA NR. 2 FA DA RIGENERA SE SI AGGIUNGE IL RULLO", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 179, "prezzo_netto": 146.72, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 145, "prezzo_netto": 118.85, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 161, "prezzo_netto": 131.97, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 199, "prezzo_netto": 163.12, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 199, "fasciaScelta": "uno_giorno"}, {"id": 1774028849807, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 167, "nome": "Rullo SEMBDNER da cm.60 bucatura", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "si può applicare a SEMIN. RS 60", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 36.6, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 32, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 34, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 41, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 41, "fasciaScelta": "uno_giorno"}]	\N	\N	\N
+66d12267-655e-4860-bc8f-3d3ef2d72a2f	2026-03-31 07:03:40.55495+00	Habitat Natura	2026-04-02	2026-04-03	1	182.75	\N	[{"id": 1774940550604, "listino": "std_netto", "nGiorni": 1, "macchina": {"id": 134, "nome": "Motocoltivatore con fresa 12 HP", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "G", "is_accessorio": false, "note_tecniche": "FRESA NORMALE LARGH. CM 90", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 96, "prezzo_netto": 78.69, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 75, "prezzo_netto": 61.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 63.12, "prezzo_netto": 63.12, "tipo_listino": "c"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 77, "prezzo_netto": 63.12, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 70.49, "prezzo_netto": 70.49, "tipo_listino": "b"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 86, "prezzo_netto": 70.49, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 107, "prezzo_netto": 87.71, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 87.71, "fasciaScelta": "uno_giorno"}]	\N	\N	\N
+\.
+
+
+--
 -- Data for Name: noleggio_listini; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -6085,35 +6484,16 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 569	132	due_tre_giorni	std	128.00	104.92
 570	132	quattro_sette_giorni	std	115.00	94.27
 571	132	oltre_sette_giorni	std	104.00	85.25
-572	133	uno_giorno	std	107.00	\N
-573	133	due_tre_giorni	std	96.00	\N
-574	133	quattro_sette_giorni	std	86.00	\N
-575	133	oltre_sette_giorni	std	77.00	\N
 576	134	mezzo_giorno	std	75.00	61.48
 577	134	uno_giorno	std	107.00	87.71
 578	134	due_tre_giorni	std	96.00	78.69
 579	134	quattro_sette_giorni	std	86.00	70.49
 580	134	oltre_sette_giorni	std	77.00	63.12
-581	135	mezzo_giorno	std	33.60	\N
-582	135	uno_giorno	std	48.00	\N
-583	135	due_tre_giorni	std	43.00	\N
-584	135	quattro_sette_giorni	std	39.00	\N
-585	135	oltre_sette_giorni	std	35.00	\N
 586	136	mezzo_giorno	std	49.70	40.74
 587	136	uno_giorno	std	71.00	58.20
 588	136	due_tre_giorni	std	64.00	52.46
 589	136	quattro_sette_giorni	std	58.00	47.55
 590	136	oltre_sette_giorni	std	52.00	42.63
-591	137	mezzo_giorno	std	49.70	\N
-592	137	uno_giorno	std	71.00	\N
-593	137	due_tre_giorni	std	64.00	\N
-594	137	quattro_sette_giorni	std	58.00	\N
-595	137	oltre_sette_giorni	std	52.00	\N
-596	138	mezzo_giorno	std	152.00	\N
-597	138	uno_giorno	std	217.00	\N
-598	138	due_tre_giorni	std	195.00	\N
-599	138	quattro_sette_giorni	std	176.00	\N
-600	138	oltre_sette_giorni	std	158.00	\N
 601	139	uno_giorno	std	217.00	177.87
 602	139	due_tre_giorni	std	195.00	159.84
 603	139	quattro_sette_giorni	std	176.00	144.27
@@ -6133,35 +6513,11 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 617	142	due_tre_giorni	std	128.00	104.92
 618	142	quattro_sette_giorni	std	115.00	94.27
 619	142	oltre_sette_giorni	std	104.00	85.25
-620	143	uno_giorno	std	176.00	\N
-621	143	due_tre_giorni	std	158.60	\N
-622	143	quattro_sette_giorni	std	143.96	\N
-623	143	oltre_sette_giorni	std	129.32	\N
 624	144	mezzo_giorno	std	54.00	44.27
 625	144	uno_giorno	std	77.00	63.12
 626	144	due_tre_giorni	std	69.00	56.56
 627	144	quattro_sette_giorni	std	62.00	50.82
 628	144	oltre_sette_giorni	std	56.00	45.90
-629	145	mezzo_giorno	std	35.00	\N
-630	145	uno_giorno	std	50.00	\N
-631	145	due_tre_giorni	std	45.00	\N
-632	145	quattro_sette_giorni	std	41.00	\N
-633	145	oltre_sette_giorni	std	37.00	\N
-634	146	mezzo_giorno	std	75.00	\N
-635	146	uno_giorno	std	107.00	\N
-636	146	due_tre_giorni	std	96.00	\N
-637	146	quattro_sette_giorni	std	86.00	\N
-638	146	oltre_sette_giorni	std	77.00	\N
-639	147	mezzo_giorno	std	35.00	\N
-640	147	uno_giorno	std	50.00	\N
-641	147	due_tre_giorni	std	45.00	\N
-642	147	quattro_sette_giorni	std	41.00	\N
-643	147	oltre_sette_giorni	std	37.00	\N
-644	148	mezzo_giorno	std	42.70	\N
-645	148	uno_giorno	std	61.00	\N
-646	148	due_tre_giorni	std	55.00	\N
-647	148	quattro_sette_giorni	std	50.00	\N
-648	148	oltre_sette_giorni	std	45.00	\N
 649	149	uno_giorno	std	177.00	145.09
 650	149	due_tre_giorni	std	159.00	130.33
 651	149	quattro_sette_giorni	std	143.00	117.21
@@ -6183,34 +6539,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 667	153	due_tre_giorni	std	195.00	159.84
 668	153	quattro_sette_giorni	std	176.00	144.26
 669	153	oltre_sette_giorni	std	158.00	129.51
-670	154	uno_giorno	std	77.00	\N
-671	154	due_tre_giorni	std	69.00	\N
-672	154	quattro_sette_giorni	std	62.00	\N
-673	154	oltre_sette_giorni	std	56.00	\N
-674	155	uno_giorno	std	6.10	\N
-675	155	due_tre_giorni	std	6.10	\N
-676	155	quattro_sette_giorni	std	6.10	\N
-677	155	oltre_sette_giorni	std	6.10	\N
-678	156	uno_giorno	std	10.00	\N
-679	156	due_tre_giorni	std	10.00	\N
-680	156	quattro_sette_giorni	std	10.00	\N
-681	156	oltre_sette_giorni	std	10.00	\N
-682	157	uno_giorno	std	12.20	\N
-683	157	due_tre_giorni	std	12.20	\N
-684	157	quattro_sette_giorni	std	12.20	\N
-685	157	oltre_sette_giorni	std	12.20	\N
-686	158	uno_giorno	std	30.50	\N
-687	158	due_tre_giorni	std	30.50	\N
-688	158	quattro_sette_giorni	std	30.50	\N
-689	158	oltre_sette_giorni	std	30.50	\N
-690	159	uno_giorno	std	30.50	\N
-691	159	due_tre_giorni	std	30.50	\N
-692	159	quattro_sette_giorni	std	30.50	\N
-693	159	oltre_sette_giorni	std	30.50	\N
-694	160	uno_giorno	std	30.50	\N
-695	160	due_tre_giorni	std	30.50	\N
-696	160	quattro_sette_giorni	std	30.50	\N
-697	160	oltre_sette_giorni	std	30.50	\N
 698	161	uno_giorno	std	41.00	33.61
 699	161	due_tre_giorni	std	36.60	30.00
 700	161	quattro_sette_giorni	std	34.00	27.87
@@ -6220,64 +6548,14 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 704	162	due_tre_giorni	std	64.00	52.46
 705	162	quattro_sette_giorni	std	58.00	47.54
 706	162	oltre_sette_giorni	std	52.00	42.62
-707	163	mezzo_giorno	std	67.20	\N
-708	163	uno_giorno	std	96.00	\N
-709	163	due_tre_giorni	std	86.00	\N
-710	163	quattro_sette_giorni	std	77.00	\N
-711	163	oltre_sette_giorni	std	73.00	\N
-712	164	mezzo_giorno	std	28.70	\N
-713	164	uno_giorno	std	41.00	\N
-714	164	due_tre_giorni	std	36.60	\N
-715	164	quattro_sette_giorni	std	34.00	\N
-716	164	oltre_sette_giorni	std	32.00	\N
 717	165	uno_giorno	std	12.00	9.84
 718	165	due_tre_giorni	std	12.00	9.84
 719	165	quattro_sette_giorni	std	11.00	9.02
 720	165	oltre_sette_giorni	std	10.00	8.20
-721	166	mezzo_giorno	std	75.00	\N
-722	166	uno_giorno	std	107.00	\N
-723	166	due_tre_giorni	std	96.00	\N
-724	166	quattro_sette_giorni	std	86.00	\N
-725	166	oltre_sette_giorni	std	77.00	\N
-726	167	uno_giorno	std	41.00	\N
-727	167	due_tre_giorni	std	36.60	\N
-728	167	quattro_sette_giorni	std	34.00	\N
-729	167	oltre_sette_giorni	std	32.00	\N
-730	168	uno_giorno	std	77.00	\N
-731	168	due_tre_giorni	std	69.00	\N
-732	168	quattro_sette_giorni	std	62.00	\N
-733	168	oltre_sette_giorni	std	56.00	\N
-734	169	uno_giorno	std	161.00	\N
-735	169	due_tre_giorni	std	145.00	\N
-736	169	quattro_sette_giorni	std	131.00	\N
-737	169	oltre_sette_giorni	std	118.00	\N
-738	170	uno_giorno	std	176.00	\N
-739	170	due_tre_giorni	std	158.60	\N
-740	170	quattro_sette_giorni	std	144.00	\N
-741	170	oltre_sette_giorni	std	130.00	\N
-742	171	uno_giorno	std	221.00	\N
-743	171	due_tre_giorni	std	199.00	\N
-744	171	quattro_sette_giorni	std	179.00	\N
-745	171	oltre_sette_giorni	std	162.00	\N
 746	172	uno_giorno	std	262.00	214.76
 747	172	due_tre_giorni	std	236.00	193.45
 748	172	quattro_sette_giorni	std	212.00	173.77
 749	172	oltre_sette_giorni	std	191.00	156.56
-750	173	mezzo_giorno	std	112.70	\N
-751	173	uno_giorno	std	161.00	\N
-752	173	due_tre_giorni	std	145.00	\N
-753	173	quattro_sette_giorni	std	131.00	\N
-754	173	oltre_sette_giorni	std	118.00	\N
-755	174	mezzo_giorno	std	170.80	\N
-756	174	uno_giorno	std	244.00	\N
-757	174	due_tre_giorni	std	219.60	\N
-758	174	quattro_sette_giorni	std	201.30	\N
-759	174	oltre_sette_giorni	std	179.30	\N
-760	175	mezzo_giorno	std	227.00	\N
-761	175	uno_giorno	std	324.00	\N
-762	175	due_tre_giorni	std	292.00	\N
-763	175	quattro_sette_giorni	std	263.00	\N
-764	175	oltre_sette_giorni	std	237.00	\N
 765	176	mezzo_giorno	std	214.20	175.41
 766	176	uno_giorno	std	306.00	250.00
 767	176	due_tre_giorni	std	275.00	225.41
@@ -6288,14 +6566,15 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 772	177	due_tre_giorni	std	128.00	104.92
 773	177	quattro_sette_giorni	std	115.00	92.62
 774	177	oltre_sette_giorni	std	104.00	83.61
-775	178	uno_giorno	std	189.00	\N
-776	178	due_tre_giorni	std	170.00	\N
-777	178	quattro_sette_giorni	std	153.00	\N
-778	178	oltre_sette_giorni	std	138.00	\N
 779	179	uno_giorno	std	199.00	163.12
 780	179	due_tre_giorni	std	179.00	146.72
 781	179	quattro_sette_giorni	std	161.00	131.97
 782	179	oltre_sette_giorni	std	145.00	118.85
+825	189	mezzo_giorno	std	42.70	35.00
+826	189	uno_giorno	std	61.00	50.00
+827	189	due_tre_giorni	std	55.00	45.09
+828	189	quattro_sette_giorni	std	50.00	40.98
+829	189	oltre_sette_giorni	std	45.00	36.89
 783	180	uno_giorno	std	221.00	181.15
 784	180	due_tre_giorni	std	199.00	163.12
 785	180	quattro_sette_giorni	std	179.00	146.72
@@ -6317,63 +6596,26 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 801	184	uno_giorno	std	61.00	50.00
 802	184	due_tre_giorni	std	55.00	45.09
 803	184	quattro_sette_giorni	std	50.00	40.98
-804	184	oltre_sette_giorni	std	45.00	36.89
 805	185	mezzo_giorno	std	68.60	56.23
+804	184	oltre_sette_giorni	std	45.00	36.89
 806	185	uno_giorno	std	98.00	80.33
 807	185	due_tre_giorni	std	88.00	72.13
 808	185	quattro_sette_giorni	std	79.00	64.75
 809	185	oltre_sette_giorni	std	71.00	58.20
-810	186	mezzo_giorno	std	35.00	\N
-811	186	uno_giorno	std	50.00	\N
-812	186	due_tre_giorni	std	45.00	\N
-813	186	quattro_sette_giorni	std	41.00	\N
-814	186	oltre_sette_giorni	std	37.00	\N
-815	187	mezzo_giorno	std	35.00	\N
-816	187	uno_giorno	std	50.00	\N
-817	187	due_tre_giorni	std	45.00	\N
-818	187	quattro_sette_giorni	std	41.00	\N
-819	187	oltre_sette_giorni	std	37.00	\N
 820	188	mezzo_giorno	std	42.70	35.00
 821	188	uno_giorno	std	61.00	50.00
 822	188	due_tre_giorni	std	55.00	45.09
 823	188	quattro_sette_giorni	std	50.00	40.98
 824	188	oltre_sette_giorni	std	45.00	36.89
-825	189	mezzo_giorno	std	42.70	35.00
-826	189	uno_giorno	std	61.00	50.00
-827	189	due_tre_giorni	std	55.00	45.09
-828	189	quattro_sette_giorni	std	50.00	40.98
-829	189	oltre_sette_giorni	std	45.00	36.89
 830	190	uno_giorno	std	61.00	50.00
 831	190	due_tre_giorni	std	55.00	45.09
 832	190	quattro_sette_giorni	std	50.00	40.98
 833	190	oltre_sette_giorni	std	45.00	36.89
-834	191	uno_giorno	std	20.00	\N
-835	191	due_tre_giorni	std	18.00	\N
-836	191	quattro_sette_giorni	std	16.00	\N
-837	191	oltre_sette_giorni	std	14.00	\N
 838	192	mezzo_giorno	std	49.70	40.74
 839	192	uno_giorno	std	71.00	58.20
 840	192	due_tre_giorni	std	64.00	52.46
 841	192	quattro_sette_giorni	std	58.00	47.55
 842	192	oltre_sette_giorni	std	52.00	42.63
-843	193	uno_giorno	std	71.00	\N
-844	193	due_tre_giorni	std	64.00	\N
-845	193	quattro_sette_giorni	std	58.00	\N
-846	193	oltre_sette_giorni	std	52.00	\N
-847	194	mezzo_giorno	std	60.00	\N
-848	194	uno_giorno	std	86.00	\N
-849	194	due_tre_giorni	std	77.00	\N
-850	194	quattro_sette_giorni	std	69.30	\N
-851	194	oltre_sette_giorni	std	62.40	\N
-852	195	mezzo_giorno	std	42.70	\N
-853	195	uno_giorno	std	61.00	\N
-854	195	due_tre_giorni	std	55.00	\N
-855	195	quattro_sette_giorni	std	50.00	\N
-856	195	oltre_sette_giorni	std	45.00	\N
-857	196	uno_giorno	std	91.00	\N
-858	196	due_tre_giorni	std	82.00	\N
-859	196	quattro_sette_giorni	std	74.00	\N
-860	196	oltre_sette_giorni	std	67.00	\N
 861	197	mezzo_giorno	std	75.00	61.48
 862	197	uno_giorno	std	107.00	87.71
 863	197	due_tre_giorni	std	96.00	78.69
@@ -6397,24 +6639,24 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 881	201	due_tre_giorni	std	69.00	56.56
 882	201	quattro_sette_giorni	std	62.00	50.82
 883	201	oltre_sette_giorni	std	56.00	45.90
-884	202	uno_giorno	std	98.00	\N
-885	202	due_tre_giorni	std	88.00	\N
-886	202	quattro_sette_giorni	std	79.00	\N
-887	202	oltre_sette_giorni	std	71.00	\N
 888	203	mezzo_giorno	std	123.20	100.99
 889	203	uno_giorno	std	176.00	144.27
 890	203	due_tre_giorni	std	158.60	130.00
 891	203	quattro_sette_giorni	std	143.96	118.04
 892	203	oltre_sette_giorni	std	129.32	106.56
-893	204	uno_giorno	std	56.00	\N
-894	204	due_tre_giorni	std	50.00	\N
-895	204	quattro_sette_giorni	std	45.00	\N
-896	204	oltre_sette_giorni	std	40.50	\N
-897	205	uno_giorno	std	61.00	\N
-898	205	due_tre_giorni	std	55.00	\N
-899	205	quattro_sette_giorni	std	50.00	\N
-900	205	oltre_sette_giorni	std	45.00	\N
 901	206	uno_giorno	std	217.00	177.87
+990	227	uno_giorno	std	142.00	116.40
+991	227	due_tre_giorni	std	128.00	104.92
+992	227	quattro_sette_giorni	std	115.00	94.26
+993	227	oltre_sette_giorni	std	104.00	85.25
+674	155	uno_giorno	std	6.10	5.00
+675	155	due_tre_giorni	std	6.10	5.00
+676	155	quattro_sette_giorni	std	6.10	5.00
+677	155	oltre_sette_giorni	std	6.10	5.00
+678	156	uno_giorno	std	10.00	8.20
+679	156	due_tre_giorni	std	10.00	8.20
+680	156	quattro_sette_giorni	std	10.00	8.20
+681	156	oltre_sette_giorni	std	10.00	8.20
 902	206	due_tre_giorni	std	195.00	159.84
 903	206	quattro_sette_giorni	std	176.00	144.26
 904	206	oltre_sette_giorni	std	158.00	129.51
@@ -6422,18 +6664,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 906	207	due_tre_giorni	std	236.00	193.44
 907	207	quattro_sette_giorni	std	213.00	174.59
 908	207	oltre_sette_giorni	std	191.00	156.56
-909	208	uno_giorno	std	282.00	\N
-910	208	due_tre_giorni	std	253.00	\N
-911	208	quattro_sette_giorni	std	228.00	\N
-912	208	oltre_sette_giorni	std	205.50	\N
-913	209	uno_giorno	std	177.00	\N
-914	209	due_tre_giorni	std	159.00	\N
-915	209	quattro_sette_giorni	std	143.00	\N
-916	209	oltre_sette_giorni	std	129.00	\N
-917	210	uno_giorno	std	162.00	\N
-918	210	due_tre_giorni	std	146.40	\N
-919	210	quattro_sette_giorni	std	134.20	\N
-920	210	oltre_sette_giorni	std	119.50	\N
+909	208	uno_giorno	std	282.00	231.15
+910	208	due_tre_giorni	std	253.00	207.38
+911	208	quattro_sette_giorni	std	228.00	186.89
+912	208	oltre_sette_giorni	std	205.50	168.45
 921	211	uno_giorno	std	99.00	81.15
 922	211	due_tre_giorni	std	89.00	72.96
 923	211	quattro_sette_giorni	std	80.00	65.57
@@ -6449,30 +6683,254 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 933	214	uno_giorno	std	221.00	181.15
 934	214	due_tre_giorni	std	199.00	163.12
 935	214	quattro_sette_giorni	std	179.00	146.72
+572	133	uno_giorno	std	107.00	87.70
+573	133	due_tre_giorni	std	96.00	78.69
+574	133	quattro_sette_giorni	std	86.00	70.49
+575	133	oltre_sette_giorni	std	77.00	63.11
+581	135	mezzo_giorno	std	33.60	27.54
+582	135	uno_giorno	std	48.00	39.34
+583	135	due_tre_giorni	std	43.00	35.25
+584	135	quattro_sette_giorni	std	39.00	31.97
+585	135	oltre_sette_giorni	std	35.00	28.69
+591	137	mezzo_giorno	std	49.70	40.74
+592	137	uno_giorno	std	71.00	58.20
+593	137	due_tre_giorni	std	64.00	52.46
+594	137	quattro_sette_giorni	std	58.00	47.54
+595	137	oltre_sette_giorni	std	52.00	42.62
+596	138	mezzo_giorno	std	152.00	124.59
+597	138	uno_giorno	std	217.00	177.87
+598	138	due_tre_giorni	std	195.00	159.84
+599	138	quattro_sette_giorni	std	176.00	144.26
+600	138	oltre_sette_giorni	std	158.00	129.51
+620	143	uno_giorno	std	176.00	144.26
+621	143	due_tre_giorni	std	158.60	130.00
+622	143	quattro_sette_giorni	std	143.96	118.00
+623	143	oltre_sette_giorni	std	129.32	106.00
+629	145	mezzo_giorno	std	35.00	28.69
+630	145	uno_giorno	std	50.00	40.98
+631	145	due_tre_giorni	std	45.00	36.89
+632	145	quattro_sette_giorni	std	41.00	33.61
+633	145	oltre_sette_giorni	std	37.00	30.33
+634	146	mezzo_giorno	std	75.00	61.48
+635	146	uno_giorno	std	107.00	87.70
+636	146	due_tre_giorni	std	96.00	78.69
+637	146	quattro_sette_giorni	std	86.00	70.49
+638	146	oltre_sette_giorni	std	77.00	63.11
+639	147	mezzo_giorno	std	35.00	28.69
+640	147	uno_giorno	std	50.00	40.98
+641	147	due_tre_giorni	std	45.00	36.89
+642	147	quattro_sette_giorni	std	41.00	33.61
+643	147	oltre_sette_giorni	std	37.00	30.33
+644	148	mezzo_giorno	std	42.70	35.00
+645	148	uno_giorno	std	61.00	50.00
+646	148	due_tre_giorni	std	55.00	45.08
+647	148	quattro_sette_giorni	std	50.00	40.98
+648	148	oltre_sette_giorni	std	45.00	36.89
+670	154	uno_giorno	std	77.00	63.11
+671	154	due_tre_giorni	std	69.00	56.56
+672	154	quattro_sette_giorni	std	62.00	50.82
+673	154	oltre_sette_giorni	std	56.00	45.90
+682	157	uno_giorno	std	12.20	10.00
+683	157	due_tre_giorni	std	12.20	10.00
+684	157	quattro_sette_giorni	std	12.20	10.00
+685	157	oltre_sette_giorni	std	12.20	10.00
+686	158	uno_giorno	std	30.50	25.00
+687	158	due_tre_giorni	std	30.50	25.00
+688	158	quattro_sette_giorni	std	30.50	25.00
+689	158	oltre_sette_giorni	std	30.50	25.00
+690	159	uno_giorno	std	30.50	25.00
+691	159	due_tre_giorni	std	30.50	25.00
+692	159	quattro_sette_giorni	std	30.50	25.00
+693	159	oltre_sette_giorni	std	30.50	25.00
+694	160	uno_giorno	std	30.50	25.00
+695	160	due_tre_giorni	std	30.50	25.00
+696	160	quattro_sette_giorni	std	30.50	25.00
+697	160	oltre_sette_giorni	std	30.50	25.00
+707	163	mezzo_giorno	std	67.20	55.08
+708	163	uno_giorno	std	96.00	78.69
+709	163	due_tre_giorni	std	86.00	70.49
+710	163	quattro_sette_giorni	std	77.00	63.11
+711	163	oltre_sette_giorni	std	73.00	59.84
+712	164	mezzo_giorno	std	28.70	23.52
+713	164	uno_giorno	std	41.00	33.61
+714	164	due_tre_giorni	std	36.60	30.00
+715	164	quattro_sette_giorni	std	34.00	27.87
+716	164	oltre_sette_giorni	std	32.00	26.23
+721	166	mezzo_giorno	std	75.00	61.48
+722	166	uno_giorno	std	107.00	87.70
+723	166	due_tre_giorni	std	96.00	78.69
+724	166	quattro_sette_giorni	std	86.00	70.49
+725	166	oltre_sette_giorni	std	77.00	63.11
+726	167	uno_giorno	std	41.00	33.61
+727	167	due_tre_giorni	std	36.60	30.00
+728	167	quattro_sette_giorni	std	34.00	27.87
+729	167	oltre_sette_giorni	std	32.00	26.23
+730	168	uno_giorno	std	77.00	63.11
+731	168	due_tre_giorni	std	69.00	56.56
+732	168	quattro_sette_giorni	std	62.00	50.82
+733	168	oltre_sette_giorni	std	56.00	45.90
+734	169	uno_giorno	std	161.00	131.97
+735	169	due_tre_giorni	std	145.00	118.85
+736	169	quattro_sette_giorni	std	131.00	107.38
+737	169	oltre_sette_giorni	std	118.00	96.72
+738	170	uno_giorno	std	176.00	144.26
+739	170	due_tre_giorni	std	158.60	130.00
+740	170	quattro_sette_giorni	std	144.00	118.03
+741	170	oltre_sette_giorni	std	130.00	106.56
+742	171	uno_giorno	std	221.00	181.15
+743	171	due_tre_giorni	std	199.00	163.11
+744	171	quattro_sette_giorni	std	179.00	146.72
+745	171	oltre_sette_giorni	std	162.00	132.79
+750	173	mezzo_giorno	std	112.70	92.38
+751	173	uno_giorno	std	161.00	131.97
+752	173	due_tre_giorni	std	145.00	118.85
+753	173	quattro_sette_giorni	std	131.00	107.38
+754	173	oltre_sette_giorni	std	118.00	96.72
+755	174	mezzo_giorno	std	170.80	140.00
+756	174	uno_giorno	std	244.00	200.00
+757	174	due_tre_giorni	std	219.60	180.00
+758	174	quattro_sette_giorni	std	201.30	165.00
+759	174	oltre_sette_giorni	std	179.30	146.97
+760	175	mezzo_giorno	std	227.00	186.07
+761	175	uno_giorno	std	324.00	265.57
+762	175	due_tre_giorni	std	292.00	239.34
+763	175	quattro_sette_giorni	std	263.00	215.57
+764	175	oltre_sette_giorni	std	237.00	194.26
+775	178	uno_giorno	std	189.00	154.92
+776	178	due_tre_giorni	std	170.00	139.34
+777	178	quattro_sette_giorni	std	153.00	125.41
+778	178	oltre_sette_giorni	std	138.00	113.11
+810	186	mezzo_giorno	std	35.00	28.69
+811	186	uno_giorno	std	50.00	40.98
+812	186	due_tre_giorni	std	45.00	36.89
+813	186	quattro_sette_giorni	std	41.00	33.61
+814	186	oltre_sette_giorni	std	37.00	30.33
+815	187	mezzo_giorno	std	35.00	28.69
+816	187	uno_giorno	std	50.00	40.98
+817	187	due_tre_giorni	std	45.00	36.89
+818	187	quattro_sette_giorni	std	41.00	33.61
+819	187	oltre_sette_giorni	std	37.00	30.33
+834	191	uno_giorno	std	20.00	16.39
+835	191	due_tre_giorni	std	18.00	14.75
+836	191	quattro_sette_giorni	std	16.00	13.11
+837	191	oltre_sette_giorni	std	14.00	11.48
+843	193	uno_giorno	std	71.00	58.20
+844	193	due_tre_giorni	std	64.00	52.46
+845	193	quattro_sette_giorni	std	58.00	47.54
+846	193	oltre_sette_giorni	std	52.00	42.62
+847	194	mezzo_giorno	std	60.00	49.18
+848	194	uno_giorno	std	86.00	70.49
+849	194	due_tre_giorni	std	77.00	63.11
+850	194	quattro_sette_giorni	std	69.30	56.80
+851	194	oltre_sette_giorni	std	62.40	51.15
+852	195	mezzo_giorno	std	42.70	35.00
+853	195	uno_giorno	std	61.00	50.00
+854	195	due_tre_giorni	std	55.00	45.08
+855	195	quattro_sette_giorni	std	50.00	40.98
+856	195	oltre_sette_giorni	std	45.00	36.89
+857	196	uno_giorno	std	91.00	74.59
+858	196	due_tre_giorni	std	82.00	67.21
+859	196	quattro_sette_giorni	std	74.00	60.66
+860	196	oltre_sette_giorni	std	67.00	54.92
+884	202	uno_giorno	std	98.00	80.33
+885	202	due_tre_giorni	std	88.00	72.13
+886	202	quattro_sette_giorni	std	79.00	64.75
+887	202	oltre_sette_giorni	std	71.00	58.20
+893	204	uno_giorno	std	56.00	45.90
+894	204	due_tre_giorni	std	50.00	40.98
+895	204	quattro_sette_giorni	std	45.00	36.89
+896	204	oltre_sette_giorni	std	40.50	33.20
+897	205	uno_giorno	std	61.00	50.00
+898	205	due_tre_giorni	std	55.00	45.08
+899	205	quattro_sette_giorni	std	50.00	40.98
+900	205	oltre_sette_giorni	std	45.00	36.89
+913	209	uno_giorno	std	177.00	145.08
+914	209	due_tre_giorni	std	159.00	130.33
+915	209	quattro_sette_giorni	std	143.00	117.21
+916	209	oltre_sette_giorni	std	129.00	105.74
+917	210	uno_giorno	std	162.00	132.79
+918	210	due_tre_giorni	std	146.40	120.00
+919	210	quattro_sette_giorni	std	134.20	110.00
+920	210	oltre_sette_giorni	std	119.50	97.95
+937	215	uno_giorno	std	162.00	132.79
+938	215	due_tre_giorni	std	146.40	120.00
+939	215	quattro_sette_giorni	std	134.20	110.00
+940	215	oltre_sette_giorni	std	119.50	97.95
+941	216	uno_giorno	std	199.00	163.11
+942	216	due_tre_giorni	std	179.00	146.72
+943	216	quattro_sette_giorni	std	161.00	131.97
+944	216	oltre_sette_giorni	std	145.00	118.85
+945	217	mezzo_giorno	std	99.40	81.48
+946	217	uno_giorno	std	142.00	116.39
+947	217	due_tre_giorni	std	128.00	104.92
+948	217	quattro_sette_giorni	std	115.00	94.26
+949	217	oltre_sette_giorni	std	104.00	85.25
+955	219	mezzo_giorno	std	75.00	61.48
+956	219	uno_giorno	std	107.00	87.70
+957	219	due_tre_giorni	std	96.00	78.69
+958	219	quattro_sette_giorni	std	86.00	70.49
+959	219	oltre_sette_giorni	std	77.00	63.11
+968	222	uno_giorno	std	24.00	19.67
+969	222	due_tre_giorni	std	21.00	17.21
+970	222	quattro_sette_giorni	std	19.00	15.57
+971	222	oltre_sette_giorni	std	17.00	13.93
+980	225	uno_giorno	std	107.00	87.70
+981	225	due_tre_giorni	std	96.00	78.69
+982	225	quattro_sette_giorni	std	86.00	70.49
+983	225	oltre_sette_giorni	std	77.00	63.11
+984	226	mezzo_giorno	std	114.80	94.10
+989	227	mezzo_giorno	std	99.40	81.48
+1006	234	uno_giorno	std	142.00	116.39
+1007	234	due_tre_giorni	std	128.00	104.92
+1008	234	quattro_sette_giorni	std	115.00	94.26
+1009	234	oltre_sette_giorni	std	104.00	85.25
+1010	235	uno_giorno	std	71.00	58.20
+1011	235	due_tre_giorni	std	64.00	52.46
+1012	235	quattro_sette_giorni	std	58.00	47.54
+1013	235	oltre_sette_giorni	std	52.00	42.62
+1014	236	uno_giorno	std	129.00	105.74
+1015	236	due_tre_giorni	std	116.00	95.08
+1016	236	quattro_sette_giorni	std	104.00	85.25
+1017	236	oltre_sette_giorni	std	94.00	77.05
+1022	238	uno_giorno	std	142.00	116.39
+1023	238	due_tre_giorni	std	128.00	104.92
+1024	238	quattro_sette_giorni	std	115.00	94.26
+1025	238	oltre_sette_giorni	std	104.00	85.25
+1026	239	uno_giorno	std	199.00	163.11
+1027	239	due_tre_giorni	std	179.00	146.72
+1028	239	quattro_sette_giorni	std	161.00	131.97
+1029	239	oltre_sette_giorni	std	145.00	118.85
+1030	240	uno_giorno	std	199.00	163.11
+1031	240	due_tre_giorni	std	179.00	146.72
+1032	240	quattro_sette_giorni	std	161.00	131.97
+1033	240	oltre_sette_giorni	std	145.00	118.85
+1034	241	uno_giorno	std	199.00	163.11
+1035	241	due_tre_giorni	std	179.00	146.72
+1036	241	quattro_sette_giorni	std	161.00	131.97
+1037	241	oltre_sette_giorni	std	145.00	118.85
+1038	242	uno_giorno	std	498.00	408.20
+1039	242	due_tre_giorni	std	449.00	368.03
+1040	242	quattro_sette_giorni	std	405.00	331.97
+1041	242	oltre_sette_giorni	std	365.00	299.18
+1042	243	mezzo_giorno	std	114.80	94.10
+1043	243	uno_giorno	std	164.00	134.43
+1044	243	due_tre_giorni	std	147.00	120.49
+1045	243	quattro_sette_giorni	std	132.00	108.20
+1046	243	oltre_sette_giorni	std	119.00	97.54
+1051	245	uno_giorno	std	161.00	131.97
+1052	245	due_tre_giorni	std	145.00	118.85
+1053	245	quattro_sette_giorni	std	131.00	107.38
+1054	245	oltre_sette_giorni	std	118.00	96.72
+1067	249	uno_giorno	std	217.00	177.87
+1068	249	due_tre_giorni	std	195.00	159.84
+1069	249	quattro_sette_giorni	std	176.00	144.26
+1070	249	oltre_sette_giorni	std	158.00	129.51
 936	214	oltre_sette_giorni	std	162.00	132.79
-937	215	uno_giorno	std	162.00	\N
-938	215	due_tre_giorni	std	146.40	\N
-939	215	quattro_sette_giorni	std	134.20	\N
-940	215	oltre_sette_giorni	std	119.50	\N
-941	216	uno_giorno	std	199.00	\N
-942	216	due_tre_giorni	std	179.00	\N
-943	216	quattro_sette_giorni	std	161.00	\N
-944	216	oltre_sette_giorni	std	145.00	\N
-945	217	mezzo_giorno	std	99.40	\N
-946	217	uno_giorno	std	142.00	\N
-947	217	due_tre_giorni	std	128.00	\N
-948	217	quattro_sette_giorni	std	115.00	\N
-949	217	oltre_sette_giorni	std	104.00	\N
 950	218	mezzo_giorno	std	75.00	61.48
 951	218	uno_giorno	std	107.00	87.71
 952	218	due_tre_giorni	std	96.00	78.69
 953	218	quattro_sette_giorni	std	86.00	70.49
 954	218	oltre_sette_giorni	std	77.00	63.12
-955	219	mezzo_giorno	std	75.00	\N
-956	219	uno_giorno	std	107.00	\N
-957	219	due_tre_giorni	std	96.00	\N
-958	219	quattro_sette_giorni	std	86.00	\N
-959	219	oltre_sette_giorni	std	77.00	\N
 960	220	uno_giorno	std	164.00	134.43
 961	220	due_tre_giorni	std	147.00	120.50
 962	220	quattro_sette_giorni	std	132.00	108.20
@@ -6481,10 +6939,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 965	221	due_tre_giorni	std	170.00	139.35
 966	221	quattro_sette_giorni	std	153.00	125.41
 967	221	oltre_sette_giorni	std	138.00	113.11
-968	222	uno_giorno	std	24.00	\N
-969	222	due_tre_giorni	std	21.00	\N
-970	222	quattro_sette_giorni	std	19.00	\N
-971	222	oltre_sette_giorni	std	17.00	\N
 972	223	uno_giorno	std	36.00	29.51
 973	223	due_tre_giorni	std	32.00	26.23
 974	223	quattro_sette_giorni	std	29.00	23.77
@@ -6493,20 +6947,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 977	224	due_tre_giorni	std	96.00	78.69
 978	224	quattro_sette_giorni	std	86.00	70.49
 979	224	oltre_sette_giorni	std	77.00	63.12
-980	225	uno_giorno	std	107.00	\N
-981	225	due_tre_giorni	std	96.00	\N
-982	225	quattro_sette_giorni	std	86.00	\N
-983	225	oltre_sette_giorni	std	77.00	\N
-984	226	mezzo_giorno	std	114.80	\N
 985	226	uno_giorno	std	164.00	134.43
 986	226	due_tre_giorni	std	147.00	120.50
 987	226	quattro_sette_giorni	std	132.00	108.20
 988	226	oltre_sette_giorni	std	119.00	97.54
-989	227	mezzo_giorno	std	99.40	\N
-990	227	uno_giorno	std	142.00	116.40
-991	227	due_tre_giorni	std	128.00	104.92
-992	227	quattro_sette_giorni	std	115.00	94.26
-993	227	oltre_sette_giorni	std	104.00	85.25
 994	228	uno_giorno	std	24.00	19.68
 995	228	due_tre_giorni	std	21.00	17.22
 996	228	quattro_sette_giorni	std	19.00	15.57
@@ -6519,55 +6963,14 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1003	230	due_tre_giorni	std	64.00	52.46
 1004	230	quattro_sette_giorni	std	58.00	47.54
 1005	230	oltre_sette_giorni	std	52.00	42.62
-1006	234	uno_giorno	std	142.00	\N
-1007	234	due_tre_giorni	std	128.00	\N
-1008	234	quattro_sette_giorni	std	115.00	\N
-1009	234	oltre_sette_giorni	std	104.00	\N
-1010	235	uno_giorno	std	71.00	\N
-1011	235	due_tre_giorni	std	64.00	\N
-1012	235	quattro_sette_giorni	std	58.00	\N
-1013	235	oltre_sette_giorni	std	52.00	\N
-1014	236	uno_giorno	std	129.00	\N
-1015	236	due_tre_giorni	std	116.00	\N
-1016	236	quattro_sette_giorni	std	104.00	\N
-1017	236	oltre_sette_giorni	std	94.00	\N
 1018	237	uno_giorno	std	12.00	9.84
 1019	237	due_tre_giorni	std	12.00	9.84
 1020	237	quattro_sette_giorni	std	12.00	9.84
 1021	237	oltre_sette_giorni	std	10.00	8.20
-1022	238	uno_giorno	std	142.00	\N
-1023	238	due_tre_giorni	std	128.00	\N
-1024	238	quattro_sette_giorni	std	115.00	\N
-1025	238	oltre_sette_giorni	std	104.00	\N
-1026	239	uno_giorno	std	199.00	\N
-1027	239	due_tre_giorni	std	179.00	\N
-1028	239	quattro_sette_giorni	std	161.00	\N
-1029	239	oltre_sette_giorni	std	145.00	\N
-1030	240	uno_giorno	std	199.00	\N
-1031	240	due_tre_giorni	std	179.00	\N
-1032	240	quattro_sette_giorni	std	161.00	\N
-1033	240	oltre_sette_giorni	std	145.00	\N
-1034	241	uno_giorno	std	199.00	\N
-1035	241	due_tre_giorni	std	179.00	\N
-1036	241	quattro_sette_giorni	std	161.00	\N
-1037	241	oltre_sette_giorni	std	145.00	\N
-1038	242	uno_giorno	std	498.00	\N
-1039	242	due_tre_giorni	std	449.00	\N
-1040	242	quattro_sette_giorni	std	405.00	\N
-1041	242	oltre_sette_giorni	std	365.00	\N
-1042	243	mezzo_giorno	std	114.80	\N
-1043	243	uno_giorno	std	164.00	\N
-1044	243	due_tre_giorni	std	147.00	\N
-1045	243	quattro_sette_giorni	std	132.00	\N
-1046	243	oltre_sette_giorni	std	119.00	\N
 1047	244	uno_giorno	std	142.00	116.40
 1048	244	due_tre_giorni	std	128.00	104.92
 1049	244	quattro_sette_giorni	std	115.00	92.62
 1050	244	oltre_sette_giorni	std	104.00	83.61
-1051	245	uno_giorno	std	161.00	\N
-1052	245	due_tre_giorni	std	145.00	\N
-1053	245	quattro_sette_giorni	std	131.00	\N
-1054	245	oltre_sette_giorni	std	118.00	\N
 1055	246	uno_giorno	std	217.00	177.87
 1056	246	due_tre_giorni	std	195.00	159.84
 1057	246	quattro_sette_giorni	std	176.00	144.27
@@ -6580,10 +6983,138 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1064	248	due_tre_giorni	std	170.00	139.35
 1065	248	quattro_sette_giorni	std	153.00	125.41
 1066	248	oltre_sette_giorni	std	138.00	113.12
-1067	249	uno_giorno	std	217.00	\N
-1068	249	due_tre_giorni	std	195.00	\N
-1069	249	quattro_sette_giorni	std	176.00	\N
-1070	249	oltre_sette_giorni	std	158.00	\N
+1071	124	quattro_sette_giorni	b	150.82	150.82
+1072	125	quattro_sette_giorni	b	150.82	150.82
+1073	126	quattro_sette_giorni	b	310.66	310.66
+1074	127	quattro_sette_giorni	b	94.27	94.27
+1075	128	quattro_sette_giorni	b	131.97	131.97
+1076	129	quattro_sette_giorni	b	131.97	131.97
+1077	130	quattro_sette_giorni	b	309.84	309.84
+1078	131	quattro_sette_giorni	b	94.27	94.27
+1079	132	quattro_sette_giorni	b	94.27	94.27
+1080	134	quattro_sette_giorni	b	70.49	70.49
+1081	136	quattro_sette_giorni	b	47.55	47.55
+1082	139	quattro_sette_giorni	b	144.27	144.27
+1083	140	quattro_sette_giorni	b	100.00	100.00
+1084	141	quattro_sette_giorni	b	47.55	47.55
+1085	142	quattro_sette_giorni	b	94.27	94.27
+1086	144	quattro_sette_giorni	b	50.82	50.82
+1087	149	quattro_sette_giorni	b	117.21	117.21
+1088	150	quattro_sette_giorni	b	173.77	173.77
+1089	151	quattro_sette_giorni	b	173.77	173.77
+1090	152	quattro_sette_giorni	b	70.49	70.49
+1091	153	quattro_sette_giorni	b	144.26	144.26
+1092	155	quattro_sette_giorni	b	5.00	5.00
+1093	156	quattro_sette_giorni	b	8.20	8.20
+1094	161	quattro_sette_giorni	b	27.87	27.87
+1095	162	quattro_sette_giorni	b	47.54	47.54
+1096	165	quattro_sette_giorni	b	9.02	9.02
+1097	172	quattro_sette_giorni	b	173.77	173.77
+1098	176	quattro_sette_giorni	b	202.46	202.46
+1099	177	quattro_sette_giorni	b	92.62	92.62
+1100	179	quattro_sette_giorni	b	131.97	131.97
+1101	180	quattro_sette_giorni	b	146.72	146.72
+1102	181	quattro_sette_giorni	b	131.97	131.97
+1103	182	quattro_sette_giorni	b	131.97	131.97
+1104	183	quattro_sette_giorni	b	40.98	40.98
+1105	184	quattro_sette_giorni	b	40.98	40.98
+1106	185	quattro_sette_giorni	b	64.75	64.75
+1107	188	quattro_sette_giorni	b	40.98	40.98
+1108	190	quattro_sette_giorni	b	40.98	40.98
+1109	192	quattro_sette_giorni	b	47.55	47.55
+1110	197	quattro_sette_giorni	b	70.49	70.49
+1111	198	quattro_sette_giorni	b	70.49	70.49
+1112	199	quattro_sette_giorni	b	92.62	92.62
+1113	200	quattro_sette_giorni	b	47.55	47.55
+1114	201	quattro_sette_giorni	b	50.82	50.82
+1115	203	quattro_sette_giorni	b	118.04	118.04
+1116	206	quattro_sette_giorni	b	144.26	144.26
+1117	207	quattro_sette_giorni	b	174.59	174.59
+1118	208	quattro_sette_giorni	b	186.89	186.89
+1119	211	quattro_sette_giorni	b	65.57	65.57
+1120	212	quattro_sette_giorni	b	95.90	95.90
+1121	213	quattro_sette_giorni	b	108.20	108.20
+1122	214	quattro_sette_giorni	b	146.72	146.72
+1123	218	quattro_sette_giorni	b	70.49	70.49
+1124	220	quattro_sette_giorni	b	108.20	108.20
+1125	221	quattro_sette_giorni	b	125.41	125.41
+1126	223	quattro_sette_giorni	b	23.77	23.77
+1127	224	quattro_sette_giorni	b	70.49	70.49
+1128	226	quattro_sette_giorni	b	108.20	108.20
+1129	228	quattro_sette_giorni	b	15.57	15.57
+1130	229	quattro_sette_giorni	b	47.54	47.54
+1131	230	quattro_sette_giorni	b	47.54	47.54
+1132	237	quattro_sette_giorni	b	9.84	9.84
+1133	244	quattro_sette_giorni	b	92.62	92.62
+1134	246	quattro_sette_giorni	b	144.27	144.27
+1135	247	quattro_sette_giorni	b	117.22	117.22
+1136	248	quattro_sette_giorni	b	125.41	125.41
+1137	124	oltre_sette_giorni	c	136.07	136.07
+1138	125	oltre_sette_giorni	c	136.07	136.07
+1139	126	oltre_sette_giorni	c	279.51	279.51
+1140	127	oltre_sette_giorni	c	85.25	85.25
+1141	128	oltre_sette_giorni	c	118.85	118.85
+1142	129	oltre_sette_giorni	c	118.85	118.85
+1143	130	oltre_sette_giorni	c	278.69	278.69
+1144	131	oltre_sette_giorni	c	85.25	85.25
+1145	132	oltre_sette_giorni	c	85.25	85.25
+1146	134	oltre_sette_giorni	c	63.12	63.12
+1147	136	oltre_sette_giorni	c	42.63	42.63
+1148	139	oltre_sette_giorni	c	129.51	129.51
+1149	140	oltre_sette_giorni	c	90.16	90.16
+1150	141	oltre_sette_giorni	c	42.62	42.62
+1151	142	oltre_sette_giorni	c	85.25	85.25
+1152	144	oltre_sette_giorni	c	45.90	45.90
+1153	149	oltre_sette_giorni	c	105.74	105.74
+1154	150	oltre_sette_giorni	c	156.56	156.56
+1155	151	oltre_sette_giorni	c	156.56	156.56
+1156	152	oltre_sette_giorni	c	63.12	63.12
+1157	153	oltre_sette_giorni	c	129.51	129.51
+1158	155	oltre_sette_giorni	c	5.00	5.00
+1159	156	oltre_sette_giorni	c	8.20	8.20
+1160	161	oltre_sette_giorni	c	26.23	26.23
+1161	162	oltre_sette_giorni	c	42.62	42.62
+1162	165	oltre_sette_giorni	c	8.20	8.20
+1163	172	oltre_sette_giorni	c	156.56	156.56
+1164	176	oltre_sette_giorni	c	182.79	182.79
+1165	177	oltre_sette_giorni	c	83.61	83.61
+1166	179	oltre_sette_giorni	c	118.85	118.85
+1167	180	oltre_sette_giorni	c	132.79	132.79
+1168	181	oltre_sette_giorni	c	118.85	118.85
+1169	182	oltre_sette_giorni	c	118.85	118.85
+1170	183	oltre_sette_giorni	c	36.89	36.89
+1171	184	oltre_sette_giorni	c	36.89	36.89
+1172	185	oltre_sette_giorni	c	58.20	58.20
+1173	188	oltre_sette_giorni	c	36.89	36.89
+1174	190	oltre_sette_giorni	c	36.89	36.89
+1175	192	oltre_sette_giorni	c	42.63	42.63
+1176	197	oltre_sette_giorni	c	63.12	63.12
+1177	198	oltre_sette_giorni	c	63.12	63.12
+1178	199	oltre_sette_giorni	c	83.61	83.61
+1179	200	oltre_sette_giorni	c	42.63	42.63
+1180	201	oltre_sette_giorni	c	45.90	45.90
+1181	203	oltre_sette_giorni	c	106.56	106.56
+1182	206	oltre_sette_giorni	c	129.51	129.51
+1183	207	oltre_sette_giorni	c	156.56	156.56
+1184	208	oltre_sette_giorni	c	168.45	168.45
+1185	211	oltre_sette_giorni	c	59.02	59.02
+1186	212	oltre_sette_giorni	c	86.07	86.07
+1187	213	oltre_sette_giorni	c	97.96	97.96
+1188	214	oltre_sette_giorni	c	132.79	132.79
+1189	218	oltre_sette_giorni	c	63.12	63.12
+1190	220	oltre_sette_giorni	c	97.54	97.54
+1191	221	oltre_sette_giorni	c	113.11	113.11
+1192	223	oltre_sette_giorni	c	21.31	21.31
+1193	224	oltre_sette_giorni	c	63.12	63.12
+1194	226	oltre_sette_giorni	c	97.54	97.54
+1195	228	oltre_sette_giorni	c	13.93	13.93
+1196	229	oltre_sette_giorni	c	42.62	42.62
+1197	230	oltre_sette_giorni	c	42.62	42.62
+1198	237	oltre_sette_giorni	c	8.20	8.20
+1199	244	oltre_sette_giorni	c	83.61	83.61
+1200	246	oltre_sette_giorni	c	129.51	129.51
+1201	247	oltre_sette_giorni	c	105.74	105.74
+1202	248	oltre_sette_giorni	c	113.12	113.12
 \.
 
 
@@ -6736,13 +7267,33 @@ e89c805f-d43a-4154-b2b3-e45ece133ccf	Stefano	2026-02-25 16:45:11.378488+00
 -- Data for Name: pratovivo_archivio; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.pratovivo_archivio (id, created_at, nome_cliente, mq, tipo_intervento, tipo_prato, livello, linea, terreno, colore, irrigazione, tipo_cliente, degradazione, estendi12, liquidi_sab, miscuglio_id, miscuglio_nome, totale_preventivo, pdf_params, note) FROM stdin;
-22772449-023a-47fd-aff6-7054fba899f2	2026-03-12 16:51:16.166467+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	albatros	normale	pallido	mano	privato	\N	t	t	\N	\N	\N	{"mq": 2000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N
-4627956f-2eea-4cb0-8d16-b07a9c027f48	2026-03-12 16:52:33.16283+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	albatros	normale	pallido	mano	privato	\N	t	t	\N	\N	1573.8	{"mq": 2000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N
-bc389761-7198-4b45-8e63-46dd3c64a563	2026-03-12 16:53:20.221159+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	mivena	normale	pallido	mano	privato	\N	t	t	\N	\N	\N	{"mq": 2000, "linea": "mivena", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N
-20e78f2e-893b-40d0-bc9f-e3d265679f3f	2026-03-12 16:53:47.110669+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	mivena	normale	pallido	mano	privato	\N	t	t	\N	\N	1436.5	{"mq": 2000, "linea": "mivena", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N
-1e661262-64cd-43d6-b1e3-6a9890827768	2026-03-13 16:47:00.369977+00	Urban Sandro	\N	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": null, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Urban Sandro", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N
-9ca3e4e4-f8e3-47f4-bbbe-e3a4fa142271	2026-03-13 16:49:23.066596+00	Urban Sandro	7000	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	4388.4	{"mq": 7000, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Urban Sandro", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N
+COPY public.pratovivo_archivio (id, created_at, nome_cliente, mq, tipo_intervento, tipo_prato, livello, linea, terreno, colore, irrigazione, tipo_cliente, degradazione, estendi12, liquidi_sab, miscuglio_id, miscuglio_nome, totale_preventivo, pdf_params, note, data_inizio) FROM stdin;
+22772449-023a-47fd-aff6-7054fba899f2	2026-03-12 16:51:16.166467+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	albatros	normale	pallido	mano	privato	\N	t	t	\N	\N	\N	{"mq": 2000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+4627956f-2eea-4cb0-8d16-b07a9c027f48	2026-03-12 16:52:33.16283+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	albatros	normale	pallido	mano	privato	\N	t	t	\N	\N	1573.8	{"mq": 2000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+bc389761-7198-4b45-8e63-46dd3c64a563	2026-03-12 16:53:20.221159+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	mivena	normale	pallido	mano	privato	\N	t	t	\N	\N	\N	{"mq": 2000, "linea": "mivena", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+20e78f2e-893b-40d0-bc9f-e3d265679f3f	2026-03-12 16:53:47.110669+00	Parisi Giovanni	2000	piano_annuo	ornamentale	standard	mivena	normale	pallido	mano	privato	\N	t	t	\N	\N	1436.5	{"mq": 2000, "linea": "mivena", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Parisi Giovanni", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+1e661262-64cd-43d6-b1e3-6a9890827768	2026-03-13 16:47:00.369977+00	Urban Sandro	\N	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": null, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Urban Sandro", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+9ca3e4e4-f8e3-47f4-bbbe-e3a4fa142271	2026-03-13 16:49:23.066596+00	Urban Sandro	7000	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	4388.4	{"mq": 7000, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Urban Sandro", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+884893c4-e74a-4534-a9f6-6f425210fce4	2026-03-17 10:29:35.499768+00	Tollardo Luciano	800	rigenerazione	ornamentale	standard	albatros	\N	\N	centralizzata	privato	ritocchi	f	t	hurricane	Hurricane	\N	{"mq": 800, "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 1kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Tollardo Luciano", "tipoCliente": "privato", "degradazione": "ritocchi", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	\N
+e36195e8-6fa8-4203-a7ad-cb7739b3daf6	2026-03-17 10:31:46.953355+00	Tollardo Luciano	800	rigenerazione	ornamentale	standard	albatros	\N	\N	centralizzata	privato	ritocchi	f	t	hurricane	Hurricane	397.45000000000005	{"mq": 800, "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 1kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Tollardo Luciano", "tipoCliente": "privato", "degradazione": "ritocchi", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	\N
+7add5146-f8f3-40ad-a21a-f9eaeb235977	2026-03-17 10:32:37.685122+00	Tollardo Luciano	800	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	hurricane	Hurricane	\N	{"mq": 800, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": {"id": "hurricane", "sku": "Hurricane 1kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Tollardo Luciano", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+53789ae7-e7d9-48dc-a06f-6da0b615b985	2026-03-17 10:32:47.44464+00	Tollardo Luciano	800	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	hurricane	Hurricane	677.9	{"mq": 800, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": {"id": "hurricane", "sku": "Hurricane 1kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Tollardo Luciano", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	\N
+1655c544-e0d6-41cb-9080-23ca8ac0973e	2026-03-17 18:39:12.302135+00	Simone	\N	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": null, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-17", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Simone", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-17
+8e3cc652-7425-4796-8e82-ebab17c6a9ad	2026-03-18 05:42:07.696197+00	\N	1000	rigenerazione	ornamentale	standard	albatros	normale	\N	centralizzata	privato	medio	f	t	hurricane	Hurricane	\N	{"mq": 1000, "linea": "albatros", "colore": null, "livello": "standard", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-04-18", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "privato", "degradazione": "medio", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-04-18
+cb2bcddc-edd7-42da-827b-fca061ff5ef1	2026-03-18 05:45:57.535024+00	\N	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	hurricane	Hurricane	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-09-11", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-09-11
+82252d75-917a-4439-9682-bdf9a1207a50	2026-03-18 05:47:59.358607+00	\N	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-11", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-11
+943bcdea-ba68-4306-93dc-d2a4f3dc1d04	2026-03-18 08:19:45.952581+00	SGORLON GIANLUCA	400	semina	ornamentale	base	albatros	normale	\N	centralizzata	giardiniere	\N	f	t	strong	Strong	\N	{"mq": 400, "linea": "albatros", "colore": null, "livello": "base", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "strong", "sku": "Strong 10kg", "nome": "Strong"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "SGORLON GIANLUCA", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "semina", "primoConcimeIncluso": false}	\N	2026-03-18
+2a2340c0-bea1-4b88-824b-16b1d7a12da8	2026-03-18 08:46:42.619882+00	Ranieri Antonino	1000	rigenerazione	ornamentale	standard	albatros	\N	\N	mano	privato	grave	f	t	hurricane	Hurricane	\N	{"mq": 1000, "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Ranieri Antonino", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-03-18
+8fb26639-34d2-4309-a46c-06927f431ce6	2026-03-18 08:46:49.864236+00	Ranieri Antonino	1000	rigenerazione	ornamentale	standard	albatros	\N	\N	mano	privato	grave	f	t	hurricane	Hurricane	668.2	{"mq": 1000, "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "mano", "nomeCliente": "Ranieri Antonino", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-03-18
+dde415d2-1842-4679-9eef-015943fcbc34	2026-03-20 17:28:03.866519+00	De Rosa	550	rigenerazione	ornamentale	premium	albatros	normale	\N	centralizzata	privato	grave	f	t	hurricane	Hurricane	\N	{"mq": 550, "linea": "albatros", "colore": null, "livello": "premium", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-20", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "De Rosa", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-03-20
+f8e7b2f2-ee90-458c-af26-2c0846e25b70	2026-03-21 10:31:13.909833+00	Del Fabbro	50	rigenerazione	ornamentale	standard	albatros	normale	\N	centralizzata	privato	grave	f	t	hurricane	Hurricane	300.6	{"mq": 50, "linea": "albatros", "colore": null, "livello": "standard", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-21", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Del Fabbro", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-03-21
+9bcc9a47-85ff-44c8-995b-b084554ab363	2026-03-21 10:33:26.86144+00	Del Fabbro	50	rigenerazione	ornamentale	standard	albatros	normale	\N	centralizzata	privato	grave	f	t	hurricane	Hurricane	300.6	{"mq": 50, "linea": "albatros", "colore": null, "livello": "standard", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-21", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Del Fabbro", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-03-21
+0a0a8c17-5862-48c8-bdb8-d19526ef91f5	2026-03-21 10:35:44.380286+00	Del Fabbro	50	rigenerazione	ornamentale	standard	albatros	normale	\N	centralizzata	privato	grave	f	t	hurricane	Hurricane	\N	{"mq": 50, "linea": "albatros", "colore": null, "livello": "standard", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-21", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Del Fabbro", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-03-21
+6df6807d-ec43-4aca-94e1-acc01b292f4f	2026-03-23 11:03:50.258089+00	Azienda Agr. Sempreverde di Toffoli Sonia	1000	semina	ornamentale	standard	mivena	\N	\N	centralizzata	fidelizzato	\N	f	t	hurricane	Hurricane	\N	{"mq": 1000, "linea": "mivena", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-23", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Azienda Agr. Sempreverde di Toffoli Sonia", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "semina", "primoConcimeIncluso": false}	\N	2026-03-23
+43e90670-9bb6-44ec-89df-3a33d44290a5	2026-03-24 12:11:56.418018+00	SGORLON GIANLUCA	400	semina	ornamentale	base	albatros	normale	\N	centralizzata	giardiniere	\N	f	t	strong	Strong	202.9	{"mq": 400, "linea": "albatros", "colore": null, "livello": "base", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "strong", "sku": "Strong 10kg", "nome": "Strong"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "SGORLON GIANLUCA", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "semina", "primoConcimeIncluso": false}	\N	2026-03-18
+78fe99c2-602a-4044-956b-c7f0f7f6e5f3	2026-03-24 12:14:46.462941+00	SGORLON GIANLUCA	400	semina	ornamentale	base	albatros	normale	\N	centralizzata	giardiniere	\N	f	t	strong	Strong	202.9	{"mq": 400, "linea": "albatros", "colore": null, "livello": "base", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "strong", "sku": "Strong 10kg", "nome": "Strong"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "SGORLON GIANLUCA", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "semina", "primoConcimeIncluso": false}	\N	2026-03-18
+79e36fca-a525-4815-9546-5da2c07ece97	2026-03-29 20:08:04.16703+00	\N	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-03-29", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-03-29
+5f79b3c1-091a-4228-96d2-a32a17c0f2d6	2026-03-30 06:34:31.497316+00	\N	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-03-30", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-03-30
 \.
 
 
@@ -6842,6 +7393,7 @@ d24f1eff-7621-403d-92d2-527fda97b250	30ae6bd7-374a-4219-a9f8-f5e7fb1e5809	Vigor 
 d68fabaa-3ceb-4056-a7af-32356f936fc4	30ae6bd7-374a-4219-a9f8-f5e7fb1e5809	Primo concime post-attecchimento	Settimane 3-4 — dopo 3-4 tagli	granulare	Test: strappare un ciuffo, le radici devono resistere. Da qui segui il piano Mantenimento Ornamentale Premium.	7	\N	\N	f	\N	\N	\N
 3a23db22-2de0-42b8-aca5-06cc01ac83c3	071a2e49-c0d3-41b0-985d-e68ca8ba714b	Taglio erba	Settimana 1 — prima di tutto	preparazione	Tagliare l'erba a 3-4 cm per facilitare le operazioni successive.	1	\N	\N	f	\N	\N	\N
 e226f2da-780c-4469-a6cb-447da4c90158	071a2e49-c0d3-41b0-985d-e68ca8ba714b	Arieggiatura	Settimana 1 — dopo il taglio	preparazione	Arieggiatura sfiorando il terreno. Per sportivo: aerazione a forchettoni profondi per alleviare la compattazione. Eliminare feltro e materiale morto.	2	\N	\N	f	\N	\N	\N
+e398ab2d-6113-477c-91a6-18456f736408	fc9fe20f-77bd-4694-b57c-a5a4f4223b72	Green 7	Inizio Marzo	granulare	Risveglio vegetativo	1	1	mar	f	\N	30.00	NPK 15-5-6. Distribuire uniformemente. Irrigare subito dopo.
 51cdaac9-1daa-4395-afbe-fd5d97beac28	071a2e49-c0d3-41b0-985d-e68ca8ba714b	Semina	Settimana 1 — dopo arieggiatura	semina	Renovate Sport per insediamento rapido e resistenza al calpestio. Dose 40 g/m² su zone degradate. Passare il rullo chiodato prima e dopo la semina. A seguire brevi e frequenti irrigazioni 2-3 volte al giorno per le prime 2 settimane. Mantenere il terreno costantemente umido fino alla germinazione.	3	\N	\N	f	\N	\N	\N
 72b3ad33-5147-4ca7-a5ce-05652c6ad3aa	071a2e49-c0d3-41b0-985d-e68ca8ba714b	Vigor Active a spaglio	Dopo la semina	granulare	Distribuire Vigor Active a spaglio con carrello dopo la semina.	4	\N	\N	f	\N	\N	\N
 92f06e66-0cbe-4c11-a3d6-0b6193635055	071a2e49-c0d3-41b0-985d-e68ca8ba714b	Primo concime post-attecchimento	Settimane 3-4 — dopo 3-4 tagli	granulare	Test: strappare un ciuffo, le radici devono resistere. Da qui segui il piano Mantenimento Sportivo Base.	5	\N	\N	f	\N	\N	\N
@@ -6859,6 +7411,42 @@ cc99b731-f6fa-4c88-ac5f-009919ed7812	f7d9eafc-5b10-4d77-ab94-ddd4c3531936	Vigor 
 f28bf089-5c0d-48b2-8b0f-d68d06881dd7	f7d9eafc-5b10-4d77-ab94-ddd4c3531936	Irrorazione Humifitos + Micosat F	Dopo la semina — stesso giorno o giorno successivo	trattamento	Irrorazione con zaino a spalla o barra irroratrice. Humifitos nutre i microrganismi del suolo migliorando la struttura: diluire insieme a Micosat F MO in acqua. A seguire brevi irrigazioni per far penetrare il prodotto. Mantenere il terreno umido nei 3-5 giorni successivi per favorire la colonizzazione microbica. Se si usa Micosat F PG: distribuire i microgranuli a spaglio separatamente. Irrorare Humifitos diluito in acqua separatamente.	5	\N	\N	f	\N	\N	\N
 ab0ca19f-8ef6-41af-8f3a-9f8cda29327f	f7d9eafc-5b10-4d77-ab94-ddd4c3531936	Irrorazione Root Speed + Wet Turf + Algapark	Settimane 1-3	trattamento	Irrorazione con zaino a spalla o barra irroratrice. Root Speed stimola l'approfondimento radicale. Wet Turf migliora la ritenzione idrica. Algapark sostiene la germinazione sotto stress da calpestio.	6	\N	\N	f	\N	\N	\N
 2222b59f-a485-4691-ba7b-16d8f374881d	f7d9eafc-5b10-4d77-ab94-ddd4c3531936	Primo concime post-attecchimento	Settimane 3-4 — dopo 3-4 tagli	granulare	Test: strappare un ciuffo, le radici devono resistere. Da qui segui il piano Mantenimento Sportivo Premium.	7	\N	\N	f	\N	\N	\N
+5d83e677-ad40-401a-8c88-134ad6e8a78f	fc9fe20f-77bd-4694-b57c-a5a4f4223b72	Green 7	Metà Aprile	granulare	Sostegno primavera	2	2	apr	f	\N	22.00	20-25 g/m². Dopo 6 settimane dal primo intervento. Irrigare.
+25fc82b5-1e38-4b1c-b7ef-60927983359c	fc9fe20f-77bd-4694-b57c-a5a4f4223b72	Green 8	Inizio Giugno	granulare	Anti-stress estivo	3	3	giu	f	\N	35.00	NPK 10-6-14 +2MgO +2Fe. 35 g/m². Prepara il prato allo stress da caldo e calpestio. Irrigare.
+6747529d-5360-46da-a56e-90cfd1a0ddc4	fc9fe20f-77bd-4694-b57c-a5a4f4223b72	Green 7	Inizio Settembre	granulare	Ripartenza post-estate	4	4	set	f	\N	50.00	NPK 15-5-6. 50 g/m². Ricarica dopo estate, stimola ricrescita. Irrigare.
+7dac8afd-e262-4dfc-beff-5debd92ff7c9	fc9fe20f-77bd-4694-b57c-a5a4f4223b72	Green 8	Inizio Novembre	granulare	Nutrimento invernale	5	5	nov	f	\N	50.00	NPK 10-6-14 +2MgO +2Fe. 50 g/m². Riserve per inverno. Irrigare.
+55691434-2d55-4959-be22-b566bc98db44	31e0d274-17ae-499a-b426-1ba7aa2c34e4	AllRound 19-5-14	Marzo	granulare	Prima concimazione	1	1	mar	f	\N	40.00	NPK 18-7-15 +CaO +MgO +Fe. 40 g/m². Cessione controllata 12-16 settimane. Irrigare.
+400d9f31-9a4a-476e-93da-df75ab42185b	31e0d274-17ae-499a-b426-1ba7aa2c34e4	AllRound 19-5-14	Maggio	granulare	Rinforzo primaverile	2	2	mag	f	\N	30.00	30 g/m². Irrigare.
+0f4cac2a-8b02-4ef8-8de0-542bb2acb186	31e0d274-17ae-499a-b426-1ba7aa2c34e4	AllRound 19-5-14	Settembre	granulare	Ripartenza autunnale	3	3	set	f	\N	40.00	40 g/m². Irrigare.
+a0530d60-4877-465f-a706-09947298ee60	31e0d274-17ae-499a-b426-1ba7aa2c34e4	AllRound 19-5-14	Novembre	granulare	Nutrimento invernale	4	4	nov	f	\N	30.00	30 g/m². Irrigare.
+80148fba-a850-4a57-94fd-a5d8324434d2	5198e7a4-f39e-434f-bc20-c64c114d67e6	AllRound 19-5-14	Febbraio/Marzo	granulare	Su sabbia anticipare lievemente	1	1	feb-mar	f	\N	30.00	30 g/m². Dose ridotta: la sabbia drena velocemente.
+120be9bf-359e-4609-b6bf-74fd2ac74fc3	5198e7a4-f39e-434f-bc20-c64c114d67e6	AllRound 19-5-14	Aprile	granulare	\N	2	2	apr	f	\N	25.00	25 g/m².
+2b7a029e-6b92-45fc-95a7-937cea37aae2	5198e7a4-f39e-434f-bc20-c64c114d67e6	AllRound 19-5-14	Maggio/Giugno	granulare	Dose ridotta, più frequente	3	3	mag-giu	f	\N	25.00	25 g/m². Su sabbia intervenire più spesso.
+07da8178-c479-4f69-bf71-660ab6163997	5198e7a4-f39e-434f-bc20-c64c114d67e6	AllRound 19-5-14	Settembre	granulare	\N	4	4	set	f	\N	30.00	30 g/m².
+c95dd2f0-ea2c-43c5-a9d0-a235e0bf24c7	5198e7a4-f39e-434f-bc20-c64c114d67e6	AllRound 19-5-14	Ottobre/Novembre	granulare	\N	5	5	ott-nov	f	\N	25.00	25 g/m².
+63d6c8b2-b24f-4571-a027-f719df7f662e	5915c313-5106-4795-9264-c6aa58f3544a	Eden Multi 18-7-15	Marzo	granulare	Risveglio	1	1	mar	f	\N	30.00	NPK 18-7-15 con Mg e Fe. 30 g/m². Irrigare.
+b4d8302c-0da6-49d0-9839-f48cb1e2a04e	5915c313-5106-4795-9264-c6aa58f3544a	Eden 8 10-6-14	Giugno	granulare	Resistenza estiva — alto K	2	2	giu	f	\N	50.00	NPK 10-6-14 con MgO, SO3, Fe, Zn. 50 g/m². Irrigare.
+c9dc9ab1-beea-4802-ba85-9f900d3dfa08	5915c313-5106-4795-9264-c6aa58f3544a	Eden Multi 18-7-15	Settembre	granulare	Ripartenza	3	3	set	f	\N	30.00	30 g/m². Irrigare.
+11b87fd5-36b8-43be-83af-06b23f90032e	5915c313-5106-4795-9264-c6aa58f3544a	Eden 8 10-6-14	Novembre	granulare	Invernale	4	4	nov	f	\N	50.00	50 g/m². Irrigare.
+96005b54-4d94-4966-bb5e-cf9c6b3660c8	56f59fd4-6d70-4434-8b28-161f3d8e3e48	Humifitos + Micosat F MO	Inizio Marzo	liquido_terreno	Risveglio biologico	1	1	mar	f	\N	20.00	Humifitos 20 g/m²: diluire in 10 lt acqua/100m². Micosat MO 5 g/m²: distribuire a secco PRIMA. Irrigare subito dopo 2-3 min.
+bfbc9ace-0793-490b-8fc6-8a289d296d28	56f59fd4-6d70-4434-8b28-161f3d8e3e48	Humifitos + Micosat F MO	Inizio Giugno	liquido_terreno	Stress estivo	2	2	giu	f	\N	20.00	Stesse modalità di marzo. Fondamentale per prevenzione siccità.
+d11b95d5-4b8d-44e4-b5d9-d0fa492ea8c8	56f59fd4-6d70-4434-8b28-161f3d8e3e48	Humifitos + Micosat F MO	Inizio Settembre	liquido_terreno	Ripartenza biologica	3	3	set	f	\N	20.00	Stesse modalità. Fondamentale per recupero post-estate.
+3cb9851c-3420-4c11-a7a5-074894d83189	56f59fd4-6d70-4434-8b28-161f3d8e3e48	Humifitos + Micosat F MO	Inizio Novembre	liquido_terreno	Preparazione invernale	4	4	nov	f	\N	20.00	Stesse modalità. Ultimo intervento dell'anno.
+70890cf7-759f-4dde-86e5-6cdc20f52698	14a7e083-6c23-4898-9aa6-b29b84d5a6ab	Humifitos + Amino K + Micosat PG	Febbraio/Marzo	liquido_terreno	Risveglio biologico su sabbia	1	1	feb-mar	f	\N	15.00	Humifitos 15 g/m² + Amino K 400 gr/100m² + Micosat PG 100 gr/100m². Diluire insieme. Irrigare dopo. Su sabbia ciclo breve essenziale.
+8cd80e95-d407-4847-925b-61d34eed1d4d	14a7e083-6c23-4898-9aa6-b29b84d5a6ab	Humifitos + Amino K + Micosat PG	Maggio	liquido_terreno	Estate — 1x al mese	2	2	mag	f	\N	20.00	20 g/m² + Amino K 400 gr + Micosat PG 100 gr per 100 m². Una volta al mese da maggio a luglio.
+a3875608-514b-45ad-bba8-64eb0f85ab9d	14a7e083-6c23-4898-9aa6-b29b84d5a6ab	Wet Turf	Giugno	liquido_terreno	Umettante su sabbia	3	3	giu	f	\N	10.00	Wet Turf 10 g/m². 5 trattamenti ogni 15 gg da metà maggio. Trattiene l'acqua nel substrato sabbioso.
+eddd396c-116a-42c3-a00c-906e6f4777a4	14a7e083-6c23-4898-9aa6-b29b84d5a6ab	Humifitos + Amino K + Micosat PG	Luglio	liquido_terreno	Estate — continuazione	4	4	lug	f	\N	20.00	20 g/m². Stesse modalità maggio.
+d487ca38-6da9-4be0-bc8e-c3b0e24c2878	14a7e083-6c23-4898-9aa6-b29b84d5a6ab	Humifitos + Amino K + Micosat PG	Settembre	liquido_terreno	Ripartenza post-estate	5	5	set	f	\N	15.00	15 g/m² + Amino K 400 gr + Micosat PG 100 gr per 100 m².
+d887b4ba-1961-4d91-98f9-a258dabc8eb3	14a7e083-6c23-4898-9aa6-b29b84d5a6ab	Humifitos + Amino K + Micosat PG	Ottobre/Novembre	liquido_terreno	Chiusura stagionale	6	6	ott-nov	f	\N	15.00	15 g/m². Stesse modalità autunnali.
+5ae79865-b631-44d5-84a1-cbaa60c524d3	c2df015b-808b-4972-8d4e-e20bd5023dd3	Tab Plus + Len + Fe Ulk + Algapark	Metà Maggio	fogliare	1° trattamento	1	1	mag	f	\N	1.00	Micosat Tab Plus 0,5 g/m² + Len 0,5 g/m² + Fe Ulk 0,1 g/m² + Algapark 0,1 g/m². 10 lt soluzione/100m². Ore fresche. NON irrigare dopo.
+9dbf502a-6338-4166-b284-597035c28739	c2df015b-808b-4972-8d4e-e20bd5023dd3	Tab Plus + Len + Fe Ulk + Algapark	Inizio Giugno	fogliare	2° trattamento	2	2	giu	f	\N	1.00	Stesse dosi. Ogni 15 gg. NON irrigare dopo.
+8daf57d2-a442-43cb-a317-96ff1ead1613	c2df015b-808b-4972-8d4e-e20bd5023dd3	Tab Plus + Len + Fe Ulk + Algapark	Metà Giugno	fogliare	3° trattamento	3	3	giu	f	\N	1.00	Stesse dosi.
+a444ce7e-1d49-43ba-8384-cdcb89db4524	c2df015b-808b-4972-8d4e-e20bd5023dd3	Tab Plus + Len + Fe Ulk + Algapark	Inizio Luglio	fogliare	4° trattamento	4	4	lug	f	\N	1.00	Stesse dosi.
+e8e64d1a-764e-4732-86a7-53141aaaa3b8	c2df015b-808b-4972-8d4e-e20bd5023dd3	Tab Plus + Len + Fe Ulk + Algapark	Metà Luglio	fogliare	5° trattamento — fine ciclo	5	5	lug	f	\N	1.00	Stesse dosi. Ultimo trattamento estivo.
+27db2ea6-62f1-4e38-bf32-0f4a16296172	c155c6e1-28cd-47a1-a5e7-0d6fdac746cd	Vigor Active + Micosat PG	PRE-posa	granulare	Inoculo micorrizico pre-posa	1	1	mar-ott	f	\N	40.00	Vigor Active 4 kg/100m² + Micosat PG 100 gr/100m². Distribuire su terreno leggermente umido subito PRIMA della posa delle zolle.
+f5872c16-abea-45c3-88f4-3dc57adef3cd	c155c6e1-28cd-47a1-a5e7-0d6fdac746cd	Algapark + Tab Plus + Len + Wet Turf	POST-posa — 1° trattamento (subito dopo)	fogliare	Mantenimento attecchimento	2	2	mar-ott	f	\N	1.00	Algapark 50 gr + Tab Plus 30 gr + Len 20 gr + Wet Turf 100 gr per 100 m². 10 lt acqua/100m². Ore fresche. Ripetere ogni 10 gg x 3 volte.
+1a4347e5-32b3-4f64-ab50-1a399e66f896	c155c6e1-28cd-47a1-a5e7-0d6fdac746cd	Algapark + Tab Plus + Len + Wet Turf	POST-posa — 2° trattamento (10 gg dopo)	fogliare	Secondo ciclo	3	3	mar-ott	f	\N	1.00	Stesse dosi. Ogni 10 giorni per almeno 3 volte.
+cc8fe05b-3746-48be-bb91-de793bb7888f	c155c6e1-28cd-47a1-a5e7-0d6fdac746cd	Algapark + Tab Plus + Len + Wet Turf	POST-posa — 3° trattamento (20 gg dopo)	fogliare	Terzo ciclo	4	4	mar-ott	f	\N	1.00	Stesse dosi. Ultimo ciclo di mantenimento.
 3d227236-c57a-4a1d-9fbf-0d0730bf547c	973c555b-7c50-40c9-896a-1036eb3e2d56	Risveglio primaverile	Marzo	granulare	Primo N stagionale. Temperatura suolo > 8°C.	1	\N	\N	f	\N	\N	\N
 6cffa65f-ca5e-4af4-a2ce-de7baf0440ed	973c555b-7c50-40c9-896a-1036eb3e2d56	Rinforzo primaverile	Aprile (+6 settimane)	granulare	6 settimane di distanza dal precedente.	2	\N	\N	f	\N	\N	\N
 6a95774e-03ec-4b1c-8e78-5ce6b7ad7941	973c555b-7c50-40c9-896a-1036eb3e2d56	Pre-estate	Fine maggio - giugno	granulare	Green 8 alto K. Ultimo granulare prima dei mesi caldi.	3	\N	\N	f	\N	\N	\N
@@ -7072,6 +7660,12 @@ COPY public.pv_liquidi_programmati (id, piano_id, tipo, mese_inizio, mese_fine, 
 --
 
 COPY public.pv_piani (id, slug, label, descrizione, tipo_prato, fase, livello, is_active, sort_order, created_at, linea, terreno, data_inizio, data_fine, esteso_12_mesi, colore_prato) FROM stdin;
+fc9fe20f-77bd-4694-b57c-a5a4f4223b72	albatros-normale	Concimazione Albatros	5 interventi annui con Green 7 e Green 8.	ornamentale	nutrizione	standard	t	100	2026-03-20 13:25:30.885216+00	albatros	normale	\N	\N	f	\N
+31e0d274-17ae-499a-b426-1ba7aa2c34e4	allround-normale	Concimazione AllRound — Normale	4 interventi con AllRound 19-5-14 a cessione controllata.	ornamentale	nutrizione	standard	t	101	2026-03-20 13:25:30.885216+00	mivena	normale	\N	\N	f	\N
+5198e7a4-f39e-434f-bc20-c64c114d67e6	allround-sabbioso	Concimazione AllRound — Sabbioso	5 interventi con AllRound 19-5-14. Dosi ridotte su sabbia.	ornamentale	nutrizione	standard	t	102	2026-03-20 13:25:30.885216+00	mivena	sabbioso	\N	\N	f	\N
+5915c313-5106-4795-9264-c6aa58f3544a	eden-sabbioso	Concimazione Eden — Sabbioso	4 interventi alternando Eden Multi 18-7-15 ed Eden 8 10-6-14.	ornamentale	nutrizione	standard	t	103	2026-03-20 13:25:30.885216+00	eden	sabbioso	\N	\N	f	\N
+56f59fd4-6d70-4434-8b28-161f3d8e3e48	prev-terreno-normale	Prevenzione biologica terreno — Normale	Humifitos + Micosat MO. 4 interventi annui.	ornamentale	prevenzione_terreno	standard	t	104	2026-03-20 13:25:30.885216+00	\N	normale	\N	\N	f	\N
+14a7e083-6c23-4898-9aa6-b29b84d5a6ab	prev-terreno-sabbioso	Prevenzione biologica terreno — Sabbioso	Humifitos + Amino K + Micosat PG. Mensile in estate.	ornamentale	prevenzione_terreno	standard	t	105	2026-03-20 13:25:30.885216+00	\N	sabbioso	\N	\N	f	\N
 973c555b-7c50-40c9-896a-1036eb3e2d56	mantenimento_ornamentale_base	Mantenimento Ornamentale Base	Solo granulare stagionale. Green 7 primavera/autunno, Green 8 pre-estate e novembre.	ornamentale	mantenimento	base	t	30	2026-03-04 19:27:45.398423+00	albatros	normale	\N	\N	f	\N
 1481c5e3-9bda-466b-a6be-6e15d2e8e56a	mantenimento_ornamentale_standard	Mantenimento Ornamentale Standard	Granulare + Humifitos + Micosat PG. Sistema biologico attivo e nutrizione bilanciata.	ornamentale	mantenimento	standard	t	31	2026-03-04 19:27:45.398423+00	albatros	normale	\N	\N	f	\N
 e5286c80-97d1-4420-98e3-8852eb4a09eb	mantenimento_ornamentale_premium	Mantenimento Ornamentale Premium	Percorso completo con LeoKare, fogliare estivo e Wet Turf. Il meglio del Metodo PratoVivo.	ornamentale	mantenimento	premium	t	32	2026-03-04 19:27:45.398423+00	albatros	normale	\N	\N	f	\N
@@ -7091,6 +7685,8 @@ a309f617-5fdd-4777-9f70-e79d949dd277	nuova_semina_sportivo_premium	Nuova Semina 
 071a2e49-c0d3-41b0-985d-e68ca8ba714b	rigenerazione_sportivo_base	Rigenerazione Sportivo Base	Taglio + arieggiatura + semina con rullo chiodato + Vigor Active post-semina. Solo granulare.	sportivo	rigenerazione	base	t	53	2026-03-05 21:26:23.433344+00	albatros	normale	\N	\N	f	\N
 a6a10680-bd23-4250-982e-8d6e93d85054	rigenerazione_sportivo_standard	Rigenerazione Sportivo Standard	Taglio + arieggiatura + semina + Vigor Active + irrorazione Humifitos + Micosat F + Root Speed.	sportivo	rigenerazione	standard	t	54	2026-03-05 21:26:23.433344+00	albatros	normale	\N	\N	f	\N
 f7d9eafc-5b10-4d77-ab94-ddd4c3531936	rigenerazione_sportivo_premium	Rigenerazione Sportivo Premium	Ciclo completo: Vigor Active + Humifitos + Micosat F + Root Speed + Wet Turf + Algapark post-semina.	sportivo	rigenerazione	premium	t	55	2026-03-05 21:26:23.433344+00	albatros	normale	\N	\N	f	\N
+c2df015b-808b-4972-8d4e-e20bd5023dd3	prev-fogliare-estiva	Prevenzione fogliare estiva	5 trattamenti fogliari da meta maggio a meta luglio.	ornamentale	prevenzione_fogliare	standard	t	106	2026-03-20 13:25:30.885216+00	\N	normale	\N	\N	f	\N
+c155c6e1-28cd-47a1-a5e7-0d6fdac746cd	posa-rotoli	Posa prato a rotoli	Vigor Active + Micosat PG pre-posa. Algapark + Tab Plus + Len + Wet Turf post-posa.	ornamentale	rotoli	standard	t	107	2026-03-20 13:25:30.885216+00	\N	normale	\N	\N	f	\N
 \.
 
 
@@ -7149,6 +7745,15 @@ b1928501-0303-481f-9126-76c543bd7b6b	MGP080	GEOGREEN	allround	granulare	🔵	f	2
 6c77a7d7-357c-441c-8e62-5a5cb68da019	PLK005	GEOGREEN	leokare	biologico	🟤	t	15	1.2	Acidi umici leonardite. Più raffinato di Humifitos, efficace anche fogliare a temp. medie.	t	2026-03-04 08:27:15.563749+00	kare	f
 cd8027cb-5de9-4f9a-b786-a92ac7e42aca	PAL005	GEOGREEN	algapark	biostimolante	🩵	t	0.3	1.2	Ecklonia maxima + lievito. Stimola accestimento, inibisce dominanza apicale.	t	2026-03-04 08:27:15.563749+00	kare	f
 50638bb4-185c-443a-a67a-efe0f05b788f	PSK001	GEOGREEN	sevenkare	fogliare	🔴	t	\N	1.2	NPK 12-5-6 liquido. Integra Green 7 in fertirrigazione.	t	2026-03-04 08:27:15.563749+00	kare	f
+\.
+
+
+--
+-- Data for Name: sopralluoghi; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.sopralluoghi (id, created_at, operatore, stato, cliente, luogo, data_sopralluogo, superficie, irrigazione, tessitura, compattamento, drenaggio, lavorazioni_preg, infestanti, ph, stato_vegetativo, note_tecniche, relazione_ai, piano_id, foto_urls, ce_terreno, cliente_id) FROM stdin;
+157a4d1a-9b53-42f8-ab37-03a239c3b808	2026-03-30 05:10:35.140041+00	Simone	completata	ASD Albaredo Insieme	via Storte 4 Albaredo di Vedelago (TV)	2026-03-28	6500	centralizzata	normale	medio	normale	Aprile 2024: arieggiatura e scarificatura, sabbiatura con 30 mc di sabbia silicea, 240 mc di compost maturo, passaggio con aeravator per aerare il terreno ed incorporare sabbia e compost. A seguire trasemina con Renovate Sport 40 gr7mq. A settembre trasemina con 30 gr/mq. Adozione piano di concimazione con AllRound 90 gr/mq in 3 interventi e Humifitos + Micosat F MO ad Aprile. Anno 2025, AllRound 90 gr/mq in 3 interventi e Humifitos + Micosat F MO a Settembre.	diffusa poa annua e Agrostis palustri in aree limitate soprattutto angolo nord ovest	\N	discreto	C'è da gestire il problema della Poa annua con irrigazioni oculate e una trasemina a fine aprile, Da subito piano di concimazione annuo con AllRound con 4 apporti da 30-25-30-30 gr/mq e 3 Trattamenti liquidi con Humifitos (6 x 25 lt) e Micosat F MO (5 kg) ad aprile, giugno e ottobre. Il fondo, fino a 8-10 cm presenta un normale livello di compattazione, mentre oltre non si riesce ad affondare il succhiello per il prelievo del terreno. La sabbia è presente solo nel primo strato di 2-3 cm di top soil. Consiglio di effettuare una trasemina con 40 gr di Renovate Sport a fine aprile. A fine agosto, bucatura profonda con Vertidrain e apporto di almeno 30 mc di sabbia silicea. Successiva trasemina con 40 gr/mq di Renovate Sport ed eventuale ripetizione dopo 15/20 giorni con altri 40 gr/mq.	**RELAZIONE TECNICA DI SOPRALLUOGO**\n\n**Oggetto:** Analisi agronomica e piano di manutenzione del tappeto erboso – ASD Albaredo Insieme\n**Tecnico incaricato:** Simone Taffarello – Agrotecnico OMPRA Srl\n**Data:** 28 marzo 2026\n\n---\n\n### 1. PREMESSA\nSu richiesta della società ASD Albaredo Insieme, in data 28 marzo 2026 ho effettuato un sopralluogo tecnico presso l’impianto sportivo sito in via Storte 4 ad Albaredo di Vedelago (TV). L’indagine è stata finalizzata alla valutazione dello stato attuale del tappeto erboso, che si estende su una superficie complessiva di 6.500 m², e alla definizione della strategia manutentiva per la stagione in corso. L'area è servita da un impianto di irrigazione centralizzato.\n\n### 2. STATO DEL TERRENO\nDall’analisi macroscopica e dai campionamenti effettuati tramite succhiello, la tessitura del terreno risulta normale con un drenaggio complessivamente equilibrato. Tuttavia, ho riscontrato un’importante criticità strutturale: il profilo del suolo presenta un livello di compattamento medio fino a una profondità di circa 8-10 cm. Oltre tale soglia, la resistenza meccanica è tale da impedire l’affondamento dello strumento, segnalando un orizzonte profondo eccessivamente compresso che limita lo sviluppo radicale e gli scambi gassosi. \nLa sabbia silicea apportata nelle stagioni precedenti è attualmente localizzata esclusivamente nei primi 2-3 cm di top soil, non risultando quindi sufficientemente integrata nel profilo per correggere la struttura del fondo.\n\n### 3. VALUTAZIONE FITOTECNICA\nLo stato vegetativo generale del tappeto si presenta discreto, ma con evidenti segnali di competizione floristica. Si rileva una presenza diffusa di *Poa annua* su gran parte della superficie e focolai di *Agrostis palustris* localizzati prevalentemente nell’angolo nord-ovest del campo. \nLa diagnosi evidenzia come le lavorazioni pregresse (arieggiature e trasemine del 2024/2025) abbiano mantenuto una buona densità, ma la pressione delle infestanti e il compattamento del fondo richiedono un cambio di passo nella gestione agronomica per evitare il declino della specie desiderata (*Lolium perenne* contenuto nel Renovate Sport).\n\n### 4. PIANO D'INTERVENTO CONSIGLIATO\nPer correggere le anomalie strutturali e contenere la *Poa annua*, ho predisposto il seguente piano operativo suddiviso per ambiti:\n\n**Nutrizione Minerale (AllRound 19-5-14):**\n*   **Marzo:** 30 g/m² (Risveglio vegetativo)\n*   **Maggio:** 25 g/m² (Rinforzo pre-estivo)\n*   **Settembre:** 35 g/m² (Ripartenza autunnale)\n*   **Novembre:** 25 g/m² (Indurimento invernale)\n\n**Prevenzione Biologica e Biostimolazione:**\nTrattamenti liquidi mediante botte per favorire la sanità del suolo e la competizione radicale (Aprile, Giugno, Ottobre):\n*   **Humifitos:** 6 confezioni da 25 lt per intervento.\n*   **Micosat F MO:** 5 kg per intervento.\n\n**Operazioni Meccaniche e Trasemine:**\n*   **Fine Aprile:** Trasemina di rigenerazione con **Renovate Sport** (40 g/m²) per contrastare il vuoto lasciato dalla senescenza della *Poa annua*.\n*   **Fine Agosto:** Intervento strutturale mediante bucatura profonda con **Vertidrain** per rompere lo strato compatto oltre i 10 cm. A seguire, apporto di almeno **30 mc di sabbia silicea** per migliorare la porosità.\n*   **Settembre:** Trasemina con **Renovate Sport** (40 g/m²), da ripetere eventualmente dopo 15-20 giorni con ulteriori 40 g/m² nelle zone più diradate.\n\n### 5. CONCLUSIONI\nLa gestione della *Poa annua* sarà la sfida principale della stagione: raccomando un’irrigazione oculata, evitando eccessi che favorirebbero l'infestante a discapito del miscuglio tecnico. È fondamentale non derogare all'intervento di Vertidrain previsto per agosto: senza una decompressione profonda e una corretta integrazione della sabbia nel profilo, l'efficacia delle concimazioni e delle trasemine risulterà limitata nel medio periodo. \n\nResto a disposizione per il monitoraggio delle operazioni sopra descritte.\n\nIn fede,\n\n*Simone Taffarello*\nAgrotecnico – OMPRA Srl	31e0d274-17ae-499a-b426-1ba7aa2c34e4	\N	\N	\N
 \.
 
 
@@ -7696,62 +8301,106 @@ a1d9e947-029f-4666-9b2b-a54e1fd24061	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	1
 99770d4d-54dd-416c-bca5-f31aa5b75c25	STIHL	Batteria AK 30.0 S	1	2026-03-14 09:37:12.971154+00	2026-03-14 09:37:12.971154+00
 680d4cf9-76d5-4c7f-8cca-9591b208cd24	STIHL	Decespugliatore FSA 80.R	1	2026-03-14 10:02:09.196439+00	2026-03-14 10:02:09.196439+00
 dd053250-075d-4265-aafa-7e44dbd74f46	STIHL	Soffiatore BGA 250.0	1	2026-03-16 08:25:08.870283+00	2026-03-16 08:25:08.870283+00
+98cdae2f-10a4-4918-84fc-906423a758f6	Stihl	Potatore GTA 40.0	1	2026-03-18 10:17:20.55011+00	2026-03-18 10:17:20.55011+00
+2c7823be-31c2-412b-9fc3-e05a33508ded	STIHL	Caricabatteria AL 5-2	1	2026-03-18 10:19:36.875018+00	2026-03-18 10:19:36.875018+00
+820fccbf-cdf0-4b30-a627-df6b2835d2c0	Honda	Rasaerba HRG416XBPEEA	1	2026-03-18 13:37:53.798285+00	2026-03-18 13:37:53.798285+00
+b0e97aa0-aac7-4595-975a-a681131150c1	Honda	Batteria 4.0 li-Ion	1	2026-03-18 13:41:22.538697+00	2026-03-18 13:41:22.538697+00
+b10df01a-24b4-4728-b163-5f8b4eed5f48	Honda	Caricabatteria CV3620XA EM	1	2026-03-18 13:41:51.845443+00	2026-03-18 13:41:51.845443+00
+617daf75-89fa-4863-9edd-d75cb1c7da9a	ECHO	Tagliasiepi DHCA-310	1	2026-03-18 15:07:01.841946+00	2026-03-18 15:07:01.841946+00
+9044d28c-22c2-4e0b-934f-e3f0afe6a471	ECHO	Caricabatteria LC-3604 EU35	1	2026-03-18 15:08:02.040679+00	2026-03-18 15:08:02.040679+00
+2f65c0b2-5c35-45ff-a911-588d3cdfc22c	ECHO	Batteria LBP-36-80 EU35	1	2026-03-18 15:08:40.663356+00	2026-03-18 15:08:40.663356+00
+a2787998-dac3-4055-ba5e-973b27ba51c7	STIHL	Rasaerba RMA 248.0	1	2026-03-18 15:34:08.13715+00	2026-03-18 15:34:08.13715+00
+b81e525d-4085-42b1-8910-40ff3013c750	STIHL	Caricabatteria AL 101	1	2026-03-18 15:36:32.621577+00	2026-03-18 15:36:32.621577+00
+d7fa14ca-7c52-4fb3-b6c7-d28b680fc65b	STIHL	Batteria AK 10	1	2026-03-18 15:43:44.233686+00	2026-03-18 15:43:44.233686+00
+59ae7b3e-94e8-4bef-94c1-53a39b94845b	STIHL	Forbice elettronica ASA 20.0	1	2026-03-18 16:30:51.506365+00	2026-03-18 16:30:51.506365+00
+8cccf967-f61d-45d9-b904-f709bfdef7aa	Echo	Decespugliatore SRM-222ES	1	2026-03-19 16:12:30.395773+00	2026-03-19 16:12:30.395773+00
+786caf64-6956-4415-88dc-d785d138b485	STIHL	Forbice elettronica HSA 26	1	2026-03-20 13:35:23.917402+00	2026-03-20 13:35:23.917402+00
+7030949c-724d-42cd-b279-49c3f9892330	Stihl	Caricabatteria AL 1	1	2026-03-20 13:36:36.872772+00	2026-03-20 13:36:36.872772+00
+523e0cce-8f16-4317-a4fd-9805987250b0	Stihl	Soffiatore BGA 250.0	1	2026-03-20 13:47:19.90218+00	2026-03-20 13:47:19.90218+00
+5e4bc539-3024-472a-ac5c-94a2ff7321cf	STIHL	Caricabatteria AL 301-4	1	2026-03-20 13:49:19.588421+00	2026-03-20 13:49:19.588421+00
+308d4511-9308-42a3-9b88-a759fb968c26	Stihl	Tagliasiepi HSA 140.0 T	1	2026-03-20 13:55:23.04114+00	2026-03-20 13:55:23.04114+00
+1d54a40e-c1de-4098-868b-b2d86b97392e	Stihl	Tagliasiepi MSA 140.0 R	1	2026-03-20 13:59:09.224888+00	2026-03-20 13:59:09.224888+00
+ef63f339-b78b-44be-a1da-9236073bc9fe	Stihl	Motosega MSA 190.0 T	1	2026-03-20 14:22:57.473489+00	2026-03-20 14:22:57.473489+00
+fb6dd5b8-d545-4c27-972a-b1dc5bd5ae03	STIHL	Motosega MSA 70.0 C	1	2026-03-20 14:37:57.605071+00	2026-03-20 14:37:57.605071+00
+b792db87-1e77-4e5f-989a-ffa9172f306a	STIHL	Motosega MS 194 T 3/8"P Chainsaw	1	2026-03-21 07:23:56.443182+00	2026-03-21 07:23:56.443182+00
+9f7fc75a-73e4-48a0-bee0-9be5dbb35cec	Echo	Decespugliatore SRM-3611T	1	2026-03-21 09:17:22.366509+00	2026-03-21 09:17:22.366509+00
+262e6f6f-0ee7-4bba-8118-44833915ce42	THE TORO COMPANY	Arieggiatore	1	2026-03-21 09:40:19.731681+00	2026-03-21 09:40:19.731681+00
+f37c5eeb-56e9-4340-91f3-cf1260a65aef	STIHL	Rasaerba RM 453.3 V	1	2026-03-21 10:15:58.152725+00	2026-03-21 10:15:58.152725+00
+ad05bf08-1b3e-4276-8106-ce67dcd87bdb	Honda	Rasaerba HRG466XB	1	2026-03-24 09:16:22.789002+00	2026-03-24 09:16:22.789002+00
+e97c7805-9011-446f-8db9-af776fac7055	Honda	Caricabatteria	1	2026-03-24 09:17:19.025518+00	2026-03-24 09:17:19.025518+00
+1aa4eaa2-cc81-4130-b9d8-829f88a39902	Honda	Batteria DP3640XA	1	2026-03-24 09:19:10.801062+00	2026-03-24 09:19:10.801062+00
+34ee306b-7b77-400e-96e2-01d4a06f7255	Stihl	Decespugliatore FSA 120.0 R	1	2026-03-24 14:54:12.282493+00	2026-03-24 14:54:12.282493+00
+48edcf87-96fe-4159-a19f-9ebbc0504755	STIHL	Decespugliatore FSA 120.0 R	1	2026-03-24 14:55:07.929029+00	2026-03-24 14:55:07.929029+00
+fae2d9a6-3c66-4959-921e-5090ccff5e9b	STIHL	Batteria AP 300S	1	2026-03-24 14:56:30.141413+00	2026-03-24 14:56:30.141413+00
+542cd99e-8fda-48c8-9a36-0802970b3d76	STIHL	 MS 212 3/8" P	1	2026-03-24 15:18:57.238974+00	2026-03-24 15:18:57.238974+00
+116912fc-0085-4b9a-97a7-281ae03df707	STIHL	Motore multifunzione KMA 120.0 R	1	2026-03-25 15:39:07.446547+00	2026-03-25 15:39:07.446547+00
+f432b00d-3d8f-4116-b9f2-e5ec7aa28d53	STIHL	Caricabatterie AL501	1	2026-03-25 15:39:07.446547+00	2026-03-25 15:39:07.446547+00
+81cc7d15-5807-4172-af6f-868e932ffef2	STIHL	Batteria AP 200S (187 Wh)	1	2026-03-25 15:44:07.404604+00	2026-03-25 15:44:07.404604+00
+fde203ed-b0a7-452e-9b3d-1af2d4fec4c4	Stihl	Batteria AP 200S	1	2026-03-25 15:44:07.404604+00	2026-03-25 15:44:07.404604+00
+f3f2b039-7d43-4aae-ba9f-fa4e54bc9aca	STIHL	Batteria AP 200S	1	2026-03-25 15:44:07.404604+00	2026-03-25 15:44:07.404604+00
+0d056b11-33e0-455e-844b-ed4d7fc821fb	STIHL	Batteria AP 300.0 S (281Wh)	1	2026-03-25 15:44:07.404604+00	2026-03-25 15:44:07.404604+00
+653da99e-4c9c-4817-8e28-805e6b5e64d7	STIHL	Batteria AP 300.0 S (281Wh) 4850-400-6575	1	2026-03-25 15:44:07.404604+00	2026-03-25 15:44:07.404604+00
+a86fc304-ffd8-490a-b5a8-9ec5b1625849	Stihl	Batteria AP 300.0 S	1	2026-03-25 15:50:13.398449+00	2026-03-25 15:50:13.398449+00
+094614ee-6c7e-442c-b338-8c7e5b5e65b8	Honda	Rasaerba HRG466C1 PKEH	1	2026-03-27 16:46:17.234166+00	2026-03-27 16:46:17.234166+00
+f9a72316-6def-44c5-8a12-8d73c2d6d480	Echo	Decespugliatore SRM-301TES	1	2026-03-28 10:27:49.616366+00	2026-03-28 10:27:49.616366+00
+36ebde20-26d7-4e8b-a003-76ff9ebdd9c4	STIHL	Idropulitrice RE 130 PLUS	1	2026-03-28 10:41:56.74763+00	2026-03-28 10:41:56.74763+00
+3bc927eb-390f-4cd2-ade5-9be965278df5	Echo	Decespugliatore SRM-267	1	2026-03-30 14:20:15.055175+00	2026-03-30 14:20:15.055175+00
 \.
 
 
 --
--- Data for Name: messages_2026_03_13; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_03_28; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_13 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_03_28 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_14; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_03_29; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_14 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_03_29 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_15; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_03_30; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_15 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_03_30 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_16; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_03_31; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_16 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_03_31 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_17; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_01; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_17 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_01 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_18; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_02; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_18 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_02 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_19; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_03; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_19 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_03 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
@@ -7836,6 +8485,8 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 --
 
 COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter) FROM stdin;
+5253	27e0c60e-2cf9-11f1-ac14-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-03-31 12:00:05.274277	*
+5254	27e0b970-2cf9-11f1-be0c-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-03-31 12:00:05.274277	*
 \.
 
 
@@ -7979,7 +8630,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 314, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 431, true);
 
 
 --
@@ -7993,7 +8644,7 @@ SELECT pg_catalog.setval('public.noleggio_abbonamenti_id_seq', 1, false);
 -- Name: noleggio_listini_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.noleggio_listini_id_seq', 1070, true);
+SELECT pg_catalog.setval('public.noleggio_listini_id_seq', 1202, true);
 
 
 --
@@ -8007,7 +8658,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 249, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 3831, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 5254, true);
 
 
 --
@@ -8259,6 +8910,38 @@ ALTER TABLE ONLY auth.users
 
 
 --
+-- Name: webauthn_challenges webauthn_challenges_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+--
+
+ALTER TABLE ONLY auth.webauthn_challenges
+    ADD CONSTRAINT webauthn_challenges_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: webauthn_credentials webauthn_credentials_pkey; Type: CONSTRAINT; Schema: auth; Owner: -
+--
+
+ALTER TABLE ONLY auth.webauthn_credentials
+    ADD CONSTRAINT webauthn_credentials_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: agro_listino agro_listino_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_listino
+    ADD CONSTRAINT agro_listino_pkey PRIMARY KEY (sku);
+
+
+--
+-- Name: agro_mapping agro_mapping_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_mapping
+    ADD CONSTRAINT agro_mapping_pkey PRIMARY KEY (label_intervento);
+
+
+--
 -- Name: app_config app_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8328,6 +9011,14 @@ ALTER TABLE ONLY public.listini
 
 ALTER TABLE ONLY public.noleggio_abbonamenti
     ADD CONSTRAINT noleggio_abbonamenti_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: noleggio_archivio noleggio_archivio_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.noleggio_archivio
+    ADD CONSTRAINT noleggio_archivio_pkey PRIMARY KEY (id);
 
 
 --
@@ -8507,6 +9198,14 @@ ALTER TABLE ONLY public.pv_prodotti
 
 
 --
+-- Name: sopralluoghi sopralluoghi_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sopralluoghi
+    ADD CONSTRAINT sopralluoghi_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: stihl_prodotti stihl_prodotti_codice_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8555,59 +9254,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_03_13 messages_2026_03_13_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_03_28 messages_2026_03_28_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_13
-    ADD CONSTRAINT messages_2026_03_13_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_03_14 messages_2026_03_14_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_03_14
-    ADD CONSTRAINT messages_2026_03_14_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_03_28
+    ADD CONSTRAINT messages_2026_03_28_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_03_15 messages_2026_03_15_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_03_29 messages_2026_03_29_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_15
-    ADD CONSTRAINT messages_2026_03_15_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_03_16 messages_2026_03_16_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_03_16
-    ADD CONSTRAINT messages_2026_03_16_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_03_29
+    ADD CONSTRAINT messages_2026_03_29_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_03_17 messages_2026_03_17_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_03_30 messages_2026_03_30_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_17
-    ADD CONSTRAINT messages_2026_03_17_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_03_18 messages_2026_03_18_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_03_18
-    ADD CONSTRAINT messages_2026_03_18_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_03_30
+    ADD CONSTRAINT messages_2026_03_30_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_03_19 messages_2026_03_19_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_03_31 messages_2026_03_31_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_19
-    ADD CONSTRAINT messages_2026_03_19_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_03_31
+    ADD CONSTRAINT messages_2026_03_31_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_01 messages_2026_04_01_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_01
+    ADD CONSTRAINT messages_2026_04_01_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_02 messages_2026_04_02_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_02
+    ADD CONSTRAINT messages_2026_04_02_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_03 messages_2026_04_03_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_03
+    ADD CONSTRAINT messages_2026_04_03_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -9063,6 +9762,34 @@ CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous);
 
 
 --
+-- Name: webauthn_challenges_expires_at_idx; Type: INDEX; Schema: auth; Owner: -
+--
+
+CREATE INDEX webauthn_challenges_expires_at_idx ON auth.webauthn_challenges USING btree (expires_at);
+
+
+--
+-- Name: webauthn_challenges_user_id_idx; Type: INDEX; Schema: auth; Owner: -
+--
+
+CREATE INDEX webauthn_challenges_user_id_idx ON auth.webauthn_challenges USING btree (user_id);
+
+
+--
+-- Name: webauthn_credentials_credential_id_key; Type: INDEX; Schema: auth; Owner: -
+--
+
+CREATE UNIQUE INDEX webauthn_credentials_credential_id_key ON auth.webauthn_credentials USING btree (credential_id);
+
+
+--
+-- Name: webauthn_credentials_user_id_idx; Type: INDEX; Schema: auth; Owner: -
+--
+
+CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING btree (user_id);
+
+
+--
 -- Name: idx_clienti_cf; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -9231,52 +9958,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_03_13_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_03_28_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_13_inserted_at_topic_idx ON realtime.messages_2026_03_13 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_03_14_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_03_14_inserted_at_topic_idx ON realtime.messages_2026_03_14 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_03_28_inserted_at_topic_idx ON realtime.messages_2026_03_28 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_03_15_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_03_29_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_15_inserted_at_topic_idx ON realtime.messages_2026_03_15 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_03_16_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_03_16_inserted_at_topic_idx ON realtime.messages_2026_03_16 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_03_29_inserted_at_topic_idx ON realtime.messages_2026_03_29 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_03_17_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_03_30_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_17_inserted_at_topic_idx ON realtime.messages_2026_03_17 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_03_18_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_03_18_inserted_at_topic_idx ON realtime.messages_2026_03_18 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_03_30_inserted_at_topic_idx ON realtime.messages_2026_03_30 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_03_19_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_03_31_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_19_inserted_at_topic_idx ON realtime.messages_2026_03_19 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_03_31_inserted_at_topic_idx ON realtime.messages_2026_03_31 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_01_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_01_inserted_at_topic_idx ON realtime.messages_2026_04_01 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_02_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_02_inserted_at_topic_idx ON realtime.messages_2026_04_02 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_03_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_03_inserted_at_topic_idx ON realtime.messages_2026_04_03 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -9343,101 +10070,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_03_13_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_28_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_13_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_13_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_13_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_28_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_14_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_28_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_14_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_14_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_14_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_28_pkey;
 
 
 --
--- Name: messages_2026_03_15_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_29_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_15_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_15_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_15_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_29_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_16_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_29_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_16_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_16_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_16_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_29_pkey;
 
 
 --
--- Name: messages_2026_03_17_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_30_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_17_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_17_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_17_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_30_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_18_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_30_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_18_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_18_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_18_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_30_pkey;
 
 
 --
--- Name: messages_2026_03_19_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_31_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_19_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_31_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_19_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_03_31_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_19_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_31_pkey;
+
+
+--
+-- Name: messages_2026_04_01_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_01_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_01_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_01_pkey;
+
+
+--
+-- Name: messages_2026_04_02_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_02_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_02_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_02_pkey;
+
+
+--
+-- Name: messages_2026_04_03_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_03_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_03_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_03_pkey;
 
 
 --
@@ -9625,6 +10352,46 @@ ALTER TABLE ONLY auth.sso_domains
 
 
 --
+-- Name: webauthn_challenges webauthn_challenges_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+--
+
+ALTER TABLE ONLY auth.webauthn_challenges
+    ADD CONSTRAINT webauthn_challenges_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: webauthn_credentials webauthn_credentials_user_id_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: -
+--
+
+ALTER TABLE ONLY auth.webauthn_credentials
+    ADD CONSTRAINT webauthn_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: agro_mapping agro_mapping_sku_grande_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_mapping
+    ADD CONSTRAINT agro_mapping_sku_grande_fkey FOREIGN KEY (sku_grande) REFERENCES public.agro_listino(sku);
+
+
+--
+-- Name: agro_mapping agro_mapping_sku_piccolo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_mapping
+    ADD CONSTRAINT agro_mapping_sku_piccolo_fkey FOREIGN KEY (sku_piccolo) REFERENCES public.agro_listino(sku);
+
+
+--
+-- Name: noleggio_archivio noleggio_archivio_sopralluogo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.noleggio_archivio
+    ADD CONSTRAINT noleggio_archivio_sopralluogo_id_fkey FOREIGN KEY (sopralluogo_id) REFERENCES public.sopralluoghi(id) ON DELETE SET NULL;
+
+
+--
 -- Name: noleggio_listini noleggio_listini_macchina_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9718,6 +10485,14 @@ ALTER TABLE ONLY public.pv_preventivo_righe
 
 ALTER TABLE ONLY public.pv_preventivo_righe
     ADD CONSTRAINT pv_preventivo_righe_prodotto_id_fkey FOREIGN KEY (prodotto_id) REFERENCES public.pv_prodotti(id);
+
+
+--
+-- Name: sopralluoghi sopralluoghi_piano_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sopralluoghi
+    ADD CONSTRAINT sopralluoghi_piano_id_fkey FOREIGN KEY (piano_id) REFERENCES public.pv_piani(id);
 
 
 --
@@ -9886,6 +10661,13 @@ CREATE POLICY "Accesso completo listini" ON public.listini USING (true) WITH CHE
 
 
 --
+-- Name: noleggio_archivio Accesso libero noleggio_archivio; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Accesso libero noleggio_archivio" ON public.noleggio_archivio USING (true);
+
+
+--
 -- Name: listini_log Allow all; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -10031,6 +10813,12 @@ ALTER TABLE public.listini_log ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.noleggio_abbonamenti ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: noleggio_archivio; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.noleggio_archivio ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: noleggio_listini; Type: ROW SECURITY; Schema: public; Owner: -
@@ -10251,5 +11039,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6AQ8Yn7l56gBELaSzYxis07sDn3DSyXRGT6dmlTbHtYJfiHfCGrFHs7Aw1uhCFo
+\unrestrict 12dcUfc5NcyEbuHVndXgwbx4po2VaoVOlJyydBFmzwXt3UIjArwJIqNJtfvLLAB
 

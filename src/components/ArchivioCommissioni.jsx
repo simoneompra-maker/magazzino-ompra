@@ -583,8 +583,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
         const result = await completeCommissione(commAggiornata.id);
         
         if (result.success) {
-          // Mostra anteprima per condividere
-          setPreviewCommissione({ ...commAggiornata, status: 'completed' });
+          const oggi = new Date().toISOString().slice(0, 10);
+          await updateCommissione(commAggiornata.id, { data_consegna: oggi });
+          setPreviewCommissione({ ...commAggiornata, status: 'completed', data_consegna: oggi });
         } else {
           alert('Errore: ' + result.error);
         }
@@ -639,8 +640,9 @@ export default function ArchivioCommissioni({ onNavigate }) {
     
     const result = await completeCommissione(commissione.id);
     if (result.success) {
-      // Mostra anteprima per condividere
-      setPreviewCommissione({ ...commissione, status: 'completed' });
+      const oggi = new Date().toISOString().slice(0, 10);
+      await updateCommissione(commissione.id, { data_consegna: oggi });
+      setPreviewCommissione({ ...commissione, status: 'completed', data_consegna: oggi });
     } else {
       alert('Errore: ' + result.error);
     }
@@ -911,7 +913,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
     const comms = filteredCommissioni;
 
     const headers = [
-      'Data', 'Stato', 'Cliente', 'Telefono', 'Operatore',
+      'Data Commissione', 'Data Consegna', 'Stato', 'Cliente', 'Telefono', 'Operatore',
       'Prodotti', 'Accessori',
       'Totale (IVA incl.)', 'Totale (IVA escl.)',
       'Caparra €', 'Da Saldare €', 'Metodo Pag.', 'Documento', 'Note'
@@ -944,6 +946,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
       return [
         new Date(comm.createdAt).toLocaleDateString('it-IT'),
+        comm.data_consegna ? new Date(comm.data_consegna + 'T12:00:00').toLocaleDateString('it-IT') : '',
         comm.status === 'completed' ? 'Completata' : 'In attesa',
         comm.cliente || '',
         comm.telefono || '',
@@ -961,12 +964,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
     });
 
     const totaleEsclGen = Math.round((totaleGen / 1.22) * 100) / 100;
-    const rigaTotali = ['', '', '', '', '', '', 'TOTALE', totaleGen, totaleEsclGen, totaleCaparre, totaleGen - totaleCaparre, '', '', ''];
+    const rigaTotali = ['', '', '', '', '', '', '', 'TOTALE', totaleGen, totaleEsclGen, totaleCaparre, totaleGen - totaleCaparre, '', '', ''];
 
     const wsData = [headers, ...rows, rigaTotali];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     ws['!cols'] = [
-      { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
+      { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
       { wch: 40 }, { wch: 30 }, { wch: 16 }, { wch: 16 },
       { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }
     ];
@@ -1312,6 +1315,11 @@ export default function ArchivioCommissioni({ onNavigate }) {
                       🕐 {new Date(comm.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </p>
+                  {comm.status === 'completed' && comm.data_consegna && (
+                    <p className="text-xs font-medium" style={{ color: '#006B3F' }}>
+                      🚚 Consegnato: {new Date(comm.data_consegna + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold" style={{ color: '#006B3F' }}>

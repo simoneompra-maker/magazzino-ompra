@@ -253,7 +253,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text(data.isPreventivo ? 'PREVENTIVO' : 'Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
-    doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
+    if (data.data_consegna) {
+      doc.text(`Emessa: ${formatDate(data.saleDate || data.createdAt || new Date())}`, pageWidth / 2, y + 22, { align: 'center' });
+    } else {
+      doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
+    }
 
     y += 32;
 
@@ -562,6 +566,23 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       });
     }
 
+    // Data consegna (solo se presente)
+    if (data.data_consegna) {
+      checkPageBreak(12);
+      y += 5;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 107, 63);
+      doc.text('Data consegna:', margin, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(
+        new Date(data.data_consegna + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        margin + 32, y
+      );
+      y += 5;
+    }
+
     // Footer
     checkPageBreak(15);
     y += 10;
@@ -621,7 +642,11 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text(data.isPreventivo ? 'PREVENTIVO' : 'Commissione di Vendita', pageWidth / 2, y + 17, { align: 'center' });
-    doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
+    if (data.data_consegna) {
+      doc.text(`Emessa: ${formatDate(data.saleDate || data.createdAt || new Date())}`, pageWidth / 2, y + 22, { align: 'center' });
+    } else {
+      doc.text(formatDate(data.saleDate || data.createdAt || new Date()), pageWidth / 2, y + 22, { align: 'center' });
+    }
 
     y += 32;
 
@@ -914,6 +939,23 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         doc.text(line, margin, y);
         y += 4;
       });
+    }
+
+    // Data consegna (solo se presente)
+    if (data.data_consegna) {
+      checkPageBreak(12);
+      y += 5;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 107, 63);
+      doc.text('Data consegna:', margin, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(
+        new Date(data.data_consegna + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        margin + 32, y
+      );
+      y += 5;
     }
 
     // Footer

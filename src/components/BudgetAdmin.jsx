@@ -150,7 +150,8 @@ export default function BudgetAdmin({ onNavigate }) {
         .select('created_at, totale')
         .gte('created_at', '2026-01-01')
         .lt('created_at',  '2027-01-01')
-        .not('totale', 'is', null);
+        .not('totale', 'is', null)
+        .eq('status', 'completed');
 
       if (isAdmin && filtroVenditore) {
         query = query.eq('operatore', filtroVenditore);

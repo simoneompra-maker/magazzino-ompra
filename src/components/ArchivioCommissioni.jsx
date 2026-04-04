@@ -6,6 +6,9 @@ import { supabase } from '../store';
 import { scanMatricola } from '../services/ocrService';
 import PrivacyModal from './PrivacyModal';
 
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
 export default function ArchivioCommissioni({ onNavigate }) {
   const commissioni = useStore((state) => state.commissioni);
   const updateCommissione = useStore((state) => state.updateCommissione);
@@ -37,6 +40,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const [editingProductIndex, setEditingProductIndex] = useState(null);
   const [newSerial, setNewSerial] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [ocrProdIdx, setOcrProdIdx] = useState(null);   // index del prodotto in modifica che aspetta OCR
+  const [scanningProd, setScanningProd] = useState(false);
   
   // Modal invio commissione
   const [sendingCommissione, setSendingCommissione] = useState(null);
@@ -583,9 +588,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
         const result = await completeCommissione(commAggiornata.id);
         
         if (result.success) {
-          const oggi = new Date().toISOString().slice(0, 10);
-          await updateCommissione(commAggiornata.id, { data_consegna: oggi });
-          setPreviewCommissione({ ...commAggiornata, status: 'completed', data_consegna: oggi });
+          // Mostra anteprima per condividere
+          setPreviewCommissione({ ...commAggiornata, status: 'completed' });
         } else {
           alert('Errore: ' + result.error);
         }
@@ -640,9 +644,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
     
     const result = await completeCommissione(commissione.id);
     if (result.success) {
-      const oggi = new Date().toISOString().slice(0, 10);
-      await updateCommissione(commissione.id, { data_consegna: oggi });
-      setPreviewCommissione({ ...commissione, status: 'completed', data_consegna: oggi });
+      // Mostra anteprima per condividere
+      setPreviewCommissione({ ...commissione, status: 'completed' });
     } else {
       alert('Errore: ' + result.error);
     }
@@ -717,6 +720,47 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const handleAddEditProduct = () => {
     const updated = [...editForm.prodotti, { brand: '', model: '', serialNumber: '', prezzo: null, aliquotaIva: 22 }];
     setEditForm({ ...editForm, prodotti: updated });
+  };
+
+  // OCR per prodotto in modifica — scatta foto → Gemini → precompila brand+model
+  const handleProductOcrFile = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    setScanningProd(true);
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { inlineData: { mimeType: file.type, data: base64 } },
+            { text: 'Questa è la targhetta o il codice di una macchina da giardino o attrezzatura (Stihl, Echo, Honda, Husqvarna, ecc.). Estrai brand e modello. Rispondi SOLO con JSON valido, nessun testo extra: {"brand":"...","model":"..."}' }
+          ]}],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 100 }
+        })
+      });
+      const d = await resp.json();
+      const raw = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const { brand = '', model = '' } = JSON.parse(clean);
+      if (ocrProdIdx !== null) {
+        const updated = [...editForm.prodotti];
+        updated[ocrProdIdx] = { ...updated[ocrProdIdx], brand: brand.trim(), model: model.trim() };
+        setEditForm({ ...editForm, prodotti: updated });
+      }
+    } catch {
+      alert('Prodotto non riconosciuto. Inserisci brand e modello manualmente.');
+    } finally {
+      setScanningProd(false);
+      setOcrProdIdx(null);
+    }
   };
 
   // Aggiorna campo generico prodotto in modifica
@@ -913,7 +957,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
     const comms = filteredCommissioni;
 
     const headers = [
-      'Data Commissione', 'Data Consegna', 'Stato', 'Cliente', 'Telefono', 'Operatore',
+      'Data', 'Stato', 'Cliente', 'Telefono', 'Operatore',
       'Prodotti', 'Accessori',
       'Totale (IVA incl.)', 'Totale (IVA escl.)',
       'Caparra €', 'Da Saldare €', 'Metodo Pag.', 'Documento', 'Note'
@@ -946,7 +990,6 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
       return [
         new Date(comm.createdAt).toLocaleDateString('it-IT'),
-        comm.data_consegna ? new Date(comm.data_consegna + 'T12:00:00').toLocaleDateString('it-IT') : '',
         comm.status === 'completed' ? 'Completata' : 'In attesa',
         comm.cliente || '',
         comm.telefono || '',
@@ -964,12 +1007,12 @@ export default function ArchivioCommissioni({ onNavigate }) {
     });
 
     const totaleEsclGen = Math.round((totaleGen / 1.22) * 100) / 100;
-    const rigaTotali = ['', '', '', '', '', '', '', 'TOTALE', totaleGen, totaleEsclGen, totaleCaparre, totaleGen - totaleCaparre, '', '', ''];
+    const rigaTotali = ['', '', '', '', '', '', 'TOTALE', totaleGen, totaleEsclGen, totaleCaparre, totaleGen - totaleCaparre, '', '', ''];
 
     const wsData = [headers, ...rows, rigaTotali];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     ws['!cols'] = [
-      { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
+      { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
       { wch: 40 }, { wch: 30 }, { wch: 16 }, { wch: 16 },
       { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }
     ];
@@ -1315,11 +1358,6 @@ export default function ArchivioCommissioni({ onNavigate }) {
                       🕐 {new Date(comm.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </p>
-                  {comm.status === 'completed' && comm.data_consegna && (
-                    <p className="text-xs font-medium" style={{ color: '#006B3F' }}>
-                      🚚 Consegnato: {new Date(comm.data_consegna + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                    </p>
-                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold" style={{ color: '#006B3F' }}>
@@ -1437,13 +1475,23 @@ export default function ArchivioCommissioni({ onNavigate }) {
         )}
       </div>
 
-      {/* Input file OCR nascosto */}
+      {/* Input file OCR nascosto — matricola */}
       <input
         type="file"
         id="commissione-ocr-input"
         accept="image/*"
         capture="environment"
         onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+
+      {/* Input file OCR nascosto — prodotto in modifica */}
+      <input
+        type="file"
+        id="edit-product-ocr-input"
+        accept="image/*"
+        capture="environment"
+        onChange={handleProductOcrFile}
         style={{ display: 'none' }}
       />
 
@@ -1798,7 +1846,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                     <div key={idx} className="p-3 bg-gray-50 rounded-lg space-y-2">
                       {/* Riga 1: brand + model (solo se vuoti = nuova riga) */}
                       {(!prod.brand && !prod.model) ? (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                           <input
                             type="text"
                             placeholder="Brand"
@@ -1813,6 +1861,19 @@ export default function ArchivioCommissioni({ onNavigate }) {
                             value={prod.model || ''}
                             onChange={(e) => handleEditProductField(idx, 'model', e.target.value)}
                           />
+                          <button
+                            onClick={() => {
+                              setOcrProdIdx(idx);
+                              document.getElementById('edit-product-ocr-input')?.click();
+                            }}
+                            disabled={scanningProd}
+                            className="p-2 rounded-lg bg-green-700 text-white shrink-0"
+                            title="Scansiona targhetta"
+                          >
+                            {scanningProd && ocrProdIdx === idx
+                              ? <span className="text-xs">...</span>
+                              : <Camera className="w-4 h-4" />}
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between">
@@ -1850,12 +1911,28 @@ export default function ArchivioCommissioni({ onNavigate }) {
                       </div>
                     </div>
                   ))}
-                  <button
-                    onClick={handleAddEditProduct}
-                    className="text-sm text-blue-600 font-medium"
-                  >
-                    + Aggiungi prodotto
-                  </button>
+                  <div className="flex gap-3 items-center">
+                    <button
+                      onClick={handleAddEditProduct}
+                      className="text-sm text-blue-600 font-medium"
+                    >
+                      + Aggiungi prodotto
+                    </button>
+                    <button
+                      onClick={() => {
+                        const newIdx = editForm.prodotti.length;
+                        handleAddEditProduct();
+                        setOcrProdIdx(newIdx);
+                        setTimeout(() => document.getElementById('edit-product-ocr-input')?.click(), 50);
+                      }}
+                      disabled={scanningProd}
+                      className="flex items-center gap-1 text-sm text-green-700 font-medium"
+                      title="Aggiungi scansionando la targhetta"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      {scanningProd ? 'Scansione...' : 'Scansiona'}
+                    </button>
+                  </div>
                 </div>
               </div>
 

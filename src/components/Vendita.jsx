@@ -7,51 +7,23 @@ import SalvaClienteBanner from './SalvaClienteBanner';
 import { scanMatricola, scanCommissione, scanDocumentoIdentita } from '../services/ocrService';
 import { loadClienti, searchClienti, formatIndirizzo, salvaTelefono, invalidaClienteCache } from '../services/clientiService';
 
-// Gestione operatori in localStorage
 const OPERATORI_KEY = 'ompra_operatori';
 const ULTIMO_OPERATORE_KEY = 'ompra_ultimo_operatore';
 
 function getOperatori() {
-  try {
-    const stored = localStorage.getItem(OPERATORI_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (e) {
-    return [];
-  }
+  try { const stored = localStorage.getItem(OPERATORI_KEY); return stored ? JSON.parse(stored) : []; } catch (e) { return []; }
 }
-
-function saveOperatori(operatori) {
-  try {
-    localStorage.setItem(OPERATORI_KEY, JSON.stringify(operatori));
-  } catch (e) {}
-}
-
-function getUltimoOperatore() {
-  try {
-    return localStorage.getItem(ULTIMO_OPERATORE_KEY) || '';
-  } catch (e) {
-    return '';
-  }
-}
-
-function saveUltimoOperatore(nome) {
-  try {
-    localStorage.setItem(ULTIMO_OPERATORE_KEY, nome);
-  } catch (e) {}
-}
-
+function saveOperatori(operatori) { try { localStorage.setItem(OPERATORI_KEY, JSON.stringify(operatori)); } catch (e) {} }
+function getUltimoOperatore() { try { return localStorage.getItem(ULTIMO_OPERATORE_KEY) || ''; } catch (e) { return ''; } }
+function saveUltimoOperatore(nome) { try { localStorage.setItem(ULTIMO_OPERATORE_KEY, nome); } catch (e) {} }
 function addOperatore(nome) {
   if (!nome.trim()) return;
   const operatori = getOperatori();
   const nomeNorm = nome.trim();
-  if (!operatori.includes(nomeNorm)) {
-    operatori.push(nomeNorm);
-    saveOperatori(operatori);
-  }
+  if (!operatori.includes(nomeNorm)) { operatori.push(nomeNorm); saveOperatori(operatori); }
   saveUltimoOperatore(nomeNorm);
 }
 
-// ========== HELPER PROMO ==========
 const isPromoAttiva = (p) => {
   if (!p.prezzo_promo) return false;
   const oggi = new Date().toISOString().split('T')[0];
@@ -68,7 +40,6 @@ export default function Vendita({ onNavigate }) {
   const createCommissione = useStore((state) => state.createCommissione);
   const brands = useStore((state) => state.brands);
 
-  // Stato principale
   const [cliente, setCliente] = useState('');
   const [clienteSelezionato, setClienteSelezionato] = useState(null);
   const [telefonoCliente, setTelefonoCliente] = useState('');
@@ -78,42 +49,28 @@ export default function Vendita({ onNavigate }) {
   const [totaleManuale, setTotaleManuale] = useState('');
   const [ivaCompresa, setIvaCompresa] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
-  // Ricerca listino accessori
   const [listiniSuggerimenti, setListiniSuggerimenti] = useState([]);
   const [showListiniDropdown, setShowListiniDropdown] = useState(false);
   const [listiniLoading, setListiniLoading] = useState(false);
-  const [fasceProdottoListino, setFasceProdottoListino] = useState([]); // fasce prezzo da scegliere
-  
-  // Caparra e Note
+  const [fasceProdottoListino, setFasceProdottoListino] = useState([]);
   const [caparra, setCaparra] = useState('');
   const [metodoPagamento, setMetodoPagamento] = useState('');
   const [note, setNote] = useState('');
-  const [tipoDocumento, setTipoDocumento] = useState('scontrino'); // 'scontrino' | 'fattura'
+  const [tipoDocumento, setTipoDocumento] = useState('scontrino');
   const [isPreventivo, setIsPreventivo] = useState(false);
-  const [tipoOperazione, setTipoOperazione] = useState('vendita'); // 'vendita' | 'reso' | 'cambio'
-  const [dataVendita, setDataVendita] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
-  
-  // Modifica accessorio
+  const [tipoOperazione, setTipoOperazione] = useState('vendita');
+  const [dataVendita, setDataVendita] = useState(new Date().toISOString().split('T')[0]);
   const [editingAccessorio, setEditingAccessorio] = useState(null);
   const [editAccessorioData, setEditAccessorioData] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '' });
-  
-  // Modifica prezzo prodotto (MODAL invece di prompt)
   const [editingProduct, setEditingProduct] = useState(null);
   const [editProductPrice, setEditProductPrice] = useState('');
   const [editProductSerial, setEditProductSerial] = useState('');
-  
-  // Operatore
   const [operatore, setOperatore] = useState('');
   const [operatoriList, setOperatoriList] = useState([]);
   const [showOperatoriDropdown, setShowOperatoriDropdown] = useState(false);
-  
-  // Autocompletamento clienti
   const [tuttiClienti, setTuttiClienti] = useState([]);
   const [suggerimenti, setSuggerimenti] = useState([]);
   const [showSuggerimenti, setShowSuggerimenti] = useState(false);
-  
-  // Modal aggiungi prodotto
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [addMode, setAddMode] = useState('magazzino');
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,93 +80,96 @@ export default function Vendita({ onNavigate }) {
   const [productPrice, setProductPrice] = useState('');
   const [showOmaggioOption, setShowOmaggioOption] = useState(false);
   const [isOmaggio, setIsOmaggio] = useState(false);
-  
-  // Per ordine
   const [orderBrand, setOrderBrand] = useState('');
   const [orderTipo, setOrderTipo] = useState('');
   const [orderModel, setOrderModel] = useState('');
-  
-  
-  // Per inserimento diretto
   const [directSerial, setDirectSerial] = useState('');
   const [directBrand, setDirectBrand] = useState('');
   const [directModel, setDirectModel] = useState('');
   const [directPrice, setDirectPrice] = useState('');
   const [directAdding, setDirectAdding] = useState(false);
 
-  // Lista tipologie macchine
   const tipiMacchina = [
-    'Arieggiatore',
-    'Aspiratore',
-    'Atomizzatore',
-    'Batteria',
-    'Biotrituratore',
-    'Caricabatteria',
-    'Decespugliatore',
-    'Forbice elettronica',
-    'Idropulitrice',
-    'Irroratore',
-    'Motocoltivatore',
-    'Motore multifunzione',
-    'Motosega',
-    'Pompa acqua',
-    'Potatore',
-    'Rasaerba',
-    'Robot tosaerba',
-    'Soffiatore',
-    'Spazzatrice',
-    'Sramatore',
-    'Tagliabordi',
-    'Tagliasiepi',
-    'Trivella',
-    'Trattorino rasaerba',
-    'Troncatrice',
-    'Altro'
+    'Arieggiatore','Aspiratore','Atomizzatore','Batteria','Biotrituratore',
+    'Caricabatteria','Decespugliatore','Forbice elettronica','Idropulitrice',
+    'Irroratore','Motocoltivatore','Motore multifunzione','Motosega',
+    'Pompa acqua','Potatore','Rasaerba','Robot tosaerba','Soffiatore',
+    'Spazzatrice','Sramatore','Tagliabordi','Tagliasiepi','Trivella',
+    'Trattorino rasaerba','Troncatrice','Altro'
   ];
-  
-  // OCR
+
+  // ── NUOVO: tipo da prefisso codice modello ──────────────────────────────
+  const tipoFromModello = (brand, model) => {
+    if (!model) return '';
+    const b = (brand || '').toLowerCase();
+    const m = model.replace(/\s/g, '').toUpperCase();
+    if (b.includes('stihl') || b.includes('viking')) {
+      if (/^MSA?\d/.test(m))               return 'Motosega';
+      if (/^(FSA?|FC|KM|FR)\d/.test(m))   return 'Decespugliatore';
+      if (/^(BGA?|SHA?|BR|SR)\d/.test(m)) return 'Soffiatore';
+      if (/^(HT|HS|HSA)\d/.test(m))       return 'Tagliasiepi';
+      if (/^RMA\d/.test(m))               return 'Robot tosaerba';
+      if (/^RM\d/.test(m))                return 'Rasaerba';
+      if (/^(RE|RL|RB)\d/.test(m))        return 'Arieggiatore';
+      if (/^(AK|AP)\d/.test(m))           return 'Batteria';
+      if (/^AL\d/.test(m))                return 'Caricabatteria';
+    }
+    if (b.includes('echo') || b.includes('yamabiko')) {
+      if (/^(CS|CSP|DCS)\d/.test(m))      return 'Motosega';
+      if (/^(SRM|PPT|GT|CDST)\d/.test(m)) return 'Decespugliatore';
+      if (/^(PB|ES|DPB)\d/.test(m))       return 'Soffiatore';
+      if (/^(HC|HCR|HCS)\d/.test(m))      return 'Tagliasiepi';
+    }
+    if (b.includes('honda')) {
+      if (/^HRX?\d|^HRG\d|^IZY/.test(m)) return 'Rasaerba';
+      if (/^HF\d|^HLG\d/.test(m))        return 'Trattorino rasaerba';
+      if (/^(HMI|MIIMO)/.test(m))         return 'Robot tosaerba';
+      if (/^F\d/.test(m))                 return 'Motocoltivatore';
+    }
+    if (b.includes('weibang'))             return 'Rasaerba';
+    if (b.includes('segway') || b.includes('navimow')) return 'Robot tosaerba';
+    if (b.includes('grillo'))              return 'Motocoltivatore';
+    return '';
+  };
+
+  // Strip prefisso tipo dal modello per la ricerca listini
+  // Es: "Motosega MS 500i" → "MS 500i"
+  const stripTipoPrefix = (model) => {
+    const m = (model || '').trim();
+    for (const tipo of tipiMacchina) {
+      if (m.toLowerCase().startsWith(tipo.toLowerCase() + ' '))
+        return m.slice(tipo.length + 1).trim();
+    }
+    return m;
+  };
+  // ───────────────────────────────────────────────────────────────────────
+
   const [scanning, setScanning] = useState(false);
   const [ocrError, setOcrError] = useState(null);
-  // Stato popup auto-carico macchina non trovata
   const [showAutoAdd, setShowAutoAdd] = useState(false);
   const [autoAddData, setAutoAddData] = useState({ brand: '', model: '', serialNumber: '', tipo: '' });
   const [autoAdding, setAutoAdding] = useState(false);
-  
-  // Scansione commissione manuale
   const [scanningCommissione, setScanningCommissione] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [showScanBuonoModal, setShowScanBuonoModal] = useState(false);
   const [showOcrChoice, setShowOcrChoice] = useState(false);
-  const [ocrRighe, setOcrRighe] = useState([]); // righe lette dall'OCR per revisione
-  const [showOcrReview, setShowOcrReview] = useState(false); // modale revisione righe
-  const [ocrPreview, setOcrPreview] = useState(null); // preview rapido dopo scan
-  
-  // Commissione
+  const [ocrRighe, setOcrRighe] = useState([]);
+  const [showOcrReview, setShowOcrReview] = useState(false);
+  const [ocrPreview, setOcrPreview] = useState(null);
   const [showCommissione, setShowCommissione] = useState(false);
   const [commissioneData, setCommissioneData] = useState(null);
-
-  // Banner salva cliente in rubrica
   const [showSalvaClienteBanner, setShowSalvaClienteBanner] = useState(false);
   const [pendingCliente, setPendingCliente] = useState(null);
-
-  // Modal Nuovo Cliente manuale
   const [showNuovoCliente, setShowNuovoCliente] = useState(false);
   const [nuovoClienteForm, setNuovoClienteForm] = useState({
     nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '', cf: '', piva: '', sdi: ''
   });
   const [scanningDocumento, setScanningDocumento] = useState(false);
-  const [scanStep, setScanStep] = useState('idle'); // 'idle' | 'fronte_done'
-  const [scanLato, setScanLato] = useState(''); // 'fronte' | 'retro' - per feedback UI
+  const [scanStep, setScanStep] = useState('idle');
+  const [scanLato, setScanLato] = useState('');
 
-  // Carica operatori e ultimo operatore
-  useEffect(() => {
-    setOperatoriList(getOperatori());
-    setOperatore(getUltimoOperatore());
-  }, []);
-
-  useEffect(() => {
-    loadClienti().then(setTuttiClienti);
-  }, []);
+  useEffect(() => { setOperatoriList(getOperatori()); setOperatore(getUltimoOperatore()); }, []);
+  useEffect(() => { loadClienti().then(setTuttiClienti); }, []);
 
   useEffect(() => {
     if (cliente.length >= 2 && !clienteSelezionato) {
@@ -222,11 +182,18 @@ export default function Vendita({ onNavigate }) {
     }
   }, [cliente, tuttiClienti, clienteSelezionato]);
 
-  // Filtra prodotti
+  // ── NUOVO: auto-fill tipo in "Da Ordinare" ──────────────────────────────
+  useEffect(() => {
+    if (!orderBrand || !orderModel.trim()) return;
+    const tipo = tipoFromModello(orderBrand, orderModel.trim());
+    if (tipo) setOrderTipo(tipo);
+  }, [orderBrand, orderModel]);
+  // ───────────────────────────────────────────────────────────────────────
+
   const filteredInventory = useMemo(() => {
     if (!searchQuery.trim()) return inventory;
     const query = searchQuery.toLowerCase();
-    return inventory.filter(item => 
+    return inventory.filter(item =>
       item.brand?.toLowerCase().includes(query) ||
       item.model?.toLowerCase().includes(query) ||
       item.serialNumber?.toLowerCase().includes(query)
@@ -234,51 +201,31 @@ export default function Vendita({ onNavigate }) {
   }, [inventory, searchQuery]);
 
   const handleSelectCliente = (c) => {
-    setCliente(c.nome);
-    setClienteSelezionato(c);
-    setTelefonoCliente(c.telefono || '');
-    setShowSuggerimenti(false);
+    setCliente(c.nome); setClienteSelezionato(c); setTelefonoCliente(c.telefono || ''); setShowSuggerimenti(false);
   };
-
   const handleClienteChange = (value) => {
     setCliente(value);
-    if (clienteSelezionato && value !== clienteSelezionato.nome) {
-      setClienteSelezionato(null);
-      setTelefonoCliente('');
-    }
+    if (clienteSelezionato && value !== clienteSelezionato.nome) { setClienteSelezionato(null); setTelefonoCliente(''); }
   };
-
-  // Gestione telefono
   const handleTelefonoChange = (value) => {
     setTelefonoCliente(value);
-    // Salva in localStorage se cliente selezionato
-    if (clienteSelezionato && value.trim()) {
-      salvaTelefono(clienteSelezionato.id, value.trim());
-    }
+    if (clienteSelezionato && value.trim()) salvaTelefono(clienteSelezionato.id, value.trim());
   };
-
-  // Apri modal nuovo cliente
   const handleAprirNuovoCliente = () => {
     setNuovoClienteForm({ nome: '', cognome: '', indirizzo: '', cap: '', localita: '', provincia: '', telefono: '', email: '', cf: '', piva: '', sdi: '' });
-    setScanStep('idle');
-    setScanLato('');
-    setShowNuovoCliente(true);
+    setScanStep('idle'); setScanLato(''); setShowNuovoCliente(true);
   };
 
-  // Scansiona documento identità con Gemini (fronte o retro)
   const handleScanDocumento = async (e, lato) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    e.target.value = ''; // reset input per permettere riscan
-    setScanningDocumento(true);
-    setScanLato(lato);
+    e.target.value = '';
+    setScanningDocumento(true); setScanLato(lato);
     try {
       const result = await scanDocumentoIdentita(file);
       if (result.success && result.data) {
         const d = result.data;
         setNuovoClienteForm(prev => ({
-          // Merge intelligente: il nuovo valore vince solo se il campo era vuoto
-          // Eccezione: il fronte sovrascrive sempre (è il lato principale)
           nome:      lato === 'fronte' ? (d.nome || prev.nome)           : (prev.nome || d.nome),
           cognome:   lato === 'fronte' ? (d.cognome || prev.cognome)     : (prev.cognome || d.cognome),
           indirizzo: lato === 'fronte' ? (d.indirizzo || prev.indirizzo) : (prev.indirizzo || d.indirizzo),
@@ -291,573 +238,262 @@ export default function Vendita({ onNavigate }) {
         }));
         setScanStep(lato === 'fronte' ? 'fronte_done' : 'idle');
       } else {
-        alert(result.error || 'Errore nella lettura del documento. Inserisci i dati manualmente.');
+        alert(result.error || 'Errore lettura documento. Inserisci manualmente.');
       }
-    } catch (err) {
-      console.error('Errore scan documento:', err);
-      alert('Errore imprevisto. Inserisci i dati manualmente.');
-    } finally {
-      setScanningDocumento(false);
-      setScanLato('');
-    }
+    } catch (err) { alert('Errore imprevisto. Inserisci manualmente.'); }
+    finally { setScanningDocumento(false); setScanLato(''); }
   };
 
-  // Conferma nuovo cliente dal form manuale — salva su Supabase con feedback visibile
   const handleConfermaClienteManuale = async () => {
     const f = nuovoClienteForm;
     const nomeCompleto = [f.cognome.trim(), f.nome.trim()].filter(Boolean).join(' ');
-    if (!nomeCompleto) {
-      alert('Inserisci almeno nome o cognome!');
-      return;
-    }
-
-    // Costruisce subito il cliente virtuale per non bloccare il flusso
+    if (!nomeCompleto) { alert('Inserisci almeno nome o cognome!'); return; }
     const clienteVirtuale = {
-      id: null,
-      nome: nomeCompleto,
-      nomeP: nomeCompleto,
-      searchText: nomeCompleto.toLowerCase(),
-      indirizzo: f.indirizzo.trim() || null,
-      cap:       f.cap.trim()       || null,
-      localita:  f.localita.trim()  || null,
-      provincia: f.provincia.trim() || null,
-      telefono:  f.telefono.trim()  || null,
-      email:     f.email.trim()     || null,
-      cf:        f.cf.trim()        || null,
-      piva:      f.piva.trim()      || null,
-      sdi:       f.sdi.trim()       || null,
+      id: null, nome: nomeCompleto, nomeP: nomeCompleto, searchText: nomeCompleto.toLowerCase(),
+      indirizzo: f.indirizzo.trim() || null, cap: f.cap.trim() || null, localita: f.localita.trim() || null,
+      provincia: f.provincia.trim() || null, telefono: f.telefono.trim() || null, email: f.email.trim() || null,
+      cf: f.cf.trim() || null, piva: f.piva.trim() || null, sdi: f.sdi.trim() || null,
     };
-
-    // Aggiorna UI subito — non aspetta Supabase
-    setCliente(nomeCompleto);
-    setClienteSelezionato(clienteVirtuale);
-    setTelefonoCliente(f.telefono.trim() || '');
-    setShowNuovoCliente(false);
-
-    // Salva in DB in background — con feedback visibile su errore
+    setCliente(nomeCompleto); setClienteSelezionato(clienteVirtuale);
+    setTelefonoCliente(f.telefono.trim() || ''); setShowNuovoCliente(false);
     const searchKey = nomeCompleto.toLowerCase();
     try {
-      // Controlla se esiste già (evita duplicati)
-      const { data: esistente, error: errCheck } = await supabase
-        .from('clienti')
-        .select('id')
-        .ilike('search_text', `%${searchKey}%`)
-        .is('deleted_at', null)
-        .maybeSingle();
-
+      const { data: esistente, error: errCheck } = await supabase.from('clienti').select('id')
+        .ilike('search_text', `%${searchKey}%`).is('deleted_at', null).maybeSingle();
       if (errCheck) throw errCheck;
-
-      if (esistente) {
-        // Esiste già — aggiorna l'id nel clienteSelezionato
-        setClienteSelezionato(prev => ({ ...prev, id: esistente.id }));
-        return;
-      }
-
-      // Non esiste — inserisci
-      const { data: inserted, error: errInsert } = await supabase
-        .from('clienti')
-        .insert({
-          nome:           f.nome.trim()      || null,
-          cognome:        f.cognome.trim()   || null,
-          nome_completo:  nomeCompleto,
-          indirizzo:      f.indirizzo.trim() || null,
-          cap:            f.cap.trim()       || null,
-          localita:       f.localita.trim()  || null,
-          provincia:      f.provincia.trim() || null,
-          telefono:       f.telefono.trim()  || null,
-          email:          f.email.trim()     || null,
-          codice_fiscale: f.cf.trim()        || null,
-          partita_iva:    f.piva.trim()      || null,
-          sdi:            f.sdi.trim()       || null,
-          search_text:    nomeCompleto,
-          fonte:          'manuale',
-        })
-        .select('id')
-        .single();
-
+      if (esistente) { setClienteSelezionato(prev => ({ ...prev, id: esistente.id })); return; }
+      const { data: inserted, error: errInsert } = await supabase.from('clienti').insert({
+        nome: f.nome.trim() || null, cognome: f.cognome.trim() || null, nome_completo: nomeCompleto,
+        indirizzo: f.indirizzo.trim() || null, cap: f.cap.trim() || null, localita: f.localita.trim() || null,
+        provincia: f.provincia.trim() || null, telefono: f.telefono.trim() || null, email: f.email.trim() || null,
+        codice_fiscale: f.cf.trim() || null, partita_iva: f.piva.trim() || null, sdi: f.sdi.trim() || null,
+        search_text: nomeCompleto, fonte: 'manuale',
+      }).select('id').single();
       if (errInsert) {
-        // Duplicato per race condition — recupera id esistente
         if (errInsert.code === '23505' || errInsert.code === '409') {
-          const { data: dup } = await supabase
-            .from('clienti').select('id')
-            .ilike('search_text', `%${searchKey}%`)
-            .is('deleted_at', null).maybeSingle();
+          const { data: dup } = await supabase.from('clienti').select('id').ilike('search_text', `%${searchKey}%`).is('deleted_at', null).maybeSingle();
           if (dup) setClienteSelezionato(prev => ({ ...prev, id: dup.id }));
-          invalidaClienteCache();
-          return;
+          invalidaClienteCache(); return;
         }
         throw errInsert;
       }
-
-      if (inserted) {
-        setClienteSelezionato(prev => ({ ...prev, id: inserted.id }));
-        invalidaClienteCache();
-        console.log('✅ Cliente salvato in rubrica:', nomeCompleto, inserted.id);
-      }
-
+      if (inserted) { setClienteSelezionato(prev => ({ ...prev, id: inserted.id })); invalidaClienteCache(); }
     } catch (err) {
-      console.error('❌ Salvataggio cliente fallito:', err);
-      // Banner visibile — il cliente è già nella commissione ma NON in rubrica
-      alert(`⚠️ Cliente "${nomeCompleto}" aggiunto alla commissione ma NON salvato in rubrica.\n\nMotivo: ${err?.message || 'Errore di rete'}\n\nPuoi continuare normalmente — il cliente verrà usato solo per questa commissione.`);
+      alert(`⚠️ Cliente "${nomeCompleto}" aggiunto ma NON salvato in rubrica.\nMotivo: ${err?.message || 'Errore di rete'}`);
     }
   };
 
-  // Gestione operatore
-  const handleSelectOperatore = (nome) => {
-    setOperatore(nome);
-    setShowOperatoriDropdown(false);
-    saveUltimoOperatore(nome);
-  };
+  const handleSelectOperatore = (nome) => { setOperatore(nome); setShowOperatoriDropdown(false); saveUltimoOperatore(nome); };
+  const handleOperatoreChange = (value) => { setOperatore(value); setShowOperatoriDropdown(false); };
 
-  const handleOperatoreChange = (value) => {
-    setOperatore(value);
-    setShowOperatoriDropdown(false);
-  };
-
-  // Calcola totale
   const calcolaTotaleAuto = () => {
     const totProdotti = prodotti.reduce((sum, p) => sum + (p.prezzo || 0), 0);
     const totAccessori = accessori.reduce((sum, a) => sum + ((parseFloat(a.prezzo) || 0) * (a.quantita || 1)), 0);
     return totProdotti + totAccessori;
   };
+  useEffect(() => { const auto = calcolaTotaleAuto(); if (auto > 0) setTotaleManuale(auto.toFixed(2)); }, [prodotti, accessori]);
+  const getTotaleFinale = () => { const m = parseFloat(totaleManuale); return !isNaN(m) && m >= 0 ? m : calcolaTotaleAuto(); };
+  const getDaSaldare = () => getTotaleFinale() - (parseFloat(caparra) || 0);
 
-  useEffect(() => {
-    const auto = calcolaTotaleAuto();
-    if (auto > 0) {
-      setTotaleManuale(auto.toFixed(2));
-    }
-  }, [prodotti, accessori]);
-
-  const getTotaleFinale = () => {
-    const manuale = parseFloat(totaleManuale);
-    return !isNaN(manuale) && manuale >= 0 ? manuale : calcolaTotaleAuto();
-  };
-
-  // Calcola da saldare
-  const getDaSaldare = () => {
-    const totale = getTotaleFinale();
-    const cap = parseFloat(caparra) || 0;
-    return totale - cap;
-  };
-
-  // OCR
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
     event.target.value = '';
-
-    setScanning(true);
-    setOcrError(null);
-
+    setScanning(true); setOcrError(null);
     try {
       const result = await scanMatricola(file);
-      
       if (result.success && result.matricola) {
         const matricola = result.matricola.trim().toUpperCase();
         const found = findBySerialNumber(matricola);
-
         if (found) {
-          setSelectedProduct(found);
-          setSearchQuery(matricola);
-          setEditingModel(false);
+          setSelectedProduct(found); setSearchQuery(matricola); setEditingModel(false);
         } else {
-          // Controlla se è una matricola completa Honda: 4 lettere + 6-7 cifre
-          // Es: MZBB1234567 — cerca in inventory per i soli numeri finali
           const hondaCompleta = /^[A-Z]{4}\d{6,7}$/.test(matricola);
           if (hondaCompleta) {
-            const suffixNumerico = matricola.slice(4); // gli ultimi 6-7 numeri
-            const { data: itemParziale, error } = await supabase
-              .from('inventory')
-              .select('*')
-              .eq('serialNumber', suffixNumerico)
-              .eq('status', 'available')
-              .maybeSingle();
-
+            const suffixNumerico = matricola.slice(4);
+            const { data: itemParziale, error } = await supabase.from('inventory').select('*')
+              .eq('serialNumber', suffixNumerico).eq('status', 'available').maybeSingle();
             if (!error && itemParziale) {
-              // Trovato! Aggiorna la matricola con quella completa
-              await supabase
-                .from('inventory')
-                .update({ serialNumber: matricola })
-                .eq('id', itemParziale.id);
-
-              const itemCompleto = { ...itemParziale, serialNumber: matricola };
-              setSelectedProduct(itemCompleto);
-              setSearchQuery(matricola);
-              setOcrError(null);
-              return; // esce — non apre auto-carico
+              await supabase.from('inventory').update({ serialNumber: matricola }).eq('id', itemParziale.id);
+              setSelectedProduct({ ...itemParziale, serialNumber: matricola });
+              setSearchQuery(matricola); setOcrError(null); return;
             }
           }
-
-          // Non trovato neanche come Honda parziale → auto-carico normale
           setSearchQuery(matricola);
-
-          // Normalizza brand: Yamabiko → Echo, varianti casing
-          const BRAND_NORM = {
-            'yamabiko': 'Echo', 'echo': 'Echo',
-            'weibang': 'Weibang', 'honda': 'Honda',
-            'stihl': 'Stihl', 'husqvarna': 'Husqvarna',
-            'viking': 'Viking', 'pellenc': 'Pellenc',
-          };
+          const BRAND_NORM = { 'yamabiko': 'Echo', 'echo': 'Echo', 'weibang': 'Weibang', 'honda': 'Honda', 'stihl': 'Stihl', 'husqvarna': 'Husqvarna', 'viking': 'Viking', 'pellenc': 'Pellenc' };
           const rawBrand = result.brand || '';
           const brandNorm = BRAND_NORM[rawBrand.toLowerCase()] || rawBrand;
-
-          // Funzione: ricava tipo macchina dalla descrizione listino
           const tipoFromDescrizione = (desc) => {
             const d = (desc || '').toLowerCase();
-            if (d.includes('motosega'))                          return 'Motosega';
+            if (d.includes('motosega')) return 'Motosega';
             if (d.includes('potatore') || d.includes('potatr')) return 'Potatore';
-            if (d.includes('decespugliatore'))                   return 'Decespugliatore';
-            if (d.includes('tagliasiepi'))                       return 'Tagliasiepi';
+            if (d.includes('decespugliatore')) return 'Decespugliatore';
+            if (d.includes('tagliasiepi')) return 'Tagliasiepi';
             if (d.includes('soffiatore') || d.includes('aspiratore')) return 'Soffiatore';
-            if (d.includes('tagliaerba') || d.includes('rasaerba'))   return 'Rasaerba';
+            if (d.includes('tagliaerba') || d.includes('rasaerba')) return 'Rasaerba';
             if (d.includes('arieggiatore') || d.includes('scarific')) return 'Arieggiatore';
-            if (d.includes('multifunzione'))                     return 'Motore multifunzione';
-            if (d.includes('troncatrice'))                       return 'Troncatrice';
+            if (d.includes('multifunzione')) return 'Motore multifunzione';
+            if (d.includes('troncatrice')) return 'Troncatrice';
             if (d.includes('biotrituratore') || d.includes('cippatore')) return 'Biotrituratore';
-            if (d.includes('trivella'))                          return 'Trivella';
+            if (d.includes('trivella')) return 'Trivella';
             if (d.includes('irroratore') || d.includes('atomizzatore')) return 'Irroratore';
-            if (d.includes('idropulitrice'))                     return 'Idropulitrice';
-            if (d.includes('pompa'))                             return 'Pompa acqua';
-            if (d.includes('robot'))                             return 'Robot tosaerba';
-            if ((d.includes('caricabatterie') || d.includes('caricabatteria'))) return 'Caricabatteria';
+            if (d.includes('idropulitrice')) return 'Idropulitrice';
+            if (d.includes('pompa')) return 'Pompa acqua';
+            if (d.includes('robot')) return 'Robot tosaerba';
+            if (d.includes('caricabatterie') || d.includes('caricabatteria')) return 'Caricabatteria';
             if (d.includes('batteria') && !d.includes('carica')) return 'Batteria';
             return '';
           };
-
-          // Cerca tipo automaticamente dal codice modello in listini
           let tipoAuto = '';
           const modello = result.modello || '';
           if (brandNorm && modello) {
             try {
               const codNorm = modello.replace(/[\s\-_.]/g, '').toUpperCase();
-              const { data: hits } = await supabase
-                .from('listini')
-                .select('descrizione')
-                .ilike('brand', `%${brandNorm}%`)
-                .ilike('codice', `%${codNorm}%`)
-                .limit(1);
+              const { data: hits } = await supabase.from('listini').select('descrizione').ilike('brand', `%${brandNorm}%`).ilike('codice', `%${codNorm}%`).limit(1);
               if (hits?.length) tipoAuto = tipoFromDescrizione(hits[0].descrizione);
             } catch (_) {}
           }
-
-          setAutoAddData({
-            brand: brandNorm,
-            model: modello,
-            serialNumber: matricola,
-            tipo: tipoAuto
-          });
+          // Fallback su mappa prefissi
+          if (!tipoAuto) tipoAuto = tipoFromModello(brandNorm, modello);
+          setAutoAddData({ brand: brandNorm, model: modello, serialNumber: matricola, tipo: tipoAuto });
           setShowAutoAdd(true);
         }
       } else {
         setOcrError(result.error || 'Non riesco a leggere. Cerca manualmente.');
       }
     } catch (error) {
-      if (error.message?.includes('429') || error.message?.includes('limit')) {
-        setOcrError('⏳ Troppe scansioni. Attendi 30 sec o cerca manualmente.');
-      } else {
-        setOcrError('Errore. Cerca manualmente.');
-      }
-    } finally {
-      setScanning(false);
-    }
+      setOcrError(error.message?.includes('429') ? '⏳ Troppe scansioni. Attendi 30 sec.' : 'Errore. Cerca manualmente.');
+    } finally { setScanning(false); }
   };
 
-  // Handler conferma auto-carico macchina non trovata
   const handleAutoAdd = async () => {
     if (!autoAddData.brand.trim() || !autoAddData.serialNumber.trim()) return;
     setAutoAdding(true);
     const tipoFinale = autoAddData.tipo === 'Altro' && autoAddData.tipoCustom?.trim() ? autoAddData.tipoCustom.trim() : (autoAddData.tipo || 'Altro');
-    const modelCompleto = tipoFinale
-      ? autoAddData.tipo + (autoAddData.model ? ' ' + autoAddData.model : '')
-      : (autoAddData.model || 'N/D');
-    const item = await autoAddToInventory({
-      brand: autoAddData.brand.trim(),
-      model: modelCompleto,
-      serialNumber: autoAddData.serialNumber.trim().toUpperCase()
-    });
+    const modelCompleto = tipoFinale ? autoAddData.tipo + (autoAddData.model ? ' ' + autoAddData.model : '') : (autoAddData.model || 'N/D');
+    const item = await autoAddToInventory({ brand: autoAddData.brand.trim(), model: modelCompleto, serialNumber: autoAddData.serialNumber.trim().toUpperCase() });
     setAutoAdding(false);
-    if (item) {
-      setShowAutoAdd(false);
-      setSelectedProduct(item);
-      setSearchQuery(item.serialNumber);
-      setOcrError(null);
-    } else {
-      alert('Errore durante il carico automatico. Riprova.');
-    }
+    if (item) { setShowAutoAdd(false); setSelectedProduct(item); setSearchQuery(item.serialNumber); setOcrError(null); }
+    else alert('Errore durante il carico automatico. Riprova.');
   };
 
   const handleSelectProduct = async (product) => {
-    if (prodotti.find(p => p.serialNumber === product.serialNumber)) {
-      alert('Prodotto già aggiunto!');
-      return;
-    }
-    setSelectedProduct(product);
-    setEditingModel(false);
-    setProductPrice('');
-    setIsOmaggio(false);
-    setShowOmaggioOption(false);
-
-    // Cerca prezzo suggerito in listini (multi-tentativo)
-    // Se risultato unico → pre-compila; se multipli → mostra dropdown scelta
+    if (prodotti.find(p => p.serialNumber === product.serialNumber)) { alert('Prodotto già aggiunto!'); return; }
+    setSelectedProduct(product); setEditingModel(false); setProductPrice(''); setIsOmaggio(false); setShowOmaggioOption(false);
     setFasceProdottoListino([]);
     try {
       const brand = (product.brand || '').toUpperCase();
       const model = (product.model || '').trim();
       if (brand && model) {
         let risultati = [];
-
-        // Helper: calcola prezzo in base al toggle IVA
         const calcolaPrezzo = (prezzo_a, iva) => {
           const aliquota = iva || 22;
-          return ivaCompresa
-            ? prezzo_a
-            : parseFloat((prezzo_a / (1 + aliquota / 100)).toFixed(2));
+          return ivaCompresa ? prezzo_a : parseFloat((prezzo_a / (1 + aliquota / 100)).toFixed(2));
         };
 
-        // Tentativo 1: codice ilike con modello senza spazi/trattini
-        // Es: "MS 251 C-BE" → "%MS251CBE%"
-        const modelNorm = model.replace(/[\s\-_.]/g, '').toUpperCase();
-        const { data: d1 } = await supabase
-          .from('listini').select('prezzo_a, iva, descrizione, codice')
-          .ilike('brand', `%${brand}%`).ilike('codice', `%${modelNorm}%`)
-          .limit(8);
+        // ── FIX: rimuovi prefisso tipo prima di cercare nei listini ──
+        // Es: "Motosega MS 500i" → "MS 500i" → "MS500I"
+        const modelPerRicerca = stripTipoPrefix(model);
+
+        const modelNorm = modelPerRicerca.replace(/[\s\-_.]/g, '').toUpperCase();
+        const { data: d1 } = await supabase.from('listini').select('prezzo_a, iva, descrizione, codice')
+          .ilike('brand', `%${brand}%`).ilike('codice', `%${modelNorm}%`).limit(8);
         if (d1?.length) risultati = d1;
 
-        // Tentativo 2: codice ilike con modello senza soli spazi
         if (!risultati.length) {
-          const modelNoSpace = model.replace(/\s+/g, '').toUpperCase();
-          const { data: d2 } = await supabase
-            .from('listini').select('prezzo_a, iva, descrizione, codice')
-            .ilike('brand', `%${brand}%`).ilike('codice', `%${modelNoSpace}%`)
-            .limit(8);
+          const modelNoSpace = modelPerRicerca.replace(/\s+/g, '').toUpperCase();
+          const { data: d2 } = await supabase.from('listini').select('prezzo_a, iva, descrizione, codice')
+            .ilike('brand', `%${brand}%`).ilike('codice', `%${modelNoSpace}%`).limit(8);
           if (d2?.length) risultati = d2;
         }
 
-        // Tentativo 3: descrizione con prime 2 parole significative
-        // Es: "CS 2511 TES" → "%CS%2511%"
         if (!risultati.length) {
-          const parole = model.split(/[\s\-_]+/).filter(p => p.length >= 2);
+          const parole = modelPerRicerca.split(/[\s\-_]+/).filter(p => p.length >= 2);
           if (parole.length > 0) {
             const chiave = parole.slice(0, 2).join('%');
-            const { data: d3 } = await supabase
-              .from('listini').select('prezzo_a, iva, descrizione, codice')
-              .ilike('brand', `%${brand}%`).ilike('descrizione', `%${chiave}%`)
-              .limit(8);
+            const { data: d3 } = await supabase.from('listini').select('prezzo_a, iva, descrizione, codice')
+              .ilike('brand', `%${brand}%`).ilike('descrizione', `%${chiave}%`).limit(8);
             if (d3?.length) risultati = d3;
           }
         }
 
-        // Filtra solo quelli con prezzo
         risultati = (risultati || []).filter(r => r.prezzo_a);
-
         if (risultati.length === 1) {
-          // Risultato unico → pre-compila direttamente
           setProductPrice(calcolaPrezzo(risultati[0].prezzo_a, risultati[0].iva).toString());
         } else if (risultati.length > 1) {
-          // Più risultati → mostra dropdown selezione (riuso fasceProdottoListino)
           setFasceProdottoListino(risultati.map(r => ({
             label: r.descrizione || r.codice || 'Prodotto',
-            prezzo: calcolaPrezzo(r.prezzo_a, r.iva),
-            isPromo: false,
-            isMachineMatch: true  // flag per distinguere dal dropdown accessori
+            prezzo: calcolaPrezzo(r.prezzo_a, r.iva), isPromo: false, isMachineMatch: true
           })));
         }
       }
-    } catch (_) {
-      // Nessun prezzo trovato — campo rimane vuoto come prima
-    }
+    } catch (_) {}
   };
 
   const handleConfirmProduct = () => {
-    if (!selectedProduct) {
-      alert('Seleziona un prodotto!');
-      return;
-    }
-
+    if (!selectedProduct) { alert('Seleziona un prodotto!'); return; }
     const prezzo = isOmaggio ? 0 : (parseFloat(productPrice) || null);
-
-    setProdotti([...prodotti, {
-      id: Date.now(),
-      brand: selectedProduct.brand,
-      model: selectedProduct.model,
-      serialNumber: selectedProduct.serialNumber,
-      prezzo: prezzo,
-      isOmaggio: isOmaggio,
-      aliquotaIva: 22
-    }]);
-    
-    setSelectedProduct(null);
-    setSearchQuery('');
-    setProductPrice('');
-    setIsOmaggio(false);
-    setShowOmaggioOption(false);
+    setProdotti([...prodotti, { id: Date.now(), brand: selectedProduct.brand, model: selectedProduct.model, serialNumber: selectedProduct.serialNumber, prezzo, isOmaggio, aliquotaIva: 22 }]);
+    setSelectedProduct(null); setSearchQuery(''); setProductPrice(''); setIsOmaggio(false); setShowOmaggioOption(false);
   };
+  const handleConfirmProductAndClose = () => { handleConfirmProduct(); setShowAddProduct(false); };
 
-  const handleConfirmProductAndClose = () => {
-    handleConfirmProduct();
-    setShowAddProduct(false);
-  };
-
-  // Auto-compila brand e modello quando la matricola corrisponde a un prodotto in magazzino
   useEffect(() => {
     if (!directSerial.trim()) return;
     const found = findBySerialNumber(directSerial.trim().toUpperCase());
-    if (found) {
-      setDirectBrand(found.brand || '');
-      setDirectModel(found.model || '');
-    }
+    if (found) { setDirectBrand(found.brand || ''); setDirectModel(found.model || ''); }
   }, [directSerial]);
 
   const handleAddDirectProduct = async () => {
-    if (!directBrand.trim()) {
-      alert('Inserisci il brand!');
-      return;
-    }
+    if (!directBrand.trim()) { alert('Inserisci il brand!'); return; }
     setDirectAdding(true);
     const serialClean = directSerial.trim().toUpperCase();
     const prezzo = parseFloat(directPrice) || null;
-
-    // Cerca in magazzino
     let prodotto = serialClean ? findBySerialNumber(serialClean) : null;
-
-    // Non trovato ma matricola presente → carico automatico silenzioso
-    if (!prodotto && serialClean) {
-      prodotto = await autoAddToInventory({
-        brand: directBrand.trim(),
-        model: directModel.trim() || 'N/D',
-        serialNumber: serialClean
-      });
-    }
-
+    if (!prodotto && serialClean) prodotto = await autoAddToInventory({ brand: directBrand.trim(), model: directModel.trim() || 'N/D', serialNumber: serialClean });
     if (prodotto) {
-      if (prodotti.find(p => p.serialNumber && p.serialNumber === prodotto.serialNumber)) {
-        alert('Prodotto già aggiunto!');
-        setDirectAdding(false);
-        return;
-      }
-      setProdotti(prev => [...prev, {
-        id: Date.now(),
-        brand: prodotto.brand,
-        model: prodotto.model,
-        serialNumber: prodotto.serialNumber,
-        prezzo,
-        isOmaggio: false,
-        aliquotaIva: 22
-      }]);
+      if (prodotti.find(p => p.serialNumber && p.serialNumber === prodotto.serialNumber)) { alert('Prodotto già aggiunto!'); setDirectAdding(false); return; }
+      setProdotti(prev => [...prev, { id: Date.now(), brand: prodotto.brand, model: prodotto.model, serialNumber: prodotto.serialNumber, prezzo, isOmaggio: false, aliquotaIva: 22 }]);
     } else {
-      setProdotti(prev => [...prev, {
-        id: Date.now(),
-        brand: directBrand.trim(),
-        model: directModel.trim() || 'N/D',
-        serialNumber: null,
-        prezzo,
-        isOmaggio: false,
-        aliquotaIva: 22
-      }]);
+      setProdotti(prev => [...prev, { id: Date.now(), brand: directBrand.trim(), model: directModel.trim() || 'N/D', serialNumber: null, prezzo, isOmaggio: false, aliquotaIva: 22 }]);
     }
-
-    setDirectSerial('');
-    setDirectBrand('');
-    setDirectModel('');
-    setDirectPrice('');
-    setDirectAdding(false);
-    setShowAddProduct(false);
+    setDirectSerial(''); setDirectBrand(''); setDirectModel(''); setDirectPrice(''); setDirectAdding(false); setShowAddProduct(false);
   };
 
-
-  const handleCloseModal = () => {
-    resetAddForm();
-  };
+  const handleCloseModal = () => resetAddForm();
 
   const handleAddOrderProduct = () => {
-    if (!orderBrand) {
-      alert('Seleziona un brand!');
-      return;
-    }
-    if (!orderTipo) {
-      alert('Seleziona un tipo di macchina!');
-      return;
-    }
-    if (!orderModel.trim()) {
-      alert('Inserisci il modello!');
-      return;
-    }
-
+    if (!orderBrand) { alert('Seleziona un brand!'); return; }
+    if (!orderTipo) { alert('Seleziona un tipo di macchina!'); return; }
+    if (!orderModel.trim()) { alert('Inserisci il modello!'); return; }
     const prezzo = isOmaggio ? 0 : (parseFloat(productPrice) || null);
-    const tipoFinale = orderTipo.trim();
-    const modelCompleto = `${tipoFinale} ${orderModel.trim()}`;
-
-    setProdotti([...prodotti, {
-      id: Date.now(),
-      brand: orderBrand,
-      model: modelCompleto,
-      serialNumber: null,
-      prezzo: prezzo,
-      isOmaggio: isOmaggio,
-      isOrdered: true,
-      aliquotaIva: 22
-    }]);
-    
-    setOrderBrand('');
-    setOrderTipo('');
-    setOrderModel('');
-    setProductPrice('');
-    setIsOmaggio(false);
-    setShowOmaggioOption(false);
+    setProdotti([...prodotti, { id: Date.now(), brand: orderBrand, model: `${orderTipo.trim()} ${orderModel.trim()}`, serialNumber: null, prezzo, isOmaggio, isOrdered: true, aliquotaIva: 22 }]);
+    setOrderBrand(''); setOrderTipo(''); setOrderModel(''); setProductPrice(''); setIsOmaggio(false); setShowOmaggioOption(false);
   };
 
   const resetAddForm = () => {
-    setShowAddProduct(false);
-    setSearchQuery('');
-    setSelectedProduct(null);
-    setProductPrice('');
-    setIsOmaggio(false);
-    setShowOmaggioOption(false);
-    setOrderBrand('');
-    setOrderTipo('');
-    setOrderModel('');
-    setOcrError(null);
-    setAddMode('magazzino');
-    setDirectSerial('');
-    setDirectBrand('');
-    setDirectModel('');
-    setDirectPrice('');
+    setShowAddProduct(false); setSearchQuery(''); setSelectedProduct(null); setProductPrice('');
+    setIsOmaggio(false); setShowOmaggioOption(false); setOrderBrand(''); setOrderTipo(''); setOrderModel('');
+    setOcrError(null); setAddMode('magazzino'); setDirectSerial(''); setDirectBrand(''); setDirectModel(''); setDirectPrice('');
   };
 
-  // Scansione commissione/buono di consegna manuale
   const handleScanCommissione = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    setScanningCommissione(true);
-    setScanResult(null);
-    setOcrRighe([]);
-    setOcrPreview(null);
-    
+    setScanningCommissione(true); setScanResult(null); setOcrRighe([]); setOcrPreview(null);
     try {
       const result = await scanCommissione(file);
-      
       if (result.success && result.righe?.length > 0) {
         const righe = result.righe.filter(r => r.campo !== 'ignora');
         setOcrRighe(righe);
-        
-        // Costruisci preview rapido
         const preview = {
           cliente: righe.find(r => r.campo === 'cliente')?.testo || null,
-          macchine: righe.filter(r => r.campo === 'macchina').map((r, i) => {
-            // Cerca matricola subito dopo questa macchina
+          macchine: righe.filter(r => r.campo === 'macchina').map((r) => {
             const rigaIdx = righe.indexOf(r);
             const nextMatricola = righe[rigaIdx + 1]?.campo === 'matricola' ? righe[rigaIdx + 1].testo : null;
-            return {
-              testo: `${r.brand ? r.brand + ' ' : ''}${r.testo}`,
-              prezzo: r.prezzo,
-              matricola: nextMatricola
-            };
+            return { testo: `${r.brand ? r.brand + ' ' : ''}${r.testo}`, prezzo: r.prezzo, matricola: nextMatricola };
           }),
-          accessori: righe.filter(r => r.campo === 'accessorio').map(r => ({
-            testo: r.testo,
-            prezzo: r.prezzo
-          })),
+          accessori: righe.filter(r => r.campo === 'accessorio').map(r => ({ testo: r.testo, prezzo: r.prezzo })),
           prezzoTotale: righe.find(r => r.campo === 'prezzo_totale')?.prezzo || null,
           caparra: righe.find(r => r.campo === 'caparra')?.prezzo || null,
           fattura: righe.find(r => r.campo === 'fattura')?.testo || null,
@@ -865,669 +501,230 @@ export default function Vendita({ onNavigate }) {
         };
         setOcrPreview(preview);
       } else {
-        setScanResult({
-          success: false,
-          message: result.error || 'Nessuna riga letta dal buono'
-        });
-        // Auto-dismiss errore dopo 10 secondi
+        setScanResult({ success: false, message: result.error || 'Nessuna riga letta dal buono' });
         setTimeout(() => setScanResult(null), 10000);
       }
     } catch (error) {
-      console.error('Errore scansione commissione:', error);
-      setScanResult({
-        success: false,
-        message: 'Errore durante la scansione. Riprova.'
-      });
-      // Auto-dismiss errore dopo 10 secondi
+      setScanResult({ success: false, message: 'Errore durante la scansione. Riprova.' });
       setTimeout(() => setScanResult(null), 10000);
-    } finally {
-      setScanningCommissione(false);
-      e.target.value = '';
-    }
+    } finally { setScanningCommissione(false); e.target.value = ''; }
   };
 
-  // Cambia campo di una riga OCR
-  const handleOcrCampoChange = (id, newCampo) => {
-    setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, campo: newCampo } : r));
-  };
-
-  // Modifica testo di una riga OCR
-  const handleOcrTestoChange = (id, newTesto) => {
-    setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, testo: newTesto } : r));
-  };
-
-  // Modifica prezzo di una riga OCR
-  const handleOcrPrezzoChange = (id, newPrezzo) => {
-    const val = newPrezzo === '' ? null : parseFloat(newPrezzo);
-    setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, prezzo: isNaN(val) ? null : val } : r));
-  };
-
-  // Unisci riga con quella sopra
+  const handleOcrCampoChange = (id, newCampo) => setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, campo: newCampo } : r));
+  const handleOcrTestoChange = (id, newTesto) => setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, testo: newTesto } : r));
+  const handleOcrPrezzoChange = (id, newPrezzo) => { const val = newPrezzo === '' ? null : parseFloat(newPrezzo); setOcrRighe(prev => prev.map(r => r.id === id ? { ...r, prezzo: isNaN(val) ? null : val } : r)); };
   const handleOcrMergeUp = (id) => {
     setOcrRighe(prev => {
       const idx = prev.findIndex(r => r.id === id);
       if (idx <= 0) return prev;
-      const above = prev[idx - 1];
-      const current = prev[idx];
-      const merged = {
-        ...above,
-        testo: `${above.testo} ${current.testo}`.trim(),
-        // Se la riga corrente ha un prezzo e quella sopra no, prendi il prezzo
-        prezzo: above.prezzo != null ? above.prezzo : current.prezzo,
-        // Se la riga corrente ha un brand e quella sopra no, prendi il brand
-        brand: above.brand || current.brand
-      };
+      const above = prev[idx - 1]; const current = prev[idx];
+      const merged = { ...above, testo: `${above.testo} ${current.testo}`.trim(), prezzo: above.prezzo != null ? above.prezzo : current.prezzo, brand: above.brand || current.brand };
       return prev.filter(r => r.id !== id).map(r => r.id === above.id ? merged : r);
     });
   };
 
-  // Conferma righe OCR e compila il form
   const handleConfirmOcrRighe = () => {
     const righe = ocrRighe.filter(r => r.campo !== 'ignora');
-    
-    let nuoveMacchine = [];
-    let nuoviAccessori = [];
-    
+    let nuoveMacchine = []; let nuoviAccessori = [];
     righe.forEach((riga, idx) => {
       switch (riga.campo) {
-        case 'cliente':
-          setCliente(riga.testo);
-          break;
-        case 'macchina':
-          nuoveMacchine.push({
-            id: Date.now() + idx,
-            brand: riga.brand || '',
-            model: riga.testo || '',
-            serialNumber: null,
-            prezzo: riga.prezzo || 0,
-            isOmaggio: false,
-            isOrdered: false,
-            aliquotaIva: 22
-          });
-          break;
-        case 'matricola': {
-          // Associa la matricola all'ultima macchina aggiunta
-          const matricolaVal = riga.testo.replace(/^MATR\.?\s*/i, '').trim();
-          if (nuoveMacchine.length > 0) {
-            nuoveMacchine[nuoveMacchine.length - 1].serialNumber = matricolaVal;
-          }
-          break;
-        }
-        case 'accessorio':
-          nuoviAccessori.push({
-            id: Date.now() + 1000 + idx,
-            nome: riga.testo || '',
-            quantita: 1,
-            prezzo: riga.prezzo || 0,
-            aliquotaIva: 22
-          });
-          break;
-        case 'prezzo_totale': {
-          const val = typeof riga.prezzo === 'number' ? riga.prezzo : 
-            parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.'));
-          if (!isNaN(val) && val > 0) {
-            setTotaleManuale(val.toFixed(2));
-          }
-          break;
-        }
+        case 'cliente': setCliente(riga.testo); break;
+        case 'macchina': nuoveMacchine.push({ id: Date.now() + idx, brand: riga.brand || '', model: riga.testo || '', serialNumber: null, prezzo: riga.prezzo || 0, isOmaggio: false, isOrdered: false, aliquotaIva: 22 }); break;
+        case 'matricola': { const v = riga.testo.replace(/^MATR\.?\s*/i, '').trim(); if (nuoveMacchine.length > 0) nuoveMacchine[nuoveMacchine.length - 1].serialNumber = v; break; }
+        case 'accessorio': nuoviAccessori.push({ id: Date.now() + 1000 + idx, nome: riga.testo || '', quantita: 1, prezzo: riga.prezzo || 0, aliquotaIva: 22 }); break;
+        case 'prezzo_totale': { const v = typeof riga.prezzo === 'number' ? riga.prezzo : parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.')); if (!isNaN(v) && v > 0) setTotaleManuale(v.toFixed(2)); break; }
         case 'caparra': {
-          const val = typeof riga.prezzo === 'number' ? riga.prezzo :
-            parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.'));
-          if (!isNaN(val) && val > 0) {
-            setCaparra(val.toFixed(2));
-          }
-          // Estrai metodo pagamento dal testo caparra
-          const testoUp = riga.testo.toUpperCase();
-          if (testoUp.includes('BANCOMAT') || testoUp.includes('POS')) {
-            setMetodoPagamento('pos');
-          } else if (testoUp.includes('CARTA') || testoUp.includes('CARD')) {
-            setMetodoPagamento('carta');
-          } else if (testoUp.includes('CONTANT') || testoUp.includes('CASH')) {
-            setMetodoPagamento('contanti');
-          } else if (testoUp.includes('BONIFIC') || testoUp.includes('IBAN')) {
-            setMetodoPagamento('bonifico');
-          }
+          const v = typeof riga.prezzo === 'number' ? riga.prezzo : parseFloat(riga.testo.replace(/[^\d.,]/g, '').replace(',', '.'));
+          if (!isNaN(v) && v > 0) setCaparra(v.toFixed(2));
+          const u = riga.testo.toUpperCase();
+          if (u.includes('BANCOMAT') || u.includes('POS')) setMetodoPagamento('pos');
+          else if (u.includes('CARTA') || u.includes('CARD')) setMetodoPagamento('carta');
+          else if (u.includes('CONTANT') || u.includes('CASH')) setMetodoPagamento('contanti');
+          else if (u.includes('BONIFIC') || u.includes('IBAN')) setMetodoPagamento('bonifico');
           break;
         }
-        case 'fattura':
-          if (riga.testo.toUpperCase().includes('SI') || riga.testo.toUpperCase() === 'S') {
-            setTipoDocumento('fattura');
-          } else {
-            setTipoDocumento('scontrino');
-          }
-          break;
-        case 'data':
+        case 'fattura': setTipoDocumento(riga.testo.toUpperCase().includes('SI') || riga.testo.toUpperCase() === 'S' ? 'fattura' : 'scontrino'); break;
+        case 'data': {
           try {
-            // Rimuovi prefisso non numerico (es. "Data ", "data:")
-            const dataTesto = riga.testo.replace(/^[^0-9]*/i, '').trim();
-            const parts = dataTesto.split('/');
-            if (parts.length === 3) {
-              const [dd, mm, yyyy] = parts;
-              const year = yyyy.length === 2 ? `20${yyyy}` : yyyy;
-              const dataFormattata = `${year}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
-              setDataVendita(dataFormattata);
-            }
-          } catch (e) {
-            console.log('Data non parsabile:', riga.testo);
-          }
+            const dt = riga.testo.replace(/^[^0-9]*/i, '').trim().split('/');
+            if (dt.length === 3) { const [dd, mm, yyyy] = dt; const y = yyyy.length === 2 ? `20${yyyy}` : yyyy; setDataVendita(`${y}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`); }
+          } catch (e) {}
           break;
-        case 'note':
-          setNote(prev => {
-            // Se è la prima nota nel batch, sostituisci
-            const isFirst = !righe.slice(0, righe.indexOf(riga)).some(r => r.campo === 'note');
-            return isFirst ? riga.testo : `${prev}\n${riga.testo}`;
-          });
-          break;
+        }
+        case 'note': setNote(prev => { const isFirst = !righe.slice(0, righe.indexOf(riga)).some(r => r.campo === 'note'); return isFirst ? riga.testo : `${prev}\n${riga.testo}`; }); break;
       }
     });
-    
-    if (nuoveMacchine.length > 0) {
-      setProdotti(nuoveMacchine);
-    }
-    if (nuoviAccessori.length > 0) {
-      setAccessori(nuoviAccessori);
-    } else if (nuoveMacchine.length > 0) {
-      // Se ci sono macchine ma non accessori, resetta comunque gli accessori OCR
-      setAccessori([]);
-    }
-    
-    const totItems = nuoveMacchine.length + nuoviAccessori.length;
-    setScanResult({
-      success: true,
-      message: `Importati: ${righe.filter(r => r.campo === 'cliente').length ? 'cliente, ' : ''}${nuoveMacchine.length} macchine, ${nuoviAccessori.length} accessori`
-    });
-    
+    if (nuoveMacchine.length > 0) setProdotti(nuoveMacchine);
+    if (nuoviAccessori.length > 0) setAccessori(nuoviAccessori);
+    else if (nuoveMacchine.length > 0) setAccessori([]);
+    setScanResult({ success: true, message: `Importati: ${righe.filter(r => r.campo === 'cliente').length ? 'cliente, ' : ''}${nuoveMacchine.length} macchine, ${nuoviAccessori.length} accessori` });
     setShowOcrReview(false);
-    // NON svuotiamo ocrRighe — serve per riaprire la revisione
   };
 
-  const handleRemoveProduct = (id) => {
-    setProdotti(prodotti.filter(p => p.id !== id));
-  };
-  
-  // Apri modal modifica prezzo prodotto
-  const handleOpenEditPrice = (prod) => {
-    setEditingProduct(prod);
-    setEditProductPrice(prod.prezzo !== null ? prod.prezzo.toString() : '');
-    setEditProductSerial(prod.serialNumber || '');
-  };
-  
-  // Salva prezzo prodotto
+  const handleRemoveProduct = (id) => setProdotti(prodotti.filter(p => p.id !== id));
+  const handleOpenEditPrice = (prod) => { setEditingProduct(prod); setEditProductPrice(prod.prezzo !== null ? prod.prezzo.toString() : ''); setEditProductSerial(prod.serialNumber || ''); };
   const handleSaveProductPrice = () => {
     if (!editingProduct) return;
-    
     const prezzo = editProductPrice.trim() === '' ? null : parseFloat(editProductPrice);
     const serialNumber = editProductSerial.trim().toUpperCase() || null;
-    
-    setProdotti(prodotti.map(p => 
-      p.id === editingProduct.id ? { ...p, prezzo: prezzo, isOmaggio: false, serialNumber: serialNumber } : p
-    ));
-    
-    setEditingProduct(null);
-    setEditProductPrice('');
-    setEditProductSerial('');
+    setProdotti(prodotti.map(p => p.id === editingProduct.id ? { ...p, prezzo, isOmaggio: false, serialNumber } : p));
+    setEditingProduct(null); setEditProductPrice(''); setEditProductSerial('');
   };
 
-  // Cicla aliquota IVA prodotto: 22 → 10 → 4 → 22
   const cycleIvaProdotto = (id) => {
-    setProdotti(prodotti.map(p => {
-      if (p.id !== id) return p;
-      const current = p.aliquotaIva || 22;
-      const next = current === 22 ? 10 : current === 10 ? 4 : 22;
-      return { ...p, aliquotaIva: next };
-    }));
+    setProdotti(prodotti.map(p => { if (p.id !== id) return p; const c = p.aliquotaIva || 22; return { ...p, aliquotaIva: c === 22 ? 10 : c === 10 ? 4 : 22 }; }));
   };
-
-  // Cicla aliquota IVA accessorio: 22 → 10 → 4 → 22
   const cycleIvaAccessorio = (id) => {
-    setAccessori(accessori.map(a => {
-      if (a.id !== id) return a;
-      const current = a.aliquotaIva || 22;
-      const next = current === 22 ? 10 : current === 10 ? 4 : 22;
-      return { ...a, aliquotaIva: next };
-    }));
+    setAccessori(accessori.map(a => { if (a.id !== id) return a; const c = a.aliquotaIva || 22; return { ...a, aliquotaIva: c === 22 ? 10 : c === 10 ? 4 : 22 }; }));
   };
-
-  // Stile badge IVA
   const getIvaBadgeStyle = (aliquota) => {
     if (aliquota === 4) return 'bg-green-100 text-green-700 border-green-300';
     if (aliquota === 10) return 'bg-amber-100 text-amber-700 border-amber-300';
     return 'bg-gray-100 text-gray-400 border-gray-200';
   };
 
-  // Cerca prodotto nel listino Supabase
   const cercaNelListino = async (query) => {
-    if (!query || query.trim().length < 2) {
-      setListiniSuggerimenti([]);
-      setShowListiniDropdown(false);
-      return;
-    }
+    if (!query || query.trim().length < 2) { setListiniSuggerimenti([]); setShowListiniDropdown(false); return; }
     setListiniLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('listini')
+      const { data, error } = await supabase.from('listini')
         .select('descrizione, brand, codice, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva, prezzo_promo, promo_dal, promo_al')
-        .ilike('descrizione', `%${query.trim()}%`)
-        .limit(8);
+        .ilike('descrizione', `%${query.trim()}%`).limit(8);
       if (error) throw error;
-      setListiniSuggerimenti(data || []);
-      setShowListiniDropdown((data || []).length > 0);
-    } catch (e) {
-      console.error('Errore ricerca listino:', e);
-      setListiniSuggerimenti([]);
-      setShowListiniDropdown(false);
-    } finally {
-      setListiniLoading(false);
-    }
+      setListiniSuggerimenti(data || []); setShowListiniDropdown((data || []).length > 0);
+    } catch (e) { setListiniSuggerimenti([]); setShowListiniDropdown(false); }
+    finally { setListiniLoading(false); }
   };
 
-  // Compila nome e IVA; se più fasce disponibili le mostra per scelta, altrimenti compila prezzo_a direttamente
   const selezionaDaListino = (prodotto) => {
     const ivaRaw = prodotto.iva;
     const iva = ivaRaw == null ? 22 : ivaRaw < 1 ? Math.round(ivaRaw * 100) : Math.round(ivaRaw);
     const nome = `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`;
-
     const promoAttiva = isPromoAttiva(prodotto);
-
     const fasce = [
-      // Se c'è promo attiva, inseriscila come prima voce speciale
       promoAttiva && { label: '🏷️ PROMO', prezzo: prodotto.prezzo_promo, isPromo: true },
       prodotto.prezzo_a != null && { label: 'A', prezzo: prodotto.prezzo_a },
       prodotto.prezzo_b != null && { label: 'B', prezzo: prodotto.prezzo_b },
       prodotto.prezzo_c != null && { label: 'C', prezzo: prodotto.prezzo_c },
       prodotto.prezzo_d != null && { label: 'D', prezzo: prodotto.prezzo_d },
     ].filter(Boolean);
-
-    setListiniSuggerimenti([]);
-    setShowListiniDropdown(false);
-
-    if (fasce.length > 1) {
-      // Più fasce: compila nome e IVA, mostra pulsanti scelta prezzo
-      setNewAccessorio(prev => ({ ...prev, nome, prezzo: '', aliquotaIva: iva }));
-      setFasceProdottoListino(fasce);
-    } else {
-      // Fascia unica (o promo unica): compila tutto direttamente
-      const prezzo = fasce.length === 1 ? fasce[0].prezzo.toString() : '';
-      setNewAccessorio(prev => ({ ...prev, nome, prezzo, aliquotaIva: iva }));
-      setFasceProdottoListino([]);
-    }
+    setListiniSuggerimenti([]); setShowListiniDropdown(false);
+    if (fasce.length > 1) { setNewAccessorio(prev => ({ ...prev, nome, prezzo: '', aliquotaIva: iva })); setFasceProdottoListino(fasce); }
+    else { setNewAccessorio(prev => ({ ...prev, nome, prezzo: fasce.length === 1 ? fasce[0].prezzo.toString() : '', aliquotaIva: iva })); setFasceProdottoListino([]); }
   };
 
   const handleAddAccessorio = () => {
-    if (!newAccessorio.nome) {
-      alert('Inserisci la descrizione!');
-      return;
-    }
-    setAccessori([...accessori, { 
-      ...newAccessorio, 
-      id: Date.now(),
-      prezzo: parseFloat(newAccessorio.prezzo) || 0,
-      quantita: parseInt(newAccessorio.quantita) || 1,
-      matricola: newAccessorio.matricola?.trim() || null,
-      aliquotaIva: newAccessorio.aliquotaIva || 22
-    }]);
-    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
-    setFasceProdottoListino([]);
+    if (!newAccessorio.nome) { alert('Inserisci la descrizione!'); return; }
+    setAccessori([...accessori, { ...newAccessorio, id: Date.now(), prezzo: parseFloat(newAccessorio.prezzo) || 0, quantita: parseInt(newAccessorio.quantita) || 1, matricola: newAccessorio.matricola?.trim() || null, aliquotaIva: newAccessorio.aliquotaIva || 22 }]);
+    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 }); setFasceProdottoListino([]);
   };
-
-  const handleRemoveAccessorio = (id) => {
-    setAccessori(accessori.filter(a => a.id !== id));
-  };
-  
-  // Apri modifica accessorio
-  const handleEditAccessorio = (acc) => {
-    setEditingAccessorio(acc.id);
-    setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString(), quantita: (acc.quantita || 1).toString(), matricola: acc.matricola || '' });
-  };
-  
-  // Salva modifica accessorio
+  const handleRemoveAccessorio = (id) => setAccessori(accessori.filter(a => a.id !== id));
+  const handleEditAccessorio = (acc) => { setEditingAccessorio(acc.id); setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString(), quantita: (acc.quantita || 1).toString(), matricola: acc.matricola || '' }); };
   const handleSaveAccessorio = () => {
-    if (!editAccessorioData.nome.trim()) {
-      alert('Inserisci la descrizione!');
-      return;
-    }
-    
-    setAccessori(accessori.map(a => 
-      a.id === editingAccessorio 
-        ? { ...a, nome: editAccessorioData.nome.trim(), prezzo: parseFloat(editAccessorioData.prezzo) || 0, quantita: parseInt(editAccessorioData.quantita) || 1, matricola: editAccessorioData.matricola?.trim() || null }
-        : a
-    ));
-    
-    setEditingAccessorio(null);
-    setEditAccessorioData({ nome: '', prezzo: '', quantita: '1', matricola: '' });
+    if (!editAccessorioData.nome.trim()) { alert('Inserisci la descrizione!'); return; }
+    setAccessori(accessori.map(a => a.id === editingAccessorio ? { ...a, nome: editAccessorioData.nome.trim(), prezzo: parseFloat(editAccessorioData.prezzo) || 0, quantita: parseInt(editAccessorioData.quantita) || 1, matricola: editAccessorioData.matricola?.trim() || null } : a));
+    setEditingAccessorio(null); setEditAccessorioData({ nome: '', prezzo: '', quantita: '1', matricola: '' });
   };
 
-  // Controlla se il cliente è già in rubrica e mostra banner se è nuovo
   const checkEsalvaCliente = async (clienteInfo) => {
-    // Salta se il cliente è già in rubrica (ha un id valido dal DB)
     if (!clienteInfo || clienteInfo.id) return;
-
-    // Costruisci chiave di ricerca — usa solo nome/cognome, non searchText esteso
-    const nomeChiave = (
-      clienteInfo.nomeP ||
-      clienteInfo.nome  ||
-      `${clienteInfo.cognome || ''} ${clienteInfo.nome || ''}`.trim()
-    ).trim();
-
+    const nomeChiave = (clienteInfo.nomeP || clienteInfo.nome || `${clienteInfo.cognome || ''} ${clienteInfo.nome || ''}`.trim()).trim();
     if (!nomeChiave) return;
-
     try {
-      const { data: esistente } = await supabase
-        .from('clienti')
-        .select('id')
-        .ilike('nome_completo', nomeChiave)
-        .is('deleted_at', null)
-        .maybeSingle();
-
-      if (!esistente) {
-        setPendingCliente(clienteInfo);
-        setShowSalvaClienteBanner(true);
-      }
-    } catch (err) {
-      // Errore silenzioso — non bloccare il flusso principale
-      console.warn('checkEsalvaCliente:', err);
-    }
+      const { data: esistente } = await supabase.from('clienti').select('id').ilike('nome_completo', nomeChiave).is('deleted_at', null).maybeSingle();
+      if (!esistente) { setPendingCliente(clienteInfo); setShowSalvaClienteBanner(true); }
+    } catch (err) { console.warn('checkEsalvaCliente:', err); }
   };
 
   const hasOrderedProducts = prodotti.some(p => p.isOrdered === true);
 
   const handleConcludi = async () => {
-    if (!cliente.trim()) {
-      alert('Inserisci il nome del cliente!');
-      return;
-    }
-    if (!operatore.trim()) {
-      alert('Inserisci il nome dell\'operatore!');
-      return;
-    }
-    if (prodotti.length === 0 && accessori.length === 0 && !note.trim()) {
-      alert('Aggiungi almeno un prodotto, un accessorio o una nota!');
-      return;
-    }
-    
+    if (!cliente.trim()) { alert('Inserisci il nome del cliente!'); return; }
+    if (!operatore.trim()) { alert("Inserisci il nome dell'operatore!"); return; }
+    if (prodotti.length === 0 && accessori.length === 0 && !note.trim()) { alert('Aggiungi almeno un prodotto, un accessorio o una nota!'); return; }
     const totale = getTotaleFinale();
-    if (totale <= 0 && !prodotti.every(p => p.isOmaggio) && tipoOperazione === 'vendita') {
-      alert('Inserisci il totale della vendita!');
-      return;
-    }
-
-    // Valida caparra se inserita
+    if (totale <= 0 && !prodotti.every(p => p.isOmaggio) && tipoOperazione === 'vendita') { alert('Inserisci il totale della vendita!'); return; }
     const caparraValue = parseFloat(caparra) || 0;
-    if (caparraValue > 0 && !metodoPagamento) {
-      alert('Seleziona il metodo di pagamento della caparra!');
-      return;
-    }
-
-    // Salva operatore nella lista
-    addOperatore(operatore);
-    setOperatoriList(getOperatori());
-
-    const nomeCliente = cliente.trim();
-    const nomeOperatore = operatore.trim();
-
-    // Mostra anteprima commissione
+    if (caparraValue > 0 && !metodoPagamento) { alert('Seleziona il metodo di pagamento della caparra!'); return; }
+    addOperatore(operatore); setOperatoriList(getOperatori());
     setCommissioneData({
-      cliente: nomeCliente,
-      clienteInfo: clienteSelezionato,
-      telefono: telefonoCliente.trim() || null,
-      operatore: nomeOperatore,
-      prodotti: prodotti.map(p => ({
-        id: p.id,
-        brand: p.brand,
-        model: p.model,
-        serialNumber: p.serialNumber || null,
-        prezzo: p.prezzo,
-        isOmaggio: p.isOmaggio,
-        isOrdered: p.isOrdered,
-        aliquotaIva: p.aliquotaIva || 22
-      })),
-      accessori: accessori,
-      totale: totale,
-      caparra: caparraValue > 0 ? caparraValue : null,
-      metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-      note: note.trim() || null,
-      tipoDocumento: tipoDocumento,
-      tipoOperazione: tipoOperazione,
-      dataVendita: dataVendita,
-      isPending: hasOrderedProducts,
-      isPreventivo: isPreventivo,
-      ivaCompresa: ivaCompresa
+      cliente: cliente.trim(), clienteInfo: clienteSelezionato, telefono: telefonoCliente.trim() || null, operatore: operatore.trim(),
+      prodotti: prodotti.map(p => ({ id: p.id, brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, isOrdered: p.isOrdered, aliquotaIva: p.aliquotaIva || 22 })),
+      accessori, totale, caparra: caparraValue > 0 ? caparraValue : null, metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
+      note: note.trim() || null, tipoDocumento, tipoOperazione, dataVendita, isPending: hasOrderedProducts, isPreventivo, ivaCompresa
     });
     setShowCommissione(true);
   };
-  
-  // Torna indietro dalla commissione per modificare
-  const handleBackFromCommissione = () => {
-    setShowCommissione(false);
-    setCommissioneData(null);
-  };
-  
-  // Conferma definitiva commissione
-  const handleConfirmCommissione = async () => {
-    if (isSaving) return; // Previeni doppio click
-    setIsSaving(true);
-    
-    try {
-      const nomeCliente = cliente.trim();
-      const nomeOperatore = operatore.trim();
-      const totale = getTotaleFinale();
-      const caparraValue = parseFloat(caparra) || 0;
-      
-      // Se è un preventivo — salva su DB con is_preventivo:true e salva cliente
-      if (isPreventivo) {
-        const dataISO = new Date().toISOString();
-        const commissione = await createCommissione({
-          cliente: nomeCliente, clienteInfo: clienteSelezionato,
-          telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
-          prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
-          accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
-          metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-          note: note.trim() || null, tipoDocumento, ivaCompresa,
-          dataVendita: dataISO,
-          is_preventivo: true,
-          privacy_required: false
-        });
-        setCommissioneData({ ...commissione, confirmed: true, isPreventivo: true, ivaCompresa });
-        await checkEsalvaCliente(clienteSelezionato);
-        return;
-      }
-      
-      if (hasOrderedProducts) {
-        const commissione = await createCommissione({
-          cliente: nomeCliente, clienteInfo: clienteSelezionato,
-          telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
-          prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
-          accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
-          metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-          note: note.trim() || null, tipoDocumento,
-          privacy_required: !clienteSelezionato?.id // true se cliente nuovo (id null)
-        });
-        setCommissioneData({ ...commissione, isPending: true, confirmed: true });
-        await checkEsalvaCliente(clienteSelezionato);
-        return;
-      }
 
+  const handleBackFromCommissione = () => { setShowCommissione(false); setCommissioneData(null); };
+
+  const handleConfirmCommissione = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const nomeCliente = cliente.trim(); const nomeOperatore = operatore.trim();
+      const totale = getTotaleFinale(); const caparraValue = parseFloat(caparra) || 0;
+      if (isPreventivo) {
+        const commissione = await createCommissione({ cliente: nomeCliente, clienteInfo: clienteSelezionato, telefono: telefonoCliente.trim() || null, operatore: nomeOperatore, prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })), accessori, totale, caparra: caparraValue > 0 ? caparraValue : null, metodoPagamento: caparraValue > 0 ? metodoPagamento : null, note: note.trim() || null, tipoDocumento, ivaCompresa, dataVendita: new Date().toISOString(), is_preventivo: true, privacy_required: false });
+        setCommissioneData({ ...commissione, confirmed: true, isPreventivo: true, ivaCompresa }); await checkEsalvaCliente(clienteSelezionato); return;
+      }
+      if (hasOrderedProducts) {
+        const commissione = await createCommissione({ cliente: nomeCliente, clienteInfo: clienteSelezionato, telefono: telefonoCliente.trim() || null, operatore: nomeOperatore, prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber || null, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })), accessori, totale, caparra: caparraValue > 0 ? caparraValue : null, metodoPagamento: caparraValue > 0 ? metodoPagamento : null, note: note.trim() || null, tipoDocumento, privacy_required: !clienteSelezionato?.id });
+        setCommissioneData({ ...commissione, isPending: true, confirmed: true }); await checkEsalvaCliente(clienteSelezionato); return;
+      }
       const dataISO = (() => {
         const today = new Date().toISOString().split('T')[0];
-        if (dataVendita === today) {
-          // Oggi: usa ora reale per ordinamento corretto
-          return new Date().toISOString();
-        }
-        // Data passata (backdate): usa mezzogiorno
+        if (dataVendita === today) return new Date().toISOString();
         const d = new Date(dataVendita + 'T12:00:00');
         return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
       })();
-      
-      // Scarica inventario per ogni prodotto con matricola
-      for (const prod of prodotti) {
-        if (prod.serialNumber) {
-          try {
-            await dischargeInventory(prod.serialNumber, nomeCliente);
-          } catch (e) {
-            console.warn('Inventario non scaricato per SN:', prod.serialNumber, e);
-          }
-        }
-      }
-      
-      // La commissione è l'unica fonte di verità
-      const commissione = await createCommissione({
-        cliente: nomeCliente, clienteInfo: clienteSelezionato,
-        telefono: telefonoCliente.trim() || null, operatore: nomeOperatore,
-        prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })),
-        accessori, totale, caparra: caparraValue > 0 ? caparraValue : null,
-        metodoPagamento: caparraValue > 0 ? metodoPagamento : null,
-        note: note.trim() || null, tipoDocumento, ivaCompresa,
-        dataVendita: dataISO,
-        privacy_required: !clienteSelezionato?.id // true se cliente nuovo (id null)
-      });
-      setCommissioneData({ ...commissione, confirmed: true, ivaCompresa });
-      await checkEsalvaCliente(clienteSelezionato);
-    } catch (error) {
-      console.error('Errore conferma commissione:', error);
-      alert('⚠️ Errore durante il salvataggio della vendita. Riprova.');
-      // NON settiamo confirmed: true — la vendita non è stata salvata
-    } finally {
-      setIsSaving(false);
-    }
+      for (const prod of prodotti) { if (prod.serialNumber) { try { await dischargeInventory(prod.serialNumber, nomeCliente); } catch (e) {} } }
+      const commissione = await createCommissione({ cliente: nomeCliente, clienteInfo: clienteSelezionato, telefono: telefonoCliente.trim() || null, operatore: nomeOperatore, prodotti: prodotti.map(p => ({ brand: p.brand, model: p.model, serialNumber: p.serialNumber, prezzo: p.prezzo, isOmaggio: p.isOmaggio, aliquotaIva: p.aliquotaIva || 22 })), accessori, totale, caparra: caparraValue > 0 ? caparraValue : null, metodoPagamento: caparraValue > 0 ? metodoPagamento : null, note: note.trim() || null, tipoDocumento, ivaCompresa, dataVendita: dataISO, privacy_required: !clienteSelezionato?.id });
+      setCommissioneData({ ...commissione, confirmed: true, ivaCompresa }); await checkEsalvaCliente(clienteSelezionato);
+    } catch (error) { alert('⚠️ Errore durante il salvataggio della vendita. Riprova.'); }
+    finally { setIsSaving(false); }
   };
 
   const handleReset = () => {
-    setCliente('');
-    setClienteSelezionato(null);
-    setTelefonoCliente('');
-    setProdotti([]);
-    setAccessori([]);
-    setTotaleManuale('');
-    setCaparra('');
-    setMetodoPagamento('');
-    setNote('');
-    setIsPreventivo(false);
-    setIvaCompresa(false);
-    setDataVendita(new Date().toISOString().split('T')[0]);
-    setShowCommissione(false);
-    setCommissioneData(null);
-    setOcrRighe([]);
-    setOcrPreview(null);
-    setScanResult(null);
+    setCliente(''); setClienteSelezionato(null); setTelefonoCliente(''); setProdotti([]); setAccessori([]);
+    setTotaleManuale(''); setCaparra(''); setMetodoPagamento(''); setNote(''); setIsPreventivo(false); setIvaCompresa(false);
+    setDataVendita(new Date().toISOString().split('T')[0]); setShowCommissione(false); setCommissioneData(null);
+    setOcrRighe([]); setOcrPreview(null); setScanResult(null);
   };
 
   if (showCommissione && commissioneData) {
-    return (
-      <CommissioneModal
-        data={commissioneData}
-        isKit={true}
-        onBack={handleBackFromCommissione}
-        onConfirm={handleConfirmCommissione}
-        onClose={() => {
-          handleReset();
-          onNavigate('home');
-        }}
-        isSaving={isSaving}
-      />
-    );
+    return (<CommissioneModal data={commissioneData} isKit={true} onBack={handleBackFromCommissione} onConfirm={handleConfirmCommissione} onClose={() => { handleReset(); onNavigate('home'); }} isSaving={isSaving} />);
   }
 
-  // Formatta prezzo per visualizzazione
   const formatPrezzo = (prod) => {
-    if (prod.isOmaggio) {
-      return <span className="text-xs text-green-600 font-medium">OMAGGIO</span>;
-    }
-    if (prod.prezzo === null || prod.prezzo === undefined) {
-      return <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium">KIT</span>;
-    }
-    if (prod.prezzo === 0) {
-      return <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium">KIT</span>;
-    }
+    if (prod.isOmaggio) return <span className="text-xs text-green-600 font-medium">OMAGGIO</span>;
+    if (prod.prezzo === null || prod.prezzo === undefined || prod.prezzo === 0) return <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium">KIT</span>;
     return <span className="font-bold text-sm" style={{ color: '#006B3F' }}>€{prod.prezzo}</span>;
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white border-b">
         <div className="flex items-center">
-          <button onClick={() => onNavigate('home')} className="mr-3">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
+          <button onClick={() => onNavigate('home')} className="mr-3"><ArrowLeft className="w-6 h-6" /></button>
           <h1 className="text-xl font-bold">Nuova Vendita</h1>
         </div>
-        
-        {/* Pulsante Scansiona Buono */}
-        <button 
-          onClick={() => setShowScanBuonoModal(true)}
-          disabled={scanningCommissione}
-          className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50"
-        >
-          <Camera className="w-4 h-4" />
-          <span className="hidden sm:inline">Scansiona Buono</span>
-          <span className="sm:hidden">📷</span>
+        <button onClick={() => setShowScanBuonoModal(true)} disabled={scanningCommissione} className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
+          <Camera className="w-4 h-4" /><span className="hidden sm:inline">Scansiona Buono</span><span className="sm:hidden">📷</span>
         </button>
       </div>
 
-      {/* Input file nascosti per Scansiona Buono */}
-      <input
-        type="file"
-        id="buono-camera"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => { setShowScanBuonoModal(false); handleScanCommissione(e); }}
-        style={{ display: 'none' }}
-        disabled={scanningCommissione}
-      />
-      <input
-        type="file"
-        id="buono-gallery"
-        accept="image/*"
-        onChange={(e) => { setShowScanBuonoModal(false); handleScanCommissione(e); }}
-        style={{ display: 'none' }}
-        disabled={scanningCommissione}
-      />
+      <input type="file" id="buono-camera" accept="image/*" capture="environment" onChange={(e) => { setShowScanBuonoModal(false); handleScanCommissione(e); }} style={{ display: 'none' }} disabled={scanningCommissione} />
+      <input type="file" id="buono-gallery" accept="image/*" onChange={(e) => { setShowScanBuonoModal(false); handleScanCommissione(e); }} style={{ display: 'none' }} disabled={scanningCommissione} />
+      <input type="file" id="vendita-ocr-input" accept="image/*" capture="environment" onChange={(e) => { setShowOcrChoice(false); handleFileSelect(e); }} style={{ display: 'none' }} />
+      <input type="file" id="vendita-ocr-input-gallery" accept="image/*" onChange={(e) => { setShowOcrChoice(false); handleFileSelect(e); }} style={{ display: 'none' }} />
 
-      {/* Input file nascosti per scansione matricola */}
-      <input
-        type="file"
-        id="vendita-ocr-input"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => { setShowOcrChoice(false); handleFileSelect(e); }}
-        style={{ display: 'none' }}
-      />
-      <input
-        type="file"
-        id="vendita-ocr-input-gallery"
-        accept="image/*"
-        onChange={(e) => { setShowOcrChoice(false); handleFileSelect(e); }}
-        style={{ display: 'none' }}
-      />
-
-      {/* Box risultato scansione commissione */}
-      {/* Preview rapido OCR */}
       {ocrPreview && (
         <div className="mx-4 mt-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
           <div className="space-y-1 text-sm">
-            {ocrPreview.cliente && (
-              <div className="flex items-center gap-2">
-                <span className="text-blue-400 w-5 text-center">👤</span>
-                <span className="font-medium">{ocrPreview.cliente}</span>
-              </div>
-            )}
-            {ocrPreview.macchine.map((m, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-green-500 w-5 text-center">⚙️</span>
-                <div className="flex-1">
-                  <span>{m.testo}</span>
-                  {m.matricola && <span className="text-xs text-gray-400 ml-1 font-mono">({m.matricola})</span>}
-                </div>
-                {m.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{m.prezzo.toFixed(2)}</span>}
-              </div>
-            ))}
-            {ocrPreview.accessori.map((a, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-yellow-500 w-5 text-center">🔧</span>
-                <span className="flex-1">{a.testo}</span>
-                {a.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{a.prezzo.toFixed(2)}</span>}
-              </div>
-            ))}
+            {ocrPreview.cliente && <div className="flex items-center gap-2"><span className="text-blue-400 w-5 text-center">👤</span><span className="font-medium">{ocrPreview.cliente}</span></div>}
+            {ocrPreview.macchine.map((m, i) => (<div key={i} className="flex items-center gap-2"><span className="text-green-500 w-5 text-center">⚙️</span><div className="flex-1"><span>{m.testo}</span>{m.matricola && <span className="text-xs text-gray-400 ml-1 font-mono">({m.matricola})</span>}</div>{m.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{m.prezzo.toFixed(2)}</span>}</div>))}
+            {ocrPreview.accessori.map((a, i) => (<div key={i} className="flex items-center gap-2"><span className="text-yellow-500 w-5 text-center">🔧</span><span className="flex-1">{a.testo}</span>{a.prezzo > 0 && <span className="text-gray-600 font-mono text-xs">€{a.prezzo.toFixed(2)}</span>}</div>))}
             <div className="flex items-center gap-3 text-xs text-gray-500 pt-1">
               {ocrPreview.prezzoTotale && <span>Tot: €{ocrPreview.prezzoTotale.toFixed(2)}</span>}
               {ocrPreview.caparra && <span>Caparra: €{ocrPreview.caparra.toFixed(2)}</span>}
@@ -1536,233 +733,86 @@ export default function Vendita({ onNavigate }) {
             </div>
           </div>
           <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => { handleConfirmOcrRighe(); setOcrPreview(null); }}
-              className="flex-[2] py-2 rounded-lg font-bold text-white text-sm"
-              style={{ backgroundColor: '#006B3F' }}
-            >
-              ✓ Conferma
-            </button>
-            <button
-              onClick={() => { setShowOcrReview(true); setOcrPreview(null); }}
-              className="flex-1 py-2 rounded-lg font-medium text-sm border-2 border-gray-300 text-gray-600"
-            >
-              ✏️ Correggi
-            </button>
-            <button
-              onClick={() => { setOcrPreview(null); setOcrRighe([]); }}
-              className="px-3 py-2 rounded-lg text-gray-400 text-sm"
-            >
-              ✕
-            </button>
+            <button onClick={() => { handleConfirmOcrRighe(); setOcrPreview(null); }} className="flex-[2] py-2 rounded-lg font-bold text-white text-sm" style={{ backgroundColor: '#006B3F' }}>✓ Conferma</button>
+            <button onClick={() => { setShowOcrReview(true); setOcrPreview(null); }} className="flex-1 py-2 rounded-lg font-medium text-sm border-2 border-gray-300 text-gray-600">✏️ Correggi</button>
+            <button onClick={() => { setOcrPreview(null); setOcrRighe([]); }} className="px-3 py-2 rounded-lg text-gray-400 text-sm">✕</button>
           </div>
         </div>
       )}
 
-      {/* Errore/successo scansione */}
       {!ocrPreview && (scanningCommissione || scanResult) && (
-        <div className={`mx-4 mt-2 p-3 rounded-lg ${
-          scanningCommissione ? 'bg-blue-50 border border-blue-200' :
-          scanResult?.success ? 'bg-green-50 border border-green-200' :
-          'bg-red-50 border border-red-200'
-        }`}>
+        <div className={`mx-4 mt-2 p-3 rounded-lg ${scanningCommissione ? 'bg-blue-50 border border-blue-200' : scanResult?.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
           {scanningCommissione ? (
-            <div className="flex items-center gap-2 text-blue-700">
-              <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
-              <span className="text-sm">Analizzo il buono...</span>
-            </div>
+            <div className="flex items-center gap-2 text-blue-700"><div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" /><span className="text-sm">Analizzo il buono...</span></div>
           ) : (
             <div className={`flex items-center justify-between ${scanResult?.success ? 'text-green-700' : 'text-red-700'}`}>
               <span className="text-sm font-medium">{scanResult?.message}</span>
               <div className="flex items-center gap-2">
-                {scanResult?.success && ocrRighe.length > 0 && (
-                  <button
-                    onClick={() => setShowOcrReview(true)}
-                    className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100"
-                  >
-                    ✏️ Modifica OCR
-                  </button>
-                )}
-                <button 
-                  onClick={() => setScanResult(null)}
-                  className="opacity-50 hover:opacity-100"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {scanResult?.success && ocrRighe.length > 0 && <button onClick={() => setShowOcrReview(true)} className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-1">✏️ Modifica OCR</button>}
+                <button onClick={() => setScanResult(null)} className="opacity-50 hover:opacity-100"><X className="w-4 h-4" /></button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Pulsante Modifica OCR persistente (visibile anche dopo dismiss del banner) */}
       {!ocrPreview && !scanResult && !scanningCommissione && ocrRighe.length > 0 && (
-        <div className="mx-4 mt-2">
-          <button
-            onClick={() => setShowOcrReview(true)}
-            className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 hover:bg-blue-100 flex items-center gap-1"
-          >
-            ✏️ Modifica dati OCR
-          </button>
-        </div>
+        <div className="mx-4 mt-2"><button onClick={() => setShowOcrReview(true)} className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center gap-1">✏️ Modifica dati OCR</button></div>
       )}
 
       <div className="flex-1 p-4 overflow-auto space-y-3">
         {/* Operatore e Data */}
         <div className="flex gap-2">
-          {/* Operatore */}
           <div className="flex-1 bg-white rounded-lg p-3 relative">
-            <label className="text-xs text-gray-500 flex items-center gap-1">
-              <UserCircle className="w-3 h-3" /> Operatore
-            </label>
+            <label className="text-xs text-gray-500 flex items-center gap-1"><UserCircle className="w-3 h-3" /> Operatore</label>
             <div className="relative mt-1">
-              <input
-                type="text"
-                placeholder="Nome operatore..."
-                className="w-full p-2 pr-10 border rounded-lg"
-                value={operatore}
-                onChange={(e) => handleOperatoreChange(e.target.value)}
-                onFocus={() => operatoriList.length > 0 && setShowOperatoriDropdown(true)}
-              />
-              {operatoriList.length > 0 && (
-                <button 
-                  onClick={() => setShowOperatoriDropdown(!showOperatoriDropdown)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
-                >
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
-                </button>
-              )}
+              <input type="text" placeholder="Nome operatore..." className="w-full p-2 pr-10 border rounded-lg" value={operatore} onChange={(e) => handleOperatoreChange(e.target.value)} onFocus={() => operatoriList.length > 0 && setShowOperatoriDropdown(true)} />
+              {operatoriList.length > 0 && <button onClick={() => setShowOperatoriDropdown(!showOperatoriDropdown)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1"><ChevronDown className="w-5 h-5 text-gray-400" /></button>}
             </div>
-            
             {showOperatoriDropdown && operatoriList.length > 0 && (
               <div className="absolute left-3 right-3 top-full mt-1 bg-white border rounded-lg shadow-xl z-30 max-h-48 overflow-auto">
-                {operatoriList.map((op) => (
-                  <button
-                    key={op}
-                    className={`w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 text-sm flex items-center justify-between ${
-                      op === getUltimoOperatore() ? 'bg-green-50' : ''
-                    }`}
-                    onClick={() => handleSelectOperatore(op)}
-                  >
-                    <span className="font-medium">{op}</span>
-                    {op === getUltimoOperatore() && (
-                      <span className="text-xs text-green-600">(ultimo)</span>
-                    )}
-                </button>
-              ))}
-            </div>
-          )}
+                {operatoriList.map((op) => (<button key={op} className={`w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 text-sm flex items-center justify-between ${op === getUltimoOperatore() ? 'bg-green-50' : ''}`} onClick={() => handleSelectOperatore(op)}><span className="font-medium">{op}</span>{op === getUltimoOperatore() && <span className="text-xs text-green-600">(ultimo)</span>}</button>))}
+              </div>
+            )}
           </div>
-          
-          {/* Data Vendita */}
           <div className="w-32 bg-white rounded-lg p-3">
             <label className="text-xs text-gray-500">📅 Data</label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded-lg mt-1 text-sm"
-              value={dataVendita}
-              onChange={(e) => setDataVendita(e.target.value)}
-            />
+            <input type="date" className="w-full p-2 border rounded-lg mt-1 text-sm" value={dataVendita} onChange={(e) => setDataVendita(e.target.value)} />
           </div>
         </div>
-
-        {showOperatoriDropdown && (
-          <div className="fixed inset-0 z-20" onClick={() => setShowOperatoriDropdown(false)} />
-        )}
+        {showOperatoriDropdown && <div className="fixed inset-0 z-20" onClick={() => setShowOperatoriDropdown(false)} />}
 
         {/* Cliente */}
         <div className="bg-white rounded-lg p-3 relative">
-          <label className="text-xs text-gray-500 flex items-center gap-1">
-            <User className="w-3 h-3" /> Cliente
-          </label>
+          <label className="text-xs text-gray-500 flex items-center gap-1"><User className="w-3 h-3" /> Cliente</label>
           <div className="relative mt-1">
-            <input
-              type="text"
-              placeholder="Cerca cliente..."
-              className="w-full p-2 pr-20 border rounded-lg"
-              value={cliente}
-              onChange={(e) => handleClienteChange(e.target.value)}
-              onFocus={() => suggerimenti.length > 0 && setShowSuggerimenti(true)}
-            />
-            <button
-              onClick={handleAprirNuovoCliente}
-              className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs px-2 py-1.5 rounded-md text-white font-medium"
-              style={{ backgroundColor: '#006B3F' }}
-              title="Inserisci cliente manualmente o scansiona documento"
-            >
-              <Plus className="w-3 h-3" /> Nuovo
-            </button>
+            <input type="text" placeholder="Cerca cliente..." className="w-full p-2 pr-20 border rounded-lg" value={cliente} onChange={(e) => handleClienteChange(e.target.value)} onFocus={() => suggerimenti.length > 0 && setShowSuggerimenti(true)} />
+            <button onClick={handleAprirNuovoCliente} className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs px-2 py-1.5 rounded-md text-white font-medium" style={{ backgroundColor: '#006B3F' }}><Plus className="w-3 h-3" /> Nuovo</button>
           </div>
-          
           {clienteSelezionato && (
             <div className="mt-2 space-y-2">
-              {/* Indirizzo */}
-              <div className="p-2 bg-green-50 rounded text-sm flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-green-600 mt-0.5" />
-                <p className="text-green-800">{formatIndirizzo(clienteSelezionato)}</p>
-              </div>
-              
-              {/* Telefono */}
+              <div className="p-2 bg-green-50 rounded text-sm flex items-start gap-2"><MapPin className="w-4 h-4 text-green-600 mt-0.5" /><p className="text-green-800">{formatIndirizzo(clienteSelezionato)}</p></div>
               <div className="p-2 bg-blue-50 rounded text-sm flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-600" />
-                <input
-                  type="tel"
-                  placeholder="Inserisci cellulare..."
-                  className="flex-1 bg-transparent border-none outline-none text-blue-800 placeholder-blue-400"
-                  value={telefonoCliente}
-                  onChange={(e) => handleTelefonoChange(e.target.value)}
-                />
-                {telefonoCliente && (
-                  <a 
-                    href={`tel:${telefonoCliente}`}
-                    className="text-blue-600 font-medium text-xs"
-                  >
-                    Chiama
-                  </a>
-                )}
+                <input type="tel" placeholder="Inserisci cellulare..." className="flex-1 bg-transparent border-none outline-none text-blue-800 placeholder-blue-400" value={telefonoCliente} onChange={(e) => handleTelefonoChange(e.target.value)} />
+                {telefonoCliente && <a href={`tel:${telefonoCliente}`} className="text-blue-600 font-medium text-xs">Chiama</a>}
               </div>
             </div>
           )}
-          
           {showSuggerimenti && (
             <div className="absolute left-3 right-3 top-full mt-1 bg-white border rounded-lg shadow-xl z-30 max-h-64 overflow-auto">
-              {suggerimenti.map((c, idx) => (
-                <button
-                  key={idx}
-                  className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0"
-                  onClick={() => handleSelectCliente(c)}
-                >
-                  <p className="font-semibold text-sm">{c.nome}</p>
-                  <p className="text-xs text-gray-500">{formatIndirizzo(c)}</p>
-                  {c.telefono && (
-                    <p className="text-xs text-blue-600">📱 {c.telefono}</p>
-                  )}
-                </button>
-              ))}
+              {suggerimenti.map((c, idx) => (<button key={idx} className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0" onClick={() => handleSelectCliente(c)}><p className="font-semibold text-sm">{c.nome}</p><p className="text-xs text-gray-500">{formatIndirizzo(c)}</p>{c.telefono && <p className="text-xs text-blue-600">📱 {c.telefono}</p>}</button>))}
             </div>
           )}
         </div>
+        {showSuggerimenti && <div className="fixed inset-0 z-20" onClick={() => setShowSuggerimenti(false)} />}
 
-        {showSuggerimenti && (
-          <div className="fixed inset-0 z-20" onClick={() => setShowSuggerimenti(false)} />
-        )}
-
-        {/* Toggle IVA compresa / esclusa */}
+        {/* Toggle IVA */}
         <div className="bg-white rounded-lg p-3">
           <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Tipo prezzi</label>
           <div className="flex rounded-lg overflow-hidden border border-gray-200">
-            <button
-              onClick={() => setIvaCompresa(false)}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${!ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
-            >
-              IVA esclusa
-            </button>
-            <button
-              onClick={() => setIvaCompresa(true)}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}
-            >
-              IVA compresa
-            </button>
+            <button onClick={() => setIvaCompresa(false)} className={`flex-1 py-2 text-sm font-medium transition-colors ${!ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}>IVA esclusa</button>
+            <button onClick={() => setIvaCompresa(true)} className={`flex-1 py-2 text-sm font-medium transition-colors ${ivaCompresa ? 'bg-green-600 text-white' : 'bg-gray-50 text-gray-600'}`}>IVA compresa</button>
           </div>
           {!ivaCompresa && <p className="text-xs text-gray-400 mt-1">I prezzi inseriti sono imponibili — l'IVA verrà calcolata separatamente</p>}
           {ivaCompresa && <p className="text-xs text-gray-400 mt-1">I prezzi inseriti includono già l'IVA — verrà applicato lo scorporo</p>}
@@ -1771,59 +821,34 @@ export default function Vendita({ onNavigate }) {
         {/* Prodotti */}
         <div className="bg-white rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs text-gray-500 flex items-center gap-1">
-              <Package className="w-3 h-3" /> Prodotti
-            </label>
-            <button
-              onClick={() => setShowAddProduct(true)}
-              className="text-white px-3 py-1 rounded-lg text-sm font-semibold flex items-center gap-1"
-              style={{ backgroundColor: '#006B3F' }}
-            >
-              <Plus className="w-4 h-4" /> Aggiungi
-            </button>
+            <label className="text-xs text-gray-500 flex items-center gap-1"><Package className="w-3 h-3" /> Prodotti</label>
+            <button onClick={() => setShowAddProduct(true)} className="text-white px-3 py-1 rounded-lg text-sm font-semibold flex items-center gap-1" style={{ backgroundColor: '#006B3F' }}><Plus className="w-4 h-4" /> Aggiungi</button>
           </div>
-
           {prodotti.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-4">Nessun prodotto aggiunto</p>
           ) : (
             <div className="space-y-2">
               {prodotti.map((prod) => (
-                <div 
-                  key={prod.id} 
-                  className={`p-2 rounded-lg border-l-4 flex items-center justify-between ${
-                    prod.isOmaggio 
-                      ? 'bg-green-50 border-green-500' 
-                      : prod.isOrdered 
-                        ? 'bg-yellow-50 border-yellow-400'
-                        : 'bg-gray-50 border-gray-300'
-                  }`}
-                >
+                <div key={prod.id} className={`p-2 rounded-lg border-l-4 flex items-center justify-between ${prod.isOmaggio ? 'bg-green-50 border-green-500' : prod.isOrdered ? 'bg-yellow-50 border-yellow-400' : 'bg-gray-50 border-gray-300'}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-sm truncate">{prod.brand} {prod.model}</p>
-                      {prod.isOrdered && (
-                        <span className="text-xs bg-yellow-200 text-yellow-800 px-1 rounded">⏳</span>
-                      )}
-                      {prod.isOmaggio && (
-                        <Gift className="w-4 h-4 text-green-600" />
-                      )}
+                      {prod.isOrdered && <span className="text-xs bg-yellow-200 text-yellow-800 px-1 rounded">⏳</span>}
+                      {prod.isOmaggio && <Gift className="w-4 h-4 text-green-600" />}
                     </div>
-                    <p className="text-xs text-gray-500 font-mono truncate">
-                      {prod.serialNumber || 'Matricola da inserire'}
-                    </p>
+                    <p className="text-xs text-gray-500 font-mono truncate">{prod.serialNumber || 'Matricola da inserire'}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
-                    {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700 border-green-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
-                        {prod.aliquotaIva}%
-                      </span>
-                    )}
-                    <button onClick={() => handleOpenEditPrice(prod)} className="p-1">
-                      {formatPrezzo(prod)}
+                    {/* ── Badge IVA sempre visibile e cliccabile ── */}
+                    <button
+                      onClick={() => cycleIvaProdotto(prod.id)}
+                      className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${getIvaBadgeStyle(prod.aliquotaIva || 22)}`}
+                      title="Tocca per cambiare aliquota IVA"
+                    >
+                      {prod.aliquotaIva || 22}%
                     </button>
-                    <button onClick={() => handleRemoveProduct(prod.id)} className="text-red-500 p-1">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <button onClick={() => handleOpenEditPrice(prod)} className="p-1">{formatPrezzo(prod)}</button>
+                    <button onClick={() => handleRemoveProduct(prod.id)} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               ))}
@@ -1834,7 +859,6 @@ export default function Vendita({ onNavigate }) {
         {/* Accessori */}
         <div className="bg-white rounded-lg p-3">
           <label className="text-xs text-gray-500 mb-2 block">Accessori (opzionale)</label>
-          
           {accessori.length > 0 && (
             <div className="mb-3 space-y-2">
               {accessori.map((acc) => (
@@ -1842,194 +866,72 @@ export default function Vendita({ onNavigate }) {
                   {editingAccessorio === acc.id ? (
                     <div className="p-2 bg-blue-50 rounded border border-blue-200 space-y-2">
                       <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Descrizione"
-                          className="flex-1 p-2 border rounded text-sm"
-                          value={editAccessorioData.nome}
-                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, nome: e.target.value })}
-                          autoFocus
-                        />
-                        <input
-                          type="number"
-                          placeholder="Qtà"
-                          className="w-14 p-2 border rounded text-sm text-center"
-                          min="1"
-                          value={editAccessorioData.quantita}
-                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, quantita: e.target.value })}
-                        />
-                        <input
-                          type="number"
-                          placeholder="€"
-                          className="w-16 p-2 border rounded text-sm text-center"
-                          value={editAccessorioData.prezzo}
-                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, prezzo: e.target.value })}
-                        />
+                        <input type="text" placeholder="Descrizione" className="flex-1 p-2 border rounded text-sm" value={editAccessorioData.nome} onChange={(e) => setEditAccessorioData({ ...editAccessorioData, nome: e.target.value })} autoFocus />
+                        <input type="number" placeholder="Qtà" className="w-14 p-2 border rounded text-sm text-center" min="1" value={editAccessorioData.quantita} onChange={(e) => setEditAccessorioData({ ...editAccessorioData, quantita: e.target.value })} />
+                        <input type="number" placeholder="€" className="w-16 p-2 border rounded text-sm text-center" value={editAccessorioData.prezzo} onChange={(e) => setEditAccessorioData({ ...editAccessorioData, prezzo: e.target.value })} />
                       </div>
                       <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Matricola (opzionale)"
-                          className="flex-1 p-2 border rounded text-sm font-mono"
-                          value={editAccessorioData.matricola}
-                          onChange={(e) => setEditAccessorioData({ ...editAccessorioData, matricola: e.target.value })}
-                        />
-                        <button 
-                          onClick={handleSaveAccessorio} 
-                          className="px-3 rounded text-white text-sm"
-                          style={{ backgroundColor: '#006B3F' }}
-                        >
-                          ✓
-                        </button>
-                        <button 
-                          onClick={() => setEditingAccessorio(null)} 
-                          className="px-2 text-gray-500"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        <input type="text" placeholder="Matricola (opzionale)" className="flex-1 p-2 border rounded text-sm font-mono" value={editAccessorioData.matricola} onChange={(e) => setEditAccessorioData({ ...editAccessorioData, matricola: e.target.value })} />
+                        <button onClick={handleSaveAccessorio} className="px-3 rounded text-white text-sm" style={{ backgroundColor: '#006B3F' }}>✓</button>
+                        <button onClick={() => setEditingAccessorio(null)} className="px-2 text-gray-500"><X className="w-4 h-4" /></button>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between py-1 px-2 bg-gray-50 rounded text-sm">
                       <div className="flex-1 min-w-0">
-                        <span className="truncate block">
-                          {acc.quantita > 1 && <span className="font-medium text-blue-600 mr-1">{acc.quantita}x</span>}
-                          {acc.nome}
-                        </span>
-                        {acc.matricola && (
-                          <span className="text-xs text-gray-500 font-mono block truncate">SN: {acc.matricola}</span>
-                        )}
+                        <span className="truncate block">{acc.quantita > 1 && <span className="font-medium text-blue-600 mr-1">{acc.quantita}x</span>}{acc.nome}</span>
+                        {acc.matricola && <span className="text-xs text-gray-500 font-mono block truncate">SN: {acc.matricola}</span>}
                       </div>
-                      <span className="text-gray-600 mx-1 shrink-0">
-                        {acc.prezzo > 0 
-                          ? (acc.quantita > 1 ? `€${(acc.prezzo * acc.quantita).toFixed(2)}` : `€${acc.prezzo}`)
-                          : 'Incluso'}
-                      </span>
-                      <button onClick={() => handleEditAccessorio(acc)} className="text-blue-500 p-1">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleRemoveAccessorio(acc.id)} className="text-red-500 p-1">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <span className="text-gray-600 mx-1 shrink-0">{acc.prezzo > 0 ? (acc.quantita > 1 ? `€${(acc.prezzo * acc.quantita).toFixed(2)}` : `€${acc.prezzo}`) : 'Incluso'}</span>
+                      <button onClick={() => handleEditAccessorio(acc)} className="text-blue-500 p-1"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleRemoveAccessorio(acc.id)} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   )}
                 </div>
               ))}
             </div>
           )}
-          
           <div className="space-y-2">
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="Descrizione"
-                  className="w-full p-2 border rounded-lg text-sm"
-                  value={newAccessorio.nome}
-                  onChange={(e) => {
-                    setNewAccessorio({ ...newAccessorio, nome: e.target.value });
-                    setFasceProdottoListino([]);
-                    cercaNelListino(e.target.value);
-                  }}
+                <input type="text" placeholder="Descrizione" className="w-full p-2 border rounded-lg text-sm" value={newAccessorio.nome}
+                  onChange={(e) => { setNewAccessorio({ ...newAccessorio, nome: e.target.value }); setFasceProdottoListino([]); cercaNelListino(e.target.value); }}
                   onBlur={() => setTimeout(() => setShowListiniDropdown(false), 150)}
-                  onFocus={() => { if (listiniSuggerimenti.length > 0) setShowListiniDropdown(true); }}
-                />
+                  onFocus={() => { if (listiniSuggerimenti.length > 0) setShowListiniDropdown(true); }} />
                 {showListiniDropdown && (
                   <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
-                    {listiniLoading && (
-                      <div className="px-3 py-2 text-xs text-gray-400">Ricerca...</div>
-                    )}
+                    {listiniLoading && <div className="px-3 py-2 text-xs text-gray-400">Ricerca...</div>}
                     {listiniSuggerimenti.map((p, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onMouseDown={() => selezionaDaListino(p)}
-                        className={`w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0 border-gray-100 ${isPromoAttiva(p) ? 'bg-orange-50 hover:bg-orange-100' : ''}`}
-                      >
+                      <button key={i} type="button" onMouseDown={() => selezionaDaListino(p)} className={`w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0 border-gray-100 ${isPromoAttiva(p) ? 'bg-orange-50 hover:bg-orange-100' : ''}`}>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-sm font-medium text-gray-800 truncate">
-                            {p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}
-                          </span>
-                          {isPromoAttiva(p) && (
-                            <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-orange-500 text-white shrink-0">🏷️ PROMO</span>
-                          )}
+                          <span className="text-sm font-medium text-gray-800 truncate">{p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}</span>
+                          {isPromoAttiva(p) && <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-orange-500 text-white shrink-0">🏷️ PROMO</span>}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {p.brand && <span className="text-xs text-gray-400">{p.brand}</span>}
-                          {isPromoAttiva(p) ? (
-                            <>
-                              <span className="text-xs font-bold text-orange-600">€{p.prezzo_promo.toFixed(2)}</span>
-                              {p.prezzo_a != null && <span className="text-xs text-gray-400 line-through">€{p.prezzo_a.toFixed(2)}</span>}
-                            </>
-                          ) : (
-                            p.prezzo_a != null && <span className="text-xs font-semibold text-green-700">€{p.prezzo_a.toFixed(2)}</span>
-                          )}
-                          {p.iva != null && (
-                            <span className={`text-xs px-1 py-0.5 rounded border font-medium ${
-                              (p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 4 ? 'bg-green-100 text-green-700 border-green-300' :
-                              (p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 10 ? 'bg-amber-100 text-amber-700 border-amber-300' :
-                              'bg-gray-100 text-gray-400 border-gray-200'
-                            }`}>
-                              IVA {p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)}%
-                            </span>
-                          )}
+                          {isPromoAttiva(p) ? (<><span className="text-xs font-bold text-orange-600">€{p.prezzo_promo.toFixed(2)}</span>{p.prezzo_a != null && <span className="text-xs text-gray-400 line-through">€{p.prezzo_a.toFixed(2)}</span>}</>) : (p.prezzo_a != null && <span className="text-xs font-semibold text-green-700">€{p.prezzo_a.toFixed(2)}</span>)}
+                          {p.iva != null && <span className={`text-xs px-1 py-0.5 rounded border font-medium ${(p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 4 ? 'bg-green-100 text-green-700 border-green-300' : (p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)) === 10 ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-gray-100 text-gray-400 border-gray-200'}`}>IVA {p.iva < 1 ? Math.round(p.iva * 100) : Math.round(p.iva)}%</span>}
                         </div>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <input
-                type="number"
-                placeholder="Qtà"
-                className="w-14 p-2 border rounded-lg text-sm text-center"
-                min="1"
-                value={newAccessorio.quantita}
-                onChange={(e) => setNewAccessorio({ ...newAccessorio, quantita: e.target.value })}
-              />
-              <input
-                type="number"
-                placeholder="€"
-                className="w-16 p-2 border rounded-lg text-sm text-center"
-                value={newAccessorio.prezzo}
-                onChange={(e) => setNewAccessorio({ ...newAccessorio, prezzo: e.target.value })}
-              />
-              <button onClick={handleAddAccessorio} className="p-2 rounded-lg text-white" style={{ backgroundColor: '#006B3F' }}>
-                <Plus className="w-5 h-5" />
-              </button>
+              <input type="number" placeholder="Qtà" className="w-14 p-2 border rounded-lg text-sm text-center" min="1" value={newAccessorio.quantita} onChange={(e) => setNewAccessorio({ ...newAccessorio, quantita: e.target.value })} />
+              <input type="number" placeholder="€" className="w-16 p-2 border rounded-lg text-sm text-center" value={newAccessorio.prezzo} onChange={(e) => setNewAccessorio({ ...newAccessorio, prezzo: e.target.value })} />
+              <button onClick={handleAddAccessorio} className="p-2 rounded-lg text-white" style={{ backgroundColor: '#006B3F' }}><Plus className="w-5 h-5" /></button>
             </div>
-            {/* Pulsanti selezione fascia prezzo */}
             {fasceProdottoListino.length > 0 && (
               <div className="flex gap-2 flex-wrap">
                 <span className="text-xs text-gray-500 self-center">Scegli fascia:</span>
                 {fasceProdottoListino.map((fascia) => (
-                  <button
-                    key={fascia.label}
-                    type="button"
-                    onClick={() => {
-                      setNewAccessorio(prev => ({ ...prev, prezzo: fascia.prezzo.toString() }));
-                      setFasceProdottoListino([]);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg border-2 text-sm font-semibold ${
-                      fascia.isPromo
-                        ? 'border-orange-500 text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200'
-                        : 'border-green-500 text-green-700 hover:bg-green-50 active:bg-green-100'
-                    }`}
-                  >
+                  <button key={fascia.label} type="button" onClick={() => { setNewAccessorio(prev => ({ ...prev, prezzo: fascia.prezzo.toString() })); setFasceProdottoListino([]); }} className={`px-3 py-1.5 rounded-lg border-2 text-sm font-semibold ${fascia.isPromo ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-green-500 text-green-700 hover:bg-green-50'}`}>
                     {fascia.label} · €{fascia.prezzo.toFixed(2)}
                   </button>
                 ))}
               </div>
             )}
-            {newAccessorio.nome && (
-              <input
-                type="text"
-                placeholder="Matricola (opzionale)"
-                className="w-full p-2 border rounded-lg text-sm font-mono"
-                value={newAccessorio.matricola}
-                onChange={(e) => setNewAccessorio({ ...newAccessorio, matricola: e.target.value })}
-              />
-            )}
+            {newAccessorio.nome && <input type="text" placeholder="Matricola (opzionale)" className="w-full p-2 border rounded-lg text-sm font-mono" value={newAccessorio.matricola} onChange={(e) => setNewAccessorio({ ...newAccessorio, matricola: e.target.value })} />}
           </div>
         </div>
 
@@ -2038,145 +940,47 @@ export default function Vendita({ onNavigate }) {
           <label className="text-xs text-gray-500">Totale vendita</label>
           <div className="relative mt-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold" style={{ color: '#006B3F' }}>€</span>
-            <input
-              type="number"
-              placeholder="0.00"
-              className="w-full p-2 pl-8 border-2 rounded-lg text-xl font-bold text-right"
-              style={{ borderColor: '#006B3F' }}
-              value={totaleManuale}
-              onChange={(e) => setTotaleManuale(e.target.value)}
-            />
+            <input type="number" placeholder="0.00" className="w-full p-2 pl-8 border-2 rounded-lg text-xl font-bold text-right" style={{ borderColor: '#006B3F' }} value={totaleManuale} onChange={(e) => setTotaleManuale(e.target.value)} />
           </div>
         </div>
 
         {/* Caparra */}
         <div className="bg-white rounded-lg p-3">
-          <label className="text-xs text-gray-500 flex items-center gap-1">
-            <CreditCard className="w-3 h-3" /> Caparra (opzionale)
-          </label>
+          <label className="text-xs text-gray-500 flex items-center gap-1"><CreditCard className="w-3 h-3" /> Caparra (opzionale)</label>
           <div className="flex gap-2 mt-1">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">€</span>
-              <input
-                type="number"
-                placeholder="0.00"
-                className="w-full p-2 pl-8 border rounded-lg"
-                value={caparra}
-                onChange={(e) => setCaparra(e.target.value)}
-              />
-            </div>
-            <select
-              className="p-2 border rounded-lg text-sm"
-              value={metodoPagamento}
-              onChange={(e) => setMetodoPagamento(e.target.value)}
-            >
-              <option value="">Metodo...</option>
-              <option value="contanti">Contanti</option>
-              <option value="carta">Carta</option>
-              <option value="pos">POS</option>
-              <option value="bonifico">Bonifico</option>
+            <div className="relative flex-1"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">€</span><input type="number" placeholder="0.00" className="w-full p-2 pl-8 border rounded-lg" value={caparra} onChange={(e) => setCaparra(e.target.value)} /></div>
+            <select className="p-2 border rounded-lg text-sm" value={metodoPagamento} onChange={(e) => setMetodoPagamento(e.target.value)}>
+              <option value="">Metodo...</option><option value="contanti">Contanti</option><option value="carta">Carta</option><option value="pos">POS</option><option value="bonifico">Bonifico</option>
             </select>
           </div>
-          
-          {parseFloat(caparra) > 0 && (
-            <div className="mt-2 p-2 bg-yellow-50 rounded-lg flex justify-between items-center">
-              <span className="text-sm text-yellow-800">Da saldare:</span>
-              <span className="font-bold text-yellow-800">€ {getDaSaldare().toFixed(2)}</span>
-            </div>
-          )}
+          {parseFloat(caparra) > 0 && <div className="mt-2 p-2 bg-yellow-50 rounded-lg flex justify-between items-center"><span className="text-sm text-yellow-800">Da saldare:</span><span className="font-bold text-yellow-800">€ {getDaSaldare().toFixed(2)}</span></div>}
         </div>
 
         {/* Note */}
         <div className="bg-white rounded-lg p-3">
-          <label className="text-xs text-gray-500 flex items-center gap-1">
-            <FileText className="w-3 h-3" /> Note (opzionale)
-          </label>
-          <textarea
-            placeholder="Es: Consegna venerdì, Ritiro in sede, Chiamare prima..."
-            className="w-full p-2 border rounded-lg mt-1 text-sm"
-            rows={2}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+          <label className="text-xs text-gray-500 flex items-center gap-1"><FileText className="w-3 h-3" /> Note (opzionale)</label>
+          <textarea placeholder="Es: Consegna venerdì, Ritiro in sede, Chiamare prima..." className="w-full p-2 border rounded-lg mt-1 text-sm" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
 
-        {/* Tipo Documento: Scontrino / Fattura */}
+        {/* Tipo Documento */}
         <div className="bg-white rounded-lg p-3">
           <label className="text-xs text-gray-500 mb-2 block">Tipo documento</label>
           <div className="flex gap-2">
-            <button
-              onClick={() => setTipoDocumento('scontrino')}
-              className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${
-                tipoDocumento === 'scontrino'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              🧾 Scontrino
-            </button>
-            <button
-              onClick={() => setTipoDocumento('fattura')}
-              className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${
-                tipoDocumento === 'fattura'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              📄 Fattura
-            </button>
+            <button onClick={() => setTipoDocumento('scontrino')} className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${tipoDocumento === 'scontrino' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>🧾 Scontrino</button>
+            <button onClick={() => setTipoDocumento('fattura')} className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${tipoDocumento === 'fattura' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📄 Fattura</button>
           </div>
-          
-          {/* Checkbox Preventivo */}
           <label className="flex items-center gap-3 mt-3 p-3 bg-orange-50 rounded-lg cursor-pointer border-2 border-transparent hover:border-orange-300 transition-all">
-            <input
-              type="checkbox"
-              checked={isPreventivo}
-              onChange={(e) => setIsPreventivo(e.target.checked)}
-              className="w-5 h-5 accent-orange-500"
-            />
-            <div>
-              <span className="font-medium text-orange-800">È un preventivo</span>
-              <p className="text-xs text-orange-600">Non registra la vendita, genera solo il documento</p>
-            </div>
+            <input type="checkbox" checked={isPreventivo} onChange={(e) => setIsPreventivo(e.target.checked)} className="w-5 h-5 accent-orange-500" />
+            <div><span className="font-medium text-orange-800">È un preventivo</span><p className="text-xs text-orange-600">Non registra la vendita, genera solo il documento</p></div>
           </label>
-
-          {/* Checkbox Reso / Cambio */}
           <label className="flex items-center gap-3 mt-2 p-3 bg-red-50 rounded-lg cursor-pointer border-2 border-transparent hover:border-red-300 transition-all">
-            <input
-              type="checkbox"
-              checked={tipoOperazione !== 'vendita'}
-              onChange={(e) => setTipoOperazione(e.target.checked ? 'reso' : 'vendita')}
-              className="w-5 h-5 accent-red-500"
-            />
-            <div className="flex-1">
-              <span className="font-medium text-red-800">Reso / Cambio merce</span>
-              <p className="text-xs text-red-600">Permette importi a zero o negativi</p>
-            </div>
+            <input type="checkbox" checked={tipoOperazione !== 'vendita'} onChange={(e) => setTipoOperazione(e.target.checked ? 'reso' : 'vendita')} className="w-5 h-5 accent-red-500" />
+            <div className="flex-1"><span className="font-medium text-red-800">Reso / Cambio merce</span><p className="text-xs text-red-600">Permette importi a zero o negativi</p></div>
           </label>
-
-          {/* Toggle Reso / Cambio */}
           {tipoOperazione !== 'vendita' && (
             <div className="flex gap-2 mt-1 px-1">
-              <button
-                onClick={() => setTipoOperazione('reso')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  tipoOperazione === 'reso'
-                    ? 'bg-red-600 text-white border-red-600'
-                    : 'bg-white text-red-600 border-red-300'
-                }`}
-              >
-                🔄 Reso
-              </button>
-              <button
-                onClick={() => setTipoOperazione('cambio')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  tipoOperazione === 'cambio'
-                    ? 'bg-orange-500 text-white border-orange-500'
-                    : 'bg-white text-orange-500 border-orange-300'
-                }`}
-              >
-                🔃 Cambio
-              </button>
+              <button onClick={() => setTipoOperazione('reso')} className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${tipoOperazione === 'reso' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-red-600 border-red-300'}`}>🔄 Reso</button>
+              <button onClick={() => setTipoOperazione('cambio')} className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${tipoOperazione === 'cambio' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-orange-500 border-orange-300'}`}>🔃 Cambio</button>
             </div>
           )}
         </div>
@@ -2184,91 +988,30 @@ export default function Vendita({ onNavigate }) {
 
       {/* Footer */}
       <div className="p-4 bg-white border-t">
-        {hasOrderedProducts && !isPreventivo && (
-          <div className="mb-3 p-2 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span>Commissione in attesa di consegna</span>
-          </div>
-        )}
-        
-        {isPreventivo && (
-          <div className="mb-3 p-2 bg-orange-50 border border-orange-300 rounded-lg text-sm text-orange-800 flex items-center gap-2">
-            📝 <span>Preventivo - non verrà registrata la vendita</span>
-          </div>
-        )}
-
-        <button
-          onClick={handleConcludi}
-          disabled={(prodotti.length === 0 && accessori.length === 0 && !note.trim()) || !cliente.trim() || !operatore.trim()}
-          className="w-full py-4 rounded-lg font-bold text-lg disabled:opacity-50"
-          style={{ 
-            backgroundColor: isPreventivo ? '#F97316' : tipoOperazione !== 'vendita' ? '#DC2626' : '#FFDD00', 
-            color: isPreventivo || tipoOperazione !== 'vendita' ? 'white' : '#006B3F' 
-          }}
-        >
-          {isPreventivo 
-            ? '📝 ANTEPRIMA PREVENTIVO'
-            : tipoOperazione === 'reso'
-              ? '🔄 ANTEPRIMA RESO'
-              : tipoOperazione === 'cambio'
-                ? '🔃 ANTEPRIMA CAMBIO'
-                : hasOrderedProducts 
-                  ? '📋 ANTEPRIMA COMMISSIONE' 
-                  : '✓ ANTEPRIMA VENDITA'}
+        {hasOrderedProducts && !isPreventivo && <div className="mb-3 p-2 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800 flex items-center gap-2"><Clock className="w-4 h-4" /><span>Commissione in attesa di consegna</span></div>}
+        {isPreventivo && <div className="mb-3 p-2 bg-orange-50 border border-orange-300 rounded-lg text-sm text-orange-800 flex items-center gap-2">📝 <span>Preventivo - non verrà registrata la vendita</span></div>}
+        <button onClick={handleConcludi} disabled={(prodotti.length === 0 && accessori.length === 0 && !note.trim()) || !cliente.trim() || !operatore.trim()} className="w-full py-4 rounded-lg font-bold text-lg disabled:opacity-50"
+          style={{ backgroundColor: isPreventivo ? '#F97316' : tipoOperazione !== 'vendita' ? '#DC2626' : '#FFDD00', color: isPreventivo || tipoOperazione !== 'vendita' ? 'white' : '#006B3F' }}>
+          {isPreventivo ? '📝 ANTEPRIMA PREVENTIVO' : tipoOperazione === 'reso' ? '🔄 ANTEPRIMA RESO' : tipoOperazione === 'cambio' ? '🔃 ANTEPRIMA CAMBIO' : hasOrderedProducts ? '📋 ANTEPRIMA COMMISSIONE' : '✓ ANTEPRIMA VENDITA'}
         </button>
       </div>
 
-      {/* MODAL MODIFICA PREZZO PRODOTTO */}
+      {/* MODAL MODIFICA PREZZO */}
       {editingProduct && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-sm p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">Modifica Prezzo</h3>
-              <button onClick={() => setEditingProduct(null)}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
-            
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold">Modifica Prezzo</h3><button onClick={() => setEditingProduct(null)}><X className="w-6 h-6 text-gray-500" /></button></div>
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="font-semibold">{editingProduct.brand} {editingProduct.model}</p>
-              <input
-                type="text"
-                className="text-xs font-mono border border-gray-300 rounded px-2 py-1 w-full mt-2 uppercase tracking-wider"
-                placeholder="Matricola (modifica se necessario)"
-                value={editProductSerial}
-                onChange={(e) => setEditProductSerial(e.target.value.toUpperCase())}
-              />
+              <input type="text" className="text-xs font-mono border border-gray-300 rounded px-2 py-1 w-full mt-2 uppercase tracking-wider" placeholder="Matricola" value={editProductSerial} onChange={(e) => setEditProductSerial(e.target.value.toUpperCase())} />
             </div>
-            
             <div className="mb-4">
               <label className="text-sm text-gray-600">Prezzo (lascia vuoto per KIT)</label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">€</span>
-                <input
-                  type="number"
-                  placeholder="Vuoto = KIT"
-                  className="w-full p-3 pl-8 border-2 rounded-lg text-lg"
-                  value={editProductPrice}
-                  onChange={(e) => setEditProductPrice(e.target.value)}
-                  autoFocus
-                />
-              </div>
+              <div className="relative mt-1"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">€</span><input type="number" placeholder="Vuoto = KIT" className="w-full p-3 pl-8 border-2 rounded-lg text-lg" value={editProductPrice} onChange={(e) => setEditProductPrice(e.target.value)} autoFocus /></div>
             </div>
-            
             <div className="flex gap-2">
-              <button
-                onClick={() => setEditingProduct(null)}
-                className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600"
-              >
-                Annulla
-              </button>
-              <button
-                onClick={handleSaveProductPrice}
-                className="flex-1 py-3 rounded-lg text-white font-semibold"
-                style={{ backgroundColor: '#006B3F' }}
-              >
-                Salva
-              </button>
+              <button onClick={() => setEditingProduct(null)} className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600">Annulla</button>
+              <button onClick={handleSaveProductPrice} className="flex-1 py-3 rounded-lg text-white font-semibold" style={{ backgroundColor: '#006B3F' }}>Salva</button>
             </div>
           </div>
         </div>
@@ -2278,94 +1021,30 @@ export default function Vendita({ onNavigate }) {
       {showAddProduct && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white rounded-t-xl sm:rounded-xl w-full sm:max-w-md max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-bold text-lg">Aggiungi Prodotto</h3>
-              <button onClick={handleCloseModal}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
-
+            <div className="flex items-center justify-between p-4 border-b"><h3 className="font-bold text-lg">Aggiungi Prodotto</h3><button onClick={handleCloseModal}><X className="w-6 h-6 text-gray-500" /></button></div>
             <div className="flex border-b">
-              <button
-                onClick={() => setAddMode('magazzino')}
-                className={`flex-1 py-3 text-sm font-medium ${
-                  addMode === 'magazzino' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'
-                }`}
-              >
-                📦 Da Magazzino
-              </button>
-              <button
-                onClick={() => setAddMode('ordine')}
-                className={`flex-1 py-3 text-sm font-medium ${
-                  addMode === 'ordine' ? 'border-b-2 border-yellow-500 text-yellow-600' : 'text-gray-500'
-                }`}
-              >
-                ⏳ Da Ordinare
-              </button>
-              <button
-                onClick={() => setAddMode('diretto')}
-                className={`flex-1 py-3 text-sm font-medium ${
-                  addMode === 'diretto' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'
-                }`}
-              >
-                ✏️ Diretto
-              </button>
+              <button onClick={() => setAddMode('magazzino')} className={`flex-1 py-3 text-sm font-medium ${addMode === 'magazzino' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}>📦 Da Magazzino</button>
+              <button onClick={() => setAddMode('ordine')} className={`flex-1 py-3 text-sm font-medium ${addMode === 'ordine' ? 'border-b-2 border-yellow-500 text-yellow-600' : 'text-gray-500'}`}>⏳ Da Ordinare</button>
+              <button onClick={() => setAddMode('diretto')} className={`flex-1 py-3 text-sm font-medium ${addMode === 'diretto' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}>✏️ Diretto</button>
             </div>
-
             <div className="flex-1 overflow-auto p-4">
               {addMode === 'magazzino' ? (
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs text-gray-500">Cerca per brand, modello o matricola</label>
                     <div className="flex gap-2 mt-1">
-                      <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Es: Stihl, RMA, 450163..."
-                          className="w-full p-2 pl-9 border rounded-lg"
-                          value={searchQuery}
-                          onChange={(e) => { setSearchQuery(e.target.value); setSelectedProduct(null); }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => setShowOcrChoice(true)}
-                        disabled={scanning}
-                        className="px-3 rounded-lg text-white flex items-center"
-                        style={{ backgroundColor: '#006B3F' }}
-                        title="Scansiona matricola"
-                      >
-                        <Camera className="w-5 h-5" />
-                        {scanning && <span className="ml-1 text-xs">...</span>}
-                      </button>
+                      <div className="flex-1 relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" placeholder="Es: Stihl, RMA, 450163..." className="w-full p-2 pl-9 border rounded-lg" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setSelectedProduct(null); }} /></div>
+                      <button onClick={() => setShowOcrChoice(true)} disabled={scanning} className="px-3 rounded-lg text-white flex items-center" style={{ backgroundColor: '#006B3F' }} title="Scansiona matricola"><Camera className="w-5 h-5" />{scanning && <span className="ml-1 text-xs">...</span>}</button>
                     </div>
                   </div>
-
                   {ocrError && (
                     <div className="p-2 bg-yellow-50 border border-yellow-300 rounded text-sm text-yellow-800">
                       <div className="flex items-center justify-between gap-2">
                         <span>⚠️ {ocrError}</span>
-                        {ocrError.includes('non in magazzino') && (
-                          <button
-                            onClick={() => {
-                              setAutoAddData({
-                                brand: '',
-                                model: '',
-                                serialNumber: searchQuery.trim().toUpperCase(),
-                                tipo: ''
-                              });
-                              setShowAutoAdd(true);
-                            }}
-                            className="shrink-0 text-xs font-bold px-2 py-1 rounded text-white"
-                            style={{ backgroundColor: '#006B3F' }}
-                          >
-                            + Aggiungi
-                          </button>
-                        )}
+                        {ocrError.includes('non in magazzino') && <button onClick={() => { setAutoAddData({ brand: '', model: '', serialNumber: searchQuery.trim().toUpperCase(), tipo: '' }); setShowAutoAdd(true); }} className="shrink-0 text-xs font-bold px-2 py-1 rounded text-white" style={{ backgroundColor: '#006B3F' }}>+ Aggiungi</button>}
                       </div>
                     </div>
                   )}
-
                   {selectedProduct ? (
                     <div className="p-3 border-2 rounded-lg" style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4' }}>
                       <div className="flex items-center justify-between gap-2">
@@ -2373,114 +1052,44 @@ export default function Vendita({ onNavigate }) {
                           {editingModel ? (
                             <div className="flex items-center gap-1">
                               <span className="font-bold text-sm shrink-0" style={{ color: '#006B3F' }}>{selectedProduct.brand}</span>
-                              <input
-                                autoFocus
-                                className="flex-1 border border-green-500 rounded px-2 py-0.5 text-sm font-bold min-w-0"
-                                style={{ color: '#006B3F' }}
-                                value={editModelValue}
-                                onChange={e => setEditModelValue(e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter') { setSelectedProduct(p => ({ ...p, model: editModelValue.trim() || p.model })); setEditingModel(false); }
-                                  if (e.key === 'Escape') setEditingModel(false);
-                                }}
-                              />
-                              <button onClick={() => { setSelectedProduct(p => ({ ...p, model: editModelValue.trim() || p.model })); setEditingModel(false); }}
-                                className="text-xs bg-green-600 text-white px-2 py-0.5 rounded font-bold shrink-0">✓</button>
+                              <input autoFocus className="flex-1 border border-green-500 rounded px-2 py-0.5 text-sm font-bold min-w-0" style={{ color: '#006B3F' }} value={editModelValue} onChange={e => setEditModelValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { setSelectedProduct(p => ({ ...p, model: editModelValue.trim() || p.model })); setEditingModel(false); } if (e.key === 'Escape') setEditingModel(false); }} />
+                              <button onClick={() => { setSelectedProduct(p => ({ ...p, model: editModelValue.trim() || p.model })); setEditingModel(false); }} className="text-xs bg-green-600 text-white px-2 py-0.5 rounded font-bold shrink-0">✓</button>
                             </div>
                           ) : (
                             <div className="flex items-center gap-1 flex-wrap">
-                              <p className="font-bold" style={{ color: '#006B3F' }}>
-                                {selectedProduct.brand} {selectedProduct.model}
-                              </p>
-                              <button onClick={() => { setEditModelValue(selectedProduct.model || ''); setEditingModel(true); }}
-                                className="text-gray-400 hover:text-green-700 text-sm" title="Correggi modello">✏️</button>
+                              <p className="font-bold" style={{ color: '#006B3F' }}>{selectedProduct.brand} {selectedProduct.model}</p>
+                              <button onClick={() => { setEditModelValue(selectedProduct.model || ''); setEditingModel(true); }} className="text-gray-400 hover:text-green-700 text-sm">✏️</button>
                             </div>
                           )}
                           <p className="text-xs font-mono text-gray-600">{selectedProduct.serialNumber}</p>
                         </div>
-                        <button onClick={() => { setSelectedProduct(null); setEditingModel(false); }} className="text-gray-400 shrink-0">
-                          <X className="w-5 h-5" />
-                        </button>
+                        <button onClick={() => { setSelectedProduct(null); setEditingModel(false); }} className="text-gray-400 shrink-0"><X className="w-5 h-5" /></button>
                       </div>
                     </div>
                   ) : (
                     <div className="border rounded-lg max-h-64 overflow-auto">
                       {filteredInventory.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 text-sm">
-                          {searchQuery ? 'Nessun prodotto trovato' : `${inventory.length} prodotti in magazzino`}
-                        </div>
+                        <div className="p-4 text-center text-gray-500 text-sm">{searchQuery ? 'Nessun prodotto trovato' : `${inventory.length} prodotti in magazzino`}</div>
                       ) : (
-                        filteredInventory.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => handleSelectProduct(item)}
-                            className="w-full text-left p-2 hover:bg-gray-50 border-b last:border-b-0 flex items-center"
-                          >
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{item.brand} {item.model}</p>
-                              <p className="text-xs text-gray-500 font-mono">{item.serialNumber}</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-gray-400" />
-                          </button>
-                        ))
+                        filteredInventory.map((item) => (<button key={item.id} onClick={() => handleSelectProduct(item)} className="w-full text-left p-2 hover:bg-gray-50 border-b last:border-b-0 flex items-center"><div className="flex-1"><p className="font-medium text-sm">{item.brand} {item.model}</p><p className="text-xs text-gray-500 font-mono">{item.serialNumber}</p></div><ChevronRight className="w-4 h-4 text-gray-400" /></button>))
                       )}
                     </div>
                   )}
-
                   {selectedProduct && (
                     <>
                       <div>
                         <label className="text-xs text-gray-500">Prezzo (lascia vuoto se fa parte di un KIT)</label>
-                        <input
-                          type="number"
-                          placeholder="Vuoto = parte del kit"
-                          className="w-full p-2 border rounded-lg mt-1"
-                          value={productPrice}
-                          onChange={(e) => { setProductPrice(e.target.value); setFasceProdottoListino([]); }}
-                        />
-                        {/* Dropdown selezione se più prodotti trovati nel listino */}
+                        <input type="number" placeholder="Vuoto = parte del kit" className="w-full p-2 border rounded-lg mt-1" value={productPrice} onChange={(e) => { setProductPrice(e.target.value); setFasceProdottoListino([]); }} />
                         {fasceProdottoListino.length > 0 && (
                           <div className="mt-2 border border-green-200 rounded-lg overflow-hidden bg-green-50">
-                            <p className="text-xs text-green-700 px-3 py-1.5 font-medium border-b border-green-200">
-                              🏷️ Trovati nel listino — seleziona:
-                            </p>
-                            {fasceProdottoListino.map((fascia, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => {
-                                  setProductPrice(fascia.prezzo.toString());
-                                  setFasceProdottoListino([]);
-                                }}
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-green-100 active:bg-green-200 border-b border-green-100 last:border-0"
-                              >
-                                <span className="text-gray-700 truncate block">{fascia.label}</span>
-                                <span className="text-green-700 font-semibold">€ {fascia.prezzo.toFixed(2)}</span>
-                              </button>
-                            ))}
+                            <p className="text-xs text-green-700 px-3 py-1.5 font-medium border-b border-green-200">🏷️ Trovati nel listino — seleziona:</p>
+                            {fasceProdottoListino.map((fascia, i) => (<button key={i} type="button" onClick={() => { setProductPrice(fascia.prezzo.toString()); setFasceProdottoListino([]); }} className="w-full text-left px-3 py-2 text-sm hover:bg-green-100 border-b border-green-100 last:border-0"><span className="text-gray-700 truncate block">{fascia.label}</span><span className="text-green-700 font-semibold">€ {fascia.prezzo.toFixed(2)}</span></button>))}
                           </div>
                         )}
                       </div>
-
                       <div className="text-center">
-                        {!showOmaggioOption ? (
-                          <button 
-                            onClick={() => setShowOmaggioOption(true)}
-                            className="text-xs text-gray-400 underline"
-                          >
-                            È un omaggio?
-                          </button>
-                        ) : (
-                          <label className="flex items-center justify-center gap-2 p-2 bg-green-50 rounded cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isOmaggio}
-                              onChange={(e) => setIsOmaggio(e.target.checked)}
-                              className="accent-green-500"
-                            />
-                            <Gift className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-green-700">Prodotto omaggio</span>
-                          </label>
+                        {!showOmaggioOption ? (<button onClick={() => setShowOmaggioOption(true)} className="text-xs text-gray-400 underline">È un omaggio?</button>) : (
+                          <label className="flex items-center justify-center gap-2 p-2 bg-green-50 rounded cursor-pointer"><input type="checkbox" checked={isOmaggio} onChange={(e) => setIsOmaggio(e.target.checked)} className="accent-green-500" /><Gift className="w-4 h-4 text-green-600" /><span className="text-sm text-green-700">Prodotto omaggio</span></label>
                         )}
                       </div>
                     </>
@@ -2488,403 +1097,125 @@ export default function Vendita({ onNavigate }) {
                 </div>
               ) : addMode === 'ordine' ? (
                 <div className="space-y-3">
-                  <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                    ⏳ Matricola da aggiungere alla consegna
-                  </div>
-
+                  <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">⏳ Matricola da aggiungere alla consegna</div>
                   <div>
                     <label className="text-xs text-gray-500">Brand *</label>
-                    <input
-                      type="text"
-                      list="order-brand-list"
-                      placeholder="Seleziona o digita il brand..."
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={orderBrand}
-                      onChange={(e) => setOrderBrand(e.target.value)}
-                    />
-                    <datalist id="order-brand-list">
-                      {brands.map(b => (
-                        <option key={b} value={b} />
-                      ))}
-                    </datalist>
+                    <input type="text" list="order-brand-list" placeholder="Seleziona o digita il brand..." className="w-full p-2 border rounded-lg mt-1" value={orderBrand} onChange={(e) => setOrderBrand(e.target.value)} />
+                    <datalist id="order-brand-list">{brands.map(b => <option key={b} value={b} />)}</datalist>
                   </div>
-
                   <div>
-                    <label className="text-xs text-gray-500">Tipo macchina *</label>
-                    <input
-                      type="text"
-                      list="order-tipo-list"
-                      placeholder="Seleziona o digita il tipo..."
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={orderTipo}
-                      onChange={(e) => setOrderTipo(e.target.value)}
-                    />
-                    <datalist id="order-tipo-list">
-                      {tipiMacchina.filter(t => t !== 'Altro').map(tipo => (
-                        <option key={tipo} value={tipo} />
-                      ))}
-                    </datalist>
+                    <label className="text-xs text-gray-500 flex items-center justify-between">
+                      Tipo macchina *
+                      {orderTipo && <span className="text-green-600 font-medium text-xs">✓ auto-rilevato</span>}
+                    </label>
+                    <input type="text" list="order-tipo-list" placeholder="Seleziona o digita il tipo..." className={`w-full p-2 border rounded-lg mt-1 ${orderTipo ? 'border-green-400 bg-green-50' : ''}`} value={orderTipo} onChange={(e) => setOrderTipo(e.target.value)} />
+                    <datalist id="order-tipo-list">{tipiMacchina.filter(t => t !== 'Altro').map(tipo => <option key={tipo} value={tipo} />)}</datalist>
                   </div>
-
                   <div>
                     <label className="text-xs text-gray-500">Modello *</label>
-                    <input
-                      type="text"
-                      placeholder="Nome modello"
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={orderModel}
-                      onChange={(e) => setOrderModel(e.target.value)}
-                    />
+                    <input type="text" placeholder="Nome modello (es: MS 500i)" className="w-full p-2 border rounded-lg mt-1" value={orderModel} onChange={(e) => setOrderModel(e.target.value)} />
                   </div>
-
                   <div>
                     <label className="text-xs text-gray-500">Prezzo (lascia vuoto se fa parte di un KIT)</label>
-                    <input
-                      type="number"
-                      placeholder="Vuoto = parte del kit"
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={productPrice}
-                      onChange={(e) => setProductPrice(e.target.value)}
-                    />
+                    <input type="number" placeholder="Vuoto = parte del kit" className="w-full p-2 border rounded-lg mt-1" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
                   </div>
-
                   <div className="text-center">
-                    {!showOmaggioOption ? (
-                      <button 
-                        onClick={() => setShowOmaggioOption(true)}
-                        className="text-xs text-gray-400 underline"
-                      >
-                        È un omaggio?
-                      </button>
-                    ) : (
-                      <label className="flex items-center justify-center gap-2 p-2 bg-green-50 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isOmaggio}
-                          onChange={(e) => setIsOmaggio(e.target.checked)}
-                          className="accent-green-500"
-                        />
-                        <Gift className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-700">Prodotto omaggio</span>
-                      </label>
+                    {!showOmaggioOption ? (<button onClick={() => setShowOmaggioOption(true)} className="text-xs text-gray-400 underline">È un omaggio?</button>) : (
+                      <label className="flex items-center justify-center gap-2 p-2 bg-green-50 rounded cursor-pointer"><input type="checkbox" checked={isOmaggio} onChange={(e) => setIsOmaggio(e.target.checked)} className="accent-green-500" /><Gift className="w-4 h-4 text-green-600" /><span className="text-sm text-green-700">Prodotto omaggio</span></label>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
-                    ✏️ Inserisci i dati a mano. Se la matricola è in magazzino, brand e modello si compilano da soli.
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-gray-500">Matricola (opzionale)</label>
-                    <input
-                      type="text"
-                      placeholder="Es: EC016812024"
-                      className="w-full p-2 border rounded-lg mt-1 font-mono uppercase"
-                      value={directSerial}
-                      onChange={(e) => setDirectSerial(e.target.value.toUpperCase())}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-gray-500">Brand *</label>
-                    <input
-                      type="text"
-                      list="direct-brand-list"
-                      placeholder="Es: Stihl, Honda..."
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={directBrand}
-                      onChange={(e) => setDirectBrand(e.target.value)}
-                    />
-                    <datalist id="direct-brand-list">
-                      {brands.map(b => (
-                        <option key={b} value={b} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-gray-500">Modello</label>
-                    <input
-                      type="text"
-                      placeholder="Es: MS 231, HRX 476..."
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={directModel}
-                      onChange={(e) => setDirectModel(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-gray-500">Prezzo (lascia vuoto se fa parte di un KIT)</label>
-                    <input
-                      type="number"
-                      placeholder="Vuoto = parte del kit"
-                      className="w-full p-2 border rounded-lg mt-1"
-                      value={directPrice}
-                      onChange={(e) => setDirectPrice(e.target.value)}
-                    />
-                  </div>
+                  <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">✏️ Inserisci i dati a mano. Se la matricola è in magazzino, brand e modello si compilano da soli.</div>
+                  <div><label className="text-xs text-gray-500">Matricola (opzionale)</label><input type="text" placeholder="Es: EC016812024" className="w-full p-2 border rounded-lg mt-1 font-mono uppercase" value={directSerial} onChange={(e) => setDirectSerial(e.target.value.toUpperCase())} /></div>
+                  <div><label className="text-xs text-gray-500">Brand *</label><input type="text" list="direct-brand-list" placeholder="Es: Stihl, Honda..." className="w-full p-2 border rounded-lg mt-1" value={directBrand} onChange={(e) => setDirectBrand(e.target.value)} /><datalist id="direct-brand-list">{brands.map(b => <option key={b} value={b} />)}</datalist></div>
+                  <div><label className="text-xs text-gray-500">Modello</label><input type="text" placeholder="Es: MS 231, HRX 476..." className="w-full p-2 border rounded-lg mt-1" value={directModel} onChange={(e) => setDirectModel(e.target.value)} /></div>
+                  <div><label className="text-xs text-gray-500">Prezzo (lascia vuoto se fa parte di un KIT)</label><input type="number" placeholder="Vuoto = parte del kit" className="w-full p-2 border rounded-lg mt-1" value={directPrice} onChange={(e) => setDirectPrice(e.target.value)} /></div>
                 </div>
               )}
             </div>
-
             <div className="p-4 border-t">
               {addMode === 'magazzino' ? (
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleConfirmProduct}
-                    disabled={!selectedProduct}
-                    className="flex-1 py-3 rounded-lg font-bold border-2 disabled:opacity-50"
-                    style={{ borderColor: '#006B3F', color: '#006B3F' }}
-                  >
-                    + Aggiungi un altro
-                  </button>
-                  <button
-                    onClick={handleConfirmProductAndClose}
-                    disabled={!selectedProduct}
-                    className="flex-1 py-3 rounded-lg font-bold text-white disabled:opacity-50"
-                    style={{ backgroundColor: '#006B3F' }}
-                  >
-                    + AGGIUNGI
-                  </button>
+                  <button onClick={handleConfirmProduct} disabled={!selectedProduct} className="flex-1 py-3 rounded-lg font-bold border-2 disabled:opacity-50" style={{ borderColor: '#006B3F', color: '#006B3F' }}>+ Aggiungi un altro</button>
+                  <button onClick={handleConfirmProductAndClose} disabled={!selectedProduct} className="flex-1 py-3 rounded-lg font-bold text-white disabled:opacity-50" style={{ backgroundColor: '#006B3F' }}>+ AGGIUNGI</button>
                 </div>
               ) : addMode === 'ordine' ? (
-                <button
-                  onClick={handleAddOrderProduct}
-                  disabled={!orderBrand.trim() || !orderTipo.trim() || !orderModel.trim()}
-                  className="w-full py-3 rounded-lg font-bold text-white bg-yellow-500 disabled:opacity-50"
-                >
-                  + AGGIUNGI IN ORDINE
-                </button>
+                <button onClick={handleAddOrderProduct} disabled={!orderBrand.trim() || !orderTipo.trim() || !orderModel.trim()} className="w-full py-3 rounded-lg font-bold text-white bg-yellow-500 disabled:opacity-50">+ AGGIUNGI IN ORDINE</button>
               ) : (
-                <button
-                  onClick={handleAddDirectProduct}
-                  disabled={!directBrand.trim() || directAdding}
-                  className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-50"
-                  style={{ backgroundColor: '#3b82f6' }}
-                >
-                  {directAdding ? '⏳ Aggiungo...' : '+ AGGIUNGI'}
-                </button>
+                <button onClick={handleAddDirectProduct} disabled={!directBrand.trim() || directAdding} className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-50" style={{ backgroundColor: '#3b82f6' }}>{directAdding ? '⏳ Aggiungo...' : '+ AGGIUNGI'}</button>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* MODALE Revisione Righe OCR */}
+      {/* MODALE Revisione OCR */}
       {showOcrReview && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <h3 className="font-bold text-lg">Verifica Righe</h3>
-                <p className="text-xs text-gray-500">{ocrRighe.length} righe lette - correggi se necessario</p>
-              </div>
-              <button onClick={() => { setShowOcrReview(false); setOcrRighe([]); }}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
+              <div><h3 className="font-bold text-lg">Verifica Righe</h3><p className="text-xs text-gray-500">{ocrRighe.length} righe lette</p></div>
+              <button onClick={() => { setShowOcrReview(false); setOcrRighe([]); }}><X className="w-6 h-6 text-gray-500" /></button>
             </div>
-            
             <div className="flex-1 overflow-auto p-3 space-y-2">
               {ocrRighe.map((riga) => (
-                <div key={riga.id} className={`p-3 rounded-lg border ${
-                  riga.campo === 'ignora' ? 'bg-gray-50 border-gray-200 opacity-50' :
-                  riga.campo === 'cliente' ? 'bg-blue-50 border-blue-200' :
-                  riga.campo === 'macchina' ? 'bg-green-50 border-green-200' :
-                  riga.campo === 'matricola' ? 'bg-emerald-50 border-emerald-300' :
-                  riga.campo === 'accessorio' ? 'bg-yellow-50 border-yellow-200' :
-                  riga.campo === 'prezzo_totale' ? 'bg-purple-50 border-purple-200' :
-                  riga.campo === 'caparra' ? 'bg-orange-50 border-orange-200' :
-                  riga.campo === 'fattura' ? 'bg-indigo-50 border-indigo-200' :
-                  riga.campo === 'data' ? 'bg-cyan-50 border-cyan-200' :
-                  riga.campo === 'note' ? 'bg-pink-50 border-pink-200' :
-                  'bg-white border-gray-200'
-                }`}>
+                <div key={riga.id} className={`p-3 rounded-lg border ${riga.campo === 'ignora' ? 'bg-gray-50 border-gray-200 opacity-50' : riga.campo === 'cliente' ? 'bg-blue-50 border-blue-200' : riga.campo === 'macchina' ? 'bg-green-50 border-green-200' : riga.campo === 'matricola' ? 'bg-emerald-50 border-emerald-300' : riga.campo === 'accessorio' ? 'bg-yellow-50 border-yellow-200' : riga.campo === 'prezzo_totale' ? 'bg-purple-50 border-purple-200' : riga.campo === 'caparra' ? 'bg-orange-50 border-orange-200' : riga.campo === 'fattura' ? 'bg-indigo-50 border-indigo-200' : riga.campo === 'data' ? 'bg-cyan-50 border-cyan-200' : riga.campo === 'note' ? 'bg-pink-50 border-pink-200' : 'bg-white border-gray-200'}`}>
                   <div className="flex items-start gap-2">
-                    {/* Pulsante unisci con riga sopra */}
-                    {ocrRighe.indexOf(riga) > 0 && (
-                      <button
-                        onClick={() => handleOcrMergeUp(riga.id)}
-                        className="shrink-0 w-7 h-7 flex items-center justify-center text-blue-500 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 active:bg-blue-200 text-base font-bold"
-                        title="Unisci con riga sopra"
-                      >
-                        ↑
-                      </button>
-                    )}
-                    {ocrRighe.indexOf(riga) === 0 && (
-                      <div className="shrink-0 w-7" />
-                    )}
+                    {ocrRighe.indexOf(riga) > 0 ? <button onClick={() => handleOcrMergeUp(riga.id)} className="shrink-0 w-7 h-7 flex items-center justify-center text-blue-500 bg-blue-50 border border-blue-200 rounded-md text-base font-bold">↑</button> : <div className="shrink-0 w-7" />}
                     <div className="flex-1 min-w-0">
-                      <input
-                        type="text"
-                        value={riga.testo}
-                        onChange={(e) => handleOcrTestoChange(riga.id, e.target.value)}
-                        className="w-full text-sm font-medium bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      />
+                      <input type="text" value={riga.testo} onChange={(e) => handleOcrTestoChange(riga.id, e.target.value)} className="w-full text-sm font-medium bg-transparent border-none p-0 focus:outline-none" />
                       {riga.brand && (
                         <div className="flex items-center gap-1 mt-0.5">
                           <span className="text-xs text-green-600">Brand:</span>
-                          <input
-                            type="text"
-                            value={riga.brand}
-                            onChange={(e) => {
-                              const newBrand = e.target.value;
-                              setOcrRighe(prev => prev.map(r => r.id === riga.id ? { ...r, brand: newBrand } : r));
-                            }}
-                            className="text-xs text-green-700 font-medium bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-24 focus:outline-none focus:ring-1 focus:ring-green-300"
-                          />
-                          <button
-                            onClick={() => setOcrRighe(prev => prev.map(r => r.id === riga.id ? { ...r, brand: '' } : r))}
-                            className="text-xs text-red-400 hover:text-red-600"
-                            title="Rimuovi brand"
-                          >✕</button>
+                          <input type="text" value={riga.brand} onChange={(e) => setOcrRighe(prev => prev.map(r => r.id === riga.id ? { ...r, brand: e.target.value } : r))} className="text-xs text-green-700 font-medium bg-green-50 border border-green-200 rounded px-1.5 py-0.5 w-24 focus:outline-none" />
+                          <button onClick={() => setOcrRighe(prev => prev.map(r => r.id === riga.id ? { ...r, brand: '' } : r))} className="text-xs text-red-400">✕</button>
                         </div>
                       )}
                     </div>
-                    {/* Campo prezzo per macchine e accessori */}
                     {(riga.campo === 'macchina' || riga.campo === 'accessorio') && (
                       <div className="flex items-center gap-1 shrink-0">
                         <span className="text-xs text-gray-400">€</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={riga.prezzo != null && riga.prezzo !== 0 ? riga.prezzo : ''}
-                          onChange={(e) => handleOcrPrezzoChange(riga.id, e.target.value)}
-                          className="w-20 text-sm text-right bg-white border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
-                        />
+                        <input type="number" step="0.01" placeholder="0.00" value={riga.prezzo != null && riga.prezzo !== 0 ? riga.prezzo : ''} onChange={(e) => handleOcrPrezzoChange(riga.id, e.target.value)} className="w-20 text-sm text-right bg-white border rounded px-2 py-1 focus:outline-none" />
                       </div>
                     )}
-                    <select
-                      value={riga.campo}
-                      onChange={(e) => handleOcrCampoChange(riga.id, e.target.value)}
-                      className="text-xs font-medium border rounded-md px-2 py-1 bg-white min-w-[100px] shrink-0"
-                    >
-                      <option value="cliente">Cliente</option>
-                      <option value="macchina">Macchina</option>
-                      <option value="matricola">Matricola</option>
-                      <option value="accessorio">Accessorio</option>
-                      <option value="prezzo_totale">Prezzo tot.</option>
-                      <option value="caparra">Caparra</option>
-                      <option value="fattura">Fattura</option>
-                      <option value="data">Data</option>
-                      <option value="note">Note</option>
-                      <option value="ignora">Ignora</option>
+                    <select value={riga.campo} onChange={(e) => handleOcrCampoChange(riga.id, e.target.value)} className="text-xs font-medium border rounded-md px-2 py-1 bg-white min-w-[100px] shrink-0">
+                      <option value="cliente">Cliente</option><option value="macchina">Macchina</option><option value="matricola">Matricola</option><option value="accessorio">Accessorio</option><option value="prezzo_totale">Prezzo tot.</option><option value="caparra">Caparra</option><option value="fattura">Fattura</option><option value="data">Data</option><option value="note">Note</option><option value="ignora">Ignora</option>
                     </select>
                   </div>
                 </div>
               ))}
             </div>
-            
             <div className="p-4 border-t flex gap-2">
-              <button
-                onClick={() => setShowOcrReview(false)}
-                className="flex-1 py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500"
-              >
-                Annulla
-              </button>
-              <button
-                onClick={handleConfirmOcrRighe}
-                className="flex-[2] py-3 rounded-lg font-bold text-white"
-                style={{ backgroundColor: '#3b82f6' }}
-              >
-                Conferma e compila
-              </button>
+              <button onClick={() => setShowOcrReview(false)} className="flex-1 py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500">Annulla</button>
+              <button onClick={handleConfirmOcrRighe} className="flex-[2] py-3 rounded-lg font-bold text-white" style={{ backgroundColor: '#3b82f6' }}>Conferma e compila</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODALE Auto-carico macchina non trovata */}
+      {/* MODALE Auto-carico */}
       {showAutoAdd && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-bold text-lg">📦 Macchina non in magazzino</h3>
-              <button onClick={() => setShowAutoAdd(false)}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
+            <div className="flex items-center justify-between p-4 border-b"><h3 className="font-bold text-lg">📦 Macchina non in magazzino</h3><button onClick={() => setShowAutoAdd(false)}><X className="w-6 h-6 text-gray-500" /></button></div>
             <div className="p-4 space-y-3">
-              <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800">
-                Questa macchina non risulta caricata. Compila i dati e verrà aggiunta automaticamente al magazzino prima di procedere con la vendita. Sarà segnata come <strong>carico automatico</strong> per un controllo successivo.
-              </div>
-
+              <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800">Compila i dati e verrà aggiunta automaticamente al magazzino.</div>
+              <div><label className="text-xs text-gray-500">Matricola</label><input type="text" className="w-full p-2 border rounded-lg mt-1 font-mono bg-gray-50" value={autoAddData.serialNumber} onChange={(e) => setAutoAddData(p => ({ ...p, serialNumber: e.target.value.toUpperCase() }))} /></div>
+              <div><label className="text-xs text-gray-500">Brand *</label><input type="text" list="auto-add-brand-list" placeholder="Es: Stihl, Honda..." className="w-full p-2 border rounded-lg mt-1" value={autoAddData.brand} onChange={(e) => setAutoAddData(p => ({ ...p, brand: e.target.value }))} /><datalist id="auto-add-brand-list">{brands.map(b => <option key={b} value={b} />)}</datalist></div>
               <div>
-                <label className="text-xs text-gray-500">Matricola</label>
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded-lg mt-1 font-mono bg-gray-50"
-                  value={autoAddData.serialNumber}
-                  onChange={(e) => setAutoAddData(p => ({ ...p, serialNumber: e.target.value.toUpperCase() }))}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-500">Brand *</label>
-                <input
-                  type="text"
-                  list="auto-add-brand-list"
-                  placeholder="Es: Stihl, Honda..."
-                  className="w-full p-2 border rounded-lg mt-1"
-                  value={autoAddData.brand}
-                  onChange={(e) => setAutoAddData(p => ({ ...p, brand: e.target.value }))}
-                />
-                <datalist id="auto-add-brand-list">
-                  {brands.map(b => (
-                    <option key={b} value={b} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-500">Tipo macchina</label>
-                <select
-                  className="w-full p-2 border rounded-lg mt-1"
-                  value={autoAddData.tipo}
-                  onChange={(e) => setAutoAddData(p => ({ ...p, tipo: e.target.value }))}
-                >
-                  <option value="">-- Non specificato --</option>
-                  {tipiMacchina.map(t => <option key={t} value={t}>{t}</option>)}
+                <label className="text-xs text-gray-500 flex items-center justify-between">Tipo macchina{autoAddData.tipo && <span className="text-green-600 text-xs">✓ auto-rilevato</span>}</label>
+                <select className={`w-full p-2 border rounded-lg mt-1 ${autoAddData.tipo ? 'border-green-400 bg-green-50' : ''}`} value={autoAddData.tipo} onChange={(e) => setAutoAddData(p => ({ ...p, tipo: e.target.value }))}>
+                  <option value="">-- Non specificato --</option>{tipiMacchina.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
-                {autoAddData.tipo === 'Altro' && (
-                  <input
-                    type="text"
-                    placeholder="Specifica tipo macchina..."
-                    className="w-full p-2 border rounded-lg mt-2"
-                    value={autoAddData.tipoCustom || ''}
-                    onChange={(e) => setAutoAddData(p => ({ ...p, tipoCustom: e.target.value }))}
-                  />
-                )}
+                {autoAddData.tipo === 'Altro' && <input type="text" placeholder="Specifica tipo..." className="w-full p-2 border rounded-lg mt-2" value={autoAddData.tipoCustom || ''} onChange={(e) => setAutoAddData(p => ({ ...p, tipoCustom: e.target.value }))} />}
               </div>
-
-              <div>
-                <label className="text-xs text-gray-500">Modello</label>
-                <input
-                  type="text"
-                  placeholder="Es: MS 231, HRX 476..."
-                  className="w-full p-2 border rounded-lg mt-1"
-                  value={autoAddData.model}
-                  onChange={(e) => setAutoAddData(p => ({ ...p, model: e.target.value }))}
-                />
-              </div>
+              <div><label className="text-xs text-gray-500">Modello</label><input type="text" placeholder="Es: MS 231, HRX 476..." className="w-full p-2 border rounded-lg mt-1" value={autoAddData.model} onChange={(e) => setAutoAddData(p => ({ ...p, model: e.target.value }))} /></div>
             </div>
             <div className="p-4 border-t flex gap-2">
-              <button
-                onClick={() => setShowAutoAdd(false)}
-                className="flex-1 py-3 rounded-lg border-2 border-gray-300 text-gray-600 font-semibold"
-              >
-                Annulla
-              </button>
-              <button
-                onClick={handleAutoAdd}
-                disabled={!autoAddData.brand.trim() || !autoAddData.serialNumber.trim() || autoAdding}
-                className="flex-[2] py-3 rounded-lg text-white font-bold disabled:opacity-50"
-                style={{ backgroundColor: '#006B3F' }}
-              >
-                {autoAdding ? '⏳ Carico in corso...' : '✓ Aggiungi e continua'}
-              </button>
+              <button onClick={() => setShowAutoAdd(false)} className="flex-1 py-3 rounded-lg border-2 border-gray-300 text-gray-600 font-semibold">Annulla</button>
+              <button onClick={handleAutoAdd} disabled={!autoAddData.brand.trim() || !autoAddData.serialNumber.trim() || autoAdding} className="flex-[2] py-3 rounded-lg text-white font-bold disabled:opacity-50" style={{ backgroundColor: '#006B3F' }}>{autoAdding ? '⏳ Carico in corso...' : '✓ Aggiungi e continua'}</button>
             </div>
           </div>
         </div>
@@ -2894,376 +1225,90 @@ export default function Vendita({ onNavigate }) {
       {showNuovoCliente && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                <User className="w-5 h-5" style={{ color: '#006B3F' }} />
-                Nuovo Cliente
-              </h3>
-              <button onClick={() => setShowNuovoCliente(false)}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
-
+            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10"><h3 className="font-bold text-lg flex items-center gap-2"><User className="w-5 h-5" style={{ color: '#006B3F' }} />Nuovo Cliente</h3><button onClick={() => setShowNuovoCliente(false)}><X className="w-6 h-6 text-gray-500" /></button></div>
             <div className="p-4 space-y-3">
-              {/* Sezione scansione documento */}
               <div className="space-y-2">
-
-                {/* Indicatore step fronte/retro */}
                 <div className="flex items-center gap-2 text-xs font-medium">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-                    scanStep === 'idle' && !scanningDocumento ? 'bg-green-100 text-green-700' :
-                    scanStep === 'fronte_done' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    {scanStep === 'fronte_done' ? '✓' : '1'} Fronte
-                  </div>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${scanStep === 'idle' && !scanningDocumento ? 'bg-green-100 text-green-700' : scanStep === 'fronte_done' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400'}`}>{scanStep === 'fronte_done' ? '✓' : '1'} Fronte</div>
                   <div className="flex-1 h-px bg-gray-200" />
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-                    scanStep === 'fronte_done' && !scanningDocumento ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    2 Retro
-                  </div>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${scanStep === 'fronte_done' && !scanningDocumento ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>2 Retro</div>
                 </div>
-
-                {/* Pulsanti FRONTE */}
                 <div className="flex gap-2">
-                  <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 cursor-pointer font-medium text-sm transition-colors ${
-                    scanningDocumento && scanLato === 'fronte'
-                      ? 'border-gray-300 text-gray-400 bg-gray-50'
-                      : scanStep === 'fronte_done'
-                        ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
-                        : 'border-green-400 border-dashed text-green-700 bg-green-50 hover:bg-green-100'
-                  }`}>
-                    <input type="file" accept="image/*" capture="environment"
-                      onChange={e => handleScanDocumento(e, 'fronte')}
-                      disabled={scanningDocumento} className="hidden" />
-                    {scanningDocumento && scanLato === 'fronte' ? (
-                      <><div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />Lettura fronte...</>
-                    ) : scanStep === 'fronte_done' ? (
-                      <>✓ Fronte acquisito</>
-                    ) : (
-                      <>📷 Scansiona Fronte</>
-                    )}
+                  <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 cursor-pointer font-medium text-sm transition-colors ${scanningDocumento && scanLato === 'fronte' ? 'border-gray-300 text-gray-400 bg-gray-50' : scanStep === 'fronte_done' ? 'border-green-500 text-green-700 bg-green-50' : 'border-green-400 border-dashed text-green-700 bg-green-50'}`}>
+                    <input type="file" accept="image/*" capture="environment" onChange={e => handleScanDocumento(e, 'fronte')} disabled={scanningDocumento} className="hidden" />
+                    {scanningDocumento && scanLato === 'fronte' ? <><div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />Lettura...</> : scanStep === 'fronte_done' ? <>✓ Fronte acquisito</> : <>📷 Scansiona Fronte</>}
                   </label>
-                  <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm transition-colors ${
-                    scanningDocumento ? 'border-gray-300 text-gray-400' : 'border-green-300 text-green-600 bg-green-50 hover:bg-green-100'
-                  }`}>
-                    <input type="file" accept="image/*"
-                      onChange={e => handleScanDocumento(e, 'fronte')}
-                      disabled={scanningDocumento} className="hidden" />
-                    <ImageIcon className="w-4 h-4" />
-                  </label>
+                  <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm ${scanningDocumento ? 'border-gray-300 text-gray-400' : 'border-green-300 text-green-600 bg-green-50'}`}><input type="file" accept="image/*" onChange={e => handleScanDocumento(e, 'fronte')} disabled={scanningDocumento} className="hidden" /><ImageIcon className="w-4 h-4" /></label>
                 </div>
-
-                {/* Pulsanti RETRO — sempre visibili ma evidenziati dopo il fronte */}
                 <div className="flex gap-2">
-                  <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 cursor-pointer font-medium text-sm transition-colors ${
-                    scanningDocumento && scanLato === 'retro'
-                      ? 'border-gray-300 text-gray-400 bg-gray-50'
-                      : scanStep === 'fronte_done'
-                        ? 'border-blue-400 border-dashed text-blue-700 bg-blue-50 hover:bg-blue-100'
-                        : 'border-gray-200 border-dashed text-gray-400 bg-gray-50'
-                  }`}>
-                    <input type="file" accept="image/*" capture="environment"
-                      onChange={e => handleScanDocumento(e, 'retro')}
-                      disabled={scanningDocumento} className="hidden" />
-                    {scanningDocumento && scanLato === 'retro' ? (
-                      <><div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />Lettura retro...</>
-                    ) : (
-                      <>📷 Scansiona Retro</>
-                    )}
+                  <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 cursor-pointer font-medium text-sm transition-colors ${scanningDocumento && scanLato === 'retro' ? 'border-gray-300 text-gray-400 bg-gray-50' : scanStep === 'fronte_done' ? 'border-blue-400 border-dashed text-blue-700 bg-blue-50' : 'border-gray-200 border-dashed text-gray-400 bg-gray-50'}`}>
+                    <input type="file" accept="image/*" capture="environment" onChange={e => handleScanDocumento(e, 'retro')} disabled={scanningDocumento} className="hidden" />
+                    {scanningDocumento && scanLato === 'retro' ? <><div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />Lettura...</> : <>📷 Scansiona Retro</>}
                   </label>
-                  <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm transition-colors ${
-                    scanningDocumento ? 'border-gray-300 text-gray-400' :
-                    scanStep === 'fronte_done' ? 'border-blue-300 text-blue-600 bg-blue-50 hover:bg-blue-100' : 'border-gray-200 text-gray-400 bg-gray-50'
-                  }`}>
-                    <input type="file" accept="image/*"
-                      onChange={e => handleScanDocumento(e, 'retro')}
-                      disabled={scanningDocumento} className="hidden" />
-                    <ImageIcon className="w-4 h-4" />
-                  </label>
+                  <label className={`flex items-center justify-center gap-1 px-3 py-3 rounded-xl border-2 border-dashed cursor-pointer text-sm ${scanningDocumento ? 'border-gray-300 text-gray-400' : scanStep === 'fronte_done' ? 'border-blue-300 text-blue-600 bg-blue-50' : 'border-gray-200 text-gray-400 bg-gray-50'}`}><input type="file" accept="image/*" onChange={e => handleScanDocumento(e, 'retro')} disabled={scanningDocumento} className="hidden" /><ImageIcon className="w-4 h-4" /></label>
                 </div>
-
-                <p className="text-xs text-gray-400 text-center">
-                  Carta d'identità, patente, permesso di soggiorno
-                </p>
+                <p className="text-xs text-gray-400 text-center">Carta d'identità, patente, permesso di soggiorno</p>
               </div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-2 py-1">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400">oppure inserisci manualmente</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-
-              {/* Form campi */}
+              <div className="flex items-center gap-2 py-1"><div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400">oppure inserisci manualmente</span><div className="flex-1 h-px bg-gray-200" /></div>
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-gray-500 font-medium">Cognome *</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg p-2 mt-1 text-sm"
-                    placeholder="Rossi"
-                    value={nuovoClienteForm.cognome}
-                    onChange={e => setNuovoClienteForm(p => ({ ...p, cognome: e.target.value }))}
-                    autoCapitalize="words"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 font-medium">Nome *</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg p-2 mt-1 text-sm"
-                    placeholder="Mario"
-                    value={nuovoClienteForm.nome}
-                    onChange={e => setNuovoClienteForm(p => ({ ...p, nome: e.target.value }))}
-                    autoCapitalize="words"
-                  />
-                </div>
+                <div><label className="text-xs text-gray-500 font-medium">Cognome *</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="Rossi" value={nuovoClienteForm.cognome} onChange={e => setNuovoClienteForm(p => ({ ...p, cognome: e.target.value }))} autoCapitalize="words" /></div>
+                <div><label className="text-xs text-gray-500 font-medium">Nome *</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="Mario" value={nuovoClienteForm.nome} onChange={e => setNuovoClienteForm(p => ({ ...p, nome: e.target.value }))} autoCapitalize="words" /></div>
               </div>
-
-              <div>
-                <label className="text-xs text-gray-500 font-medium">Indirizzo</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2 mt-1 text-sm"
-                  placeholder="Via Roma 10"
-                  value={nuovoClienteForm.indirizzo}
-                  onChange={e => setNuovoClienteForm(p => ({ ...p, indirizzo: e.target.value }))}
-                  autoCapitalize="words"
-                />
-              </div>
-
+              <div><label className="text-xs text-gray-500 font-medium">Indirizzo</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="Via Roma 10" value={nuovoClienteForm.indirizzo} onChange={e => setNuovoClienteForm(p => ({ ...p, indirizzo: e.target.value }))} autoCapitalize="words" /></div>
               <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-xs text-gray-500 font-medium">CAP</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="w-full border rounded-lg p-2 mt-1 text-sm"
-                    placeholder="31100"
-                    maxLength={5}
-                    value={nuovoClienteForm.cap}
-                    onChange={e => setNuovoClienteForm(p => ({ ...p, cap: e.target.value }))}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-500 font-medium">Città</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg p-2 mt-1 text-sm"
-                    placeholder="Treviso"
-                    value={nuovoClienteForm.localita}
-                    onChange={e => setNuovoClienteForm(p => ({ ...p, localita: e.target.value }))}
-                    autoCapitalize="words"
-                  />
-                </div>
+                <div><label className="text-xs text-gray-500 font-medium">CAP</label><input type="text" inputMode="numeric" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="31100" maxLength={5} value={nuovoClienteForm.cap} onChange={e => setNuovoClienteForm(p => ({ ...p, cap: e.target.value }))} /></div>
+                <div className="col-span-2"><label className="text-xs text-gray-500 font-medium">Città</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="Treviso" value={nuovoClienteForm.localita} onChange={e => setNuovoClienteForm(p => ({ ...p, localita: e.target.value }))} autoCapitalize="words" /></div>
               </div>
-
-              <div>
-                <label className="text-xs text-gray-500 font-medium">Provincia</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2 mt-1 text-sm uppercase"
-                  placeholder="TV"
-                  maxLength={2}
-                  value={nuovoClienteForm.provincia}
-                  onChange={e => setNuovoClienteForm(p => ({ ...p, provincia: e.target.value.toUpperCase() }))}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                  <Phone className="w-3 h-3" /> Telefono
-                </label>
-                <input
-                  type="tel"
-                  inputMode="tel"
-                  className="w-full border rounded-lg p-2 mt-1 text-sm"
-                  placeholder="340 1234567"
-                  value={nuovoClienteForm.telefono}
-                  onChange={e => setNuovoClienteForm(p => ({ ...p, telefono: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-500 font-medium">Email</label>
-                <input
-                  type="email"
-                  inputMode="email"
-                  className="w-full border rounded-lg p-2 mt-1 text-sm"
-                  placeholder="mario@email.com"
-                  value={nuovoClienteForm.email}
-                  onChange={e => setNuovoClienteForm(p => ({ ...p, email: e.target.value }))}
-                  autoCapitalize="none"
-                />
-              </div>
-
-              {/* Divider fatturazione */}
-              <div className="flex items-center gap-2 pt-1">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400">Dati fatturazione (opzionale)</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-500 font-medium">Codice Fiscale</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2 mt-1 text-sm uppercase font-mono tracking-wider"
-                  placeholder="RSSMRA80A01H501Z"
-                  maxLength={16}
-                  value={nuovoClienteForm.cf}
-                  onChange={e => setNuovoClienteForm(p => ({ ...p, cf: e.target.value.toUpperCase() }))}
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                />
-              </div>
-
+              <div><label className="text-xs text-gray-500 font-medium">Provincia</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm uppercase" placeholder="TV" maxLength={2} value={nuovoClienteForm.provincia} onChange={e => setNuovoClienteForm(p => ({ ...p, provincia: e.target.value.toUpperCase() }))} /></div>
+              <div><label className="text-xs text-gray-500 font-medium flex items-center gap-1"><Phone className="w-3 h-3" /> Telefono</label><input type="tel" inputMode="tel" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="340 1234567" value={nuovoClienteForm.telefono} onChange={e => setNuovoClienteForm(p => ({ ...p, telefono: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 font-medium">Email</label><input type="email" inputMode="email" className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="mario@email.com" value={nuovoClienteForm.email} onChange={e => setNuovoClienteForm(p => ({ ...p, email: e.target.value }))} autoCapitalize="none" /></div>
+              <div className="flex items-center gap-2 pt-1"><div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400">Dati fatturazione (opzionale)</span><div className="flex-1 h-px bg-gray-200" /></div>
+              <div><label className="text-xs text-gray-500 font-medium">Codice Fiscale</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm uppercase font-mono tracking-wider" placeholder="RSSMRA80A01H501Z" maxLength={16} value={nuovoClienteForm.cf} onChange={e => setNuovoClienteForm(p => ({ ...p, cf: e.target.value.toUpperCase() }))} autoCapitalize="characters" autoCorrect="off" /></div>
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-gray-500 font-medium">Partita IVA</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="w-full border rounded-lg p-2 mt-1 text-sm font-mono"
-                    placeholder="12345678901"
-                    maxLength={11}
-                    value={nuovoClienteForm.piva}
-                    onChange={e => setNuovoClienteForm(p => ({ ...p, piva: e.target.value.replace(/\D/g,'') }))}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 font-medium">Codice SDI</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg p-2 mt-1 text-sm uppercase font-mono"
-                    placeholder="XXXXXXX"
-                    maxLength={7}
-                    value={nuovoClienteForm.sdi}
-                    onChange={e => setNuovoClienteForm(p => ({ ...p, sdi: e.target.value.toUpperCase() }))}
-                    autoCorrect="off"
-                  />
-                </div>
+                <div><label className="text-xs text-gray-500 font-medium">Partita IVA</label><input type="text" inputMode="numeric" className="w-full border rounded-lg p-2 mt-1 text-sm font-mono" placeholder="12345678901" maxLength={11} value={nuovoClienteForm.piva} onChange={e => setNuovoClienteForm(p => ({ ...p, piva: e.target.value.replace(/\D/g,'') }))} /></div>
+                <div><label className="text-xs text-gray-500 font-medium">Codice SDI</label><input type="text" className="w-full border rounded-lg p-2 mt-1 text-sm uppercase font-mono" placeholder="XXXXXXX" maxLength={7} value={nuovoClienteForm.sdi} onChange={e => setNuovoClienteForm(p => ({ ...p, sdi: e.target.value.toUpperCase() }))} autoCorrect="off" /></div>
               </div>
-
-              {/* Anteprima nome che verrà usato */}
-              {(nuovoClienteForm.cognome || nuovoClienteForm.nome) && (
-                <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-sm">
-                  <span className="text-gray-500 text-xs">Verrà salvato come: </span>
-                  <span className="font-bold text-green-800">
-                    {[nuovoClienteForm.cognome, nuovoClienteForm.nome].filter(Boolean).join(' ')}
-                  </span>
-                </div>
-              )}
-
-              {/* Azioni */}
+              {(nuovoClienteForm.cognome || nuovoClienteForm.nome) && <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-sm"><span className="text-gray-500 text-xs">Verrà salvato come: </span><span className="font-bold text-green-800">{[nuovoClienteForm.cognome, nuovoClienteForm.nome].filter(Boolean).join(' ')}</span></div>}
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => setShowNuovoCliente(false)}
-                  className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium text-sm"
-                >
-                  Annulla
-                </button>
-                <button
-                  onClick={handleConfermaClienteManuale}
-                  className="flex-[2] py-3 rounded-xl text-white font-bold text-sm"
-                  style={{ backgroundColor: '#006B3F' }}
-                >
-                  ✓ Conferma Cliente
-                </button>
+                <button onClick={() => setShowNuovoCliente(false)} className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium text-sm">Annulla</button>
+                <button onClick={handleConfermaClienteManuale} className="flex-[2] py-3 rounded-xl text-white font-bold text-sm" style={{ backgroundColor: '#006B3F' }}>✓ Conferma Cliente</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODALE Scansiona Buono - stile CaricoMerce */}
+      {/* MODALE Scansiona Buono */}
       {showScanBuonoModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-bold text-lg">📷 Scansione OCR</h3>
-              <button onClick={() => setShowScanBuonoModal(false)}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
+            <div className="flex items-center justify-between p-4 border-b"><h3 className="font-bold text-lg">📷 Scansione OCR</h3><button onClick={() => setShowScanBuonoModal(false)}><X className="w-6 h-6 text-gray-500" /></button></div>
             <div className="p-4 space-y-3">
-              <button
-                onClick={() => document.getElementById('buono-camera')?.click()}
-                className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#3b82f6' }}
-              >
-                <Camera className="w-5 h-5" />
-                📷 SCATTA FOTO
-              </button>
-              <button
-                onClick={() => document.getElementById('buono-gallery')?.click()}
-                className="w-full py-4 rounded-lg font-bold border-2 flex items-center justify-center gap-2"
-                style={{ borderColor: '#3b82f6', color: '#3b82f6' }}
-              >
-                <ImageIcon className="w-5 h-5" />
-                🖼️ DA GALLERIA
-              </button>
-              <button
-                onClick={() => setShowScanBuonoModal(false)}
-                className="w-full py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500"
-              >
-                CHIUDI
-              </button>
+              <button onClick={() => document.getElementById('buono-camera')?.click()} className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-2" style={{ backgroundColor: '#3b82f6' }}><Camera className="w-5 h-5" />📷 SCATTA FOTO</button>
+              <button onClick={() => document.getElementById('buono-gallery')?.click()} className="w-full py-4 rounded-lg font-bold border-2 flex items-center justify-center gap-2" style={{ borderColor: '#3b82f6', color: '#3b82f6' }}><ImageIcon className="w-5 h-5" />🖼️ DA GALLERIA</button>
+              <button onClick={() => setShowScanBuonoModal(false)} className="w-full py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500">CHIUDI</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODALE Scansione Matricola - stile CaricoMerce */}
+      {/* MODALE Scansione Matricola */}
       {showOcrChoice && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-bold text-lg">📷 Scansione OCR</h3>
-              <button onClick={() => setShowOcrChoice(false)}>
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
+            <div className="flex items-center justify-between p-4 border-b"><h3 className="font-bold text-lg">📷 Scansione OCR</h3><button onClick={() => setShowOcrChoice(false)}><X className="w-6 h-6 text-gray-500" /></button></div>
             <div className="p-4 space-y-3">
-              <button
-                onClick={() => document.getElementById('vendita-ocr-input')?.click()}
-                className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#006B3F' }}
-              >
-                <Camera className="w-5 h-5" />
-                📷 SCATTA FOTO
-              </button>
-              <button
-                onClick={() => document.getElementById('vendita-ocr-input-gallery')?.click()}
-                className="w-full py-4 rounded-lg font-bold border-2 flex items-center justify-center gap-2"
-                style={{ borderColor: '#006B3F', color: '#006B3F' }}
-              >
-                <ImageIcon className="w-5 h-5" />
-                🖼️ DA GALLERIA
-              </button>
-              <button
-                onClick={() => setShowOcrChoice(false)}
-                className="w-full py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500"
-              >
-                CHIUDI
-              </button>
+              <button onClick={() => document.getElementById('vendita-ocr-input')?.click()} className="w-full py-4 rounded-lg font-bold text-white flex items-center justify-center gap-2" style={{ backgroundColor: '#006B3F' }}><Camera className="w-5 h-5" />📷 SCATTA FOTO</button>
+              <button onClick={() => document.getElementById('vendita-ocr-input-gallery')?.click()} className="w-full py-4 rounded-lg font-bold border-2 flex items-center justify-center gap-2" style={{ borderColor: '#006B3F', color: '#006B3F' }}><ImageIcon className="w-5 h-5" />🖼️ DA GALLERIA</button>
+              <button onClick={() => setShowOcrChoice(false)} className="w-full py-3 rounded-lg font-semibold border-2 border-gray-300 text-gray-500">CHIUDI</button>
             </div>
           </div>
         </div>
       )}
-      {/* Banner salva cliente in rubrica */}
-      {showSalvaClienteBanner && pendingCliente && (
-        <SalvaClienteBanner
-          clienteInfo={pendingCliente}
-          onClose={() => {
-            setShowSalvaClienteBanner(false);
-            setPendingCliente(null);
-          }}
-        />
-      )}
 
+      {showSalvaClienteBanner && pendingCliente && (
+        <SalvaClienteBanner clienteInfo={pendingCliente} onClose={() => { setShowSalvaClienteBanner(false); setPendingCliente(null); }} />
+      )}
     </div>
   );
 }

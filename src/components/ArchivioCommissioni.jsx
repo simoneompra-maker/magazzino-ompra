@@ -1890,11 +1890,13 @@ export default function ArchivioCommissioni({ onNavigate }) {
                           value={prod.serialNumber || ''}
                           onChange={(e) => handleEditProductSerial(idx, e.target.value)}
                         />
-                        {(prod.aliquotaIva && prod.aliquotaIva !== 22) && (
-                          <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${prod.aliquotaIva === 4 ? 'bg-green-100 text-green-700 border-green-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
-                            {prod.aliquotaIva}%
-                          </span>
-                        )}
+                        <button
+                          onClick={() => cycleIvaProdotto(idx)}
+                          className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${getIvaBadgeStyle(prod.aliquotaIva || 22)}`}
+                          title="Tocca per cambiare aliquota"
+                        >
+                          {prod.aliquotaIva || 22}%
+                        </button>
                         <input
                           type="number"
                           placeholder="Prezzo"

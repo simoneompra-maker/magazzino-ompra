@@ -1111,38 +1111,37 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
             </tr>`).join('')}
         </table>`;
 
-      // Liquidi: usa liquidiCustom se presenti, altrimenti default da livello
-      const liquidiPiano = (() => {
-        // Raccogli tutti i liquidiCustom definiti esplicitamente negli interventi
-        const customAll = pianoAnnuo.flatMap(iv => iv.liquidiCustom || []);
-        if (customAll.length > 0) {
-          // Deduplica per prodotto, somma frequenze
-          const byProd = {};
-          customAll.forEach(l => {
-            if (!byProd[l.prodotto]) byProd[l.prodotto] = { prodotto: l.prodotto, dose: l.dose, freq: 1 };
-            else byProd[l.prodotto].freq++;
-          });
-          return Object.values(byProd);
+      // Liquidi: costruisci righe per-intervento (con Periodo / Funzione / Prodotto / Dose)
+      const liquidiRows = (() => {
+        const rows = [];
+        const ivs = pianoAnnuo.map(iv => resolveIv(iv)).filter(iv => !iv.saltato);
+        for (const iv of ivs) {
+          const periodo = iv.bimestre_label || '';
+          const funzione = iv.funzione || '';
+          // Usa liquidiCustom se presenti, altrimenti default da liquidi_standard/premium
+          const liqList = iv.liquidiCustom && iv.liquidiCustom.length > 0
+            ? iv.liquidiCustom
+            : (livello === 'standard' ? (iv.liquidi_standard ? [{ prodotto: 'Humifitos', dose: 20 }, { prodotto: 'Micosat F PG', dose: 1 }] : [])
+              : livello === 'premium' ? (iv.liquidi_premium ? [{ prodotto: 'Humifitos', dose: 20 }, { prodotto: 'Micosat F PG', dose: 1 }] : [])
+              : []);
+          for (const l of liqList) {
+            if (l.prodotto) rows.push({ periodo, funzione, prodotto: l.prodotto, dose: l.dose });
+          }
         }
-        // Fallback hardcoded
-        const defaults = [
-          { prodotto: 'Humifitos', dose: 20, freq: livello==='standard' ? 3 : 5, quando: livello==='standard' ? 'Marzo, fine Maggio, fine Ott/Nov (×3)' : 'Ogni concimazione granulare (×5)' },
-          { prodotto: 'Micosat F PG', dose: 1, freq: livello==='standard' ? 3 : 5, quando: 'Con Humifitos' },
-        ];
-        if (livello === 'premium') defaults.push(
-          { prodotto: 'Algapark', dose: 1, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
-          { prodotto: 'Root Speed', dose: 20, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
-          { prodotto: 'Micosat Tab Plus', dose: 0.5, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
-          { prodotto: 'Micosat Len', dose: 0.5, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
-        );
-        return defaults;
+        // Aggiungi liquidi premium fissi se nessun override
+        if (livello === 'premium' && !pianoAnnuo.some(iv => iv.liquidiCustom?.length > 0)) {
+          rows.push({ periodo: 'Mag — Ago', funzione: 'Ciclo estivo', prodotto: 'Algapark', dose: 1 });
+          rows.push({ periodo: 'Mag — Ago', funzione: 'Ciclo estivo', prodotto: 'Root Speed', dose: 20 });
+          rows.push({ periodo: 'Mag — Ago', funzione: 'Ciclo estivo', prodotto: 'Wet Turf', dose: 1 });
+        }
+        return rows;
       })();
 
-      sezioneLiquidi = liquidiPiano.length > 0 ? `
+      sezioneLiquidi = liquidiRows.length > 0 ? `
         <h2>Liquidi di Supporto</h2>
         <table>
-          <tr><th>Prodotto</th><th>Dose</th><th>Frequenza</th></tr>
-          ${liquidiPiano.map(l => `<tr><td>${l.prodotto}</td><td>${l.dose} g/m²</td><td>${l.quando || (l.freq > 1 ? '×'+l.freq : 'Con ogni intervento')}</td></tr>`).join('')}
+          <tr><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th></tr>
+          ${liquidiRows.map(r => `<tr><td style="white-space:nowrap">${r.periodo}</td><td>${r.funzione}</td><td><strong>${r.prodotto}</strong></td><td style="white-space:nowrap">${r.dose} g/m²${kg(r.dose)}</td></tr>`).join('')}
         </table>` : '';
     }
   }
@@ -1531,8 +1530,10 @@ export default function PratoVivo({ onNavigate }) {
           const dose = (iv.dose != null) ? iv.dose : (doseBase || 0);
           const prodottoBase = (usaAllRound && dati?.prodotto_migliore) ? dati.prodotto_migliore : (dati?.prodotto || '');
           const prodotto = iv.prodotto || prodottoBase || '—';
-          // Liquidi: usa liquidiCustom se presenti, altrimenti check liquidiAttivi
-          const liquidiAttivi = iv.liquidiAttivi;
+          // liquidiAttivi: nel piano grezzo è undefined — calcolalo da livello come fa pianoConNumero
+          const liquidiAttivi = iv.liquidiCustom
+            ? iv.liquidiCustom.length > 0  // se override: true se non è vuoto
+            : (livello === 'standard' ? !!iv.liquidi_standard : livello === 'premium' ? !!iv.liquidi_premium : false);
           const liquidiCustom = iv.liquidiCustom;
           return { ...iv, dose, prodotto, liquidiAttivi, liquidiCustom };
         };
@@ -3607,29 +3608,32 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                       </div>
                     </div>
                   )}
+                  {/* Esperto: inserisci trattamento dopo questa card */}
+                  {modalitaEsperto && onChangePianoAnnuo && (
+                    <button
+                      onClick={() => {
+                        const nuovo = { numero: '', funzione: 'Nuovo trattamento', bimestre_label: '', prodotto: '', dose: 0, npk: '', liquidiCustom: [], prodotti: [], _custom: true };
+                        const u = [...piano.slice(0, i+1), nuovo, ...piano.slice(i+1)];
+                        onChangePianoAnnuo(u);
+                      }}
+                      className="w-full py-1.5 rounded-lg border border-dashed border-green-300 text-green-600 text-xs font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <span className="text-sm leading-none">+</span> inserisci trattamento qui
+                    </button>
+                  )}
                 </Fragment>
               ))
             }
-            {/* Esperto: aggiungi trattamento */}
+            {/* Esperto: aggiungi trattamento in coda */}
             {modalitaEsperto && onChangePianoAnnuo && (
               <button
                 onClick={() => {
-                  const nuovo = {
-                    numero: (piano.length + 1),
-                    funzione: 'Nuovo trattamento',
-                    bimestre_label: '',
-                    prodotto: '',
-                    dose: 0,
-                    npk: '',
-                    liquidiCustom: [],
-                    prodotti: [],
-                    _custom: true,
-                  };
+                  const nuovo = { numero: '', funzione: 'Nuovo trattamento', bimestre_label: '', prodotto: '', dose: 0, npk: '', liquidiCustom: [], prodotti: [], _custom: true };
                   onChangePianoAnnuo([...piano, nuovo]);
                 }}
                 className="w-full py-2.5 rounded-xl border-2 border-dashed border-green-400 text-green-700 font-bold text-sm hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
               >
-                <span className="text-lg leading-none">+</span> Aggiungi trattamento
+                <span className="text-lg leading-none">+</span> Aggiungi trattamento in coda
               </button>
             )}
 

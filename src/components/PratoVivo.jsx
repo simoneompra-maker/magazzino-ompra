@@ -215,6 +215,25 @@ let LISTINO = {
   'Micosat F Uno 200g':         { formato: '200 g',  kg: 0.2, prezzoA: 10.00,  iva: 4  },
   'Micosat Tab Plus Mini 100g': { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  iva: 4  },
   'Micosat Len Mini 100g':      { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  iva: 4  },
+  // Linea Kare — liquidi esperto
+  'LeoKare 1kg':                { formato: '1 kg',   kg: 1,   prezzoA: 28.00,  prezzoB: 25.20,  iva: 4  },
+  'LeoKare 5kg':                { formato: '5 kg',   kg: 5,   prezzoA: 110.00, prezzoB: 99.00,  iva: 4  },
+  'Amino K 1kg':                { formato: '1 kg',   kg: 1,   prezzoA: 38.00,  prezzoB: 34.20,  iva: 4  },
+  'Kalium Rush 1kg':            { formato: '1 kg',   kg: 1,   prezzoA: 32.00,  prezzoB: 28.80,  iva: 4  },
+  'SevenKare 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 35.00,  prezzoB: 31.50,  iva: 4  },
+  'Fe ULK 1kg':                 { formato: '1 kg',   kg: 1,   prezzoA: 42.00,  prezzoB: 37.80,  iva: 4  },
+  'NPK Enduring 1kg':           { formato: '1 kg',   kg: 1,   prezzoA: 30.00,  prezzoB: 27.00,  iva: 4  },
+  'Ca Kicker 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 25.00,  prezzoB: 22.50,  iva: 4  },
+  'Paint Turf 250g':            { formato: '250 g',  kg: 0.25,prezzoA: 28.00,  prezzoB: 25.20,  iva: 22 },
+  'Solar 1kg':                  { formato: '1 kg',   kg: 1,   prezzoA: 45.00,  prezzoB: 40.50,  iva: 4  },
+  // Granulari Mivena extra
+  'Pro Green 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 65.00,  prezzoB: 61.80,  iva: 4  },
+  'Pro Kappa 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 68.00,  prezzoB: 64.60,  iva: 4  },
+  'Bio Grow 20kg':              { formato: '20 kg',  kg: 20,  prezzoA: 75.00,  prezzoB: 71.30,  iva: 4  },
+  'Energy 20kg':                { formato: '20 kg',  kg: 20,  prezzoA: 60.00,  prezzoB: 57.00,  iva: 4  },
+  'Granustar 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 55.00,  prezzoB: 52.30,  iva: 4  },
+  'Iron Power 20kg':            { formato: '20 kg',  kg: 20,  prezzoA: 62.00,  prezzoB: 58.90,  iva: 4  },
+  'Green 8 Prestige 20kg':      { formato: '20 kg',  kg: 20,  prezzoA: 58.00,  prezzoB: 55.10,  iva: 4  },
   // Semi Ares Seed (IVA 10%)
   'Hurricane 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 13.75,  iva: 10 },
   'Hurricane 5kg':              { formato: '5 kg',   kg: 5,   prezzoA: 52.00,  prezzoB: 50.00, iva: 10 },
@@ -413,6 +432,26 @@ const PRODOTTO_CONFIG = {
   'Micosat F MO/PG':          { tipo: 'micosat_dinamico' },
   'Micosat Tab Plus':         { tipo: 'micosat_mini', sku: 'Micosat Tab Plus Mini 100g', kgP: 0.1 },
   'Micosat Len':              { tipo: 'micosat_mini', sku: 'Micosat Len Mini 100g',      kgP: 0.1 },
+  // Micorrize per esperto
+  'Micosat F Uno':            { piccolo: 'Micosat F Uno 200g', kgP: 0.2, grande: null },
+  // Liquidi esperto (1 kg piccolo, 5 kg grande dove disponibile)
+  'LeoKare':                  { piccolo: 'LeoKare 1kg',       kgP: 1,  grande: 'LeoKare 5kg',   kgG: 5  },
+  'Amino K':                  { piccolo: 'Amino K 1kg',       kgP: 1,  grande: null              },
+  'Kalium Rush':              { piccolo: 'Kalium Rush 1kg',   kgP: 1,  grande: null              },
+  'SevenKare':                { piccolo: 'SevenKare 1kg',     kgP: 1,  grande: null              },
+  'Fe ULK':                   { piccolo: 'Fe ULK 1kg',        kgP: 1,  grande: null              },
+  'NPK Enduring':             { piccolo: 'NPK Enduring 1kg',  kgP: 1,  grande: null              },
+  'Ca Kicker':                { piccolo: 'Ca Kicker 1kg',     kgP: 1,  grande: null              },
+  'Paint Turf':               { piccolo: 'Paint Turf 250g',   kgP: 0.25,grande: null             },
+  'Solar':                    { piccolo: 'Solar 1kg',         kgP: 1,  grande: null              },
+  // Granulari Mivena extra
+  'Pro Green':                { piccolo: 'Pro Green 20kg',        kgP: 20, grande: null },
+  'Pro Kappa':                { piccolo: 'Pro Kappa 20kg',        kgP: 20, grande: null },
+  'Bio Grow':                 { piccolo: 'Bio Grow 20kg',         kgP: 20, grande: null },
+  'Energy':                   { piccolo: 'Energy 20kg',           kgP: 20, grande: null },
+  'Granustar':                { piccolo: 'Granustar 20kg',        kgP: 20, grande: null },
+  'Iron Power':               { piccolo: 'Iron Power 20kg',       kgP: 20, grande: null },
+  'Green 8 Prestige':         { piccolo: 'Green 8 Prestige 20kg', kgP: 20, grande: null },
 };
 
 function getBimestreCorrente(dataRif = null) {

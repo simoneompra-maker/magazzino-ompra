@@ -3270,11 +3270,37 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
             {terreno === 'sabbioso'
               ? piano.map((iv, i) => (
                 <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.bridge?'border-amber-400 bg-amber-50':iv.verde?'border-emerald-500 bg-emerald-50':iv.passato?'border-gray-300 bg-gray-50 opacity-50':iv.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>
-                  <div className="flex justify-between items-start">
-                    <div><p className="font-bold text-sm text-green-800">{iv.bimestre_label}</p><p className="text-xs text-gray-500">{iv.funzione}</p></div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.verde?'bg-emerald-200 text-emerald-800':iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
-                      {iv.bridge?'🟡 Ponte':iv.verde?'🟢 Rinforzo colore':iv.passato?'⚫ Passato':iv.inRitardo?'🟡 In ritardo — ancora recuperabile':'🟢 Programmato'}
-                    </span>
+                  <div className="flex justify-between items-start gap-2">
+                    {modalitaEsperto ? (
+                      <div className="flex-1 space-y-1 min-w-0">
+                        <input
+                          className="w-full border border-green-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-green-800"
+                          placeholder="Periodo"
+                          value={piano[i]?.bimestre_label ?? iv.bimestre_label ?? ''}
+                          onChange={e => onChangePianoAnnuo(piano.map((iv2,j) => j===i ? {...iv2, bimestre_label: e.target.value} : iv2))}
+                        />
+                        <input
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white text-gray-600"
+                          placeholder="Funzione"
+                          value={piano[i]?.funzione ?? iv.funzione ?? ''}
+                          onChange={e => onChangePianoAnnuo(piano.map((iv2,j) => j===i ? {...iv2, funzione: e.target.value} : iv2))}
+                        />
+                      </div>
+                    ) : (
+                      <div><p className="font-bold text-sm text-green-800">{iv.bimestre_label}</p><p className="text-xs text-gray-500">{iv.funzione}</p></div>
+                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.verde?'bg-emerald-200 text-emerald-800':iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
+                        {iv.bridge?'🟡 Ponte':iv.verde?'🟢 Rinforzo colore':iv.passato?'⚫ Passato':iv.inRitardo?'🟡 In ritardo':'🟢 Programmato'}
+                      </span>
+                      {modalitaEsperto && (
+                        <button
+                          onClick={() => onChangePianoAnnuo(piano.filter((_,j) => j !== i))}
+                          className="text-red-400 hover:text-red-600 text-base px-1 leading-none"
+                          title="Elimina intervento"
+                        >🗑️</button>
+                      )}
+                    </div>
                   </div>
                   <p className="font-bold text-green-700 mt-1">{iv.prodotto} <span className="font-normal text-gray-500 text-xs">NPK {iv.npk}</span></p>
                   <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
@@ -3320,11 +3346,37 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
               : pianoConNumero.map((iv, i) => iv.saltato ? null : (
                 <Fragment key={i}>
                   <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-50':iv.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numVisivo} — {iv.funzione}</p></div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
-                      {iv.passato ? '⚫ Passato' : iv.inRitardo ? '🟡 In ritardo — ancora recuperabile' : iv.bimestre_label}
-                    </span>
+                    <div className="flex justify-between items-start gap-2">
+                      {modalitaEsperto && !iv.passato ? (
+                        <div className="flex-1 space-y-1 min-w-0">
+                          <input
+                            className="w-full border border-green-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-green-800"
+                            placeholder="Periodo (es. Fine Aprile)"
+                            value={piano[i]?.bimestre_label ?? iv.bimestre_label ?? ''}
+                            onChange={e => onChangePianoAnnuo(piano.map((iv2,j) => j===i ? {...iv2, bimestre_label: e.target.value} : iv2))}
+                          />
+                          <input
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white text-gray-600"
+                            placeholder="Funzione (es. Rinforzo primaverile)"
+                            value={piano[i]?.funzione ?? iv.funzione ?? ''}
+                            onChange={e => onChangePianoAnnuo(piano.map((iv2,j) => j===i ? {...iv2, funzione: e.target.value} : iv2))}
+                          />
+                        </div>
+                      ) : (
+                        <div><p className="text-xs font-bold text-gray-500">Intervento {iv.numVisivo} — {iv.funzione}</p></div>
+                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
+                          {iv.passato ? '⚫ Passato' : iv.inRitardo ? '🟡 In ritardo' : (piano[i]?.bimestre_label ?? iv.bimestre_label)}
+                        </span>
+                        {modalitaEsperto && (
+                          <button
+                            onClick={() => onChangePianoAnnuo(piano.filter((_,j) => j !== i))}
+                            className="text-red-400 hover:text-red-600 text-base px-1 leading-none"
+                            title="Elimina intervento"
+                          >🗑️</button>
+                        )}
+                      </div>
                     </div>
                     {/* ── Prodotto principale: read-only in base, editabile in esperto ── */}
                     {!modalitaEsperto ? (
@@ -3558,6 +3610,29 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                 </Fragment>
               ))
             }
+            {/* Esperto: aggiungi trattamento */}
+            {modalitaEsperto && onChangePianoAnnuo && (
+              <button
+                onClick={() => {
+                  const nuovo = {
+                    numero: (piano.length + 1),
+                    funzione: 'Nuovo trattamento',
+                    bimestre_label: '',
+                    prodotto: '',
+                    dose: 0,
+                    npk: '',
+                    liquidiCustom: [],
+                    prodotti: [],
+                    _custom: true,
+                  };
+                  onChangePianoAnnuo([...piano, nuovo]);
+                }}
+                className="w-full py-2.5 rounded-xl border-2 border-dashed border-green-400 text-green-700 font-bold text-sm hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="text-lg leading-none">+</span> Aggiungi trattamento
+              </button>
+            )}
+
             {/* Biostimolanti — Humifitos/Micosat riassunto per Standard; Premium già inline */}
             {livello === 'standard' && terreno !== 'sabbioso' && (
               <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">

@@ -998,6 +998,19 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       <span style="float:right;font-weight:700">${doseProd} g/m²${kg(doseProd)}</span>`;
   };
 
+  // Materializza prodotto/dose/dati dal piano grezzo (override esperto)
+  const resolveIv = (iv) => {
+    const dati = linea === 'mivena' ? iv.mivena : iv.albatros;
+    // Dose: usa override se presente, altrimenti calcola dai dati base
+    const doseBase = dati ? (colore === 'intenso' ? dati.dose_intenso : dati.dose_pallido) : 0;
+    const dose = (iv.dose != null && iv.dose !== undefined) ? iv.dose : (doseBase || 0);
+    // Prodotto: usa override se presente, altrimenti dai dati base
+    const prodottoBase = (usaAllRound && dati?.prodotto_migliore) ? dati.prodotto_migliore : (dati?.prodotto || '');
+    const prodotto = iv.prodotto || prodottoBase || '—';
+    const npk = iv.npk || dati?.npk || '';
+    return { ...iv, dati: dati || iv.dati, dose, prodotto, npk };
+  };
+
   // Helper: stampa lista granulari semina/rig (supporta campo prodotti)
   const renderGranulare = (p) => {
     if (p.prodotti && p.prodotti.length > 0) {
@@ -1064,7 +1077,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <h2>Interventi Granulari</h2>
         <table>
           <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto / Miscela</th><th>Note</th></tr>
-          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => `
+          ${pianoAnnuo.map(iv => resolveIv(iv)).filter(iv => !iv.saltato).map(iv => `
             <tr class="${iv.bridge ? 'bridge' : iv.verde ? 'verde' : iv.passato ? 'passato' : ''}" style="page-break-inside:avoid">
               <td>${iv.bridge ? '⚑' : iv.verde ? '▲' : iv.numero}</td>
               <td>${iv.bimestre_label||''}</td>
@@ -1088,7 +1101,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <h2>Interventi Granulari Programmati</h2>
         <table>
           <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto / Miscela</th><th>Note</th></tr>
-          ${pianoAnnuo.filter(iv => !iv.saltato).map(iv => `
+          ${pianoAnnuo.map(iv => resolveIv(iv)).filter(iv => !iv.saltato).map(iv => `
             <tr class="${iv.passato ? 'passato' : ''}" style="page-break-inside:avoid">
               <td>${iv.numero||''}</td>
               <td style="white-space:nowrap">${iv.bimestre_label||''}</td>
@@ -1097,18 +1110,40 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
               <td><small>${iv.note||''}</small></td>
             </tr>`).join('')}
         </table>`;
-      sezioneLiquidi = `
+
+      // Liquidi: usa liquidiCustom se presenti, altrimenti default da livello
+      const liquidiPiano = (() => {
+        // Raccogli tutti i liquidiCustom definiti esplicitamente negli interventi
+        const customAll = pianoAnnuo.flatMap(iv => iv.liquidiCustom || []);
+        if (customAll.length > 0) {
+          // Deduplica per prodotto, somma frequenze
+          const byProd = {};
+          customAll.forEach(l => {
+            if (!byProd[l.prodotto]) byProd[l.prodotto] = { prodotto: l.prodotto, dose: l.dose, freq: 1 };
+            else byProd[l.prodotto].freq++;
+          });
+          return Object.values(byProd);
+        }
+        // Fallback hardcoded
+        const defaults = [
+          { prodotto: 'Humifitos', dose: 20, freq: livello==='standard' ? 3 : 5, quando: livello==='standard' ? 'Marzo, fine Maggio, fine Ott/Nov (×3)' : 'Ogni concimazione granulare (×5)' },
+          { prodotto: 'Micosat F PG', dose: 1, freq: livello==='standard' ? 3 : 5, quando: 'Con Humifitos' },
+        ];
+        if (livello === 'premium') defaults.push(
+          { prodotto: 'Algapark', dose: 1, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
+          { prodotto: 'Root Speed', dose: 20, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
+          { prodotto: 'Micosat Tab Plus', dose: 0.5, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
+          { prodotto: 'Micosat Len', dose: 0.5, freq: 13, quando: 'Ogni 20 gg — Mag/Giu/Lug/Ago' },
+        );
+        return defaults;
+      })();
+
+      sezioneLiquidi = liquidiPiano.length > 0 ? `
         <h2>Liquidi di Supporto</h2>
         <table>
           <tr><th>Prodotto</th><th>Dose</th><th>Frequenza</th></tr>
-          <tr><td>Humifitos</td><td>20 g/m²</td><td>${livello==='standard' ? 'Marzo, fine Maggio, fine Ott/Nov (×3)' : 'Ogni concimazione granulare (×5)'}</td></tr>
-          <tr><td>Micosat F PG</td><td>1 g/m²</td><td>Con Humifitos</td></tr>
-          ${livello === 'premium' ? `
-          <tr><td>Algapark</td><td>1 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
-          <tr><td>Root Speed</td><td>20 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
-          <tr><td>Micosat Tab Plus</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>
-          <tr><td>Micosat Len</td><td>0,5 g/m²</td><td>Ogni 20 gg — Mag/Giu/Lug/Ago</td></tr>` : ''}
-        </table>`;
+          ${liquidiPiano.map(l => `<tr><td>${l.prodotto}</td><td>${l.dose} g/m²</td><td>${l.quando || (l.freq > 1 ? '×'+l.freq : 'Con ogni intervento')}</td></tr>`).join('')}
+        </table>` : '';
     }
   }
 
@@ -1489,26 +1524,48 @@ export default function PratoVivo({ onNavigate }) {
           }
         }
       } else {
-        for (const iv of pianoAnnuoEffettivo) {
-          if (iv.saltato) continue;
+        // Helper: risolve prodotto e dose dal piano grezzo (override o base)
+        const resolvePrevIv = (iv) => {
+          const dati = linea === 'mivena' ? iv.mivena : iv.albatros;
+          const doseBase = dati ? (colore === 'intenso' ? dati.dose_intenso : dati.dose_pallido) : 0;
+          const dose = (iv.dose != null) ? iv.dose : (doseBase || 0);
+          const prodottoBase = (usaAllRound && dati?.prodotto_migliore) ? dati.prodotto_migliore : (dati?.prodotto || '');
+          const prodotto = iv.prodotto || prodottoBase || '—';
+          // Liquidi: usa liquidiCustom se presenti, altrimenti check liquidiAttivi
+          const liquidiAttivi = iv.liquidiAttivi;
+          const liquidiCustom = iv.liquidiCustom;
+          return { ...iv, dose, prodotto, liquidiAttivi, liquidiCustom };
+        };
+
+        for (const ivRaw of pianoAnnuoEffettivo) {
+          const iv = resolvePrevIv(ivRaw);
           const dose = parseFloat(String(iv.dose).split('–')[0]);
-          if (!isNaN(dose)) items.push({ prodotto: iv.dati?.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
-          if (iv.liquidiAttivi) {
+          if (!isNaN(dose) && dose > 0) items.push({ prodotto: iv.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
+          // Liquidi: usa override se presente, altrimenti default da piano
+          if (iv.liquidiCustom && iv.liquidiCustom.length > 0) {
+            for (const l of iv.liquidiCustom) {
+              if (l.prodotto && l.dose > 0) items.push({ prodotto: l.prodotto, dose_g_mq: l.dose, n_applicazioni: 1 });
+            }
+          } else if (iv.liquidiAttivi) {
             items.push({ prodotto: 'Humifitos', dose_g_mq: 20, n_applicazioni: 1 });
             items.push({ prodotto: 'Micosat F PG', dose_g_mq: 1, n_applicazioni: 1 });
           }
         }
         if (livello === 'premium') {
-          items.push({ prodotto: 'Algapark', dose_g_mq: 1, n_applicazioni: 13 });
-          items.push({ prodotto: 'Root Speed', dose_g_mq: 20, n_applicazioni: 13 });
-          items.push({ prodotto: 'Wet Turf', dose_g_mq: 1, n_applicazioni: 13 });
+          // Controlla se ci sono già liquidi premium negli override, altrimenti aggiungi i default
+          const haPremiumCustom = pianoAnnuoEffettivo.some(iv => iv.liquidiCustom?.length > 0);
+          if (!haPremiumCustom) {
+            items.push({ prodotto: 'Algapark', dose_g_mq: 1, n_applicazioni: 13 });
+            items.push({ prodotto: 'Root Speed', dose_g_mq: 20, n_applicazioni: 13 });
+            items.push({ prodotto: 'Wet Turf', dose_g_mq: 1, n_applicazioni: 13 });
+          }
         }
       }
       return calcolaPreventivoConKgSeme(items, null, 0, mq, tipoCliente);
     }
 
     return null;
-  }, [tipoIntervento, datiPianoAttivo, linea, mq, degradazione, miscuglio, pianoAnnuo, terreno, colore, livello, liquidiSab, tipoCliente, primoConcimeIncluso]);
+  }, [tipoIntervento, datiPianoAttivo, linea, mq, degradazione, miscuglio, pianoAnnuoEffettivo, overridePianoAnnuo, terreno, colore, livello, liquidiSab, tipoCliente, primoConcimeIncluso, usaAllRound]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4 pb-8">
@@ -1543,7 +1600,20 @@ export default function PratoVivo({ onNavigate }) {
                   setOverrideSeme(datiPianoAttivo.seme ? JSON.parse(JSON.stringify(datiPianoAttivo.seme)) : null);
                 }
                 if (pianoAnnuo.length > 0) {
-                  setOverridePianoAnnuo(JSON.parse(JSON.stringify(pianoAnnuo)));
+                  // Materializza prodotto/dose/npk in ogni item del piano
+                  // così il PDF e il preventivo trovano sempre i valori corretti
+                  const pianoMaterializzato = pianoAnnuo.map(iv => {
+                    const dati = linea === 'mivena' ? iv.mivena : iv.albatros;
+                    const doseBase = dati ? (colore === 'intenso' ? dati?.dose_intenso : dati?.dose_pallido) : 0;
+                    const prodottoBase = (usaAllRound && dati?.prodotto_migliore) ? dati.prodotto_migliore : (dati?.prodotto || '');
+                    return {
+                      ...iv,
+                      prodotto: iv.prodotto || prodottoBase || '',
+                      dose: iv.dose != null ? iv.dose : (doseBase || 0),
+                      npk: iv.npk || dati?.npk || '',
+                    };
+                  });
+                  setOverridePianoAnnuo(JSON.parse(JSON.stringify(pianoMaterializzato)));
                 }
               } else {
                 // Disattiva: annulla override (torna ai default)

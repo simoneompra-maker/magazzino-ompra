@@ -3256,89 +3256,210 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                       {iv.passato ? '⚫ Passato' : iv.inRitardo ? '🟡 In ritardo — ancora recuperabile' : iv.bimestre_label}
                     </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <p className="font-bold text-green-800">
-                        {linea === 'mivena' && iv.dati?.prodotto_migliore
-                          ? (usaAllRound ? iv.dati.prodotto_migliore : iv.dati.prodotto)
-                          : (iv.dati?.prodotto || iv.prodotto || '—')}
-                        {iv.dati?.npk && iv.dati.npk!=='—' && <span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}
-                      </p>
-                      {linea === 'mivena' && iv.dati?.prodotto_migliore && livello !== 'base' && (
-                        <button onClick={() => setUsaAllRound(v => !v)}
-                          className={`text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors ${usaAllRound ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'}`}>
-                          {usaAllRound ? '⭐ AllRound attivo' : '⭐ Usa AllRound'}
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
-                    {iv.liquidiAttivi&&<p className="text-xs text-blue-600 mt-1">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</p>}
-                    {iv.noteRitardo && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-1.5 border border-amber-200">{iv.noteRitardo}</p>}
-                    {/* Esperto: modifica inline prodotto */}
-                    {modalitaEsperto && !iv.passato && (() => {
-                      const pianoOvr = onChangePianoAnnuo ? piano : null;
-                      if (!pianoOvr) return null;
+                    {/* ── Prodotto principale: read-only in base, editabile in esperto ── */}
+                    {!modalitaEsperto ? (
+                      <>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <p className="font-bold text-green-800">
+                            {linea === 'mivena' && iv.dati?.prodotto_migliore
+                              ? (usaAllRound ? iv.dati.prodotto_migliore : iv.dati.prodotto)
+                              : (iv.dati?.prodotto || iv.prodotto || '—')}
+                            {iv.dati?.npk && iv.dati.npk!=='—' && <span className="font-normal text-gray-500 text-xs"> NPK {iv.dati.npk}</span>}
+                          </p>
+                          {linea === 'mivena' && iv.dati?.prodotto_migliore && livello !== 'base' && (
+                            <button onClick={() => setUsaAllRound(v => !v)}
+                              className={`text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors ${usaAllRound ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'}`}>
+                              {usaAllRound ? '⭐ AllRound attivo' : '⭐ Usa AllRound'}
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-green-700">{iv.dose} g/m²{mq&&<span className="font-normal text-gray-400 ml-1 text-xs">{kg(iv.dose)}</span>}</p>
+                        {iv.liquidiAttivi && <p className="text-xs text-blue-600 mt-1">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</p>}
+                      </>
+                    ) : !iv.passato && (() => {
+                      // ── Modalità Esperto: tutto editabile ──────────────────────────
                       const ivOrig = piano[i];
-                      const prodottiRiga = ivOrig?.prodotti || [];
+                      // Prodotto principale da override o dal piano
+                      const nomePrincipale = ivOrig?.prodotto ||
+                        (linea === 'mivena' && iv.dati?.prodotto_migliore
+                          ? (usaAllRound ? iv.dati.prodotto_migliore : iv.dati.prodotto)
+                          : (iv.dati?.prodotto || '—'));
+                      const dosePrincipale = ivOrig?.dose ?? iv.dose ?? 0;
+                      // Liquidi custom (se già overridati) o default piano
+                      const liquidiDefault = iv.liquidiAttivi
+                        ? [{ prodotto: 'Humifitos', dose: 20, catKey: 'liquido' }, { prodotto: 'Micosat F PG', dose: 1, catKey: 'micorrize' }]
+                        : [];
+                      const liquidiRiga = ivOrig?.liquidiCustom !== undefined ? ivOrig.liquidiCustom : liquidiDefault;
+
+                      const aggiornaPiano = (updates) => {
+                        const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, ...updates } : iv2);
+                        onChangePianoAnnuo(nuovoPiano);
+                      };
+
+                      // Tutte le categorie del catalogo per i dropdown prodotto
+                      const tuttiProdotti = Object.entries(CATALOGO_ESPERTO).flatMap(([catKey, cat]) =>
+                        cat.prodotti.map(p => ({ ...p, catKey, catLabel: cat.label }))
+                      );
+
                       return (
-                        <div className="mt-2 pt-2 border-t border-green-200 space-y-1.5">
-                          {prodottiRiga.map((pr, pi) => (
-                            <div key={pi} className="flex gap-2 flex-wrap items-center">
-                              <select
-                                className="text-xs border border-green-300 rounded-lg px-2 py-1 bg-white text-gray-600 font-semibold"
-                                value={pr.catKey || ''}
-                                onChange={e => {
-                                  const cat = CATALOGO_ESPERTO[e.target.value];
-                                  if (!cat) return;
-                                  const primo = cat.prodotti[0];
-                                  const nuovi = [...prodottiRiga];
-                                  nuovi[pi] = { ...nuovi[pi], nomeProdotto: primo.nome, catKey: e.target.value, npk: primo.npk, dose: primo.dose };
-                                  const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi, prodotto: nuovi[0]?.nomeProdotto||'', npk: nuovi[0]?.npk||'' } : iv2);
-                                  onChangePianoAnnuo(nuovoPiano);
-                                }}
-                              >
-                                <option value="">— categoria —</option>
-                                {Object.entries(CATALOGO_ESPERTO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                              </select>
-                              <select
-                                className="flex-1 border border-green-300 rounded-lg px-2 py-1 text-xs font-bold min-w-0 bg-white"
-                                value={pr.nomeProdotto || ''}
-                                onChange={e => {
-                                  const cat = CATALOGO_ESPERTO[pr.catKey];
-                                  const found = cat?.prodotti.find(p => p.nome === e.target.value);
-                                  if (!found) return;
-                                  const nuovi = [...prodottiRiga];
-                                  nuovi[pi] = { ...nuovi[pi], nomeProdotto: found.nome, npk: found.npk, dose: found.dose };
-                                  const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi, prodotto: nuovi[0]?.nomeProdotto||'', npk: nuovi[0]?.npk||'' } : iv2);
-                                  onChangePianoAnnuo(nuovoPiano);
-                                }}
-                              >
-                                {pr.catKey
-                                  ? CATALOGO_ESPERTO[pr.catKey]?.prodotti.map(p => <option key={p.nome} value={p.nome}>{p.nome}</option>)
-                                  : <option value={pr.nomeProdotto || ''}>{pr.nomeProdotto || '— scegli categoria —'}</option>
-                                }
-                              </select>
-                              <div className="flex items-center gap-1">
-                                <input type="number" step="1" className="w-14 border border-green-300 rounded-lg px-2 py-1 text-xs text-right font-bold"
-                                  value={pr.dose ?? iv.dose ?? ''}
-                                  onChange={e => {
-                                    const nuovi = [...prodottiRiga];
-                                    nuovi[pi] = { ...nuovi[pi], dose: parseFloat(e.target.value)||0 };
-                                    const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi, dose: nuovi[0]?.dose??iv2.dose } : iv2);
-                                    onChangePianoAnnuo(nuovoPiano);
-                                  }} />
-                                <span className="text-xs text-gray-400">g/m²</span>
-                              </div>
-                              {prodottiRiga.length > 1 && <button onClick={() => { const nuovi=prodottiRiga.filter((_,j)=>j!==pi); const nuovoPiano=piano.map((iv2,idx2)=>idx2===i?{...iv2,prodotti:nuovi,prodotto:nuovi[0]?.nomeProdotto||'',npk:nuovi[0]?.npk||''}:iv2); onChangePianoAnnuo(nuovoPiano); }} className="text-red-400 text-base px-1">×</button>}
+                        <div className="mt-1 space-y-2">
+                          {/* Prodotto principale + dose */}
+                          <div className="flex gap-2 items-center flex-wrap">
+                            <select
+                              className="flex-1 border border-green-400 rounded-lg px-2 py-1.5 text-sm font-bold bg-white min-w-0"
+                              value={nomePrincipale}
+                              onChange={e => {
+                                const found = tuttiProdotti.find(p => p.nome === e.target.value);
+                                aggiornaPiano({ prodotto: e.target.value, npk: found?.npk || '', dose: found?.dose ?? dosePrincipale });
+                              }}
+                            >
+                              {tuttiProdotti.map(p => (
+                                <option key={p.catKey + p.nome} value={p.nome}>{p.catLabel}: {p.nome}</option>
+                              ))}
+                              {!tuttiProdotti.find(p => p.nome === nomePrincipale) && (
+                                <option value={nomePrincipale}>{nomePrincipale}</option>
+                              )}
+                            </select>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <input
+                                type="number" step="1" min="1"
+                                className="w-16 border border-green-400 rounded-lg px-2 py-1.5 text-sm font-bold text-center"
+                                value={dosePrincipale}
+                                onChange={e => aggiornaPiano({ dose: parseFloat(e.target.value) || 0 })}
+                              />
+                              <span className="text-xs text-gray-500">g/m²</span>
                             </div>
-                          ))}
+                          </div>
+
+                          {/* Liquidi del piano — editabili */}
+                          {liquidiRiga.length > 0 && (
+                            <div className="space-y-1.5">
+                              <p className="text-xs font-semibold text-blue-600">💧 Liquidi:</p>
+                              {liquidiRiga.map((liq, li) => (
+                                <div key={li} className="flex gap-2 items-center flex-wrap">
+                                  <select
+                                    className="text-xs border border-blue-300 rounded-lg px-2 py-1 bg-white text-gray-600 font-semibold"
+                                    value={liq.catKey || ''}
+                                    onChange={e => {
+                                      const cat = CATALOGO_ESPERTO[e.target.value];
+                                      if (!cat) return;
+                                      const p = cat.prodotti[0];
+                                      const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { prodotto: p.nome, dose: p.dose, catKey: e.target.value } : l);
+                                      aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                    }}
+                                  >
+                                    <option value="">— cat —</option>
+                                    {Object.entries(CATALOGO_ESPERTO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                                  </select>
+                                  <select
+                                    className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold min-w-0 bg-white"
+                                    value={liq.prodotto || ''}
+                                    onChange={e => {
+                                      const cat = CATALOGO_ESPERTO[liq.catKey];
+                                      const found = cat?.prodotti.find(p => p.nome === e.target.value);
+                                      const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, prodotto: e.target.value, dose: found?.dose ?? l.dose } : l);
+                                      aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                    }}
+                                  >
+                                    {liq.catKey
+                                      ? CATALOGO_ESPERTO[liq.catKey]?.prodotti.map(p => <option key={p.nome} value={p.nome}>{p.nome}</option>)
+                                      : <option value={liq.prodotto || ''}>{liq.prodotto || '—'}</option>
+                                    }
+                                  </select>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <input type="number" step="1" className="w-14 border border-blue-300 rounded-lg px-2 py-1 text-xs text-right font-bold"
+                                      value={liq.dose ?? ''}
+                                      onChange={e => {
+                                        const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, dose: parseFloat(e.target.value) || 0 } : l);
+                                        aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                      }}
+                                    />
+                                    <span className="text-xs text-gray-400">g/m²</span>
+                                  </div>
+                                  <button onClick={() => aggiornaPiano({ liquidiCustom: liquidiRiga.filter((_, j) => j !== li) })}
+                                    className="text-red-400 text-base px-1">×</button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {/* Aggiungi liquido */}
                           <button onClick={() => {
-                            const nuovi=[...prodottiRiga, {nomeProdotto:'', catKey:'', npk:'', dose:0}];
-                            const nuovoPiano=piano.map((iv2,idx2)=>idx2===i?{...iv2,prodotti:nuovi}:iv2);
-                            onChangePianoAnnuo(nuovoPiano);
-                          }} className="text-xs text-green-700 font-semibold">+ prodotto</button>
+                            const cat = CATALOGO_ESPERTO['liquido'];
+                            const p = cat.prodotti[0];
+                            aggiornaPiano({ liquidiCustom: [...liquidiRiga, { prodotto: p.nome, dose: p.dose, catKey: 'liquido' }] });
+                          }} className="text-xs text-blue-600 font-semibold">+ liquido</button>
+
+                          {/* Prodotti extra (granulari secondari) */}
+                          {(() => {
+                            const prodottiRiga = ivOrig?.prodotti || [];
+                            return (
+                              <div className="space-y-1.5">
+                                {prodottiRiga.map((pr, pi) => (
+                                  <div key={pi} className="flex gap-2 flex-wrap items-center">
+                                    <select
+                                      className="text-xs border border-green-300 rounded-lg px-2 py-1 bg-white text-gray-600 font-semibold"
+                                      value={pr.catKey || ''}
+                                      onChange={e => {
+                                        const cat = CATALOGO_ESPERTO[e.target.value];
+                                        if (!cat) return;
+                                        const primo = cat.prodotti[0];
+                                        const nuovi = [...prodottiRiga];
+                                        nuovi[pi] = { ...nuovi[pi], nomeProdotto: primo.nome, catKey: e.target.value, npk: primo.npk, dose: primo.dose };
+                                        const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi } : iv2);
+                                        onChangePianoAnnuo(nuovoPiano);
+                                      }}
+                                    >
+                                      <option value="">— categoria —</option>
+                                      {Object.entries(CATALOGO_ESPERTO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                                    </select>
+                                    <select
+                                      className="flex-1 border border-green-300 rounded-lg px-2 py-1 text-xs font-bold min-w-0 bg-white"
+                                      value={pr.nomeProdotto || ''}
+                                      onChange={e => {
+                                        const cat = CATALOGO_ESPERTO[pr.catKey];
+                                        const found = cat?.prodotti.find(p => p.nome === e.target.value);
+                                        if (!found) return;
+                                        const nuovi = [...prodottiRiga];
+                                        nuovi[pi] = { ...nuovi[pi], nomeProdotto: found.nome, npk: found.npk, dose: found.dose };
+                                        const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi } : iv2);
+                                        onChangePianoAnnuo(nuovoPiano);
+                                      }}
+                                    >
+                                      {pr.catKey
+                                        ? CATALOGO_ESPERTO[pr.catKey]?.prodotti.map(p => <option key={p.nome} value={p.nome}>{p.nome}</option>)
+                                        : <option value={pr.nomeProdotto || ''}>{pr.nomeProdotto || '—'}</option>
+                                      }
+                                    </select>
+                                    <div className="flex items-center gap-1">
+                                      <input type="number" step="1" className="w-14 border border-green-300 rounded-lg px-2 py-1 text-xs text-right font-bold"
+                                        value={pr.dose ?? ''}
+                                        onChange={e => {
+                                          const nuovi = [...prodottiRiga];
+                                          nuovi[pi] = { ...nuovi[pi], dose: parseFloat(e.target.value) || 0 };
+                                          const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi } : iv2);
+                                          onChangePianoAnnuo(nuovoPiano);
+                                        }} />
+                                      <span className="text-xs text-gray-400">g/m²</span>
+                                    </div>
+                                    <button onClick={() => {
+                                      const nuovi = prodottiRiga.filter((_, j) => j !== pi);
+                                      const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi } : iv2);
+                                      onChangePianoAnnuo(nuovoPiano);
+                                    }} className="text-red-400 text-base px-1">×</button>
+                                  </div>
+                                ))}
+                                <button onClick={() => {
+                                  const nuovi = [...prodottiRiga, { nomeProdotto: '', catKey: '', npk: '', dose: 0 }];
+                                  const nuovoPiano = piano.map((iv2, idx2) => idx2 === i ? { ...iv2, prodotti: nuovi } : iv2);
+                                  onChangePianoAnnuo(nuovoPiano);
+                                }} className="text-xs text-green-700 font-semibold">+ granulare extra</button>
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })()}
+                    {iv.noteRitardo && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-1.5 border border-amber-200">{iv.noteRitardo}</p>}
                   </div>
                   {/* Ciclo estivo premium — inserito inline dopo intervento 3 */}
                   {livello === 'premium' && iv.numero === 3 && (

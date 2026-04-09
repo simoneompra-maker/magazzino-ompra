@@ -1165,7 +1165,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
               : livello === 'premium' ? (iv.liquidi_premium ? [{ prodotto: 'Humifitos', dose: 20 }, { prodotto: 'Micosat F PG', dose: 1 }] : [])
               : []);
           for (const l of liqList) {
-            if (l.prodotto) rows.push({ periodo, funzione, prodotto: l.prodotto, dose: l.dose });
+            if (l.prodotto) rows.push({ periodo, funzione, prodotto: l.prodotto, dose: l.dose, note: l.note || l.quando || '' });
           }
         }
         // Aggiungi liquidi premium fissi se nessun override
@@ -1180,8 +1180,8 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       sezioneLiquidi = liquidiRows.length > 0 ? `
         <h2>Liquidi di Supporto</h2>
         <table>
-          <tr><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th></tr>
-          ${liquidiRows.map(r => `<tr><td style="white-space:nowrap">${r.periodo}</td><td>${r.funzione}</td><td><strong>${r.prodotto}</strong></td><td style="white-space:nowrap">${r.dose} g/m²${kg(r.dose)}</td></tr>`).join('')}
+          <tr><th>Periodo</th><th>Funzione</th><th>Prodotto</th><th>Dose</th><th>Note</th></tr>
+          ${liquidiRows.map(r => `<tr><td style="white-space:nowrap">${r.periodo}</td><td>${r.funzione}</td><td><strong>${r.prodotto}</strong></td><td style="white-space:nowrap">${r.dose} g/m²${kg(r.dose)}</td><td><small>${r.note||''}</small></td></tr>`).join('')}
         </table>` : '';
     }
   }
@@ -3496,63 +3496,107 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                             </div>
                           </div>
 
-                          {/* Liquidi del piano — editabili */}
-                          {liquidiRiga.length > 0 && (
-                            <div className="space-y-1.5">
-                              <p className="text-xs font-semibold text-blue-600">💧 Liquidi:</p>
-                              {liquidiRiga.map((liq, li) => (
-                                <div key={li} className="flex gap-2 items-center flex-wrap">
-                                  <select
-                                    className="text-xs border border-blue-300 rounded-lg px-2 py-1 bg-white text-gray-600 font-semibold"
-                                    value={liq.catKey || ''}
-                                    onChange={e => {
-                                      const cat = CATALOGO_ESPERTO[e.target.value];
-                                      if (!cat) return;
-                                      const p = cat.prodotti[0];
-                                      const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { prodotto: p.nome, dose: p.dose, catKey: e.target.value } : l);
-                                      aggiornaPiano({ liquidiCustom: nuoviLiq });
-                                    }}
-                                  >
-                                    <option value="">— cat —</option>
-                                    {Object.entries(CATALOGO_ESPERTO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                  </select>
-                                  <select
-                                    className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold min-w-0 bg-white"
-                                    value={liq.prodotto || ''}
-                                    onChange={e => {
-                                      const cat = CATALOGO_ESPERTO[liq.catKey];
-                                      const found = cat?.prodotti.find(p => p.nome === e.target.value);
-                                      const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, prodotto: e.target.value, dose: found?.dose ?? l.dose } : l);
-                                      aggiornaPiano({ liquidiCustom: nuoviLiq });
-                                    }}
-                                  >
-                                    {liq.catKey
-                                      ? CATALOGO_ESPERTO[liq.catKey]?.prodotti.map(p => <option key={p.nome} value={p.nome}>{p.nome}</option>)
-                                      : <option value={liq.prodotto || ''}>{liq.prodotto || '—'}</option>
-                                    }
-                                  </select>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <input type="number" step="1" className="w-14 border border-blue-300 rounded-lg px-2 py-1 text-xs text-right font-bold"
-                                      value={liq.dose ?? ''}
-                                      onChange={e => {
-                                        const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, dose: parseFloat(e.target.value) || 0 } : l);
-                                        aggiornaPiano({ liquidiCustom: nuoviLiq });
-                                      }}
-                                    />
-                                    <span className="text-xs text-gray-400">g/m²</span>
+                          {/* Liquidi del piano — editabili con nota per prodotto */}
+                          {(() => {
+                            // localStorage: note per prodotto liquido
+                            const NOTE_KEY = 'pratovivo_note_liquido';
+                            const getNoteMemoria = () => { try { return JSON.parse(localStorage.getItem(NOTE_KEY) || '{}'); } catch { return {}; } };
+                            const salvaNota = (prodotto, nota) => {
+                              if (!prodotto) return;
+                              const mem = getNoteMemoria();
+                              if (nota.trim()) mem[prodotto] = nota.trim();
+                              else delete mem[prodotto];
+                              localStorage.setItem(NOTE_KEY, JSON.stringify(mem));
+                            };
+                            const getNota = (prodotto) => {
+                              if (!prodotto) return '';
+                              const mem = getNoteMemoria();
+                              if (mem[prodotto]) return mem[prodotto];
+                              // Fallback: campo quando dal catalogo
+                              for (const cat of Object.values(CATALOGO_ESPERTO)) {
+                                const found = cat.prodotti.find(p => p.nome === prodotto);
+                                if (found?.quando) return found.quando;
+                              }
+                              return '';
+                            };
+                            return (
+                              <>
+                                {liquidiRiga.length > 0 && (
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-blue-600">💧 Liquidi:</p>
+                                    {liquidiRiga.map((liq, li) => (
+                                      <div key={li} className="space-y-1">
+                                        <div className="flex gap-2 items-center flex-wrap">
+                                          <select
+                                            className="text-xs border border-blue-300 rounded-lg px-2 py-1 bg-white text-gray-600 font-semibold"
+                                            value={liq.catKey || ''}
+                                            onChange={e => {
+                                              const cat = CATALOGO_ESPERTO[e.target.value];
+                                              if (!cat) return;
+                                              const p = cat.prodotti[0];
+                                              const nota = liq.note !== undefined ? liq.note : getNota(p.nome);
+                                              const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { prodotto: p.nome, dose: p.dose, catKey: e.target.value, note: nota } : l);
+                                              aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                            }}
+                                          >
+                                            <option value="">— cat —</option>
+                                            {Object.entries(CATALOGO_ESPERTO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                                          </select>
+                                          <select
+                                            className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold min-w-0 bg-white"
+                                            value={liq.prodotto || ''}
+                                            onChange={e => {
+                                              const cat = CATALOGO_ESPERTO[liq.catKey];
+                                              const found = cat?.prodotti.find(p => p.nome === e.target.value);
+                                              const nota = getNota(e.target.value);
+                                              const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, prodotto: e.target.value, dose: found?.dose ?? l.dose, note: nota } : l);
+                                              aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                            }}
+                                          >
+                                            {liq.catKey
+                                              ? CATALOGO_ESPERTO[liq.catKey]?.prodotti.map(p => <option key={p.nome} value={p.nome}>{p.nome}</option>)
+                                              : <option value={liq.prodotto || ''}>{liq.prodotto || '—'}</option>
+                                            }
+                                          </select>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <input type="number" step="1" className="w-14 border border-blue-300 rounded-lg px-2 py-1 text-xs text-right font-bold"
+                                              value={liq.dose ?? ''}
+                                              onChange={e => {
+                                                const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, dose: parseFloat(e.target.value) || 0 } : l);
+                                                aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                              }}
+                                            />
+                                            <span className="text-xs text-gray-400">g/m²</span>
+                                          </div>
+                                          <button onClick={() => aggiornaPiano({ liquidiCustom: liquidiRiga.filter((_, j) => j !== li) })}
+                                            className="text-red-400 text-base px-1">×</button>
+                                        </div>
+                                        {/* Nota editabile con memoria per prodotto */}
+                                        <input
+                                          type="text"
+                                          className="w-full border border-blue-100 rounded-lg px-2 py-1 text-xs text-gray-500 italic bg-blue-50 placeholder-blue-300"
+                                          placeholder={`Nota per ${liq.prodotto || 'questo liquido'}...`}
+                                          value={liq.note !== undefined ? liq.note : (liq.prodotto ? getNota(liq.prodotto) : '')}
+                                          onChange={e => {
+                                            salvaNota(liq.prodotto, e.target.value);
+                                            const nuoviLiq = liquidiRiga.map((l, j) => j === li ? { ...l, note: e.target.value } : l);
+                                            aggiornaPiano({ liquidiCustom: nuoviLiq });
+                                          }}
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
-                                  <button onClick={() => aggiornaPiano({ liquidiCustom: liquidiRiga.filter((_, j) => j !== li) })}
-                                    className="text-red-400 text-base px-1">×</button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {/* Aggiungi liquido */}
-                          <button onClick={() => {
-                            const cat = CATALOGO_ESPERTO['liquido'];
-                            const p = cat.prodotti[0];
-                            aggiornaPiano({ liquidiCustom: [...liquidiRiga, { prodotto: p.nome, dose: p.dose, catKey: 'liquido' }] });
-                          }} className="text-xs text-blue-600 font-semibold">+ liquido</button>
+                                )}
+                                {/* Aggiungi liquido */}
+                                <button onClick={() => {
+                                  const cat = CATALOGO_ESPERTO['liquido'];
+                                  const p = cat.prodotti[0];
+                                  const nota = getNota(p.nome);
+                                  aggiornaPiano({ liquidiCustom: [...liquidiRiga, { prodotto: p.nome, dose: p.dose, catKey: 'liquido', note: nota }] });
+                                }} className="text-xs text-blue-600 font-semibold">+ liquido</button>
+                              </>
+                            );
+                          })()}
 
                           {/* Prodotti extra (granulari secondari) */}
                           {(() => {

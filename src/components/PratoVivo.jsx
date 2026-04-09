@@ -1140,7 +1140,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
         <h2>Interventi Granulari Programmati</h2>
         <table>
           <tr><th>#</th><th>Periodo</th><th>Funzione</th><th>Prodotto / Miscela</th><th>Note</th></tr>
-          ${pianoAnnuo.map(iv => resolveIv(iv)).filter(iv => !iv.saltato).map(iv => `
+          ${pianoAnnuo.map(iv => resolveIv(iv)).filter(iv => !iv.saltato && iv.prodotto && iv.prodotto !== '—' && parseFloat(iv.dose) > 0).map(iv => `
             <tr class="${iv.passato ? 'passato' : ''}" style="page-break-inside:avoid">
               <td>${iv.numero||''}</td>
               <td style="white-space:nowrap">${iv.bimestre_label||''}</td>
@@ -1153,6 +1153,7 @@ function generaPDF({ tipo, tipoPrato, livello, linea, terreno, colore, mq, irrig
       // Liquidi: costruisci righe per-intervento (con Periodo / Funzione / Prodotto / Dose)
       const liquidiRows = (() => {
         const rows = [];
+        // Includi liquidi da TUTTI i trattamenti non saltati (anche solo-liquido)
         const ivs = pianoAnnuo.map(iv => resolveIv(iv)).filter(iv => !iv.saltato);
         for (const iv of ivs) {
           const periodo = iv.bimestre_label || '';
@@ -1580,8 +1581,10 @@ export default function PratoVivo({ onNavigate }) {
         for (const ivRaw of pianoAnnuoEffettivo) {
           const iv = resolvePrevIv(ivRaw);
           const dose = parseFloat(String(iv.dose).split('–')[0]);
-          if (!isNaN(dose) && dose > 0) items.push({ prodotto: iv.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
-          // Liquidi: usa override se presente, altrimenti default da piano
+          // Granulare: solo se presente
+          const haGranulare = !isNaN(dose) && dose > 0 && iv.prodotto && iv.prodotto !== '—';
+          if (haGranulare) items.push({ prodotto: iv.prodotto, dose_g_mq: dose, n_applicazioni: 1 });
+          // Liquidi: sempre (anche trattamenti solo-liquido)
           if (iv.liquidiCustom && iv.liquidiCustom.length > 0) {
             for (const l of iv.liquidiCustom) {
               if (l.prodotto && l.dose > 0) items.push({ prodotto: l.prodotto, dose_g_mq: l.dose, n_applicazioni: 1 });

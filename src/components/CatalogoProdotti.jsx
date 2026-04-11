@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import useStore, { supabase } from '../../store';
+import useStore, { supabase } from '../store';
 import {
   ArrowLeft, Search, ShoppingCart, Plus, Minus, Check,
   ChevronDown, ChevronUp, X, Tag, Filter,

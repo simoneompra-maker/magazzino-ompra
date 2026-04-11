@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import useStore, { supabase } from '../../store';
+import useStore, { supabase } from '../store';
 import {
   ArrowLeft, Plus, Trash2, FileSpreadsheet, FileText, Save, ShoppingCart, X,
 } from 'lucide-react';

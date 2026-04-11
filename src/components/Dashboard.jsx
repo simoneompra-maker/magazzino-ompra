@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch, BookOpen, FilePlus2 } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -318,6 +318,23 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
               STIHL
             </div>
             <div className="text-xs font-bold">CATALOGO</div>
+          </button>
+          <button
+            onClick={() => onNavigate('catalogo-prodotti')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#2563eb', backgroundColor: '#eff6ff', color: '#1d4ed8' }}
+          >
+            <BookOpen className="w-6 h-6" />
+            <div className="text-xs font-bold">CATALOGO</div>
+            <div className="text-xs font-bold" style={{ marginTop: -4 }}>PRODOTTI</div>
+          </button>
+          <button
+            onClick={() => onNavigate('compilatore-prev')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#ea580c', backgroundColor: '#fff7ed', color: '#ea580c' }}
+          >
+            <FilePlus2 className="w-6 h-6" />
+            <div className="text-xs font-bold">PREVENTIVO</div>
           </button>
         </div>
       </div>

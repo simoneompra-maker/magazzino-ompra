@@ -16,6 +16,8 @@ import Noleggio from './components/Noleggio';
 import RubricaClienti from './components/RubricaClienti';
 import StihlCatalog from './components/StihlCatalog';
 import ArchivioPreventivi from './components/ArchivioPreventivi';
+import CompilatorePrev from './components/CompilatorePrev';
+import CatalogoProdotti from './components/CatalogoProdotti';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
@@ -115,6 +117,10 @@ function App() {
         return <StihlCatalog isAdmin={true} onBack={() => navigate('home')} />;
       case 'preventivi':
         return <ArchivioPreventivi onNavigate={navigate} />;
+      case 'compilatore-prev':
+        return <CompilatorePrev onNavigate={navigate} />;
+      case 'catalogo-prodotti':
+        return <CatalogoProdotti onNavigate={navigate} />;
       default:
         return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }

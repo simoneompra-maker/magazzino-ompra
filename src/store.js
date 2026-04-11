@@ -943,7 +943,40 @@ const useStore = create((set, get) => ({
       alert('Errore durante azzeramento: ' + error.message);
       return false;
     }
-  }
+  },
+
+  // ── Carrello preventivi ─────────────────────────────────────────────────────
+  // Stato condiviso tra CatalogoProdotti (aggiunge) e CompilatorePrev (legge)
+  preventivoCarrello: [],
+
+  addToCarrello: (prodotto) => {
+    const carrello = get().preventivoCarrello;
+    const esistente = carrello.find(i => i.id === prodotto.id);
+    if (esistente) {
+      set({
+        preventivoCarrello: carrello.map(i =>
+          i.id === prodotto.id ? { ...i, qty: (i.qty || 1) + 1 } : i
+        ),
+      });
+    } else {
+      set({ preventivoCarrello: [...carrello, { ...prodotto, qty: 1 }] });
+    }
+  },
+
+  removeFromCarrello: (id) => {
+    set({ preventivoCarrello: get().preventivoCarrello.filter(i => i.id !== id) });
+  },
+
+  updateCarrelloItem: (id, changes) => {
+    set({
+      preventivoCarrello: get().preventivoCarrello.map(i =>
+        i.id === id ? { ...i, ...changes } : i
+      ),
+    });
+  },
+
+  clearCarrello: () => set({ preventivoCarrello: [] }),
+
 }));
 
 export default useStore;

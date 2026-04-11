@@ -49,12 +49,15 @@ function ProdottoCard({ prodotto, inCarrello, qtyCarrello, onAdd, onRemove }) {
           </div>
           {/* Prezzi */}
           <div className="text-right shrink-0">
-            {prodotto.prezzo_listino && (
+            {prodotto.prezzo_listino && prodotto.prezzo_vendita &&
+             prodotto.prezzo_listino > prodotto.prezzo_vendita && (
               <p className="text-xs text-gray-400 line-through">{fmt(prodotto.prezzo_listino)} €</p>
             )}
-            {prodotto.prezzo_vendita && (
+            {prodotto.prezzo_vendita ? (
               <p className="text-base font-bold text-orange-600">{fmt(prodotto.prezzo_vendita)} €</p>
-            )}
+            ) : prodotto.prezzo_listino ? (
+              <p className="text-base font-bold text-orange-600">{fmt(prodotto.prezzo_listino)} €</p>
+            ) : null}
           </div>
         </div>
 

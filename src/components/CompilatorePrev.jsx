@@ -144,95 +144,99 @@ async function generaPDF({ righe, cliente, indirizzo, citta, data, titolo, pagam
 }
 
 // ─── Excel ────────────────────────────────────────────────────────────────────
+// Converte indice colonna (0-based) in lettera Excel
+function colLetter(n) {
+  let s = '';
+  n += 1;
+  while (n > 0) {
+    const r = (n - 1) % 26;
+    s = String.fromCharCode(65 + r) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
 async function esportaExcel({ righe, cliente, indirizzo, citta, data, titolo, pagamento, garanzia }) {
   if (!window.XLSX) {
     await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
   }
   const XLSX = window.XLSX;
-  const vuota = ['', '', '', '', '', '', '', ''];
-  const aoa = [];
 
-  // Righe 0-4 vuote (per logo/spazio)
-  aoa.push(vuota, vuota, vuota, vuota, vuota);
-  // r5: intestazione OMPRA + Spett.le
-  aoa.push(['     Tel: +39-0422-892426 r.a. \u2013 fax: +39-0422-793042', 'Spett.le', '', '', '', '', '', '']);
-  // r6: email + cliente
-  aoa.push(['       http//www.ompra.it  \u2013  E-MAIL:  info@ompra.it', cliente || '', '', '', '', '', '', '']);
-  // r7: blank + indirizzo
-  aoa.push(['', indirizzo || '', '', '', '', '', '', '']);
-  // r8: blank + citt\u00e0
-  aoa.push(['', citta || '', '', '', '', '', '', '']);
-  aoa.push(vuota); // r9
-  // r10: data
+  const righeValide = righe.filter(r => r.descrizione || r.scontato_ic);
+  const totImp = righeValide.reduce(
+    (a, r) => a + round2(round2((+r.scontato_ic || 0) / IVA) * (+r.qty || 1)), 0
+  );
+  const ivaAmt = round2(totImp * 0.22);
+  const totIC  = round2(totImp + ivaAmt);
   const dStr = data
     ? new Date(data + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
-    : '';
-  aoa.push(['Nerbon, ' + dStr, '', '', '', '', '', '', '']);
-  aoa.push(vuota); // r11
-  // r12: titolo
-  aoa.push([titolo || 'PREVENTIVO: ATTREZZATURA STIHL', '', '', '', '', '', '', '']);
-  aoa.push(vuota); // r13
-  // r14: header colonne
-  aoa.push(['DESCRIZIONE', '  NR ', '', 'IMPORTO', '', 'LISTINO I.C.', 'SCONTATO I.C.', 'SCONTATO I.E.']);
-  aoa.push(vuota); // r15 spacer
+    : new Date().toLocaleDateString('it-IT');
+
+  // Costruzione foglio cella per cella
+  const ws = {};
+  const set = (row, col, v) => {
+    const addr = colLetter(col) + row;
+    ws[addr] = typeof v === 'number' ? { v, t: 'n', z: '#,##0.00' } : { v: v || '', t: 's' };
+  };
+
+  // Intestazione OMPRA
+  set(5, 0, '     Tel: +39-0422-892426 r.a. \u2013 fax: +39-0422-793042');
+  set(5, 1, 'Spett.le');
+  set(6, 0, '       http//www.ompra.it  \u2013  E-MAIL:  info@ompra.it');
+  set(6, 1, cliente || '');
+  set(7, 1, indirizzo || '');
+  set(8, 1, citta || '');
+  set(11, 0, 'Nerbon, ' + dStr);
+  set(13, 0, titolo || 'PREVENTIVO: ATTREZZATURA STIHL');
+  set(15, 0, 'DESCRIZIONE');
+  set(15, 1, '  NR ');
+  set(15, 3, 'IMPORTO');
+  set(15, 5, 'LISTINO I.C.');
+  set(15, 6, 'SCONTATO I.C.');
+  set(15, 7, 'SCONTATO I.E.');
 
   // Righe prodotti
-  const righeValide = righe.filter(r => r.descrizione || r.scontato_ic);
+  let r = 17;
   for (const riga of righeValide) {
     const sie = round2((+riga.scontato_ic || 0) / IVA);
     const imp = round2(sie * (+riga.qty || 1));
-    const unitario = (+riga.qty || 1) > 1 ? sie : '';
-    aoa.push([
-      riga.descrizione || '',
-      +riga.qty || 1,
-      unitario,
-      imp || '',
-      '',
-      +riga.listino_ic || '',
-      +riga.scontato_ic || '',
-      sie || '',
-    ]);
+    set(r, 0, riga.descrizione || '');
+    set(r, 1, +riga.qty || 1);
+    if ((+riga.qty || 1) > 1) set(r, 2, sie);
+    if (imp) set(r, 3, imp);
+    if (+riga.listino_ic) set(r, 5, +riga.listino_ic);
+    if (+riga.scontato_ic) set(r, 6, +riga.scontato_ic);
+    if (sie) set(r, 7, sie);
+    r++;
   }
 
-  aoa.push(vuota); // spacer dopo prodotti
+  r++;
+  set(r,   0, 'TOTALE IMPONIBILE');      set(r,   3, totImp);
+  set(r+1, 0, '+I.V.A. del 22%');        set(r+1, 3, ivaAmt);
+  set(r+2, 0, 'TOTALE PREVENTIVO IVA COMPRESA'); set(r+2, 3, totIC);
+  r += 4;
 
-  // Totali
-  const totImp = righeValide.reduce(
-    (a, r) => a + round2(round2((+r.scontato_ic || 0) / IVA) * (+r.qty || 1)),
-    0
-  );
-  const ivaAmt = round2(totImp * 0.22);
-  const totIC = round2(totImp + ivaAmt);
+  set(r,   0, 'CONDIZIONI DI FORNITURA:'); r++;
+  set(r,   0, 'Validit\u00e0 offerta: 30 giorni'); r++;
+  set(r,   0, 'Pagamento: ' + (pagamento || '')); r++;
+  set(r,   0, 'Garanzia: ' + (garanzia || '12 mesi')); r += 2;
+  set(r,   0, 'Per qualsiasi ulteriore chiarimento, non esitate a contattarci. Cordiali saluti.'); r += 2;
+  set(r,   2, 'OMPRA Srl'); r += 2;
+  set(r,   2, 'Agr. Simone Taffarello'); r += 15;
+  set(r,   0, '    OMPRA  Srl    \u2013    Via Roncade, 7 Nerbon   \u2013   31048   S.Biagio di Callalta   (TV)');
 
-  aoa.push(['TOTALE IMPONIBILE', '', '', totImp, '', '', '', '']);
-  aoa.push(['+I.V.A. del 22%', '', '', ivaAmt, '', '', '', '']);
-  aoa.push(['TOTALE PREVENTIVO IVA COMPRESA', '', '', totIC, '', '', '', '']);
-  aoa.push(vuota);
-  // Condizioni
-  aoa.push(['CONDIZIONI DI FORNITURA:', '', '', '', '', '', '', '']);
-  aoa.push(['Validit\u00e0 offerta: 30 giorni', '', '', '', '', '', '', '']);
-  aoa.push(['Pagamento: ' + (pagamento || ''), '', '', '', '', '', '', '']);
-  aoa.push(['Garanzia: ' + (garanzia || '12 mesi'), '', '', '', '', '', '', '']);
-  aoa.push(vuota);
-  aoa.push(["Per qualsiasi ulteriore chiarimento, non esitate a contattarci. Cordiali saluti.", '', '', '', '', '', '', '']);
-  aoa.push(vuota);
-  aoa.push(['', '', 'OMPRA Srl', '', '', '', '', '']);
-  aoa.push(vuota);
-  aoa.push(['', '', 'Agr. Simone Taffarello', '', '', '', '', '']);
-  // Padding per footer
-  for (let i = 0; i < 14; i++) aoa.push(vuota);
-  aoa.push(['    OMPRA  Srl    \u2013    Via Roncade, 7 Nerbon   \u2013   31048   S.Biagio di Callalta   (TV)', '', '', '', '', '', '', '']);
-
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!ref'] = 'A1:' + colLetter(7) + r;
   ws['!cols'] = [
-    { wch: 72 }, { wch: 7 }, { wch: 12 }, { wch: 14 },
-    { wch: 4 },  { wch: 14 }, { wch: 14 }, { wch: 14 },
+    { wch: 74 }, { wch: 6 }, { wch: 13 }, { wch: 14 },
+    { wch: 3 },  { wch: 14 }, { wch: 14 }, { wch: 14 },
   ];
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Preventivo');
   const nomeFile = 'Preventivo_' + (cliente || 'OMPRA').replace(/\s+/g, '_') + '_' + (data || new Date().toISOString().slice(0, 10)) + '.xlsx';
   XLSX.writeFile(wb, nomeFile);
 }
+
 
 // ─── Componente principale ────────────────────────────────────────────────────
 export default function CompilatorePrev({ onNavigate }) {

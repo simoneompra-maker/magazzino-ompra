@@ -12,6 +12,13 @@ const fmt = (n) =>
 // Normalizza stringa per ricerca: rimuove spazi, trattini, punti → tutto uppercase
 const norm = (s) => (s || '').toUpperCase().replace(/[\s\-\.]/g, '');
 
+// Arrotonda prezzo vendita all'euro superiore, senza mai eccedere il listino
+const arrotonda = (v, l) => {
+  if (!v) return v;
+  const ceil = Math.ceil(v);
+  return l ? Math.min(ceil, l) : ceil;
+};
+
 // ─── Componente Card prodotto ─────────────────────────────────────────────────
 function ProdottoCard({ prodotto, inCarrello, qtyCarrello, onAdd, onRemove }) {
   const [espanso, setEspanso] = useState(false);
@@ -50,11 +57,13 @@ function ProdottoCard({ prodotto, inCarrello, qtyCarrello, onAdd, onRemove }) {
           {/* Prezzi */}
           <div className="text-right shrink-0">
             {prodotto.prezzo_listino && prodotto.prezzo_vendita &&
-             prodotto.prezzo_listino > prodotto.prezzo_vendita && (
+             prodotto.prezzo_listino > Math.ceil(prodotto.prezzo_vendita) && (
               <p className="text-xs text-gray-400 line-through">{fmt(prodotto.prezzo_listino)} €</p>
             )}
             {prodotto.prezzo_vendita ? (
-              <p className="text-base font-bold text-orange-600">{fmt(prodotto.prezzo_vendita)} €</p>
+              <p className="text-base font-bold text-orange-600">
+                {fmt(arrotonda(prodotto.prezzo_vendita, prodotto.prezzo_listino))} €
+              </p>
             ) : prodotto.prezzo_listino ? (
               <p className="text-base font-bold text-orange-600">{fmt(prodotto.prezzo_listino)} €</p>
             ) : null}
@@ -211,7 +220,7 @@ export default function CatalogoProdotti({ onNavigate }) {
 
   const totCarrello = preventivoCarrello.reduce((a, i) => a + (i.qty || 1), 0);
   const totaleCarrello = preventivoCarrello.reduce(
-    (a, i) => a + (i.prezzo_vendita || 0) * (i.qty || 1), 0
+    (a, i) => a + (arrotonda(i.prezzo_vendita, i.prezzo_listino) || 0) * (i.qty || 1), 0
   );
 
   const handleAdd = (prodotto) => addToCarrello(prodotto);

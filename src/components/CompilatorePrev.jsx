@@ -7,6 +7,12 @@ import {
 // ─── Costanti e utilità ───────────────────────────────────────────────────────
 const IVA = 1.22;
 const round2 = (n) => Math.round((n || 0) * 100) / 100;
+// Arrotonda prezzo vendita all'euro superiore, senza mai eccedere il listino
+const arrotonda = (v, l) => {
+  if (!v) return v;
+  const ceil = Math.ceil(v);
+  return l ? Math.min(ceil, l) : ceil;
+};
 const fmt = (n) =>
   new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
 const nuovaRiga = () => ({
@@ -265,7 +271,9 @@ export default function CompilatorePrev({ onNavigate }) {
           descrizione: item.descrizione || item.modello || '',
           qty: item.qty || 1,
           listino_ic: item.prezzo_listino || '',
-          scontato_ic: item.prezzo_vendita || '',
+          scontato_ic: item.prezzo_vendita
+            ? arrotonda(item.prezzo_vendita, item.prezzo_listino)
+            : '',
         })));
       }
       setImportato(true);

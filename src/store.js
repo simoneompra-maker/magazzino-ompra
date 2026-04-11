@@ -950,16 +950,26 @@ const useStore = create((set, get) => ({
   preventivoCarrello: [],
 
   addToCarrello: (prodotto) => {
+    // Arrotonda prezzo_vendita all'euro superiore, senza mai eccedere il listino
+    const arrotonda = (v, l) => {
+      if (!v) return v;
+      const ceil = Math.ceil(v);
+      return l ? Math.min(ceil, l) : ceil;
+    };
+    const prodottoArrotondato = {
+      ...prodotto,
+      prezzo_vendita: arrotonda(prodotto.prezzo_vendita, prodotto.prezzo_listino),
+    };
     const carrello = get().preventivoCarrello;
-    const esistente = carrello.find(i => i.id === prodotto.id);
+    const esistente = carrello.find(i => i.id === prodottoArrotondato.id);
     if (esistente) {
       set({
         preventivoCarrello: carrello.map(i =>
-          i.id === prodotto.id ? { ...i, qty: (i.qty || 1) + 1 } : i
+          i.id === prodottoArrotondato.id ? { ...i, qty: (i.qty || 1) + 1 } : i
         ),
       });
     } else {
-      set({ preventivoCarrello: [...carrello, { ...prodotto, qty: 1 }] });
+      set({ preventivoCarrello: [...carrello, { ...prodottoArrotondato, qty: 1 }] });
     }
   },
 

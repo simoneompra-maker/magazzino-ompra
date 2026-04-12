@@ -310,16 +310,6 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <div className="text-xs font-bold">NOLEGGIO</div>
           </button>
           <button
-            onClick={() => onNavigate('stihl')}
-            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
-            style={{ borderColor: '#f97316', backgroundColor: '#fff7ed', color: '#ea580c' }}
-          >
-            <div className="text-xs font-black px-2 py-0.5 rounded tracking-widest text-white" style={{ backgroundColor: '#f97316' }}>
-              STIHL
-            </div>
-            <div className="text-xs font-bold">CATALOGO</div>
-          </button>
-          <button
             onClick={() => onNavigate('catalogo-prodotti')}
             className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
             style={{ borderColor: '#2563eb', backgroundColor: '#eff6ff', color: '#1d4ed8' }}
@@ -401,6 +391,25 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
       {/* Sezione Admin */}
       {isAdmin && (
         <div className="mt-2">
+          {/* ── STRUMENTI ADMIN ── */}
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <button
+              onClick={() => onNavigate('stihl')}
+              className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-gray-200 bg-white shadow-sm active:scale-95 transition-transform"
+            >
+              <div className="text-xs font-black px-2 py-0.5 rounded tracking-widest text-white" style={{ backgroundColor: '#f97316' }}>
+                STIHL
+              </div>
+              <div className="text-xs font-bold text-gray-500">Listino Admin</div>
+            </button>
+            <button
+              onClick={() => onNavigate('budget-admin')}
+              className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-gray-200 bg-white shadow-sm active:scale-95 transition-transform text-gray-600"
+            >
+              <BarChart2 className="w-5 h-5 text-gray-400" />
+              <div className="text-xs font-bold">BUDGET</div>
+            </button>
+          </div>
           {/* ── STOCK ALERTS ── */}
           <div className="mt-2">
             {/* Header toggle */}
@@ -613,15 +622,8 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
       )}
 
       {/* Footer */}
-      <div className="mt-3 flex items-center justify-between px-1">
+      <div className="mt-3 px-1">
         <p className="text-xs text-gray-400">v1.3.2 - OMPRA Gestionale</p>
-        <button
-          onClick={() => onNavigate('budget-admin')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-xs font-semibold active:scale-95 transition-transform"
-        >
-          <BarChart2 className="w-3.5 h-3.5" />
-          Budget
-        </button>
       </div>
     </div>
   );

@@ -3386,6 +3386,22 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
+  // Liquidi box editabili in modalità esperto
+  const [liquidiSabbEdit, setLiquidiSabbEdit] = useState(null);
+  const [liquidiStdEdit, setLiquidiStdEdit] = useState(null);
+  const [liquidiPremEdit, setLiquidiPremEdit] = useState(null);
+
+  // Inizializza gli override quando si attiva la modalità esperto
+  const liquidiSabbAttivi = liquidiSabbEdit ?? LIQUIDI_SABBIOSO.map(l => ({ ...l }));
+  const liquidiStdAttivi = liquidiStdEdit ?? [
+    { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Concimazioni 1, 3, 4 (Mivena) — dopo distribuzione granulare' },
+    { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)' },
+  ];
+  const liquidiPremAttivi = liquidiPremEdit ?? [
+    { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Abbinato a ogni intervento granulare (×5)' },
+    { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)' },
+  ];
+
   // Numerazione progressiva per Mivena (salta trattamento 2 che ha mivena:null)
   const pianoConNumero = (() => {
     let n = 0;
@@ -4026,15 +4042,29 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
             {/* Biostimolanti — Humifitos/Micosat riassunto per Standard; Premium già inline */}
             {livello === 'standard' && terreno !== 'sabbioso' && (
               <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
-                <div className="bg-blue-600 px-3 py-2">
+                <div className="bg-blue-600 px-3 py-2 flex items-center justify-between">
                   <p className="text-white font-bold text-xs">💧 Biostimolanti — momenti chiave (×3)</p>
+                  {modalitaEsperto && (
+                    <button onClick={() => { const u = [...liquidiStdAttivi, { prodotto: '', dose: '1 g/m²', quando: '' }]; setLiquidiStdEdit(u); }}
+                      className="text-white text-xs px-2 py-0.5 rounded-lg bg-blue-500 hover:bg-blue-400 font-bold">+ prodotto</button>
+                  )}
                 </div>
                 <div className="p-3 space-y-2">
-                  {[
-                    { prodotto: 'Humifitos', dose: '20 g/m²', quando: 'Concimazioni 1, 3, 4 (Mivena) — dopo distribuzione granulare' },
-                    { prodotto: 'Micosat F PG', dose: '1 g/m²', quando: 'Con Humifitos (stesso passaggio)' },
-                  ].map((p, i) => (
-                    <div key={i} className="flex justify-between items-start">
+                  {liquidiStdAttivi.map((p, idx) => modalitaEsperto ? (
+                    <div key={idx} className="flex gap-2 items-center flex-wrap">
+                      <input className="flex-1 min-w-0 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-blue-800"
+                        value={p.prodotto} placeholder="Prodotto"
+                        onChange={e => { const u=[...liquidiStdAttivi]; u[idx]={...u[idx],prodotto:e.target.value}; setLiquidiStdEdit(u); }} />
+                      <input className="w-20 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-blue-700 text-right"
+                        value={p.dose} placeholder="dose"
+                        onChange={e => { const u=[...liquidiStdAttivi]; u[idx]={...u[idx],dose:e.target.value}; setLiquidiStdEdit(u); }} />
+                      <input className="flex-1 min-w-0 border border-blue-200 rounded-lg px-2 py-1 text-xs bg-white text-gray-500 italic"
+                        value={p.quando||''} placeholder="Nota..."
+                        onChange={e => { const u=[...liquidiStdAttivi]; u[idx]={...u[idx],quando:e.target.value}; setLiquidiStdEdit(u); }} />
+                      <button onClick={() => setLiquidiStdEdit(liquidiStdAttivi.filter((_,j)=>j!==idx))} className="text-red-400 text-base px-1">×</button>
+                    </div>
+                  ) : (
+                    <div key={idx} className="flex justify-between items-start">
                       <div>
                         <p className="font-bold text-blue-800 text-xs">{p.prodotto}</p>
                         <p className="text-xs text-blue-600">{p.quando}</p>
@@ -4047,16 +4077,67 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
             )}
             {/* Premium: Humifitos/Micosat riassunto (già visibile inline, ma riepilogo frequenza) */}
             {livello === 'premium' && terreno !== 'sabbioso' && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-                <p className="text-xs text-blue-700"><span className="font-bold">💧 Humifitos 20 g/m² + Micosat F PG 1 g/m²</span> — abbinati a ogni intervento granulare (×5)</p>
+              <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
+                <div className="bg-blue-600 px-3 py-2 flex items-center justify-between">
+                  <p className="text-white font-bold text-xs">💧 Biostimolanti — ogni intervento (×5)</p>
+                  {modalitaEsperto && (
+                    <button onClick={() => { const u = [...liquidiPremAttivi, { prodotto: '', dose: '1 g/m²', quando: '' }]; setLiquidiPremEdit(u); }}
+                      className="text-white text-xs px-2 py-0.5 rounded-lg bg-blue-500 hover:bg-blue-400 font-bold">+ prodotto</button>
+                  )}
+                </div>
+                <div className="p-3 space-y-2">
+                  {liquidiPremAttivi.map((p, idx) => modalitaEsperto ? (
+                    <div key={idx} className="flex gap-2 items-center flex-wrap">
+                      <input className="flex-1 min-w-0 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-blue-800"
+                        value={p.prodotto} placeholder="Prodotto"
+                        onChange={e => { const u=[...liquidiPremAttivi]; u[idx]={...u[idx],prodotto:e.target.value}; setLiquidiPremEdit(u); }} />
+                      <input className="w-20 border border-blue-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-blue-700 text-right"
+                        value={p.dose} placeholder="dose"
+                        onChange={e => { const u=[...liquidiPremAttivi]; u[idx]={...u[idx],dose:e.target.value}; setLiquidiPremEdit(u); }} />
+                      <input className="flex-1 min-w-0 border border-blue-200 rounded-lg px-2 py-1 text-xs bg-white text-gray-500 italic"
+                        value={p.quando||''} placeholder="Nota..."
+                        onChange={e => { const u=[...liquidiPremAttivi]; u[idx]={...u[idx],quando:e.target.value}; setLiquidiPremEdit(u); }} />
+                      <button onClick={() => setLiquidiPremEdit(liquidiPremAttivi.filter((_,j)=>j!==idx))} className="text-red-400 text-base px-1">×</button>
+                    </div>
+                  ) : (
+                    <div key={idx} className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-blue-800 text-xs">{p.prodotto}</p>
+                        {p.quando && <p className="text-xs text-blue-600">{p.quando}</p>}
+                      </div>
+                      <p className="font-bold text-blue-700 text-xs whitespace-nowrap ml-2">{p.dose}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {terreno === 'sabbioso' && liquidiSab && (
-              <div className="rounded-xl p-3 border-l-4 border-amber-400 bg-amber-50">
-                <p className="font-bold text-amber-800 text-sm mb-1.5">💧 Liquidi ogni 20 gg</p>
-                <div className="space-y-1">
-                  {LIQUIDI_SABBIOSO.map((l, i) => (
-                    <div key={i} className="text-xs">
+              <div className="rounded-xl border-l-4 border-amber-400 bg-amber-50 overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 bg-amber-100 border-b border-amber-200">
+                  <p className="font-bold text-amber-800 text-sm">💧 Liquidi ogni 20 gg</p>
+                  {modalitaEsperto && (
+                    <button onClick={() => { const u = [...liquidiSabbAttivi, { prodotto: '', dose: '1 g/m²', note: '' }]; setLiquidiSabbEdit(u); }}
+                      className="text-amber-800 text-xs px-2 py-0.5 rounded-lg bg-amber-200 hover:bg-amber-300 font-bold">+ prodotto</button>
+                  )}
+                </div>
+                <div className="p-3 space-y-2">
+                  {liquidiSabbAttivi.map((l, idx) => modalitaEsperto ? (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <input className="flex-1 min-w-0 border border-amber-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-amber-900"
+                          value={l.prodotto} placeholder="Prodotto"
+                          onChange={e => { const u=[...liquidiSabbAttivi]; u[idx]={...u[idx],prodotto:e.target.value}; setLiquidiSabbEdit(u); }} />
+                        <input className="w-20 border border-amber-300 rounded-lg px-2 py-1 text-xs font-bold bg-white text-amber-700 text-right"
+                          value={l.dose} placeholder="dose"
+                          onChange={e => { const u=[...liquidiSabbAttivi]; u[idx]={...u[idx],dose:e.target.value}; setLiquidiSabbEdit(u); }} />
+                        <button onClick={() => setLiquidiSabbEdit(liquidiSabbAttivi.filter((_,j)=>j!==idx))} className="text-red-400 text-base px-1">×</button>
+                      </div>
+                      <input className="w-full border border-amber-200 rounded-lg px-2 py-1 text-xs bg-white text-amber-600 italic placeholder-amber-300"
+                        value={l.note||''} placeholder="Nota..."
+                        onChange={e => { const u=[...liquidiSabbAttivi]; u[idx]={...u[idx],note:e.target.value}; setLiquidiSabbEdit(u); }} />
+                    </div>
+                  ) : (
+                    <div key={idx} className="text-xs">
                       <div className="flex justify-between">
                         <span className="text-amber-900 font-semibold">{l.prodotto}</span>
                         <span className="text-amber-700 font-bold">{l.dose}</span>

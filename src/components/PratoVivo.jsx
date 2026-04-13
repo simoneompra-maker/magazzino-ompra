@@ -521,6 +521,19 @@ function getStatoIntervento(id, dataRif = null, settimaneRitardo = 3) {
 // Mantieni isPassato per retrocompatibilità
 function isPassato(id, dataRif = null) { return getStatoIntervento(id, dataRif) === 'passato'; }
 
+// Ricalcola stato da bimestre_label (usato quando l'esperto modifica la label)
+// Se la label corrisponde a un bimestre noto, usa getStatoIntervento; altrimenti 'futuro'
+function getStatoDaLabel(label) {
+  if (!label) return 'futuro';
+  const bim = BIMESTRI.find(b =>
+    b.label.toLowerCase() === label.toLowerCase() ||
+    b.label.toLowerCase().includes(label.toLowerCase()) ||
+    label.toLowerCase().includes(b.label.slice(0, 8).toLowerCase())
+  );
+  if (!bim) return 'futuro'; // label libera → non è passato
+  return getStatoIntervento(bim.id);
+}
+
 // Vigor Active: dose dinamica per rigenerazione in base al mese
 function getVigorActiveDoseRig() {
   const now = new Date();
@@ -3378,7 +3391,18 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
     let n = 0;
     return (piano || []).map(iv => {
       if (!iv.saltato) n++;
-      return { ...iv, numVisivo: iv.saltato ? null : n };
+      // Se la bimestre_label è stata modificata dall'esperto, ricalcola passato/inRitardo
+      // da quella label invece di usare il valore calcolato al momento della generazione
+      const labelAttiva = iv.bimestre_label ?? '';
+      const statoRicalcolato = getStatoDaLabel(labelAttiva);
+      const passatoRicalcolato = statoRicalcolato === 'passato';
+      const inRitardoRicalcolato = statoRicalcolato === 'ritardo';
+      return {
+        ...iv,
+        numVisivo: iv.saltato ? null : n,
+        passato: passatoRicalcolato,
+        inRitardo: inRitardoRicalcolato,
+      };
     });
   })();
 
@@ -3475,8 +3499,12 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
           </div>
           <div className="p-4 space-y-3">
             {terreno === 'sabbioso'
-              ? piano.map((iv, i) => (
-                <div key={i} className={`rounded-xl p-3 border-l-4 ${iv.bridge?'border-amber-400 bg-amber-50':iv.verde?'border-emerald-500 bg-emerald-50':iv.passato?'border-gray-300 bg-gray-50 opacity-50':iv.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>
+              ? piano.map((iv, i) => {
+                const labelAttiva = iv.bimestre_label ?? '';
+                const statoRic = getStatoDaLabel(labelAttiva);
+                const ivCalc = { ...iv, passato: statoRic === 'passato', inRitardo: statoRic === 'ritardo' };
+                return (
+                <div key={i} className={`rounded-xl p-3 border-l-4 ${ivCalc.bridge?'border-amber-400 bg-amber-50':ivCalc.verde?'border-emerald-500 bg-emerald-50':ivCalc.passato?'border-gray-300 bg-gray-50 opacity-50':ivCalc.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>
                   <div className="flex justify-between items-start gap-2">
                     {modalitaEsperto ? (
                       <div className="flex-1 space-y-1 min-w-0">
@@ -3497,8 +3525,8 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                       <div><p className="font-bold text-sm text-green-800">{iv.bimestre_label}</p><p className="text-xs text-gray-500">{iv.funzione}</p></div>
                     )}
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.bridge?'bg-amber-200 text-amber-800':iv.verde?'bg-emerald-200 text-emerald-800':iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
-                        {iv.bridge?'🟡 Ponte':iv.verde?'🟢 Rinforzo colore':iv.passato?'⚫ Passato':iv.inRitardo?'🟡 In ritardo':'🟢 Programmato'}
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${ivCalc.bridge?'bg-amber-200 text-amber-800':ivCalc.verde?'bg-emerald-200 text-emerald-800':ivCalc.passato?'bg-gray-200 text-gray-500':ivCalc.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
+                        {ivCalc.bridge?'🟡 Ponte':ivCalc.verde?'🟢 Rinforzo colore':ivCalc.passato?'⚫ Passato':ivCalc.inRitardo?'🟡 In ritardo':'🟢 Programmato'}
                       </span>
                       {modalitaEsperto && (
                         <button
@@ -3636,7 +3664,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                     </button>
                   )}
                 </div>
-              ))
+              );})
               : pianoConNumero.map((iv, i) => iv.saltato ? null : (
                 <Fragment key={i}>
                   <div className={`rounded-xl p-3 border-l-4 ${iv.passato?'border-gray-300 bg-gray-50 opacity-50':iv.inRitardo?'border-yellow-400 bg-yellow-50':'border-green-500 bg-green-50'}`}>

@@ -1672,6 +1672,56 @@ export default function PratoVivo({ onNavigate }) {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4 pb-8">
       <div className="max-w-2xl mx-auto space-y-4">
 
+        {/* ── MODAL SALVA TEMPLATE ────────────────────────────── */}
+        {showSalvaTemplate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm space-y-4">
+              <h2 className="text-base font-bold text-green-800">💾 Salva template</h2>
+              <p className="text-xs text-gray-500">Salva la configurazione corrente per riutilizzarla con altri clienti.</p>
+              <input
+                className="w-full border border-green-300 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-400"
+                placeholder="Nome template (es. Piano Ornamentale Premium)"
+                value={nomeTemplate}
+                onChange={e => setNomeTemplate(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && salvaTemplate()}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button onClick={() => setShowSalvaTemplate(false)} className="flex-1 py-2 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold">Annulla</button>
+                <button onClick={salvaTemplate} disabled={!nomeTemplate.trim()} className="flex-1 py-2 rounded-xl bg-green-700 text-white text-sm font-bold disabled:opacity-40">Salva</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODAL CARICA TEMPLATE ────────────────────────────── */}
+        {showCaricaTemplate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-green-800">📂 Carica template</h2>
+                <button onClick={() => setShowCaricaTemplate(false)} className="text-gray-400 text-xl leading-none">×</button>
+              </div>
+              {templateLoading ? (
+                <p className="text-xs text-gray-400 text-center py-4">Caricamento...</p>
+              ) : templates.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-4">Nessun template salvato</p>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {templates.map(t => (
+                    <button key={t.id} onClick={() => caricaTemplate(t)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 transition-colors">
+                      <p className="font-bold text-green-800 text-sm">{t.nome}</p>
+                      <p className="text-xs text-gray-400">{t.tipo_prato} · {t.linea} · {t.livello} · {new Date(t.created_at).toLocaleDateString('it-IT')}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={() => setShowCaricaTemplate(false)} className="w-full py-2 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold">Chiudi</button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
@@ -3489,7 +3539,28 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                             <input type="number" step="1" min="1" className="w-16 border border-green-400 rounded-lg px-2 py-1.5 text-sm font-bold text-center"
                               value={dosePrincipale} onChange={e => aggiornaPiano({ dose: parseFloat(e.target.value) || 0 })} />
                             <span className="text-xs text-gray-500">g/m²</span>
+                            {/* Applica a tutti */}
+                            <button
+                              title="Applica questa dose a tutti gli interventi con lo stesso prodotto"
+                              onClick={() => {
+                                const nuovoPiano = piano.map(iv2 => {
+                                  const nome2 = iv2.prodotto || (linea === 'mivena' && iv2.dati?.prodotto_migliore ? (usaAllRound ? iv2.dati.prodotto_migliore : iv2.dati.prodotto) : iv2.dati?.prodotto);
+                                  return nome2 === nomePrincipale ? { ...iv2, dose: dosePrincipale } : iv2;
+                                });
+                                onChangePianoAnnuo(nuovoPiano);
+                              }}
+                              className="text-xs px-1.5 py-1 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 font-bold"
+                            >≡</button>
                           </div>
+                          {/* Prezzo €/kg esperto */}
+                          {setOverridePrezzi && nomePrincipale && nomePrincipale !== '—' && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="text-xs text-gray-400">€/kg</span>
+                              <input type="number" step="0.10" className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700"
+                                value={overridePrezzi[nomePrincipale] ?? ''} placeholder="—"
+                                onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [nomePrincipale]: isNaN(v) ? undefined : v })); }} />
+                            </div>
+                          )}
                         </div>
                         {liquidiRiga.length > 0 && (
                           <div className="space-y-2">
@@ -3673,7 +3744,28 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                                 onChange={e => aggiornaPiano({ dose: parseFloat(e.target.value) || 0 })}
                               />
                               <span className="text-xs text-gray-500">g/m²</span>
+                              {/* Applica a tutti */}
+                              <button
+                                title="Applica questa dose a tutti gli interventi con lo stesso prodotto"
+                                onClick={() => {
+                                  const nuovoPiano = piano.map(iv2 => {
+                                    const nome2 = iv2.prodotto || (linea === 'mivena' && iv2.dati?.prodotto_migliore ? (usaAllRound ? iv2.dati.prodotto_migliore : iv2.dati.prodotto) : iv2.dati?.prodotto);
+                                    return nome2 === nomePrincipale ? { ...iv2, dose: dosePrincipale } : iv2;
+                                  });
+                                  onChangePianoAnnuo(nuovoPiano);
+                                }}
+                                className="text-xs px-1.5 py-1 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 font-bold"
+                              >≡</button>
                             </div>
+                            {/* Prezzo €/kg esperto */}
+                            {setOverridePrezzi && nomePrincipale && nomePrincipale !== '—' && (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="text-xs text-gray-400">€/kg</span>
+                                <input type="number" step="0.10" className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700"
+                                  value={overridePrezzi[nomePrincipale] ?? ''} placeholder="—"
+                                  onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [nomePrincipale]: isNaN(v) ? undefined : v })); }} />
+                              </div>
+                            )}
                           </div>
 
                           {/* Liquidi del piano — editabili con nota per prodotto */}

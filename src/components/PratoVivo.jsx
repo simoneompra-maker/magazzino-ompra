@@ -1298,6 +1298,16 @@ export default function PratoVivo({ onNavigate }) {
   const [overrideSeme, setOverrideSeme] = useState(null);
   // Override per piano annuo
   const [overridePianoAnnuo, setOverridePianoAnnuo] = useState(null);
+  // Override prezzi prodotti: { [sku]: prezzoPerKg }
+  const [overridePrezzi, setOverridePrezzi] = useState({});
+  // Accesso diretto al piano (bypass selezione tipo prato)
+  const [accessoDiretto, setAccessoDiretto] = useState(false);
+  // Template: modal salva/carica
+  const [showSalvaTemplate, setShowSalvaTemplate] = useState(false);
+  const [showCaricaTemplate, setShowCaricaTemplate] = useState(false);
+  const [nomeTemplate, setNomeTemplate] = useState('');
+  const [templates, setTemplates] = useState([]);
+  const [templateLoading, setTemplateLoading] = useState(false);
 
   // Archivio
   const [activeTab, setActiveTab] = useState('nuovo');
@@ -1335,6 +1345,7 @@ export default function PratoVivo({ onNavigate }) {
     setIdroPrezzi({ premium_paper: 33.50, hidro_mulch: 27.00, wood_lok: 38.50, fibra_madeira: 20.70, verdeflex: 6.25, sementi: 28.00, algapark5: 42.00, rootspeed5: 48.00, collante: 12.00, noleggio: 350.00 });
     // Reset override modalità esperto
     setOverrideGranulari(null); setOverrideLiquidi(null); setOverrideSeme(null); setOverridePianoAnnuo(null);
+    setOverridePrezzi({}); setAccessoDiretto(false);
   };
 
   const goBack = () => {
@@ -1363,6 +1374,53 @@ export default function PratoVivo({ onNavigate }) {
     } finally {
       setArchivioLoading(false);
     }
+  };
+
+  // ── Template helpers ──────────────────────────────────────────
+  const loadTemplates = async () => {
+    setTemplateLoading(true);
+    try {
+      const { data } = await supabase.from('pv_templates').select('*').order('created_at', { ascending: false });
+      setTemplates(data || []);
+    } catch(e) { console.error('Template load error:', e); }
+    finally { setTemplateLoading(false); }
+  };
+
+  const salvaTemplate = async () => {
+    if (!nomeTemplate.trim()) return;
+    const config = {
+      tipoPrato, tipoIntervento, livello, linea, terreno, colore, mq,
+      overrideGranulari, overrideLiquidi, overrideSeme, overridePianoAnnuo, overridePrezzi,
+      tipoCliente, usaAllRound, estendi12, liquidiSab,
+    };
+    try {
+      await supabase.from('pv_templates').insert({ nome: nomeTemplate.trim(), tipo_prato: tipoPrato, linea, livello, config });
+      setNomeTemplate('');
+      setShowSalvaTemplate(false);
+      alert('Template salvato ✅');
+    } catch(e) { console.error('Salva template error:', e); }
+  };
+
+  const caricaTemplate = (t) => {
+    const c = t.config || {};
+    if (c.tipoPrato) setTipoPrato(c.tipoPrato);
+    if (c.tipoIntervento) setTipoIntervento(c.tipoIntervento);
+    if (c.livello) setLivello(c.livello);
+    if (c.linea) setLinea(c.linea);
+    if (c.terreno) setTerreno(c.terreno);
+    if (c.colore) setColore(c.colore);
+    if (c.mq) setMq(c.mq);
+    if (c.tipoCliente) setTipoCliente(c.tipoCliente);
+    if (c.usaAllRound != null) setUsaAllRound(c.usaAllRound);
+    if (c.estendi12 != null) setEstendi12(c.estendi12);
+    if (c.liquidiSab != null) setLiquidiSab(c.liquidiSab);
+    if (c.overrideGranulari) setOverrideGranulari(c.overrideGranulari);
+    if (c.overrideLiquidi) setOverrideLiquidi(c.overrideLiquidi);
+    if (c.overrideSeme) setOverrideSeme(c.overrideSeme);
+    if (c.overridePianoAnnuo) setOverridePianoAnnuo(c.overridePianoAnnuo);
+    if (c.overridePrezzi) setOverridePrezzi(c.overridePrezzi);
+    setShowCaricaTemplate(false);
+    setAccessoDiretto(true);
   };
 
   const buildArchivioRecord = (extraData = {}) => ({
@@ -1631,48 +1689,68 @@ export default function PratoVivo({ onNavigate }) {
             )}
           </div>
           <h1 className="text-xl font-bold text-green-900 flex-1 text-center">🌱 PratoVivo</h1>
-          <button
-            onClick={() => {
-              const nuovoStato = !modalitaEsperto;
-              setModalitaEsperto(nuovoStato);
-              if (nuovoStato) {
-                // Inizializza override con i valori attuali del piano
-                if (datiPianoAttivo) {
-                  setOverrideGranulari(JSON.parse(JSON.stringify(datiPianoAttivo.granulari || [])));
-                  setOverrideLiquidi(JSON.parse(JSON.stringify(datiPianoAttivo.liquidi || [])));
-                  setOverrideSeme(datiPianoAttivo.seme ? JSON.parse(JSON.stringify(datiPianoAttivo.seme)) : null);
+          <div className="flex items-center gap-1.5">
+            {/* Carica template — sempre visibile */}
+            <button
+              onClick={() => { loadTemplates(); setShowCaricaTemplate(true); }}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-green-400 transition-all"
+              title="Carica template"
+            >📂</button>
+            {/* Toggle Esperto */}
+            <button
+              onClick={() => {
+                const nuovoStato = !modalitaEsperto;
+                setModalitaEsperto(nuovoStato);
+                if (nuovoStato) {
+                  if (datiPianoAttivo) {
+                    setOverrideGranulari(JSON.parse(JSON.stringify(datiPianoAttivo.granulari || [])));
+                    setOverrideLiquidi(JSON.parse(JSON.stringify(datiPianoAttivo.liquidi || [])));
+                    setOverrideSeme(datiPianoAttivo.seme ? JSON.parse(JSON.stringify(datiPianoAttivo.seme)) : null);
+                  }
+                  if (pianoAnnuo.length > 0) {
+                    const pianoMaterializzato = pianoAnnuo.map(iv => {
+                      const dati = linea === 'mivena' ? iv.mivena : iv.albatros;
+                      const doseBase = dati ? (colore === 'intenso' ? dati?.dose_intenso : dati?.dose_pallido) : 0;
+                      const prodottoBase = (usaAllRound && dati?.prodotto_migliore) ? dati.prodotto_migliore : (dati?.prodotto || '');
+                      return {
+                        ...iv,
+                        prodotto: iv.prodotto || prodottoBase || '',
+                        dose: iv.dose != null ? iv.dose : (doseBase || 0),
+                        npk: iv.npk || dati?.npk || '',
+                      };
+                    });
+                    setOverridePianoAnnuo(JSON.parse(JSON.stringify(pianoMaterializzato)));
+                  }
+                } else {
+                  setOverrideGranulari(null); setOverrideLiquidi(null);
+                  setOverrideSeme(null); setOverridePianoAnnuo(null);
+                  setOverridePrezzi({}); setAccessoDiretto(false);
                 }
-                if (pianoAnnuo.length > 0) {
-                  // Materializza prodotto/dose/npk in ogni item del piano
-                  // così il PDF e il preventivo trovano sempre i valori corretti
-                  const pianoMaterializzato = pianoAnnuo.map(iv => {
-                    const dati = linea === 'mivena' ? iv.mivena : iv.albatros;
-                    const doseBase = dati ? (colore === 'intenso' ? dati?.dose_intenso : dati?.dose_pallido) : 0;
-                    const prodottoBase = (usaAllRound && dati?.prodotto_migliore) ? dati.prodotto_migliore : (dati?.prodotto || '');
-                    return {
-                      ...iv,
-                      prodotto: iv.prodotto || prodottoBase || '',
-                      dose: iv.dose != null ? iv.dose : (doseBase || 0),
-                      npk: iv.npk || dati?.npk || '',
-                    };
-                  });
-                  setOverridePianoAnnuo(JSON.parse(JSON.stringify(pianoMaterializzato)));
-                }
-              } else {
-                // Disattiva: annulla override (torna ai default)
-                setOverrideGranulari(null); setOverrideLiquidi(null);
-                setOverrideSeme(null); setOverridePianoAnnuo(null);
-              }
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
-              modalitaEsperto
-                ? 'bg-green-700 border-green-700 text-white'
-                : 'bg-white border-gray-200 text-gray-500 hover:border-green-400'
-            }`}
-          >
-            🔬 {modalitaEsperto ? '✓ Esperto' : 'Esperto'}
-          </button>
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${
+                modalitaEsperto
+                  ? 'bg-green-700 border-green-700 text-white'
+                  : 'bg-white border-gray-200 text-gray-500 hover:border-green-400'
+              }`}
+            >
+              🔬 {modalitaEsperto ? '✓ Esperto' : 'Esperto'}
+            </button>
+          </div>
         </div>
+
+        {/* ── Toolbar esperto ────────────────────────────────────── */}
+        {modalitaEsperto && (
+          <div className="flex gap-2 mb-1">
+            <button
+              onClick={() => setAccessoDiretto(v => !v)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${accessoDiretto ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-blue-300 text-blue-600 hover:bg-blue-50'}`}
+            >⚡ {accessoDiretto ? '✓ Accesso diretto' : 'Accesso diretto'}</button>
+            <button
+              onClick={() => setShowSalvaTemplate(true)}
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold border-2 border-green-400 text-green-700 bg-white hover:bg-green-50 transition-all"
+            >💾 Salva template</button>
+          </div>
+        )}
 
         {/* Tab bar */}
         <div className="flex rounded-xl overflow-hidden border border-green-200 bg-white shadow-sm">
@@ -1690,11 +1768,29 @@ export default function PratoVivo({ onNavigate }) {
         {activeTab === 'nuovo' && (<>
 
         {/* STEP 1 — Tipo prato */}
-        {!tipoPrato && (
+        {!tipoPrato && !accessoDiretto && (
           <Card title="Tipo di prato">
             <div className="grid grid-cols-2 gap-3">
               <Btn emoji="🌸" label="Ornamentale" desc="Giardino residenziale" onClick={() => setTipoPrato('ornamentale')} selected={tipoPrato==='ornamentale'} />
               <Btn emoji="⚽" label="Sportivo" desc="Campo sportivo / uso intensivo" onClick={() => setTipoPrato('sportivo')} selected={tipoPrato==='sportivo'} color="blue" />
+            </div>
+          </Card>
+        )}
+
+        {/* STEP 1b — Tipo prato in accesso diretto esperto */}
+        {!tipoPrato && accessoDiretto && modalitaEsperto && (
+          <Card title="Tipo di prato (accesso diretto)">
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <Btn emoji="🌸" label="Ornamentale" desc="Residenziale" onClick={() => setTipoPrato('ornamentale')} selected={tipoPrato==='ornamentale'} />
+              <Btn emoji="⚽" label="Sportivo" desc="Uso intensivo" onClick={() => setTipoPrato('sportivo')} selected={tipoPrato==='sportivo'} color="blue" />
+            </div>
+            <div className="grid grid-cols-3 gap-1 mt-2">
+              {['semina','rigenerazione','piano_annuo'].map(t => (
+                <button key={t} onClick={() => setTipoIntervento(t)}
+                  className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${tipoIntervento===t?'bg-green-700 text-white border-green-700':'border-gray-200 text-gray-600 hover:bg-green-50'}`}>
+                  {t === 'semina' ? '🌱 Semina' : t === 'rigenerazione' ? '🔄 Rigen.' : '📅 Piano'}
+                </button>
+              ))}
             </div>
           </Card>
         )}
@@ -1799,6 +1895,8 @@ export default function PratoVivo({ onNavigate }) {
             onChangeGranulari={setOverrideGranulari}
             onChangeLiquidi={setOverrideLiquidi}
             onChangeSeme={setOverrideSeme}
+            overridePrezzi={overridePrezzi}
+            setOverridePrezzi={setOverridePrezzi}
             degradazione={null}
             nomeCliente={nomeCliente}
             tipoPrato={tipoPrato}
@@ -1912,6 +2010,8 @@ export default function PratoVivo({ onNavigate }) {
             onChangeGranulari={setOverrideGranulari}
             onChangeLiquidi={setOverrideLiquidi}
             onChangeSeme={setOverrideSeme}
+            overridePrezzi={overridePrezzi}
+            setOverridePrezzi={setOverridePrezzi}
             degradazione={degradazione}
             degradazioneCustomPct={degradazioneCustomPct}
             nomeCliente={nomeCliente}
@@ -1942,6 +2042,8 @@ export default function PratoVivo({ onNavigate }) {
             usaAllRound={usaAllRound} setUsaAllRound={setUsaAllRound}
             modalitaEsperto={modalitaEsperto}
             onChangePianoAnnuo={setOverridePianoAnnuo}
+            overridePrezzi={overridePrezzi}
+            setOverridePrezzi={setOverridePrezzi}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo: pianoAnnuoEffettivo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound, autoStampa: stampa }); salvaInBackground(); }}
           />
@@ -2695,7 +2797,7 @@ function PianoIdrosemina({ mq, nomeCliente, terreno, setTerreno, mulch, setMulch
 }
 
 // ─── Sotto-componente: Semina / Rigenerazione ─────────────────
-function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, degradazioneCustomPct = 30, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, haUsatoStarter, setHaUsatoStarter, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme }) {
+function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granulari, liquidi, liquidiSabbioso, seme, degradazione, degradazioneCustomPct = 30, nomeCliente, tipoPrato, terreno, setTerreno, miscuglio, setMiscuglio, tipoCliente, setTipoCliente, primoConcimeIncluso, setPrimoConcimeIncluso, haUsatoStarter, setHaUsatoStarter, onPreventivo, onStampa, dataInizio = null, modalitaEsperto = false, onChangeGranulari, onChangeLiquidi, onChangeSeme, overridePrezzi = {}, setOverridePrezzi }) {
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
   const titoloTipo = tipo === 'semina' ? 'Nuova Semina' : 'Rigenerazione';
@@ -2944,6 +3046,12 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
                     <input type="number" step="0.1" className="w-16 border border-green-300 rounded-lg px-2 py-1 text-xs text-right font-bold" value={p.dose ?? ''} onChange={e => { const u=[...granulari]; u[i]={...u[i],dose:parseFloat(e.target.value)||0}; onChangeGranulari(u); }} />
                     <span className="text-xs text-gray-400">g/m²</span>
                   </div>
+                  {setOverridePrezzi && p.prodotto && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-400">€/kg</span>
+                      <input type="number" step="0.10" className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700" value={overridePrezzi[p.prodotto] ?? ''} placeholder="prezzo" onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [p.prodotto]: isNaN(v) ? undefined : v })); }} />
+                    </div>
+                  )}
                   <button onClick={() => onChangeGranulari(granulari.filter((_,j)=>j!==i))} className="text-red-400 text-base px-1">×</button>
                 </div>
               )}
@@ -3031,6 +3139,12 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
                       }
                     </select>
                     <button onClick={() => onChangeLiquidi(liquidi.filter((_,j)=>j!==origIdx))} className="text-red-400 text-base px-1">×</button>
+                  </div>
+                )}
+                {setOverridePrezzi && p.prodotto && modalitaEsperto && origIdx !== -1 && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-xs text-gray-400">€/kg</span>
+                    <input type="number" step="0.10" className="w-20 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700" value={overridePrezzi[p.prodotto] ?? ''} placeholder="prezzo" onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [p.prodotto]: isNaN(v) ? undefined : v })); }} />
                   </div>
                 )}
               </div>
@@ -3205,7 +3319,7 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa, modalitaEsperto = false, onChangePianoAnnuo }) {
+function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa, modalitaEsperto = false, onChangePianoAnnuo, overridePrezzi = {}, setOverridePrezzi }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 

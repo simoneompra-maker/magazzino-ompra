@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nsQDcEwvZieN1PxuzVXmQh7E2HQfzAhuygGLLnetdqdfkAGKIDwUevPZe8vcpfV
+\restrict sCoYshAd8gOZuxv8jNRpCYgejPgQFI3Ko2vdSOaCVVJvSs3ncHc5lNKsyC774an
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Ubuntu 17.9-1.pgdg24.04+1)
@@ -29,6 +29,7 @@ DROP PUBLICATION IF EXISTS supabase_realtime_messages_publication;
 DROP PUBLICATION IF EXISTS supabase_realtime;
 DROP POLICY IF EXISTS public_select_stihl_promo ON public.stihl_promo;
 DROP POLICY IF EXISTS public_select_stihl_prodotti ON public.stihl_prodotti;
+DROP POLICY IF EXISTS public_access ON public.pv_templates;
 DROP POLICY IF EXISTS allow_all_noleggio_macchine ON public.noleggio_macchine;
 DROP POLICY IF EXISTS allow_all_noleggio_listini ON public.noleggio_listini;
 DROP POLICY IF EXISTS allow_all_noleggio_abbonamenti ON public.noleggio_abbonamenti;
@@ -67,6 +68,9 @@ ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXIS
 ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXISTS pv_intervento_prodotti_intervento_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.pv_interventi DROP CONSTRAINT IF EXISTS pv_interventi_piano_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_listini DROP CONSTRAINT IF EXISTS noleggio_listini_macchina_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.noleggio_archivio DROP CONSTRAINT IF EXISTS noleggio_archivio_sopralluogo_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_sku_piccolo_fkey;
+ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_sku_grande_fkey;
 ALTER TABLE IF EXISTS ONLY auth.webauthn_credentials DROP CONSTRAINT IF EXISTS webauthn_credentials_user_id_fkey;
 ALTER TABLE IF EXISTS ONLY auth.webauthn_challenges DROP CONSTRAINT IF EXISTS webauthn_challenges_user_id_fkey;
 ALTER TABLE IF EXISTS ONLY auth.sso_domains DROP CONSTRAINT IF EXISTS sso_domains_sso_provider_id_fkey;
@@ -126,6 +130,10 @@ DROP INDEX IF EXISTS public.idx_clienti_search_text;
 DROP INDEX IF EXISTS public.idx_clienti_piva;
 DROP INDEX IF EXISTS public.idx_clienti_deleted_at;
 DROP INDEX IF EXISTS public.idx_clienti_cf;
+DROP INDEX IF EXISTS public.idx_catalogo_modello;
+DROP INDEX IF EXISTS public.idx_catalogo_categoria;
+DROP INDEX IF EXISTS public.idx_catalogo_brand;
+DROP INDEX IF EXISTS public.idx_catalogo_attivo;
 DROP INDEX IF EXISTS auth.webauthn_credentials_user_id_idx;
 DROP INDEX IF EXISTS auth.webauthn_credentials_credential_id_key;
 DROP INDEX IF EXISTS auth.webauthn_challenges_user_id_idx;
@@ -191,13 +199,13 @@ ALTER TABLE IF EXISTS ONLY storage.buckets DROP CONSTRAINT IF EXISTS buckets_pke
 ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS buckets_analytics_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_01 DROP CONSTRAINT IF EXISTS messages_2026_04_01_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_31 DROP CONSTRAINT IF EXISTS messages_2026_03_31_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_30 DROP CONSTRAINT IF EXISTS messages_2026_03_30_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_29 DROP CONSTRAINT IF EXISTS messages_2026_03_29_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_28 DROP CONSTRAINT IF EXISTS messages_2026_03_28_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_27 DROP CONSTRAINT IF EXISTS messages_2026_03_27_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_03_26 DROP CONSTRAINT IF EXISTS messages_2026_03_26_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_16 DROP CONSTRAINT IF EXISTS messages_2026_04_16_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_15 DROP CONSTRAINT IF EXISTS messages_2026_04_15_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_14 DROP CONSTRAINT IF EXISTS messages_2026_04_14_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_13 DROP CONSTRAINT IF EXISTS messages_2026_04_13_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_12 DROP CONSTRAINT IF EXISTS messages_2026_04_12_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_11 DROP CONSTRAINT IF EXISTS messages_2026_04_11_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_10 DROP CONSTRAINT IF EXISTS messages_2026_04_10_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -205,6 +213,7 @@ ALTER TABLE IF EXISTS ONLY public.stihl_promo DROP CONSTRAINT IF EXISTS stihl_pr
 ALTER TABLE IF EXISTS ONLY public.stihl_prodotti DROP CONSTRAINT IF EXISTS stihl_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.stihl_prodotti DROP CONSTRAINT IF EXISTS stihl_prodotti_codice_key;
 ALTER TABLE IF EXISTS ONLY public.sopralluoghi DROP CONSTRAINT IF EXISTS sopralluoghi_pkey;
+ALTER TABLE IF EXISTS ONLY public.pv_templates DROP CONSTRAINT IF EXISTS pv_templates_pkey;
 ALTER TABLE IF EXISTS ONLY public.pv_prodotti DROP CONSTRAINT IF EXISTS pv_prodotti_slug_key;
 ALTER TABLE IF EXISTS ONLY public.pv_prodotti DROP CONSTRAINT IF EXISTS pv_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.pv_preventivo_righe DROP CONSTRAINT IF EXISTS pv_preventivo_righe_pkey;
@@ -221,6 +230,7 @@ ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXIS
 ALTER TABLE IF EXISTS ONLY public.pv_interventi DROP CONSTRAINT IF EXISTS pv_interventi_pkey;
 ALTER TABLE IF EXISTS ONLY public.pricing_policies DROP CONSTRAINT IF EXISTS pricing_policies_pkey;
 ALTER TABLE IF EXISTS ONLY public.pricing_policies DROP CONSTRAINT IF EXISTS pricing_policies_brand_key;
+ALTER TABLE IF EXISTS ONLY public.preventivi_catalogo DROP CONSTRAINT IF EXISTS preventivi_catalogo_pkey;
 ALTER TABLE IF EXISTS ONLY public.pratovivo_archivio DROP CONSTRAINT IF EXISTS pratovivo_archivio_pkey;
 ALTER TABLE IF EXISTS ONLY public.operatori DROP CONSTRAINT IF EXISTS operatori_pkey;
 ALTER TABLE IF EXISTS ONLY public.operatori DROP CONSTRAINT IF EXISTS operatori_nome_key;
@@ -236,7 +246,10 @@ ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS inventory_
 ALTER TABLE IF EXISTS ONLY public.commissioni DROP CONSTRAINT IF EXISTS commissioni_pkey;
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_search_text_unique;
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_pkey;
+ALTER TABLE IF EXISTS ONLY public.catalogo_prodotti DROP CONSTRAINT IF EXISTS catalogo_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.app_config DROP CONSTRAINT IF EXISTS app_config_pkey;
+ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_pkey;
+ALTER TABLE IF EXISTS ONLY public.agro_listino DROP CONSTRAINT IF EXISTS agro_listino_pkey;
 ALTER TABLE IF EXISTS ONLY auth.webauthn_credentials DROP CONSTRAINT IF EXISTS webauthn_credentials_pkey;
 ALTER TABLE IF EXISTS ONLY auth.webauthn_challenges DROP CONSTRAINT IF EXISTS webauthn_challenges_pkey;
 ALTER TABLE IF EXISTS ONLY auth.users DROP CONSTRAINT IF EXISTS users_pkey;
@@ -285,18 +298,19 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_04_01;
-DROP TABLE IF EXISTS realtime.messages_2026_03_31;
-DROP TABLE IF EXISTS realtime.messages_2026_03_30;
-DROP TABLE IF EXISTS realtime.messages_2026_03_29;
-DROP TABLE IF EXISTS realtime.messages_2026_03_28;
-DROP TABLE IF EXISTS realtime.messages_2026_03_27;
-DROP TABLE IF EXISTS realtime.messages_2026_03_26;
+DROP TABLE IF EXISTS realtime.messages_2026_04_16;
+DROP TABLE IF EXISTS realtime.messages_2026_04_15;
+DROP TABLE IF EXISTS realtime.messages_2026_04_14;
+DROP TABLE IF EXISTS realtime.messages_2026_04_13;
+DROP TABLE IF EXISTS realtime.messages_2026_04_12;
+DROP TABLE IF EXISTS realtime.messages_2026_04_11;
+DROP TABLE IF EXISTS realtime.messages_2026_04_10;
 DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
 DROP TABLE IF EXISTS public.stihl_prodotti;
 DROP TABLE IF EXISTS public.sopralluoghi;
+DROP TABLE IF EXISTS public.pv_templates;
 DROP TABLE IF EXISTS public.pv_prodotti;
 DROP TABLE IF EXISTS public.pv_preventivo_righe;
 DROP TABLE IF EXISTS public.pv_preventivi;
@@ -308,6 +322,7 @@ DROP TABLE IF EXISTS public.pv_kit;
 DROP TABLE IF EXISTS public.pv_intervento_prodotti;
 DROP TABLE IF EXISTS public.pv_interventi;
 DROP TABLE IF EXISTS public.pricing_policies;
+DROP TABLE IF EXISTS public.preventivi_catalogo;
 DROP TABLE IF EXISTS public.pratovivo_archivio;
 DROP TABLE IF EXISTS public.operatori;
 DROP SEQUENCE IF EXISTS public.noleggio_macchine_id_seq;
@@ -323,7 +338,10 @@ DROP SEQUENCE IF EXISTS public.inventory_id_seq;
 DROP TABLE IF EXISTS public.inventory;
 DROP TABLE IF EXISTS public.commissioni;
 DROP TABLE IF EXISTS public.clienti;
+DROP TABLE IF EXISTS public.catalogo_prodotti;
 DROP TABLE IF EXISTS public.app_config;
+DROP TABLE IF EXISTS public.agro_mapping;
+DROP TABLE IF EXISTS public.agro_listino;
 DROP TABLE IF EXISTS auth.webauthn_credentials;
 DROP TABLE IF EXISTS auth.webauthn_challenges;
 DROP TABLE IF EXISTS auth.users;
@@ -368,6 +386,8 @@ DROP FUNCTION IF EXISTS storage.extension(name text);
 DROP FUNCTION IF EXISTS storage.enforce_bucket_name_length();
 DROP FUNCTION IF EXISTS storage.delete_leaf_prefixes(bucket_ids text[], names text[]);
 DROP FUNCTION IF EXISTS storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb);
+DROP FUNCTION IF EXISTS storage.allow_only_operation(expected_operation text);
+DROP FUNCTION IF EXISTS storage.allow_any_operation(expected_operations text[]);
 DROP FUNCTION IF EXISTS realtime.topic();
 DROP FUNCTION IF EXISTS realtime.to_regrole(role_name text);
 DROP FUNCTION IF EXISTS realtime.subscription_check_filters();
@@ -1651,66 +1671,75 @@ CREATE FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[
 -- Name: list_changes(name, name, integer, integer); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
-CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) RETURNS SETOF realtime.wal_rls
+CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) RETURNS TABLE(wal jsonb, is_rls_enabled boolean, subscription_ids uuid[], errors text[], slot_changes_count bigint)
     LANGUAGE sql
     SET log_min_messages TO 'fatal'
     AS $$
-      with pub as (
-        select
-          concat_ws(
-            ',',
-            case when bool_or(pubinsert) then 'insert' else null end,
-            case when bool_or(pubupdate) then 'update' else null end,
-            case when bool_or(pubdelete) then 'delete' else null end
-          ) as w2j_actions,
-          coalesce(
-            string_agg(
-              realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
-              ','
-            ) filter (where ppt.tablename is not null and ppt.tablename not like '% %'),
-            ''
-          ) w2j_add_tables
-        from
-          pg_publication pp
-          left join pg_publication_tables ppt
-            on pp.pubname = ppt.pubname
-        where
-          pp.pubname = publication
-        group by
-          pp.pubname
-        limit 1
-      ),
-      w2j as (
-        select
-          x.*, pub.w2j_add_tables
-        from
-          pub,
-          pg_logical_slot_get_changes(
-            slot_name, null, max_changes,
-            'include-pk', 'true',
-            'include-transaction', 'false',
-            'include-timestamp', 'true',
-            'include-type-oids', 'true',
-            'format-version', '2',
-            'actions', pub.w2j_actions,
-            'add-tables', pub.w2j_add_tables
-          ) x
-      )
-      select
-        xyz.wal,
-        xyz.is_rls_enabled,
-        xyz.subscription_ids,
-        xyz.errors
-      from
-        w2j,
-        realtime.apply_rls(
-          wal := w2j.data::jsonb,
-          max_record_bytes := max_record_bytes
-        ) xyz(wal, is_rls_enabled, subscription_ids, errors)
-      where
-        w2j.w2j_add_tables <> ''
-        and xyz.subscription_ids[1] is not null
-    $$;
+  WITH pub AS (
+    SELECT
+      concat_ws(
+        ',',
+        CASE WHEN bool_or(pubinsert) THEN 'insert' ELSE NULL END,
+        CASE WHEN bool_or(pubupdate) THEN 'update' ELSE NULL END,
+        CASE WHEN bool_or(pubdelete) THEN 'delete' ELSE NULL END
+      ) AS w2j_actions,
+      coalesce(
+        string_agg(
+          realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
+          ','
+        ) filter (WHERE ppt.tablename IS NOT NULL AND ppt.tablename NOT LIKE '% %'),
+        ''
+      ) AS w2j_add_tables
+    FROM pg_publication pp
+    LEFT JOIN pg_publication_tables ppt ON pp.pubname = ppt.pubname
+    WHERE pp.pubname = publication
+    GROUP BY pp.pubname
+    LIMIT 1
+  ),
+  -- MATERIALIZED ensures pg_logical_slot_get_changes is called exactly once
+  w2j AS MATERIALIZED (
+    SELECT x.*, pub.w2j_add_tables
+    FROM pub,
+         pg_logical_slot_get_changes(
+           slot_name, null, max_changes,
+           'include-pk', 'true',
+           'include-transaction', 'false',
+           'include-timestamp', 'true',
+           'include-type-oids', 'true',
+           'format-version', '2',
+           'actions', pub.w2j_actions,
+           'add-tables', pub.w2j_add_tables
+         ) x
+  ),
+  -- Count raw slot entries before apply_rls/subscription filter
+  slot_count AS (
+    SELECT count(*)::bigint AS cnt
+    FROM w2j
+    WHERE w2j.w2j_add_tables <> ''
+  ),
+  -- Apply RLS and filter as before
+  rls_filtered AS (
+    SELECT xyz.wal, xyz.is_rls_enabled, xyz.subscription_ids, xyz.errors
+    FROM w2j,
+         realtime.apply_rls(
+           wal := w2j.data::jsonb,
+           max_record_bytes := max_record_bytes
+         ) xyz(wal, is_rls_enabled, subscription_ids, errors)
+    WHERE w2j.w2j_add_tables <> ''
+      AND xyz.subscription_ids[1] IS NOT NULL
+  )
+  -- Real rows with slot count attached
+  SELECT rf.wal, rf.is_rls_enabled, rf.subscription_ids, rf.errors, sc.cnt
+  FROM rls_filtered rf, slot_count sc
+
+  UNION ALL
+
+  -- Sentinel row: always returned when no real rows exist so Elixir can
+  -- always read slot_changes_count. Identified by wal IS NULL.
+  SELECT null, null, null, null, sc.cnt
+  FROM slot_count sc
+  WHERE NOT EXISTS (SELECT 1 FROM rls_filtered)
+$$;
 
 
 --
@@ -1879,6 +1908,67 @@ CREATE FUNCTION realtime.topic() RETURNS text
     LANGUAGE sql STABLE
     AS $$
 select nullif(current_setting('realtime.topic', true), '')::text;
+$$;
+
+
+--
+-- Name: allow_any_operation(text[]); Type: FUNCTION; Schema: storage; Owner: -
+--
+
+CREATE FUNCTION storage.allow_any_operation(expected_operations text[]) RETURNS boolean
+    LANGUAGE sql STABLE
+    AS $$
+  WITH current_operation AS (
+    SELECT storage.operation() AS raw_operation
+  ),
+  normalized AS (
+    SELECT CASE
+      WHEN raw_operation LIKE 'storage.%' THEN substr(raw_operation, 9)
+      ELSE raw_operation
+    END AS current_operation
+    FROM current_operation
+  )
+  SELECT EXISTS (
+    SELECT 1
+    FROM normalized n
+    CROSS JOIN LATERAL unnest(expected_operations) AS expected_operation
+    WHERE expected_operation IS NOT NULL
+      AND expected_operation <> ''
+      AND n.current_operation = CASE
+        WHEN expected_operation LIKE 'storage.%' THEN substr(expected_operation, 9)
+        ELSE expected_operation
+      END
+  );
+$$;
+
+
+--
+-- Name: allow_only_operation(text); Type: FUNCTION; Schema: storage; Owner: -
+--
+
+CREATE FUNCTION storage.allow_only_operation(expected_operation text) RETURNS boolean
+    LANGUAGE sql STABLE
+    AS $$
+  WITH current_operation AS (
+    SELECT storage.operation() AS raw_operation
+  ),
+  normalized AS (
+    SELECT
+      CASE
+        WHEN raw_operation LIKE 'storage.%' THEN substr(raw_operation, 9)
+        ELSE raw_operation
+      END AS current_operation,
+      CASE
+        WHEN expected_operation LIKE 'storage.%' THEN substr(expected_operation, 9)
+        ELSE expected_operation
+      END AS requested_operation
+    FROM current_operation
+  )
+  SELECT CASE
+    WHEN requested_operation IS NULL OR requested_operation = '' THEN FALSE
+    ELSE COALESCE(current_operation = requested_operation, FALSE)
+  END
+  FROM normalized;
 $$;
 
 
@@ -3565,12 +3655,66 @@ CREATE TABLE auth.webauthn_credentials (
 
 
 --
+-- Name: agro_listino; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agro_listino (
+    sku text NOT NULL,
+    formato text NOT NULL,
+    kg_per_conf numeric NOT NULL,
+    prezzo_a numeric NOT NULL,
+    prezzo_b numeric,
+    prezzo_c numeric,
+    prezzo_d numeric,
+    iva_pct integer DEFAULT 4 NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: agro_mapping; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agro_mapping (
+    label_intervento text NOT NULL,
+    sku_piccolo text NOT NULL,
+    kg_piccolo numeric NOT NULL,
+    sku_grande text,
+    kg_grande numeric,
+    soglia integer,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
 -- Name: app_config; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.app_config (
     key text NOT NULL,
     value text NOT NULL
+);
+
+
+--
+-- Name: catalogo_prodotti; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.catalogo_prodotti (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    brand text DEFAULT 'STIHL'::text NOT NULL,
+    codice text,
+    modello text NOT NULL,
+    categoria text,
+    descrizione text,
+    prezzo_listino numeric,
+    prezzo_vendita numeric,
+    attivo boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT now(),
+    alimentazione text,
+    batteria_cons text,
+    battery_data jsonb,
+    note text
 );
 
 
@@ -3627,7 +3771,8 @@ CREATE TABLE public.commissioni (
     privacy_required boolean DEFAULT false,
     privacy_acknowledged boolean DEFAULT false,
     is_preventivo boolean DEFAULT false,
-    stato_preventivo text DEFAULT 'in_attesa'::text
+    stato_preventivo text DEFAULT 'in_attesa'::text,
+    data_consegna date
 );
 
 
@@ -3761,7 +3906,9 @@ CREATE TABLE public.noleggio_archivio (
     totale_preventivo numeric,
     note text,
     carrello jsonb,
-    pdf_url text
+    pdf_url text,
+    sopralluogo_id uuid,
+    cliente_id uuid
 );
 
 
@@ -3878,6 +4025,25 @@ CREATE TABLE public.pratovivo_archivio (
     pdf_params jsonb,
     note text,
     data_inizio date
+);
+
+
+--
+-- Name: preventivi_catalogo; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.preventivi_catalogo (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    cliente text,
+    righe jsonb,
+    totale_imponibile numeric,
+    totale_ic numeric,
+    data_preventivo date,
+    titolo text,
+    pagamento text,
+    garanzia text,
+    note text,
+    created_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -4083,6 +4249,21 @@ CREATE TABLE public.pv_prodotti (
 
 
 --
+-- Name: pv_templates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pv_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    nome text NOT NULL,
+    tipo_prato text,
+    linea text,
+    livello text,
+    config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
 -- Name: sopralluoghi; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4107,7 +4288,8 @@ CREATE TABLE public.sopralluoghi (
     relazione_ai text,
     piano_id uuid,
     foto_urls text[],
-    ce_terreno text
+    ce_terreno text,
+    cliente_id uuid
 );
 
 
@@ -4181,10 +4363,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_03_26; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_10; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_26 (
+CREATE TABLE realtime.messages_2026_04_10 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4197,10 +4379,10 @@ CREATE TABLE realtime.messages_2026_03_26 (
 
 
 --
--- Name: messages_2026_03_27; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_11; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_27 (
+CREATE TABLE realtime.messages_2026_04_11 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4213,10 +4395,10 @@ CREATE TABLE realtime.messages_2026_03_27 (
 
 
 --
--- Name: messages_2026_03_28; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_12; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_28 (
+CREATE TABLE realtime.messages_2026_04_12 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4229,10 +4411,10 @@ CREATE TABLE realtime.messages_2026_03_28 (
 
 
 --
--- Name: messages_2026_03_29; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_13; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_29 (
+CREATE TABLE realtime.messages_2026_04_13 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4245,10 +4427,10 @@ CREATE TABLE realtime.messages_2026_03_29 (
 
 
 --
--- Name: messages_2026_03_30; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_14; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_30 (
+CREATE TABLE realtime.messages_2026_04_14 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4261,10 +4443,10 @@ CREATE TABLE realtime.messages_2026_03_30 (
 
 
 --
--- Name: messages_2026_03_31; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_15; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_03_31 (
+CREATE TABLE realtime.messages_2026_04_15 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4277,10 +4459,10 @@ CREATE TABLE realtime.messages_2026_03_31 (
 
 
 --
--- Name: messages_2026_04_01; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_16; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_01 (
+CREATE TABLE realtime.messages_2026_04_16 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4438,7 +4620,8 @@ CREATE TABLE storage.s3_multipart_uploads (
     version text NOT NULL,
     owner_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    user_metadata jsonb
+    user_metadata jsonb,
+    metadata jsonb
 );
 
 
@@ -4478,52 +4661,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_03_26; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_10; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_26 FOR VALUES FROM ('2026-03-26 00:00:00') TO ('2026-03-27 00:00:00');
-
-
---
--- Name: messages_2026_03_27; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_27 FOR VALUES FROM ('2026-03-27 00:00:00') TO ('2026-03-28 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_10 FOR VALUES FROM ('2026-04-10 00:00:00') TO ('2026-04-11 00:00:00');
 
 
 --
--- Name: messages_2026_03_28; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_11; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_28 FOR VALUES FROM ('2026-03-28 00:00:00') TO ('2026-03-29 00:00:00');
-
-
---
--- Name: messages_2026_03_29; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_29 FOR VALUES FROM ('2026-03-29 00:00:00') TO ('2026-03-30 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_11 FOR VALUES FROM ('2026-04-11 00:00:00') TO ('2026-04-12 00:00:00');
 
 
 --
--- Name: messages_2026_03_30; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_12; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_30 FOR VALUES FROM ('2026-03-30 00:00:00') TO ('2026-03-31 00:00:00');
-
-
---
--- Name: messages_2026_03_31; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_03_31 FOR VALUES FROM ('2026-03-31 00:00:00') TO ('2026-04-01 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_12 FOR VALUES FROM ('2026-04-12 00:00:00') TO ('2026-04-13 00:00:00');
 
 
 --
--- Name: messages_2026_04_01; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_13; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_01 FOR VALUES FROM ('2026-04-01 00:00:00') TO ('2026-04-02 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_13 FOR VALUES FROM ('2026-04-13 00:00:00') TO ('2026-04-14 00:00:00');
+
+
+--
+-- Name: messages_2026_04_14; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_14 FOR VALUES FROM ('2026-04-14 00:00:00') TO ('2026-04-15 00:00:00');
+
+
+--
+-- Name: messages_2026_04_15; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_15 FOR VALUES FROM ('2026-04-15 00:00:00') TO ('2026-04-16 00:00:00');
+
+
+--
+-- Name: messages_2026_04_16; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_16 FOR VALUES FROM ('2026-04-16 00:00:00') TO ('2026-04-17 00:00:00');
 
 
 --
@@ -4822,11 +5005,588 @@ COPY auth.webauthn_credentials (id, user_id, credential_id, public_key, attestat
 
 
 --
+-- Data for Name: agro_listino; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.agro_listino (sku, formato, kg_per_conf, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva_pct, created_at) FROM stdin;
+Eden 7 5kg	5 kg	5	14.90	14.20	\N	\N	4	2026-03-30 06:03:54.895192+00
+Eden 8 5kg	5 kg	5	17.30	16.50	\N	\N	4	2026-03-30 06:03:54.895192+00
+Green 7 25kg	25 kg	25	45.30	43.00	38.70	34.90	4	2026-03-30 06:03:54.895192+00
+Green 8 25kg	25 kg	25	57.70	54.80	49.30	44.40	4	2026-03-30 06:03:54.895192+00
+Vigor Active 5kg	5 kg	5	13.80	13.10	\N	\N	4	2026-03-30 06:03:54.895192+00
+Vigor Active 25kg	25 kg	25	50.40	47.90	43.00	38.70	4	2026-03-30 06:03:54.895192+00
+AllRound 20kg	20 kg	20	61.30	58.30	54.20	51.50	4	2026-03-30 06:03:54.895192+00
+Universal Top 20kg	20 kg	20	59.40	56.50	52.60	50.00	4	2026-03-30 06:03:54.895192+00
+Pro Starter 20kg	20 kg	20	72.20	68.60	63.80	60.60	4	2026-03-30 06:03:54.895192+00
+Pro Slow 20kg	20 kg	20	71.30	67.80	63.00	59.90	4	2026-03-30 06:03:54.895192+00
+Humifitos 5kg	5 kg	5	34.20	30.80	\N	\N	4	2026-03-30 06:03:54.895192+00
+Humifitos 25kg	25 kg	25	115.00	103.00	\N	\N	4	2026-03-30 06:03:54.895192+00
+Root Speed 5kg	5 kg	5	49.00	44.10	\N	\N	4	2026-03-30 06:03:54.895192+00
+Algapark 1kg	1 kg	1	32.90	29.60	\N	\N	4	2026-03-30 06:03:54.895192+00
+Algapark 5kg	5 kg	5	140.00	126.00	\N	\N	4	2026-03-30 06:03:54.895192+00
+Wet Turf 1lt	1 lt	1	65.90	62.60	\N	\N	22	2026-03-30 06:03:54.895192+00
+Wet Turf 5lt	5 lt	5	230.60	219.00	\N	\N	22	2026-03-30 06:03:54.895192+00
+Micosat F MO 5kg	5 kg	5	140.40	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat F PG 1kg	1 kg	1	31.20	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat F Uno 200g	200 g	0.2	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat Tab Plus Mini 100g	100 g	0.1	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Micosat Len Mini 100g	100 g	0.1	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+\.
+
+
+--
+-- Data for Name: agro_mapping; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.agro_mapping (label_intervento, sku_piccolo, kg_piccolo, sku_grande, kg_grande, soglia, created_at) FROM stdin;
+Green 7	Eden 7 5kg	5	Green 7 25kg	25	3	2026-03-30 06:03:54.895192+00
+Green 8	Eden 8 5kg	5	Green 8 25kg	25	3	2026-03-30 06:03:54.895192+00
+Green 8 Prestige	Eden 8 5kg	5	Green 8 25kg	25	3	2026-03-30 06:03:54.895192+00
+Vigor Active	Vigor Active 5kg	5	Vigor Active 25kg	25	3	2026-03-30 06:03:54.895192+00
+AllRound	AllRound 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+AllRound 19-5-14	AllRound 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Universal Top	Universal Top 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Pro Starter	Pro Starter 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Pro Slow	Pro Slow 20kg	20	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Humifitos	Humifitos 5kg	5	Humifitos 25kg	25	3	2026-03-30 06:03:54.895192+00
+Root Speed	Root Speed 5kg	5	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Algapark	Algapark 1kg	1	Algapark 5kg	5	\N	2026-03-30 06:03:54.895192+00
+Wet Turf	Wet Turf 1lt	1	Wet Turf 5lt	5	\N	2026-03-30 06:03:54.895192+00
+Micosat F PG	Micosat F PG 1kg	1	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Micosat F MO	Micosat F MO 5kg	5	\N	\N	\N	2026-03-30 06:03:54.895192+00
+Micosat F MO/PG	Micosat F PG 1kg	1	Micosat F MO 5kg	5	2	2026-03-30 06:03:54.895192+00
+Humifitos + Micosat F	Humifitos 5kg	5	Humifitos 25kg	25	3	2026-03-30 06:03:54.895192+00
+\.
+
+
+--
 -- Data for Name: app_config; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.app_config (key, value) FROM stdin;
 stock_alerts_enabled	false
+\.
+
+
+--
+-- Data for Name: catalogo_prodotti; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.catalogo_prodotti (id, brand, codice, modello, categoria, descrizione, prezzo_listino, prezzo_vendita, attivo, created_at, alimentazione, batteria_cons, battery_data, note) FROM stdin;
+31c76fd4-f958-4c84-a33d-a6e6cc681463	STIHL	4140 200 0526	FS 55 R	Decespugliatori	Decespugliatore a benzina Stihl FS 55 R, cilindrata 27,2 cc, potenza 0,80 kW, motore 2-MIX, testina AutoCut, peso 4,4 kg.	299.00	235.62	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · 230mm AutoCut · impugnatura circolare
+6faad5fd-c064-4958-be13-a24f4d378102	STIHL	4140-200-0526	FS 55 R	Decespugliatori termici	Decespugliatore a benzina Stihl FS 55 R, cilindrata 27,2 cc, potenza 0,80 kW, motore 2-MIX, testina AutoCut, peso 4,4 kg.	299.0	235.62	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+e1c97d05-37e8-4f73-ac24-71e965dcd7be	STIHL	4144 200 0091	FS 70 RC-E	Decespugliatori	Decespugliatore a benzina Stihl FS 70 RC-E, cilindrata 27,2 cc, potenza 0,90 kW, motore 2-MIX, impugnatura circolare, AutoCut 27-2.	439.00	322.77	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · ErgoStart · AutoCut · impugnatura circolare
+7b3ddc2b-7edd-4022-80af-1d1370ae3636	STIHL	4180 200 0686	FS 91 R	Decespugliatori	Decespugliatore a benzina Stihl FS 91 R, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, AutoCut 27-2.	539.00	425.46	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	28.4cc · 4-MIX · impugnatura circolare · antivibrante 1 punto · Smart Connector
+c3a86aed-e742-44e4-83a1-321488f5c6f7	STIHL	4149 200 0082	FS 94 RC-E	Decespugliatori	Decespugliatore a benzina Stihl FS 94 RC-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, impugnatura circolare, AutoCut 27-2.	559.00	411.00	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	24.1cc · 4-MIX · ErgoStart · ECOSPEED · impugnatura circolare
+864e7e1f-047c-490f-acfe-09ca23e7ad4d	STIHL	4149 200 0080	FS 94 C-E	Decespugliatori	Decespugliatore a benzina Stihl FS 94 C-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, AutoCut 27-2.	599.00	504.45	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	24.1cc · 4-MIX · ErgoStart · ECOSPEED · impugnatura a manubrio
+7ec025c8-bab3-437d-bf0c-711c275a930d	STIHL	4134 200 0411	FS 120 R	Decespugliatori	Decespugliatore a benzina Stihl FS 120 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, AutoCut 27-2.	459.00	332.02	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	30.8cc · 2-MIX · impugnatura circolare
+e0c6f9c6-3c7c-4511-8059-fb1f51c264fc	STIHL	4180 200 0772	FS 131 R NOVITÀ	Decespugliatori	Decespugliatore a benzina Stihl FS 131 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2, manubrio loop, peso 5,4 kg.	679.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · impugnatura circolare · NOVITÀ
+e5c10cd5-be12-4331-8f79-6e7440e6ab61	STIHL	4180-200-0574	FS 131 R	Decespugliatori termici	Decespugliatore a benzina Stihl FS 131 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2, manubrio loop, peso 5,4 kg.	689.0	577.52	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+9591f71c-eba8-45e2-935e-878573ae83f5	STIHL	4180 200 0761	FS 131	Decespugliatori	Decespugliatore a benzina Stihl FS 131, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2.	719.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · tracolla doppia · antivibrante · Smart Connector
+ab6c3259-cb41-4836-8c3c-becdc822008a	STIHL	4180 200 0568	FS 131	Decespugliatori	Decespugliatore a benzina Stihl FS 131, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2.	729.00	611.05	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · tracolla doppia · antivibrante · Smart Connector
+c79260d3-9875-4ebb-9324-aef031d54f66	STIHL	4151 200 0017	FS 235 R	Decespugliatori	Decespugliatore a benzina Stihl FS 235 R, cilindrata 40,2 cc, potenza 1,5 kW, motore 2-MIX, impugnatura circolare.	539.00	409.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · impugnatura circolare
+44ce8f61-d563-40cd-826b-d60c2d995ee4	STIHL	4147 200 0385	FS 240 R	Decespugliatori	Decespugliatore a benzina Stihl FS 240 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX, AutoCut 27-2.	809.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · impugnatura circolare
+0b332f2d-94bd-4d8c-9c9f-2a4276332697	STIHL	4147 200 0727	FS 240 R NOVITÀ	Decespugliatori	Decespugliatore a benzina Stihl FS 240 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX, AutoCut 27-2.	804.00	654.81	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · impugnatura circolare · NOVITÀ · ADVANCE Grip
+13336f55-84e7-4533-adfe-abba0dabd70d	STIHL	4147 200 0386	FS 260 R	Decespugliatori	Decespugliatore a benzina Stihl FS 260 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX.	899.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · impugnatura circolare
+864831b8-dc1f-47e8-91e9-112d9808c860	STIHL	4147 200 0719	FS 260 R NOVITÀ	Decespugliatori	Decespugliatore a benzina Stihl FS 260 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX.	894.00	729.29	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · impugnatura circolare · NOVITÀ
+0f770c77-6f21-451f-a959-6e1167bff23a	STIHL	4147 200 0608	FS 361 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 361 C-EM, cilindrata 40,2 cc, potenza 1,8 kW, motore 4-MIX.	1079.00	941.45	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+21b4ba2c-9103-4538-b37b-2eab4eb7d32e	STIHL	4147 200 0618	FS 411 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 411 C-EM, cilindrata 40,2 cc, potenza 2,0 kW, motore 4-MIX.	1169.00	1016.89	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE
+b241496b-d4a8-4f60-9df6-f52169dbe063	STIHL	4147 200 0636	FS 461 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 461 C-EM, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX.	1239.00	1064.69	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+b9350676-9892-4f1f-8425-043a89358851	STIHL	4148 200 0194	FS 491 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 491 C-EM, cilindrata 43,1 cc, potenza 2,2 kW, motore 4-MIX.	1299.00	1112.82	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	51.6cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+896732df-706e-426a-b87d-c323e42f2252	STIHL	FA11 011 5700	FSA 50	Decespugliatori	Decespugliatore a batteria Stihl FSA 50, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	179.00	178.53	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 50, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	AK 10 · 280mm AutoCut · NOVITÀ · senza batteria
+ee929198-f741-4112-a57e-a5d363ad21c0	STIHL	1148 200 0139	MS 212	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	489.00	440.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 35cm PM3
+073a2431-7b86-4cb7-bd79-816516768ec3	STIHL	1148 200 0179	MS 212 C-BE	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	529.00	480.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 35cm PM3
+17b85703-d4dd-432e-a2eb-d2c8141c8026	STIHL	FA11 011 5710	FSA 50 Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 50, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	299.00	298.62	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 50, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	NOVITÀ · AK 10 · 280mm AutoCut · con AK 10 e AL 101
+dcd76f0d-84a9-45c8-9c88-c64654df6a3d	STIHL	FA04 011 5700	FSA 60 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 60 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	199.00	185.38	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 30, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 38, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 350mm AutoCut · NOVITÀ · senza batteria
+28fa8118-f5c4-4a91-bbf3-f1c03dae9374	STIHL	FA04 011 5740	FSA 60 R Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 60 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	339.00	315.81	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 30, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 38, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 350mm AutoCut · con AK 20 e AL 101
+7575adb2-1931-4be6-8a55-217ff1487172	STIHL	FA12 011 5700	FSA 70 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 70 R, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	219.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 30, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 38, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 380mm AutoCut · NOVITÀ · senza batteria
+fcc82650-c4f1-4a54-8bf7-e0bdd583f1bb	STIHL	FA07 011 5710	FSA 70 R Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 70 R, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	409.00	407.93	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 15, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 25, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 380mm AutoCut · con AK 20 e AL 101
+292c5fb6-d6ef-4775-9914-a62f401abe6b	STIHL	FA08 011 5730	FSA 80 R Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 80 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	529.00	528.33	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 380mm AutoCut · impugnatura circolare · con AK 30 S e AL 101
+043c2cc2-2de6-4f35-9f5f-16fdf3d012d3	STIHL	FA08 011 5720	FSA 80 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 80 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	359.00	358.54	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 380mm AutoCut · impugnatura circolare · senza batteria
+3585aaac-d5b8-4c5c-94a0-fa41dc5cbace	STIHL	FA08 011 5700	FSA 80 Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 80, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	379.00	379.04	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 230mm AutoCut · tracolla doppia · con batteria
+42af2527-82a6-4657-96d3-686ef8b46936	STIHL	FA08 011 5710	FSA 80	Decespugliatori	Decespugliatore a batteria Stihl FSA 80, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	549.00	547.55	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 230mm AutoCut · tracolla doppia · senza batteria
+c8ee1668-56a0-499f-bc72-7093d02ed393	STIHL	FA07 011 5720	FSA 110 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 110 R, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	399.00	373.34	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 45, "nome": "AP 20", "unita": "min", "val_min": 25}, {"val": 65, "nome": "AP 30", "unita": "min", "val_min": 50}, {"val": 60, "nome": "AP 200 S", "unita": "min", "val_min": 30, "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min", "val_min": 50}, {"val": 120, "nome": "AP 500 S", "unita": "min", "val_min": 60}, {"val": 400, "nome": "AR 2000 L", "unita": "min", "val_min": 210}, {"val": 570, "nome": "AR 3000 L", "unita": "min", "val_min": 290}]}	AP 200 S · 380mm AutoCut · senza batteria · Smart Connector
+b100d8ed-3440-45e0-a6ef-934d4e6bbb21	STIHL	FA08 200 0002	FSA 120	Decespugliatori	Decespugliatore a batteria Stihl FSA 120, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	459.00	429.48	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 50, "nome": "AP 20", "unita": "min", "val_min": 30}, {"val": 75, "nome": "AP 30", "unita": "min", "val_min": 45}, {"val": 60, "nome": "AP 200 S", "unita": "min", "val_min": 40, "raccomandata": true}, {"val": 110, "nome": "AP 300 S", "unita": "min", "val_min": 60}, {"val": 130, "nome": "AP 500 S", "unita": "min", "val_min": 70}, {"val": 400, "nome": "AR 2000 L", "unita": "min", "val_min": 210}, {"val": 490, "nome": "AR 3000 L", "unita": "min", "val_min": 280}]}	AP 300 S · 230mm AutoCut · tracolla doppia · senza batteria · Smart Connector
+a5f45666-34bd-4c4e-b2ef-1ae32b4a88e7	STIHL	FA01 200 0029	FSA 135 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 135 R, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	569.00	464.30	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 13}, {"val": 43, "nome": "AP 30", "unita": "min", "val_min": 24}, {"val": 28, "nome": "AP 200 S", "unita": "min", "val_min": 17, "raccomandata": true}, {"val": 45, "nome": "AP 300 S", "unita": "min", "val_min": 25}, {"val": 54, "nome": "AP 500 S", "unita": "min", "val_min": 30}, {"val": 170, "nome": "AR 2000 L", "unita": "min", "val_min": 96}, {"val": 234, "nome": "AR 3000 L", "unita": "min", "val_min": 138}]}	AP 300 S · 420mm · impugnatura circolare · SC2A · senza batteria
+4596b7b7-0e86-4041-8c10-234849b6620c	STIHL	FA03 200 0000	FSA 200	Decespugliatori	Decespugliatore a batteria Stihl FSA 200, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	799.00	749.78	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 30, "nome": "AP 30", "unita": "min", "val_min": 15}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 10}, {"val": 32, "nome": "AP 300 S", "unita": "min", "val_min": 16, "raccomandata": true}, {"val": 40, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"val": 127, "nome": "AR 2000 L", "unita": "min", "val_min": 64}, {"val": 192, "nome": "AR 3000 L", "unita": "min", "val_min": 96}]}	AP 500 S · 450mm · tracolla doppia · SC2A · senza batteria
+4ef023b8-c8ce-420d-9130-2c5eb31ea38e	STIHL	FA03 200 0040	FSA 250	Decespugliatori	Decespugliatore a batteria Stihl FSA 250, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	839.00	786.17	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 54, "nome": "AP 300 S", "unita": "min", "val_min": 27, "raccomandata": true}, {"val": 63, "nome": "AP 500 S", "unita": "min", "val_min": 32}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 480mm · ADVANCE · SC2A · senza batteria
+3fafba08-43f9-445a-95a0-a6096a7aadd4	STIHL	FA09 200 0001	FSA 400	Decespugliatori	Decespugliatore a batteria Stihl FSA 400, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	1099.00	1028.31	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 20, "nome": "AP 300 S", "unita": "min", "val_min": 12, "raccomandata": true}, {"val": 25, "nome": "AP 500 S", "unita": "min", "val_min": 15}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 520mm · ADVANCE PLUS · SC2A · NOVITÀ · senza batteria
+875fd1a8-28c2-44f2-8c20-7c09898868d2	STIHL	4151 200 0016	FR 235	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, AutoCut 27-2.	679.00	578.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · zaino
+90355bba-bb8d-4afd-986d-a1adc25fbd68	STIHL	4151 200 0047	FR 235 T	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, AutoCut 27-2.	699.00	597.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · zaino · asta divisibile
+fac7d262-4ae6-444c-b4cf-d460ac4427c2	STIHL	GA04 011 6910	GTA 40 Set	Potatori da giardino	\N	449.00	415.82	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 240, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con 2×AS 2, AL 5-2 e valigetta · spranga 15cm
+0c0d1d91-eb83-49df-bebe-043a8ee020de	STIHL	4151-200-0016	FR 235	Decespugliatori professionali	Decespugliatore a zaino a benzina Stihl FR 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, AutoCut 27-2.	679.0	578.1	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+54768e6a-c434-45c3-b728-05f664846e55	STIHL	4147 200 0364	FR 460 TC-EM NOVITÀ	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1249.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · ErgoStart · zaino · NOVITÀ
+92393893-86a7-4f46-beee-1df98e8e6cd1	STIHL	4147 200 0713	FR 460 TC-EM	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1219.00	1028.20	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · ErgoStart · zaino
+c8bc036f-16b8-45a6-b4b2-f9741c584f3d	STIHL	4147 200 0372	FR 460 TC-EFM NOVITÀ	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1349.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · Elektrostart · zaino · NOVITÀ
+b931e8f4-2617-427c-a7cd-5d8f69d5bc2c	STIHL	4147 200 0714	FR 460 TC-EFM	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1289.00	1087.25	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · Elektrostart · zaino
+8ecbc709-f233-40c9-a3a7-61eb29df79c2	STIHL	4147 200 0716	FR 460 TC-E	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1189.00	1002.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · ErgoStart · zaino · asta divisibile · Smart Connector
+60ba4755-53ce-49b2-b2b0-d9fbfddda386	STIHL	4147 200 0374	FR 460 TC-E NOVITÀ	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1199.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · ErgoStart · zaino · asta divisibile · Smart Connector · NOVITÀ
+929b45cb-a137-4361-9c37-e7ee13cc3604	STIHL	4147 200 0706	FR 480 C-E	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 480 C-E, cilindrata 43,1 cc, potenza 2,1 kW, motore 4-MIX, sistema di trasporto a zaino.	1149.00	966.12	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · ErgoStart · zaino · pendenza
+46e060e5-0581-424c-b8fc-3cc5771132ce	STIHL	HA03 011 3506	HSA 26 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 26, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,1 kg, lunghezza lama 60 cm.	139.00	139.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 110, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con AS 2, AL 1 e custodia
+5e632eac-e4ce-4b4c-bafd-d142412567b4	STIHL	HA03 011 3500	HSA 26	Tosasiepi	Tosasiepe a batteria Stihl HSA 26, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,1 kg, lunghezza lama 60 cm.	99.00	99.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 110, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · ergonomico · coltello cespugli + erba
+7e5d319e-5f49-4502-9d04-52e562065419	STIHL	HA08 011 3506	HSA 30 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 30, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	159.00	159.02	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 50, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con AS 2 e AL 1
+cc43ecdc-a058-4063-b88f-e1e3cba30531	STIHL	HA08 011 3500	HSA 30	Tosasiepi	Tosasiepe a batteria Stihl HSA 30, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	119.00	119.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 50, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · lame tagliate al laser
+45a75e99-28cc-43dd-8c23-7067dac9a95c	STIHL	HA08 011 3526	HSA 40 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 40, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	209.00	209.02	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 40, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con 2×AS 2 e AL 1
+73583235-118d-4399-a45c-f3e899e9074c	STIHL	4521 011 3570	HSA 50 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 50, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	269.00	269.02	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · con AK 10 e AL 101
+d2ba12a0-9459-4e93-a93c-20f974ebd010	STIHL	4521 200 0032	HSA 50 Set 2×	Tosasiepi	Tosasiepe a batteria Stihl HSA 50, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	349.00	349.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · con 2×AK 10 e AL 101
+1bdc32aa-f4ec-44b4-8c54-d4e260ad7722	STIHL	4521 011 3560	HSA 50	Tosasiepi	Tosasiepe a batteria Stihl HSA 50, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	169.00	169.01	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · lame tagliate al laser · coltelli a goccia
+30e1b090-53fc-46ca-a93b-5fe98d307df1	STIHL	HA06 011 3540	HSA 60 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 60, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	389.00	389.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 70, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 140, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 175, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · con AK 10 e AL 101
+85e874ff-3db7-4b22-ae3d-857764e0fb75	STIHL	HA06 011 3530	HSA 60	Tosasiepi	Tosasiepe a batteria Stihl HSA 60, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	289.00	289.03	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 70, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 140, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 175, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · imp. multifunzione orientabile · Smart Connector
+dee1bbe4-353f-4d5f-9ea7-082c8f5cf5ae	STIHL	4869 011 3567	HSA 130 T 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	629.00	590.25	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	AP · rifinitura T · lama 75cm
+d4b0e639-5789-432f-ac3d-0ad3c4846aa7	STIHL	4869 011 3566	HSA 130 T	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	569.00	533.95	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 83, "nome": "AP 20", "unita": "min"}, {"val": 160, "nome": "AP 30", "unita": "min"}, {"val": 108, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 167, "nome": "AP 300 S", "unita": "min"}, {"val": 200, "nome": "AP 500 S", "unita": "min"}, {"val": 735, "nome": "AR 2000 L", "unita": "min"}, {"val": 1050, "nome": "AR 3000 L", "unita": "min"}]}	AP · rifinitura T · alta velocità · SC2A
+8a8e29c9-2560-4b31-9b69-d54edc7b642c	STIHL	HA02 011 3520	HSA 150 R	Tosasiepi	Tosasiepe a batteria Stihl HSA 150 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	749.00	702.86	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 116, "nome": "AP 20", "unita": "min"}, {"val": 235, "nome": "AP 30", "unita": "min"}, {"val": 150, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 245, "nome": "AP 300 S", "unita": "min"}, {"val": 290, "nome": "AP 500 S", "unita": "min"}, {"val": 935, "nome": "AR 2000 L", "unita": "min"}, {"val": 1405, "nome": "AR 3000 L", "unita": "min"}]}	AP · sfrondatura R · batteria rimovibile · SC2A
+17d23161-a0dd-461f-baaf-d7545e3704df	STIHL	HA02 011 3530	HSA 150 T	Tosasiepi	Tosasiepe a batteria Stihl HSA 150 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 30 mm, 3900-4500-5000 colpi/minuto, peso 4,2 kg, lunghezza lama 60 cm.	744.00	698.17	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 108, "nome": "AP 20", "unita": "min"}, {"val": 226, "nome": "AP 30", "unita": "min"}, {"val": 140, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 235, "nome": "AP 300 S", "unita": "min"}, {"val": 280, "nome": "AP 500 S", "unita": "min"}, {"val": 900, "nome": "AR 2000 L", "unita": "min"}, {"val": 1355, "nome": "AR 3000 L", "unita": "min"}]}	AP · rifinitura T · batteria rimovibile · SC2A
+7a24b9c3-eaad-438c-b467-a5858b00d2d6	STIHL	4228 011 2938	HS 45 60cm	Tosasiepi	Tosasiepe a benzina Stihl HS 45 450mm, cilindrata 22,7 cc, motore 2-MIX, lunghezza lama 45 cm.	399.00	323.19	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · lama 60cm
+3aebe310-f935-4791-8537-144ef212ec7e	STIHL	4228 011 2937	HS 45	Tosasiepi	Tosasiepe a benzina Stihl HS 45 450mm, cilindrata 22,7 cc, motore 2-MIX, lunghezza lama 45 cm.	369.00	343.72	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · ElastoStart · antivibrante
+f3ab88fb-90c2-4bb0-83c9-71aaba70e149	STIHL	4237 011 2978	HS 82 R 75cm	Tosasiepi	Tosasiepe a benzina Stihl HS 82 R 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, affilatura lama su entrambi i lati.	859.00	800.16	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · sfrondatura R · lama 75cm
+4011249e-f43b-41e1-a4ee-e13bdaa158b8	STIHL	4237 011 2977	HS 82 R	Tosasiepi	Tosasiepe a benzina Stihl HS 82 R 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, affilatura lama su entrambi i lati.	819.00	762.90	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · sfrondatura R · Smart Connector
+9a683fb6-f67e-458c-a94b-507000d713a8	STIHL	4237-011-2977	HS 82 R 600mm	Tosasiepi termici	Tosasiepe a benzina Stihl HS 82 R 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, affilatura lama su entrambi i lati.	819.0	762.9	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+b5e2b42c-3851-4405-a1b9-d6ac794c94dc	STIHL	4237 011 2986	HS 82 T 75cm	Tosasiepi	Tosasiepe a benzina Stihl HS 82 T 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, lame dentate su entrambi i lati.	859.00	800.16	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · rifinitura T · lama 75cm
+b976d2d4-d1fd-4f38-a3e2-9cf44216685b	STIHL	4237 011 2985	HS 82 T	Tosasiepi	Tosasiepe a benzina Stihl HS 82 T 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, lame dentate su entrambi i lati.	819.00	762.90	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · rifinitura T · Smart Connector
+e90c9f2b-9e75-4fe6-b6c9-8afb1debcbcb	STIHL	4237 011 2991	HS 87 R	Tosasiepi	Tosasiepe a benzina Stihl HS 87 R, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 75 cm, affilatura su entrambi i lati.	919.00	856.05	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · grandi volumi · antivibrante · Smart Connector
+bb608dda-ff71-41dc-96dd-0a83c377e916	STIHL	4237-011-2991	HS 87 R 750mm	Tosasiepi termici	Tosasiepe a benzina Stihl HS 87 R, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 75 cm, affilatura su entrambi i lati.	919.0	856.05	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+74dd8bcd-8b4a-4215-afaa-7f3b6e984725	STIHL	4237 011 2995	HS 87 T	Tosasiepi	Tosasiepe a benzina Stihl HS 87 T, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 75 cm, lame dentate su entrambi i lati.	919.00	856.05	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · rifinitura · alta velocità · antivibrante
+341af2ff-e1bc-4624-91c5-1a48f1c2f195	STIHL	1145 200 0264	MS 201 C-M 16cm	Motoseghe	\N	999.00	900.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale leggera · M-Tronic · 40cm PS
+b3553510-3e62-4dae-a1f4-4bd18049333c	STIHL	1146 200 0055	MS 151 C-E 30cm	Motoseghe	\N	579.00	520.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 2-MIX · 30cm PM3
+fdb05c9e-9baf-406b-a993-18e3ac0b5a59	STIHL	1146 200 0056	MS 151 TC-E 25cm	Motoseghe	\N	559.00	420.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 2-MIX · 25cm
+6404515b-dff1-4f13-8a73-c4e9fe9b7577	STIHL	1146 200 0057	MS 151 TC-E 30cm	Motoseghe	\N	569.00	430.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 2-MIX · 30cm
+fdca0d5a-dd65-4303-a25b-8493ec08808d	STIHL	4180 200 0574	FS 131 R	Decespugliatori	Decespugliatore a benzina Stihl FS 131 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2, manubrio loop, peso 5,4 kg.	689.00	577.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · impugnatura circolare · antivibrante · Smart Connector
+f0f84359-7487-4e59-aa71-0f72c56c3368	STIHL	HA08 011 3520	HSA 40	Tosasiepi	Tosasiepe a batteria Stihl HSA 40, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	149.00	149.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 40, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · lame tagliate al laser · Smart Connector
+268e9c3a-a31e-4e0f-a33c-33e5101e53fb	STIHL	HA10 011 2900	HLA 40	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 40, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	149.00	138.81	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 40, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · Sistema AS · telescopico · angolo -45°/+70°
+b67f97dd-8921-4102-aa65-c1a248f8ea9e	STIHL	HA01 011 2910	HLA 56	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 56, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	249.00	249.03	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 120, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · angolo 135° · IPX4 · impugnatura circolare
+dd1d3beb-cfe2-4803-aae2-73fba99013ce	STIHL	HA01 200 0050	HLA 56 Set	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 56, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	389.00	389.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 120, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · con AK 20 e AL 101
+9424783d-07cb-4346-8992-efb22e4b3ff4	STIHL	HA01 200 0049	HLA 56 Set 2×	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 56, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	519.00	519.05	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 120, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · con 2×AK 20 e AL 101
+22f7fa3d-d6fc-46cf-b702-7d7cd81fc9b7	STIHL	4859 011 2930	HLA 86	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 86, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	559.00	524.57	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 111, "nome": "AP 20", "unita": "min"}, {"val": 214, "nome": "AP 30", "unita": "min"}, {"val": 144, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 223, "nome": "AP 300 S", "unita": "min"}, {"val": 268, "nome": "AP 500 S", "unita": "min"}, {"val": 760, "nome": "AR 2000 L", "unita": "min"}, {"val": 1110, "nome": "AR 3000 L", "unita": "min"}]}	AP · telescopica 260-330cm · angolo 115° · Smart Connector
+63ae94b7-83fb-4968-9d59-aa55ab853b97	STIHL	LA02 200 0013	HTA 50 Set 2×	Potatori	Potatore a batteria Stihl HTA 50, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	569.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 45, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · asta fino 2.8m · Smart Connector · con 2×AK 20 e AL 101
+f6f7b44a-7d3b-4518-bdb5-efd5d61ac4bb	STIHL	1148 200 0144	MS 212 40cm	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	499.00	450.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 40cm PM3
+a957421c-6a8c-4c4c-a426-cd253e39ec6f	STIHL	HA04 200 0016	HLA 135	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 135, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	654.00	533.67	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 50, "nome": "AP 20", "unita": "min"}, {"val": 91, "nome": "AP 30", "unita": "min"}, {"val": 64, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 95, "nome": "AP 300 S", "unita": "min"}, {"val": 114, "nome": "AP 500 S", "unita": "min"}, {"val": 370, "nome": "AR 2000 L", "unita": "min"}, {"val": 555, "nome": "AR 3000 L", "unita": "min"}]}	AP · professionale parchi · angolo 145° · SC2A
+c5ff8cb6-26d8-4f6e-92f7-dd51f621547d	STIHL	HA04 200 0040	HLA 140 K-B	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 140 K-B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	669.00	627.79	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 30	\N	NOVITÀ · AP · asta corta K · Bluetooth · SC integrato
+532db399-1284-437c-9201-3f59fa944552	STIHL	HA04 200 0045	HLA 150 B	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 150-B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	799.00	749.78	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 30	\N	NOVITÀ · AP · telescopico · Bluetooth · SC integrato
+9d7aa259-1794-477e-8b28-c2f9edd3e414	STIHL	LA05 011 6400	HTA 30	Potatori	Potatore a batteria Stihl HTA 30, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	239.00	222.65	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 28, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · asta 1.9-2.8m · senza batteria
+355e9d61-f4fd-4497-b955-b9d733d5c21f	STIHL	LA05 011 6410	HTA 30 Set	Potatori	Potatore a batteria Stihl HTA 30, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	299.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 28, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · asta 1.9-2.8m · con 2×AS 2 e ALS31
+86973f9f-2923-4786-b074-1f64968fac1e	STIHL	LA02 011 6400	HTA 50	Potatori	Potatore a batteria Stihl HTA 50, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	319.00	319.04	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 45, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 20 · asta fino 2.8m · Smart Connector · senza batteria
+1cdabdb6-56a4-4bb3-aef5-363ad6182d00	STIHL	LA02 200 0014	HTA 50 Set	Potatori	Potatore a batteria Stihl HTA 50, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	459.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 45, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · asta fino 2.8m · Smart Connector · con AK 20 e AL 101
+079f5180-909e-4972-a72d-07f9e2a1f0a8	STIHL	LA03 200 0002	HTA 86	Potatori	Potatore a batteria Stihl HTA 86, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	689.00	646.55	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 32, "nome": "AP 20", "unita": "min"}, {"val": 65, "nome": "AP 30", "unita": "min"}, {"val": 42, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 68, "nome": "AP 300 S", "unita": "min"}, {"val": 82, "nome": "AP 500 S", "unita": "min"}, {"val": 222, "nome": "AR 2000 L", "unita": "min"}, {"val": 318, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · asta telescopica 2.7-3.9m · antivibrante · Smart Connector
+21c3eebc-5c6d-4392-9659-7b31e2ab2180	STIHL	LA01 200 0046	HTA 135	Potatori	Potatore a batteria Stihl HTA 135, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	864.00	810.78	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 52, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 36, "nome": "AP 300 S", "unita": "min"}, {"val": 54, "nome": "AP 500 S", "unita": "min"}, {"val": 70, "nome": "AR 2000 L", "unita": "min"}, {"val": 254, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta professionale 2.85-4.05m · SC2A
+37b165c6-8e7c-447e-a10e-1caa643a4901	STIHL	LA01 200 0034	HTA 150	Potatori	Potatore a batteria Stihl HTA 150, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	729.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 40, "nome": "AP 20", "unita": "min"}, {"val": 96, "nome": "AP 30", "unita": "min"}, {"val": 52, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min"}, {"val": 113, "nome": "AP 500 S", "unita": "min"}, {"val": 396, "nome": "AR 2000 L", "unita": "min"}, {"val": 592, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta rigida · frutticoltura · SC2A
+c17f6e5d-8165-4565-86ac-c2475fa9a0cb	STIHL	1148 200 0184	MS 212 C-BE 40cm	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	539.00	490.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 40cm PM3
+a4b5ea04-11c6-4ff3-9f95-47c1cc83afbb	STIHL	1143 200 0722	MS 231 C-BE 45cm	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	634.00	550.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 45cm
+070b6a9e-a388-4d29-a307-f612da42a606	STIHL	4812 011 3564	HSE 61	Tosasiepi	\N	229.00	\N	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · imp. multifunzione orientabile
+fd1138da-b848-45a8-b82b-4f4ab6723464	STIHL	4812 011 3576	HSE 71	Tosasiepi	\N	249.00	225.22	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · imp. multifunzione orientabile
+61582c31-efbf-4dfb-be42-9d42d6ee9287	STIHL	LA01 200 0019	HTA 150	Potatori	Potatore a batteria Stihl HTA 150, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	729.00	545.29	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 40, "nome": "AP 20", "unita": "min"}, {"val": 96, "nome": "AP 30", "unita": "min"}, {"val": 52, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min"}, {"val": 113, "nome": "AP 500 S", "unita": "min"}, {"val": 396, "nome": "AR 2000 L", "unita": "min"}, {"val": 592, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta rigida · frutticoltura · SC2A · esaurimento
+ef40111d-1d14-4b69-ab86-597f0146b874	STIHL	LA01 200 0032	HTA 160	Potatori	Potatore a batteria Stihl HTA 160, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	899.00	843.63	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 27, "nome": "AP 20", "unita": "min"}, {"val": 67, "nome": "AP 30", "unita": "min"}, {"val": 36, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 70, "nome": "AP 300 S", "unita": "min"}, {"val": 80, "nome": "AP 500 S", "unita": "min"}, {"val": 277, "nome": "AR 2000 L", "unita": "min"}, {"val": 416, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta telescopica prof. 2.85-4.05m · SC2A
+6d464c22-fede-474a-b2bd-d08bb5c80c77	STIHL	4182 200 0194	HT 105	Potatori	Potatore su palo a benzina Stihl HT 105 30cm, cilindrata 22,7 cc, motore 2-MIX, lunghezza spranga 30 cm, catena 71PM3.	1149.00	1023.76	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX · antivibrante · asta 2.7-3.9m · Smart Connector
+2d9d470a-b0c5-4141-802f-6258a9003f30	STIHL	4182-200-0194	HT 105 30cm	Potatori su palo termici	Potatore su palo a benzina Stihl HT 105 30cm, cilindrata 22,7 cc, motore 2-MIX, lunghezza spranga 30 cm, catena 71PM3.	1149.0	1023.76	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+b6e6999a-0151-4237-a20b-21dd5ea16e19	STIHL	4182 200 0202	HT 135	Potatori	Potatore su palo a benzina Stihl HT 135 30cm, cilindrata 36,3 cc, motore 2-MIX, lunghezza spranga 30 cm, catena 61PMM3.	1239.00	1103.94	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	AP 300 S	\N	Professionale · 4-MIX · asta fino a 3.9m · Smart Connector
+1b848855-ff39-4d70-8025-66e64c653a5a	STIHL	MA04 011 5800	MSA 60 C-B	Motoseghe	Motosega a batteria Stihl MSA 60 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	199.00	199.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 55, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · senza batteria · 30cm PM3 · Smart Connector
+8f2da920-6b06-4958-aade-1ae1517560fe	STIHL	MA04 011 5806	MSA 60 C-B Set	Motoseghe	Motosega a batteria Stihl MSA 60 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	339.00	339.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 55, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · con AK 20 e AL 101 · 30cm PM3 · Smart Connector
+ea33a8a8-4875-4620-b5e3-d51b486aff2b	STIHL	MA04 200 0002	MSA 60 C-B 2×Set	Motoseghe	Motosega a batteria Stihl MSA 60 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	449.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	\N	Sistema AK · con 2×AK 20 e AL 101 · 30cm PM3 · Smart Connector
+aa7d1eeb-458e-4291-950d-1dce429b0d71	STIHL	MA04 011 5816	MSA 70 C-B	Motoseghe	Motosega a batteria Stihl MSA 70 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	239.00	239.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 45, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · senza batteria · 30cm PM3 · Smart Connector
+f8d7364e-8405-4994-99bd-7093317f5f6a	STIHL	MA04 011 5822	MSA 70 C-B Set	Motoseghe	Motosega a batteria Stihl MSA 70 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	409.00	409.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 45, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · con AK 30 e AL 101 · 30cm PM3 · Smart Connector
+86b5c410-2ad4-4353-ac92-f46e6a19b786	STIHL	MA04 200 0011	MSA 70 C-B 2×Set	Motoseghe	Motosega a batteria Stihl MSA 70 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	569.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	\N	Sistema AK · con 2×AK 30 e AL 101 · 30cm PM3 · Smart Connector
+293b7fae-555a-4e74-9077-72e6bf02bed6	STIHL	MA04 011 5843	MSA 80 C-B	Motoseghe	Motosega a batteria Stihl MSA 80 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	389.00	389.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": null, "nome": "AK 10", "unita": "min", "incompatibile": true}, {"wh": 144, "val": null, "nome": "AK 20", "unita": "min", "incompatibile": true}, {"wh": 180, "val": 35, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · senza batteria · 30cm PM3 · Smart Connector
+2c2f56bb-25ac-4ec0-bb9e-d0c9f3343711	STIHL	MA04 011 5832	MSA 80 C-B Set	Motoseghe	Motosega a batteria Stihl MSA 80 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	559.00	559.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": null, "nome": "AK 10", "unita": "min", "incompatibile": true}, {"wh": 144, "val": null, "nome": "AK 20", "unita": "min", "incompatibile": true}, {"wh": 180, "val": 35, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · con AK 30 e AL 101 · 30cm PM3 · Smart Connector
+5b1a4d22-b19c-4245-8970-2e8c45c5a477	STIHL	1143 200 0684	MS 231	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	589.00	510.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 40cm RM Pro
+48f8fa30-5259-4b58-8f26-5efd01aeb9e2	STIHL	1143 200 0688	MS 231 C-BE	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	629.00	550.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 40cm RM Pro
+4050c6ee-7ade-46d3-b927-ccd76ae1d97e	STIHL	MA03 200 0004	MSA 160 C-B	Motoseghe	Motosega a batteria Stihl MSA 160 C-B: Motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 16 m/s, lunghezza barra 25 cm, peso 2,5 kg	369.00	350.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 60, "nome": "AP 200 S", "tagli": 300, "unita": "min", "val_min": 60, "raccomandata": true}, {"val": 42, "nome": "AP 300 S", "tagli": 210, "unita": "min", "val_min": 42}, {"val": 62, "nome": "AP 500 S", "tagli": 310, "unita": "min", "val_min": 62}, {"val": 74, "nome": "AR 2000 L", "tagli": 370, "unita": "min", "val_min": 74}, {"nome": "AR 3000 L", "incompatibile": true}]}	Sistema AP · 30cm PM3 · Smart Connector · senza batteria
+377d5555-f3ff-4a32-899e-4687af7d6d23	STIHL	MA03 200 0010	MSA 200 C-B	Motoseghe	Motosega a batteria Stihl MSA 200 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	459.00	430.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 48, "nome": "AP 200 S", "tagli": 260, "unita": "min", "val_min": 48, "raccomandata": true}, {"val": 42, "nome": "AP 300 S", "tagli": 160, "unita": "min", "val_min": 42}, {"val": 50, "nome": "AP 500 S", "tagli": 270, "unita": "min", "val_min": 50}, {"val": 60, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 60}, {"nome": "AR 3000 L", "incompatibile": true}]}	Sistema AP · 35cm PM3 · Smart Connector · senza batteria
+ad57557a-2f26-4853-927c-bd1d4a5eb5e7	STIHL	MA01 200 0021	MSA 220 T	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	749.00	560.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 28, "nome": "AP 20", "tagli": 280, "unita": "min", "val_min": 12}, {"val": 28, "nome": "AP 30", "tagli": 280, "unita": "min", "val_min": 28}, {"val": 29, "nome": "AP 200 S", "tagli": 290, "unita": "min", "val_min": 16}, {"val": 29, "nome": "AP 300 S", "tagli": 290, "unita": "min", "val_min": 29, "raccomandata": true}, {"val": 34, "nome": "AP 500 S", "tagli": 340, "unita": "min", "val_min": 34}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Display 180° · Smart Connector · 30cm PS3
+a4e8829a-2520-4d43-bd98-e408330171c9	STIHL	MA01 200 0083	MSA 220 TC-O	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	809.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 23, "nome": "AP 20", "tagli": 280, "unita": "min", "val_min": 16}, {"val": 23, "nome": "AP 30", "tagli": 280, "unita": "min", "val_min": 23}, {"val": 24, "nome": "AP 200 S", "tagli": 290, "unita": "min", "val_min": 21}, {"val": 24, "nome": "AP 300 S", "tagli": 290, "unita": "min", "val_min": 24, "raccomandata": true}, {"val": 34, "nome": "AP 500 S", "tagli": 340, "unita": "min", "val_min": 34}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Sensore olio · Display 180° · Smart Connector · 30cm PS3 Pro
+ca630bfa-12b4-4c30-b1c8-b66ef519eb66	STIHL	1148 200 0002	MS 162	Motoseghe	Motosega a benzina Stihl MS 162, cilindrata 30,1 cc, potenza 1,2 kW, catena 61PMM3.	199.00	199.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby entry · 2-MIX · 35cm PMM3
+8f541ff2-7c79-499f-b288-3b58e5e6641f	STIHL	1208 200 0304	MSE 141	Motoseghe	\N	194.00	180.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 30cm PMM3
+a2b0937d-ff56-40d8-ae5c-d3048293f9a6	STIHL	1209 200 0154	MSE 170	Motoseghe	\N	289.00	270.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 30cm PMM3
+162fb8dd-2325-4426-8d1c-626b6754a477	STIHL	1209 200 0157	MSE 190	Motoseghe	\N	339.00	320.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PM3
+0a10c801-a1d7-449a-a623-d7606e6ccedc	STIHL	1209 200 0160	MSE 210 C-B	Motoseghe	\N	404.00	380.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PM3
+7101df3a-807f-413e-9405-ea9f2c72a6b6	STIHL	4255 019 4950	SG 51	Irroratori	\N	144.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	12.0L serbatoio
+3e2d4f39-ba3e-4625-a1d0-5cd83122233e	STIHL	1146 200 0054	MS 151 C-E	Motoseghe	\N	569.00	510.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 2-MIX · 25cm PM3
+cb5fbfcf-9166-4290-a79c-f504fb0bef52	STIHL	1137 200 0340	MS 151 TC-E	Motoseghe	\N	534.00	480.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart
+335d145f-5b48-432f-b870-69cc8f8b271b	STIHL	GA01 011 6900	GTA 26	Potatori da giardino	\N	129.00	128.13	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 70, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · leggero
+28e492ba-793a-4b86-bf42-f88b37cf42da	STIHL	GA01 011 6910	GTA 26 Set	Potatori da giardino	\N	169.00	168.09	t	2026-04-11 18:29:22.623135+00	Batteria AK	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 70, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · NOVITÀ · con AS 2 e AL 1
+211d3fe5-bc0c-449e-a0a0-143ce87104df	STIHL	GA05 011 6910	GTA 30	Potatori da giardino	\N	329.00	330.38	t	2026-04-11 18:29:22.623135+00	Batteria AK	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 180, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con 2×AS 2, AL 5-2 e valigetta
+f5b71f5b-b278-4a08-b69d-89b0eb0b54a1	STIHL	4238 011 2820	TS 440	Troncatrici	\N	1949.00	1631.55	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · disco 350mm · QuickStop · ciclone
+25ced937-d1e0-466f-90f0-acbe554256b6	STIHL	4250 011 2810	TS 500i	Troncatrici	\N	1889.00	1576.48	t	2026-04-11 18:29:22.623135+00	Miscela Injection	\N	\N	Injection · disco 350mm · ciclone
+a7e83a25-ee40-4127-b9f8-f717fe345ece	STIHL	1152 200 0040	MSE 250 W	Motoseghe edilizia	\N	1299.00	\N	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · taglio muri · acqua
+c3572acd-9769-48b4-9a30-e05c44b71326	STIHL	4252 200 0047	GS 461	Motoseghe edilizia	\N	2939.00	2745.62	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Motosega edilizia · catena diamantata GBM · 40cm
+2b5401db-a3d8-49d0-962d-617f073ee4fd	STIHL	4313 011 2120	BT 131	Trivelle	\N	1319.00	1166.53	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX, 200 giri/min mandrino
+6acc5c42-b69c-4654-8392-114e9e4c350a	STIHL	GA04 011 6900	GTA 40	Potatori da giardino	\N	289.00	266.86	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 240, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · senza batteria · spranga 15cm PM3
+3e55bfa7-b9d6-4ab3-89da-29f00cd96ea2	STIHL	4812 011 3577	HSE 71 70cm	Tosasiepi	\N	279.00	252.36	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · lama 70cm
+2ca1a940-e331-458b-bca3-6fad631d35ad	STIHL	4255 019 4910	SG 11	Irroratori	\N	22.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	1.5L serbatoio
+e90f9cc5-c1ca-4dd8-bd54-1e6c300d1645	STIHL	4255 019 4921	SG 21	Irroratori	\N	36.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	3.0L serbatoio
+3f57db56-371f-459c-8d91-321f0ccd18b7	STIHL	4243 200 0016	HL 94 KC-E	Tagliasiepi allungati	\N	959.00	841.53	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 145° · asta corta K · ECOSPEED · Smart Connector
+037875c2-f559-4007-a1cb-224c12857700	STIHL	4604 011 5401	MM 56	Sistema Multi	\N	659.00	604.07	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · telaio ripiegabile · 7 attrezzi Multi disponibili
+0199a7e7-1b2d-4276-a0fd-f605b300b307	STIHL	4255 019 4930	SG 31	Irroratori	\N	48.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	5.0L serbatoio
+9880b7c0-a3e9-40d7-8869-a56a846a6c0b	STIHL	4255 019 4970	SG 71	Irroratori	\N	164.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	18.0L serbatoio
+ae5bc8c2-3c5e-4a49-af06-73ac8fd844c9	STIHL	SA09 011 9100	PKA 30	Irroratori	\N	80.00	80.22	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	\N	NOVITÀ, testa pompaggio a batteria
+9f2eddbf-bc00-4277-9102-0e1b9b35c13b	STIHL	4243 200 0019	HL 91 KC-E	Tagliasiepi allungati	\N	869.00	762.55	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 130° · asta corta K · ErgoStart · impugnatura circolare
+f08b64f2-980b-4766-8fcb-3efc92489ff8	STIHL	4259 011 0705	SP 92 TC-E	Raccoglitori speciali	\N	1399.00	1217.06	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, raccoglitore frutta
+32160ac4-6a04-49a1-b464-e416ee4d2c3b	STIHL	VB01 200 0010	SP 452 1.86m	Raccoglitori speciali	\N	2019.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 1.86m
+18b41251-98a5-443c-880e-5d49255a89bc	STIHL	VB01 200 0011	SP 452 2.26m	Raccoglitori speciali	\N	2049.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 2.26m
+e80dfd41-dcda-4521-9459-321a77f994e4	STIHL	VB01 200 0008	SP 482 1.86m	Raccoglitori speciali	\N	2129.00	1863.79	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 1.86m
+7aad1e67-7565-480b-9009-0baaa540d7a8	STIHL	VB01 200 0009	SP 482 2.26m	Raccoglitori speciali	\N	2159.00	1884.14	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 2.26m
+a8cc140d-1a69-4d89-ab12-075236f60544	STIHL	VB01 200 0013	SP 482 2.60m	Raccoglitori speciali	\N	2189.00	1907.32	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 2.60m
+ce28b1b8-7fac-40f7-a5d7-4e9618b948d9	STIHL	4811 011 1544	BGE 71	Soffiatori	\N	134.00	118.51	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, con cavo
+b2b318c6-73c5-4ec2-9ac1-2624dd0cb988	STIHL	4811 011 1552	BGE 81	Soffiatori	\N	184.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, con cavo
+0b2ab11f-48aa-4934-b44e-a93909b51dd0	STIHL	SA06 011 8210	KOA 20	Compressori	\N	139.00	139.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 23, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Senza batteria, gonfiatore
+75ae7a48-ead7-49fc-8a57-1dcdbc013997	STIHL	4244 011 1600	BR 350	Soffiatori dorsali	\N	679.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+1921a7f9-a9b4-4c31-892c-1d7a3aca896e	STIHL	4282 200 0020	BR 500	Soffiatori dorsali	\N	849.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX
+4f620a4b-8af5-4c20-8fce-03e52b604af6	STIHL	SA02 011 7100	SHA 56 Set	Aspiratori-trituratori	\N	269.00	269.02	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 12, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 25, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Con AK 20 e AL 101
+71fe6764-11e4-4898-b333-8b5fe0133a00	STIHL	SA02 200 0005	SHA 56	Aspiratori-trituratori	\N	409.00	409.05	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 12, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 25, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Senza batteria, sacco 40L
+e3238da2-1f1f-458f-9ae4-f1fe4ea8c11b	STIHL	4241 011 0928	SH 56	Aspiratori-trituratori	\N	419.00	378.98	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, sacco 45L
+c3b96c3f-a616-4565-9e9c-b5c36046ddc0	STIHL	4860 019 4705	KG 550	Spazzatrici	\N	279.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	55cm larghezza lavoro, MultiClean
+58788413-6740-47af-97b0-95bd7d598470	STIHL	4860 019 4707	KG 770	Spazzatrici	\N	649.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	77cm larghezza lavoro, MultiClean PLUS
+bc8e3a77-8d6c-4b2a-a535-502b97cdb5ac	STIHL	4788 012 4500	RE 232	Idropulitrici	\N	1259.00	1146.26	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	145 bar professionale
+7d26f331-73bd-401f-8d41-7a6a6f2771a6	STIHL	4788 012 4512	RE 272 PLUS	Idropulitrici	\N	1639.00	1492.22	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	150 bar, pistoni ceramica
+b3225c5f-4a21-431b-aa04-2523dfb2787e	STIHL	4780 012 4501	RE 462 PLUS	Idropulitrici	\N	2609.00	2382.61	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	220 bar, 400V trifase, professionale
+15c52194-3073-49e1-8e00-1bd10a4fb8d0	STIHL	4784 012 4400	SE 62	Aspiratori	\N	189.00	170.44	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, 20L
+4d9f64f4-dac4-4886-80fa-94ac7b2f91d8	STIHL	4784 012 4403	SE 62 E	Aspiratori	\N	234.00	211.65	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, accensione automatica
+32dca52a-c413-4482-b5b7-02a705bd5cb3	STIHL	SA08 011 7300	SEA 50 L	Aspiratori	\N	189.00	189.80	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 27, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 31, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	NOVITÀ, 8.5L, classe L
+202598bf-0d05-4611-b550-8a9f99a78c1b	STIHL	SA04 011 7300	SEA 60 L	Aspiratori	\N	219.00	218.72	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 26, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	12L, classe L
+5d75e2d9-fb9c-4d1d-b5ec-e92a55d8d903	STIHL	4774 012 4400	SE 122	Aspiratori	\N	509.00	459.70	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, 30L, acciaio inox
+0a946316-75a6-4e51-b0b4-0bcefabc5662	STIHL	4774 012 4405	SE 122 E	Aspiratori	\N	559.00	505.62	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, accensione automatica
+64cb9fcb-f097-4d37-a1b0-e0d2e549e8f2	STIHL	4786 012 4430	SE 133 ME	Aspiratori	\N	884.00	799.58	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, 42L, classe M
+5ecd3d14-3dc6-4587-93d3-e2a1fdc8b7d0	STIHL	SA06 011 8200	KOA 20 Set	Compressori	\N	99.00	98.74	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 23, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Con AS 2 e AL 1, gonfiatore
+2409f4cd-4b93-48a6-9f6c-5107b61e1f45	STIHL	VB03 011 2000	WP 300	Pompe	\N	344.00	320.93	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2" attacco, 37m³/h
+dff7f7b0-b023-4775-9296-d41f017d6535	STIHL	VB04 011 2000	WP 600	Pompe	\N	389.00	363.48	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	3" attacco, 63m³/h
+aa3a5871-9eb7-44ab-9076-1380e860b334	STIHL	VB05 011 2000	WP 900	Pompe	\N	599.00	559.70	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4" attacco, 94m³/h
+6a643add-bb13-4ec4-9ffe-d0952a9bd902	STIHL	4139 200 0007	HT 56 C-E	Potatori	\N	719.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX · ErgoStart · asta divisibile · fino 2.8m
+fa4a62f7-dede-48f7-adb1-bd9fa19365c7	STIHL	VA09 011 8900	SBA 140 B	Raccoglitori speciali	\N	999.00	933.26	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	\N	NOVITÀ, abbacchiatore bacche Bluetooth
+db09099a-0b54-4f3c-8b79-d016ff46e516	STIHL	VA05 011 6200	ASA 20 Set	Cesoie a batteria	\N	179.00	179.02	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 2000, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · taglio max 25mm · senza batteria
+12173db6-94b2-4fba-a667-da8cca75d1cf	STIHL	VA05 011 6210	ASA 20	Cesoie a batteria	\N	219.00	219.02	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 2000, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · taglio max 25mm · con AS 2 e AL 1
+86c6163a-1531-49fe-aa75-fa85a1d326cb	STIHL	1145 200 0263	MS 201 C-M	Motoseghe	\N	989.00	890.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale leggera · M-Tronic · 35cm PS
+101e00ad-2ec9-4bda-ab00-dd1b3dfd281a	STIHL	1141 200 0649	MS 261 C-BM	Motoseghe	\N	1189.00	1030.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · tendicatena rapido · 40cm RS Pro
+4de6cd66-08b9-491e-8e19-ffc5e26f7618	STIHL	1140 200 0721	MS 362 C-M VW	Motoseghe	\N	1529.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · riscaldamento · 45cm RS
+599432aa-e7a6-4d0c-b5f0-408a0a5b59ba	STIHL	4144 200 0028	FS 56 R	Decespugliatori	\N	389.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · SuperCut · impugnatura circolare · Smart Connector
+dcedf4c1-3af4-4388-8221-d157c5bf6761	STIHL	4180 200 0557	FS 111 R	Decespugliatori	\N	599.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	31.4cc · 4-MIX · impugnatura circolare · antivibrante · Smart Connector
+e85bbf0d-88eb-4ae4-ba21-398bf0af1745	STIHL	WB21 011 3400	RM 248	Tosaerba	\N	489.00	435.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 46cm · senza trazione
+a1dbb029-1fc8-45e7-9ca0-1e3e3ab53075	STIHL	WB21 011 3410	RM 248 T	Tosaerba	\N	599.00	536.95	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 46cm · trazione 1 marcia
+286e64ec-8879-48ab-a99b-7ff1e4d762a0	STIHL	6357 011 3416	RM 2 R	Tosaerba	\N	469.00	404.21	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 46cm · mulching
+faac9076-266b-4e8b-a158-a9b43efcda2e	STIHL	6291 011 5610	RLE 240	Arieggiatori	\N	269.00	249.77	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 34cm · 0.9kW · cesto 50L
+7db3649d-012b-48d0-bd9c-8919185208c0	STIHL	6290 011 3105	RL 540	Arieggiatori	\N	859.00	784.47	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD675 · 38cm · SmartChoke · profondo 25mm
+51d94189-854a-47b2-8e77-acc7596001d1	STIHL	6290 011 5610	RLE 540	Arieggiatori	\N	589.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 38cm · 1.6kW · silenzioso
+fd34add1-0af2-4fa5-8832-f3bee9fb6b67	STIHL	FA10 011 5710	FSA 30	Decespugliatori	\N	159.00	158.80	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 10, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	AS 2 · 230mm PolyCut · senza batteria
+37decec6-c035-41b6-b798-401b0913eeab	STIHL	4512 011 5700	FSA 45	Decespugliatori	\N	129.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	\N	\N	Batteria integrata 18V · 250mm PolyCut · NOVITÀ
+04887227-6184-4fb0-a6a8-7fb138705f8d	STIHL	4140 012 2353	FS 38	Decespugliatori	\N	214.00	182.48	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · 380mm AutoCut · impugnatura ad archetto
+a72de625-aa7a-469d-ba80-30d7ddb4e003	STIHL	4815 011 4100	FSE 31	Decespugliatori	\N	80.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.25kW · 245mm · leggero
+fb4f216d-d6a6-4f0e-ad38-bf60889155e6	STIHL	4816 011 4100	FSE 52	Decespugliatori	\N	119.00	107.31	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.5kW · 300mm AutoCut
+00b1addc-c654-413f-b32f-5058c5de2613	STIHL	4809 011 4122	FSE 60	Decespugliatori	\N	169.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.54kW · 350mm AutoCut
+40f88f39-d7b8-4001-b396-9376f82b7a41	STIHL	4809 011 4123	FSE 71	Decespugliatori	\N	199.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.54kW · 350mm AutoCut · asta regolabile
+90e4ab3e-1de8-41d3-8876-c72ab05b3378	STIHL	4809 011 4124	FSE 81	Decespugliatori	\N	239.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 1.0kW · 350mm AutoCut · potente
+8ec7e283-dd82-4acc-ac29-6afaa6e60e54	STIHL	4134 200 0422	FS 120	Decespugliatori	\N	479.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	30.8cc · 2-MIX · tracolla doppia
+90911c1a-1e16-40f6-bb3e-c0678bedb58e	STIHL	4151 200 0018	FS 235	Decespugliatori	\N	559.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · tracolla doppia
+69696309-c30b-494a-a865-98ca21391de7	STIHL	4147 200 0357	FS 240	Decespugliatori	\N	849.00	689.22	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · tracolla doppia · cambio bassa manutenzione
+7a0e4804-bfb7-4c37-9836-a1e5dcc3b78a	STIHL	4147 200 0710	FS 240 NOVITÀ	Decespugliatori	\N	844.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · NOVITÀ · ADVANCE Grip
+c2b653f8-5d96-4262-b989-4aaf5aa976f3	STIHL	4151 200 0070	FS 255	Decespugliatori	\N	674.00	554.26	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · tracolla doppia
+0454a343-9831-4f5f-807e-ae62c2a87509	STIHL	4147 200 0592	FS 261 C-E	Decespugliatori	\N	999.00	842.63	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · ErgoStart · ADVANCE Grip
+6b736639-8c22-417c-9c34-1925a460c9ea	STIHL	4148 200 0216	FS 561 C-EM	Decespugliatori	\N	1679.00	1460.53	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	57.1cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+dc2e1a61-9aed-498f-97fc-bcd8ada705e1	STIHL	4147 200 0432	FS 460	Decespugliatori	\N	1169.00	1001.46	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · tracolla ADVANCE · Smart Connector
+2898c9c6-f5fc-43ae-bb91-cd8df93097fc	STIHL	FA10 011 5700	FSA 30 Set	Decespugliatori	\N	119.00	118.68	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 10, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	AS 2 · 230mm PolyCut · con AS 2 e AL 1
+cd6c5ecc-8c55-4110-b980-92a180eba4af	STIHL	4180 200 0585	FR 131 T	Decespugliatori	\N	869.00	630.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · zaino · asta divisibile · antivibrante · Smart Connector
+94717731-8807-4056-ab99-6d7bd5c66833	STIHL	SA03 011 7300	SEA 20 Set	Aspiratori	\N	99.00	98.74	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 14, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · con AS 2 e AL 1 · 8.5L
+7edb9437-059f-4a34-80e2-56ad77b08c02	STIHL	SA03 011 7310	SEA 20	Aspiratori	\N	139.00	138.63	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 14, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · senza batteria · 8.5L
+4a84eda5-eb81-4a93-a5dd-7042de12d73d	STIHL	SE01 012 4400	SE 33	Aspiratori	\N	109.00	99.03	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 10L · leggero
+73e4c7f4-b374-436c-976f-d5228992b253	STIHL	4811 011 0819	SHE 71	Aspiratori	\N	189.00	170.95	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · aspiratore-trituratore · 45L
+bc172158-38aa-4d88-be68-9a1ef745dc99	STIHL	4811 011 0840	SHE 81	Aspiratori	\N	229.00	207.13	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · aspiratore-trituratore potente · 45L
+0c65c1aa-ae38-4a3c-a48c-e16c0630009b	STIHL	4241 011 0932	SH 86	Aspiratori	\N	539.00	487.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX · aspiratore-trituratore · sacco 45L
+8ea90db2-f86d-41da-a38a-3ebc1f04f847	STIHL	SA09 011 8510	WSA 40 Set	Irroratori	\N	209.00	209.88	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 30, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · contenitore acqua a pressione 10L · con AS 2 e AL 1
+a783b699-5bd3-4ceb-9c12-3ec426259122	STIHL	1137 200 0332	MS 194 C-E 30cm	Motoseghe	\N	499.00	450.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 30cm
+07ee6ccb-7f87-4181-9b1e-9c671ef775f7	STIHL	1137 200 0334	MS 194 C-E ErgoStart	Motoseghe	\N	549.00	490.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 1/4"P · 30cm
+97fbfd01-29cc-465e-b086-def1ea2cfc86	STIHL	1141 200 0665	MS 261 C-BM 45cm	Motoseghe	\N	1199.00	1040.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · tendicatena rapido · 45cm RS
+3b3b4027-617f-4443-8ec9-371df93c9bfc	STIHL	1146 200 0071	MS 151 TC-E ErgoStart 30cm	Motoseghe	\N	619.00	560.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart avanzato · 2-MIX · 30cm
+660b8ac1-1d4f-4d18-bf3e-fc89aca6f3d9	STIHL	1208 200 0332	MSE 141 35cm	Motoseghe	\N	204.00	190.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PMM3
+2c43380b-db67-4df5-b6f1-5f683480444b	STIHL	1209 200 0155	MSE 170 35cm	Motoseghe	\N	299.00	280.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PMM3
+02bac813-4ab3-488e-a927-8617410499b0	STIHL	1209 200 0180	MSE 190 40cm	Motoseghe	\N	349.00	330.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 40cm PM3
+0e755049-76a7-4b6e-8e95-bcd363403065	STIHL	1209 200 0179	MSE 210 C-BQ 40cm	Motoseghe	\N	414.00	390.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 40cm PM3
+44d5d775-9aa3-4656-b33c-6a2b7cba5ca4	STIHL	MB01 200 0008	MS 400.1 C-M 50cm	Motoseghe	\N	1519.00	1360.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 50cm RS
+76561fab-93b1-45ff-bbfa-9dc2baec26d9	STIHL	6357 200 0015	RMA 2 RPV Set	Tosaerba	\N	1069.00	995.77	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	\N	AP 300 S · 46cm · mulching · con AP 300 S e AL 301
+2f22c983-1fa0-4f8d-9ab2-75b526996004	STIHL	RA01 011 7600	REA 60 PLUS	Aspiratori	\N	259.00	259.74	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AK", "batterie": [{"wh": 72, "val": 12, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 20, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 25, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	AS 2 · senza batteria · compatto
+58906ca2-abba-4e94-8ac2-dea190cafbbc	STIHL	4137 740 5008	FSB-KM	Sistema Kombi	\N	89.00	82.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore
+f7ddb921-dfa9-4739-af4f-4e15f20321b0	STIHL	4180 200 0474	FS-KM AutoCut	Sistema Kombi	\N	179.00	163.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore AutoCut 27-2
+8e8f2d02-1953-429d-baa0-11ad15eb7804	STIHL	4180 200 0478	FS-KM GSB	Sistema Kombi	\N	179.00	163.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore GSB 230-4
+3c3a66f7-3cfd-4d83-b0ab-00d75734d9cf	STIHL	4180 740 5002	FCB-KM	Sistema Kombi	\N	219.00	200.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · tagliabordi
+84f5b955-23d3-4f2c-b30c-d02b4f9064ba	STIHL	4180 740 5006	RG-KM	Sistema Kombi	\N	459.00	418.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · testina per erbacce
+4558d95c-79f4-4d09-ba55-3cee5a06afbf	STIHL	4182 200 0212	HT-KM	Sistema Kombi	\N	429.00	390.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · sramatore lungo
+f26b43dc-7c52-4f32-86ca-ee85ddebee9d	STIHL	4249 740 5000	SP-KM	Sistema Kombi	\N	599.00	545.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · raccoglitore speciale
+a523d086-eb4a-4a01-96af-a7dfaa406b11	STIHL	4252 200 0034	GS 461 45cm	Motoseghe edilizia	\N	3369.00	3151.87	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Motosega edilizia · catena diamantata GBM · 45cm
+c4410c4e-9d7e-4b20-bcc8-37726a60b6af	STIHL	4601 740 4904	KW-KM	Sistema Kombi	\N	584.00	530.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · rullo di spazzatura
+dfd955c9-3597-4683-85f4-017350ab3b78	STIHL	4601 740 4905	KB-KM	Sistema Kombi	\N	429.00	390.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · spazzola rotante
+87b997e9-44b2-49ee-bd3b-9abcbe243be7	STIHL	4601 740 5000	BF-KM	Sistema Kombi	\N	344.00	312.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · fresa
+de79d429-23e0-4faa-80ba-715687407331	STIHL	4606 740 5000	BG-KM	Sistema Kombi	\N	229.00	210.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · soffiatore assiale
+89ee654c-760f-4278-bf4e-d443ff89c7dd	STIHL	FA03 200 0018	FSS-KM	Sistema Kombi	\N	229.00	210.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore AP
+c4bed4e1-1a94-4b74-9539-15be4aacdc48	STIHL	4243 200 0033	HL 92 C-E	Tagliasiepi allungati	\N	929.00	815.20	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 145° · ECOSPEED · Smart Connector
+b26ca097-bded-46c3-bf49-524d4b454214	STIHL	4243 200 0024	HL 94 C-E	Tagliasiepi allungati	\N	979.00	859.07	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 145° · ECOSPEED · Smart Connector
+f3af79fd-a565-48e7-8790-8be9251cc879	STIHL	4180 200 0554	FS 111	Decespugliatori	\N	649.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	31.4cc · 4-MIX · tracolla doppia · antivibrante · Smart Connector
+d65664bd-5e31-47f3-a988-db86b87e5c6e	STIHL	4147 200 0582	FS 261	Decespugliatori	\N	939.00	792.03	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · tracolla doppia · ADVANCE Grip · Smart Connector
+4af9b157-cf53-4fae-9fd1-ad632b117f22	STIHL	4147 200 0362	FR 410 C-E NOVITÀ	Decespugliatori	\N	1099.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · ErgoStart · zaino · Smart Connector · NOVITÀ
+b5c65a0c-47d3-4e55-9080-7146ccabde26	STIHL	4147 200 0711	FR 410 C-E	Decespugliatori	\N	1059.00	905.82	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · ErgoStart · zaino · Smart Connector
+13c49066-c667-4abd-afb4-3a7ad11993e8	STIHL	FA05-011-5700	FSA 86 R	Decespugliatori batteria	Decespugliatore a batteria Stihl FSA 86 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	329.0	306.49	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+9a7ab512-1aec-4a28-9139-0bac561d08c6	STIHL	RA01 011 7610	REA 100 PLUS	Idropulitrici	\N	349.00	328.46	t	2026-04-11 18:29:22.623135+00	batteria	AP 30	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 43, "nome": "AP 200 S", "unita": "min", "val_min": 13, "raccomandata": true}, {"val": 30, "nome": "AP 300 S", "unita": "min", "val_min": 12}, {"val": 45, "nome": "AP 500 S", "unita": "min", "val_min": 14}, {"val": 50, "nome": "AR 2000 L", "unita": "min", "val_min": 17}, {"nome": "AR 3000 L", "incompatibile": true}]}	125 bar, 300 l/h
+cc650df4-3a83-4da6-84d7-4ac176a0e2fb	STIHL	FA01 200 0000	FSA 135	Decespugliatori	\N	619.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 39, "nome": "AP 20", "unita": "min", "val_min": 23}, {"val": 96, "nome": "AP 30", "unita": "min", "val_min": 48}, {"val": 50, "nome": "AP 200 S", "unita": "min", "val_min": 30, "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min", "val_min": 50}, {"val": 120, "nome": "AP 500 S", "unita": "min", "val_min": 60}, {"val": 330, "nome": "AR 2000 L", "unita": "min", "val_min": 170}, {"val": 458, "nome": "AR 3000 L", "unita": "min", "val_min": 256}]}	AP 300 S · 420mm · tracolla doppia · SC2A · senza batteria
+78cadbd9-5104-4b30-ae34-5ae28c165458	STIHL	FA02 200 0012	RGA 140	Decespugliatori	\N	909.00	857.95	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 13}, {"val": 96, "nome": "AP 30", "unita": "min", "val_min": 48}, {"val": 50, "nome": "AP 200 S", "unita": "min", "val_min": 30, "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min", "val_min": 50}, {"val": 120, "nome": "AP 500 S", "unita": "min", "val_min": 60}, {"val": 380, "nome": "AR 2000 L", "unita": "min", "val_min": 190}, {"val": 455, "nome": "AR 3000 L", "unita": "min", "val_min": 255}]}	AP 300 S · 230mm · reciprocatore rimozione erbacce · SC2A
+37f30a06-0bd5-4e7b-a90f-02f9e692882f	STIHL	SA04 011 7310	SEA 100 L	Aspiratori	\N	289.00	269.21	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 13}, {"val": 42, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 29, "nome": "AP 200 S", "unita": "min", "val_min": 17, "raccomandata": true}, {"val": 44, "nome": "AP 300 S", "unita": "min", "val_min": 26}, {"val": 53, "nome": "AP 500 S", "unita": "min", "val_min": 32}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	12L, classe L
+61471579-a2bf-49f0-bc05-b1ce8410b0f6	STIHL	SA07 011 7100	SHA 140	Aspiratori	\N	379.00	353.04	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 30, "nome": "AP 20", "unita": "min", "val_min": 19}, {"val": 58, "nome": "AP 30", "unita": "min", "val_min": 37}, {"val": 39, "nome": "AP 200 S", "unita": "min", "val_min": 25, "raccomandata": true}, {"val": 60, "nome": "AP 300 S", "unita": "min", "val_min": 38}, {"val": 71, "nome": "AP 500 S", "unita": "min", "val_min": 44}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 200 S · senza batteria · 45L
+8b5b9cc2-53c0-4290-8a50-04a032330c8f	STIHL	4860 011 4704	KGA 770	Spazzatrici	\N	889.00	836.66	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 129, "nome": "AP 30", "unita": "min"}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 250, "nome": "AP 300 S", "unita": "min", "raccomandata": true}, {"val": 168, "nome": "AP 500 S", "unita": "min"}, {"val": 260, "nome": "AR 2000 L", "unita": "min"}, {"val": 312, "nome": "AR 3000 L", "unita": "min"}]}	77cm larghezza lavoro, MultiClean PLUS
+ddcc06af-35d5-4a6d-92e4-c4555a7f8711	STIHL	VA02 011 0700	SPA 130	Raccoglitori speciali	\N	899.00	835.00	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 77, "nome": "AP 20", "unita": "min"}, {"val": 144, "nome": "AP 30", "unita": "min"}, {"val": 100, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 150, "nome": "AP 300 S", "unita": "min"}, {"val": 180, "nome": "AP 500 S", "unita": "min"}, {"val": 580, "nome": "AR 2000 L", "unita": "min"}, {"val": 870, "nome": "AR 3000 L", "unita": "min"}]}	Per olive/frutta, senza batteria
+9db89c32-8e1f-46ef-a41c-0a1a71f0cf4a	STIHL	VA02 011 0701	SPA 140	Raccoglitori speciali	\N	999.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 77, "nome": "AP 20", "unita": "min"}, {"val": 144, "nome": "AP 30", "unita": "min"}, {"val": 100, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 150, "nome": "AP 300 S", "unita": "min"}, {"val": 180, "nome": "AP 500 S", "unita": "min"}, {"val": 580, "nome": "AR 2000 L", "unita": "min"}, {"val": 870, "nome": "AR 3000 L", "unita": "min"}]}	Asta telescopica, senza batteria
+be23384c-aecd-4d9f-9878-cf661c9263a9	STIHL	VA07 011 6200	ASA 130	Cesoie a batteria	\N	799.00	749.78	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 10000, "nome": "AP 200 S", "unita": "tagli", "raccomandata": true}, {"val": 7500, "nome": "AP 300 S", "unita": "tagli"}, {"val": 11000, "nome": "AP 500 S", "unita": "tagli"}, {"val": 13000, "nome": "AR 2000 L", "unita": "tagli"}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · AP 200 S · taglio max 35mm · professionale · senza batteria
+bebb4c70-e0d0-4f78-ae6d-0ddc302f59a1	STIHL	VA08 011 6200	ASA 140	Cesoie a batteria	\N	999.00	937.46	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 8500, "nome": "AP 200 S", "unita": "tagli", "raccomandata": true}, {"val": 6000, "nome": "AP 300 S", "unita": "tagli"}, {"val": 9000, "nome": "AP 500 S", "unita": "tagli"}, {"val": 11000, "nome": "AR 2000 L", "unita": "tagli"}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · AP 300 S · taglio max 45mm · professionale · senza batteria
+7d275377-b7df-430b-8956-8810e593d40e	STIHL	HA07 011 3530	HSA 100	Tosasiepi	\N	399.00	374.42	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 116, "nome": "AP 20", "unita": "min"}, {"val": 216, "nome": "AP 30", "unita": "min"}, {"val": 150, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 225, "nome": "AP 300 S", "unita": "min"}, {"val": 270, "nome": "AP 500 S", "unita": "min"}, {"val": 1205, "nome": "AR 2000 L", "unita": "min"}, {"val": 1810, "nome": "AR 3000 L", "unita": "min"}]}	AP · antivibrante · coltelli doppio taglio · Smart Connector
+ab825868-0e9f-4e51-b9aa-70b3ff168645	STIHL	4511 011 3520	HSA 45	Tosasiepi	\N	129.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AI	Batteria integrata	\N	Batteria integrata 18V · cavo di ricarica
+22e93a40-c3ce-4f8e-9fb7-26b29c81760c	STIHL	FA03-200-0007	FSA 200.0 R	Decespugliatori batteria	Decespugliatore a batteria Stihl FSA 200 R, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	759.0	710.18	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e3afb9b5-286b-4e10-8a6c-4c38eed3c236	STIHL	4818 011 3520	HSE 42	Tosasiepi	\N	149.00	134.77	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · freno lama meccanico
+86595606-255e-4186-a12c-681670b01381	STIHL	4818 011 3530	HSE 52	Tosasiepi	\N	189.00	170.95	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico
+37980520-b9bf-4f02-86ed-addbe112db5b	STIHL	4812 011 3584	HSE 81	Tosasiepi	\N	369.00	333.76	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · denti larghi · imp. orientabile 5 pos.
+02e8fdbe-8448-4300-8011-efc60fb79d28	STIHL	6357 011 1410	RMA 2 RV	Tosaerba	\N	694.00	645.52	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 320, "nome": "AP 20", "unita": "m²"}, {"val": 610, "nome": "AP 30", "unita": "m²"}, {"val": 405, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 630, "nome": "AP 300 S", "unita": "m²"}, {"val": 760, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	EVC 200 · AP 500 S · 46cm · mulching · trazione Vario · senza batteria
+c6daa1d9-271b-4f76-a824-e31aa57ef4c5	STIHL	6357 011 1415	RMA 2 RPV	Tosaerba	\N	749.00	696.68	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 320, "nome": "AP 20", "unita": "m²"}, {"val": 610, "nome": "AP 30", "unita": "m²"}, {"val": 405, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 630, "nome": "AP 300 S", "unita": "m²"}, {"val": 760, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 46cm · mulching · trazione Vario asse per asse · senza batteria
+b4d3dc51-bc7b-4873-8f5b-cb149f48212f	STIHL	WA72 011 1400	RMA 7 RV	Tosaerba	\N	2299.00	2141.52	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 730, "nome": "AP 30", "unita": "m²", "val_min": 730}, {"val": 490, "nome": "AP 200 S", "unita": "m²", "val_min": 490}, {"val": 760, "nome": "AP 300 S", "unita": "m²", "val_min": 760, "raccomandata": true}, {"val": 910, "nome": "AP 500 S", "unita": "m²", "val_min": 910}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 51cm · mulching · trazione Vario · professionale · senza batteria
+ae9df495-a312-49d1-863d-ffc4d1aeb142	STIHL	WB22 011 3400	RM 253	Tosaerba	\N	569.00	506.28	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 51cm · senza trazione
+493847ca-4475-4415-b0dc-4bef78ccb7d8	STIHL	WB22 011 3410	RM 253 T	Tosaerba	\N	699.00	618.23	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 51cm · trazione 1 marcia
+99a36624-7be3-405f-959c-c964227843f8	STIHL	WB40 011 3400	RM 443	Tosaerba	\N	519.00	444.53	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 41cm · senza trazione
+3b474cd7-f825-4f99-b9ae-c11b87939c85	STIHL	WB40 011 3410	RM 443 T	Tosaerba	\N	589.00	497.44	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 41cm · trazione 1 marcia
+b884e8a6-c03a-4672-996d-6cae6fccad75	STIHL	6364 011 3441	RM 650 T	Tosaerba	\N	1039.00	877.49	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 48cm · trazione 1 marcia · cesto 70L
+2178802e-d502-4f77-8d9f-103b6be9704b	STIHL	6364 011 3401	RM 650 V	Tosaerba	\N	1129.00	956.50	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 48cm · trazione Vario
+aad371a2-89be-4f96-b16d-7047cd28f794	STIHL	6364 011 3411	RM 650 VS	Tosaerba	\N	1369.00	1165.29	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 48cm · trazione Vario · freno-frizione
+a6f8311a-efda-4f6d-be3a-5d0a6e5089a4	STIHL	6374 011 3401	RM 655 V	Tosaerba	\N	1299.00	1100.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 53cm · trazione Vario
+4015f101-2977-4612-8d0d-5d0c8448718c	STIHL	6374 011 3412	RM 655 VS	Tosaerba	\N	1499.00	1271.96	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 53cm · trazione Vario · freno-frizione
+e5e34fd4-312e-4afc-b6c4-4f107f7ccc60	STIHL	6374 011 3441	RM 655 YS	Tosaerba	\N	2139.00	1815.03	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 53cm · trasmissione idrostatica
+a72176b6-f9de-400b-976b-0cf4e0f327df	STIHL	6378 011 3431	RM 756 GC	Tosaerba	\N	2399.00	1754.87	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 54cm · trazione 3 marce · cesto 80L
+ee57937a-9af5-4042-a858-0729f0d1c65d	STIHL	6378 011 3421	RM 756 YC	Tosaerba	\N	2639.00	2274.39	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 54cm · trasmissione idrostatica
+ab7da7c2-8399-47c5-a639-3e48f47ef774	STIHL	6378 011 3401	RM 756 YS	Tosaerba	\N	2639.00	2274.39	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 54cm · trasmissione idrostatica · freno-frizione
+d28a02cc-ee48-477d-a88d-074d0ce2c9fe	STIHL	6357 011 3415	RM 2 RT	Tosaerba	\N	699.00	601.50	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 46cm · mulching · trazione 1 marcia
+40ee6e9f-ee8a-4137-ad8d-aa650c257304	STIHL	6361 011 3416	RM 3 RT	Tosaerba	\N	829.00	713.36	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 48cm · mulching · trazione 1 marcia
+f79e2460-d756-468c-9f3c-894cb74107fa	STIHL	6383 011 3411	RM 4 RT	Tosaerba	\N	949.00	816.63	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD675 · 53cm · mulching · trazione 1 marcia
+85b490d4-a1ef-42bd-8228-da080b19e1a7	STIHL	6383 011 3422	RM 4 RTP	Tosaerba	\N	1199.00	1031.75	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 53cm · mulching · trazione 1 marcia · professionale
+d38d702e-073d-49c6-9bf9-d7775c941e23	STIHL	6383 011 3431	RM 4 RV	Tosaerba	\N	1069.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD675 · 53cm · mulching · trazione Vario
+62522cbd-d999-40e7-a226-c5b5b4064065	STIHL	4866 011 5900	BGA 100	Soffiatori	Soffiatore a batteria Stihl BGA 100, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	459.00	430.73	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"val": 51, "nome": "AP 20", "unita": "min", "val_min": 9}, {"val": 99, "nome": "AP 30", "unita": "min", "val_min": 19}, {"val": 66, "nome": "AP 200 S", "unita": "min", "val_min": 12, "raccomandata": true}, {"val": 103, "nome": "AP 300 S", "unita": "min", "val_min": 20}, {"val": 123, "nome": "AP 500 S", "unita": "min", "val_min": 24}, {"val": 400, "nome": "AR 2000 L", "unita": "min", "val_min": 80}, {"val": 595, "nome": "AR 3000 L", "unita": "min", "val_min": 110}]}	Senza batteria
+0be81eb0-4dca-4fa5-8ef4-5373dfa37d98	STIHL	BA06 011 5900	BGA 250	Soffiatori	Soffiatore a batteria Stihl BGA 250, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	399.00	374.42	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 38, "nome": "AP 30", "unita": "min", "val_min": 12}, {"val": 27, "nome": "AP 200 S", "unita": "min", "val_min": 13, "raccomandata": true}, {"val": 40, "nome": "AP 300 S", "unita": "min", "val_min": 12}, {"val": 48, "nome": "AP 500 S", "unita": "min", "val_min": 14}, {"val": 155, "nome": "AR 2000 L", "unita": "min", "val_min": 45}, {"val": 235, "nome": "AR 3000 L", "unita": "min", "val_min": 70}]}	Senza batteria
+7b9ee035-e157-4279-aa84-08bfa721ad43	STIHL	BA02 011 5900	BGA 86	Soffiatori	Soffiatore a batteria Stihl BGA 86, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	309.00	289.97	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 81, "nome": "AP 20", "unita": "min", "val_min": 14}, {"val": 144, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 105, "nome": "AP 200 S", "unita": "min", "val_min": 18, "raccomandata": true}, {"val": 150, "nome": "AP 300 S", "unita": "min", "val_min": 26}, {"val": 175, "nome": "AP 500 S", "unita": "min", "val_min": 31}, {"val": 580, "nome": "AR 2000 L", "unita": "min", "val_min": 95}, {"val": 910, "nome": "AR 3000 L", "unita": "min", "val_min": 148}]}	Senza batteria
+1217e990-cdd1-4af3-99bf-6e772a6500ac	STIHL	BA07 011 5910	BRA 600 B	Soffiatori dorsali	Soffiatore a batteria Stihl BRA600, tensione di utilizzo 72 V, potenza di soffiaggio 35 N, sistema di trasporto a zaino ergonomico, tubo di soffiaggio regolabile in lunghezza, peso 10,5 kg.	1149.00	1078.22	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 22, "nome": "AP 30", "unita": "min", "val_min": 11}, {"val": 18, "nome": "AP 200 S", "unita": "min", "val_min": 12}, {"val": 29, "nome": "AP 300 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"val": 34, "nome": "AP 500 S", "unita": "min", "val_min": 18}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ, Bluetooth, STIHL Noise Reduction
+1e992572-f779-4657-86b5-a75997b15dfa	STIHL	FA08 200 0005	FSA 120 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 120 R, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	439.00	408.98	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 25, "nome": "AP 20", "unita": "min", "val_min": 15}, {"val": 45, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 30, "nome": "AP 200 S", "unita": "min", "val_min": 20, "raccomandata": true}, {"val": 50, "nome": "AP 300 S", "unita": "min", "val_min": 30}, {"val": 60, "nome": "AP 500 S", "unita": "min", "val_min": 35}, {"val": 210, "nome": "AR 2000 L", "unita": "min", "val_min": 130}, {"val": 320, "nome": "AR 3000 L", "unita": "min", "val_min": 190}]}	AP 300 S · 380mm AutoCut · impugnatura circolare · senza batteria · Smart Connector
+a2790723-2f84-4274-b610-2b072fe71f2e	STIHL	FA03 200 0007	FSA 200 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 200 R, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	759.00	710.18	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 30, "nome": "AP 30", "unita": "min", "val_min": 15}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 10}, {"val": 32, "nome": "AP 300 S", "unita": "min", "val_min": 16, "raccomandata": true}, {"val": 40, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"val": 127, "nome": "AR 2000 L", "unita": "min", "val_min": 64}, {"val": 192, "nome": "AR 3000 L", "unita": "min", "val_min": 96}]}	AP 500 S · 450mm · impugnatura circolare · SC2A · senza batteria
+2f0f07c0-6441-4f0c-9a8f-7cb0dbaf902e	STIHL	FA05 011 5700	FSA 86 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 86 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	329.00	306.49	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 30, "nome": "AP 20", "unita": "min"}, {"val": 55, "nome": "AP 30", "unita": "min"}, {"val": 35, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 55, "nome": "AP 300 S", "unita": "min"}, {"val": 65, "nome": "AP 500 S", "unita": "min"}, {"val": 200, "nome": "AR 2000 L", "unita": "min"}, {"val": 290, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · 350mm AutoCut · senza batteria · Smart Connector
+12b004cd-8289-41e5-b57c-50eef8843b0b	STIHL	HA04 200 0038	HLA 140 B	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 140 B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	699.00	655.94	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 30	\N	NOVITÀ · AP · Bluetooth · HMI ADVANCE PLUS · SC integrato
+583e7024-464e-426f-849f-85d6190a9ac4	STIHL	4859 011 2910	HLA 66	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 66, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	429.00	402.57	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 111, "nome": "AP 20", "unita": "min"}, {"val": 214, "nome": "AP 30", "unita": "min"}, {"val": 144, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 223, "nome": "AP 300 S", "unita": "min"}, {"val": 268, "nome": "AP 500 S", "unita": "min"}, {"val": 760, "nome": "AR 2000 L", "unita": "min"}, {"val": 1110, "nome": "AR 3000 L", "unita": "min"}]}	AP · angolo 115° · coltelli su entrambi i lati · Smart Connector
+d58f2276-dc98-4654-be53-686726394155	STIHL	4869 011 3561	HSA 130 R 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 R, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	629.00	590.25	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	AP · sfrondatura R · lama 75cm · SC2A
+7dba4cf8-0414-42f8-b707-a6dc1c1884a0	STIHL	4869 011 3560	HSA 130 R	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 R, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	569.00	533.95	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 83, "nome": "AP 20", "unita": "min"}, {"val": 160, "nome": "AP 30", "unita": "min"}, {"val": 108, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 167, "nome": "AP 300 S", "unita": "min"}, {"val": 200, "nome": "AP 500 S", "unita": "min"}, {"val": 735, "nome": "AR 2000 L", "unita": "min"}, {"val": 1050, "nome": "AR 3000 L", "unita": "min"}]}	AP · sfrondatura R · SC2A
+2b5b4600-8ea4-47f3-9bfe-6e1919dc2853	STIHL	HA02 011 3505	HSA 140 R 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	709.00	665.33	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	AP · sfrondatura R · lama 75cm
+119c9a68-773c-4740-b40a-5e696eef7b4c	STIHL	HA02 011 3500	HSA 140 R	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	659.00	618.40	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 116, "nome": "AP 20", "unita": "min"}, {"val": 235, "nome": "AP 30", "unita": "min"}, {"val": 150, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 245, "nome": "AP 300 S", "unita": "min"}, {"val": 290, "nome": "AP 500 S", "unita": "min"}, {"val": 935, "nome": "AR 2000 L", "unita": "min"}, {"val": 1405, "nome": "AR 3000 L", "unita": "min"}]}	AP · sfrondatura R · antivibrante · batteria rimovibile · SC2A
+31fc6bad-da1b-4fd5-a20d-d4dc394ff1cb	STIHL	HA02 011 3515	HSA 140 T 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 30 mm, 3900-4500-5000 colpi/minuto, peso 4,2 kg, lunghezza lama 60 cm.	709.00	665.33	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	AP · rifinitura T · lama 75cm
+06908413-50e6-4b62-8773-8ac991976f9c	STIHL	HA02 011 3510	HSA 140 T	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 30 mm, 3900-4500-5000 colpi/minuto, peso 4,2 kg, lunghezza lama 60 cm.	659.00	618.40	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 108, "nome": "AP 20", "unita": "min"}, {"val": 226, "nome": "AP 30", "unita": "min"}, {"val": 140, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 235, "nome": "AP 300 S", "unita": "min"}, {"val": 280, "nome": "AP 500 S", "unita": "min"}, {"val": 900, "nome": "AR 2000 L", "unita": "min"}, {"val": 1355, "nome": "AR 3000 L", "unita": "min"}]}	AP · rifinitura T · antivibrante · SC2A
+fba72cd0-3265-477a-bb7f-4aed620d1482	STIHL	LA03 200 0004	HTA 66	Potatori	Potatore a batteria Stihl HTA 66, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	564.00	529.26	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 32, "nome": "AP 20", "unita": "min"}, {"val": 65, "nome": "AP 30", "unita": "min"}, {"val": 42, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 68, "nome": "AP 300 S", "unita": "min"}, {"val": 82, "nome": "AP 500 S", "unita": "min"}, {"val": 222, "nome": "AR 2000 L", "unita": "min"}, {"val": 318, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · asta fissa 2.4m · Smart Connector · senza batteria
+92147d03-90e6-4151-9372-f963506107fd	STIHL	LA03 200 0020	HTA 66 K	Potatori	Potatore a batteria Stihl HTA 66, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	544.00	510.49	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 32, "nome": "AP 20", "unita": "min"}, {"val": 65, "nome": "AP 30", "unita": "min"}, {"val": 42, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 68, "nome": "AP 300 S", "unita": "min"}, {"val": 82, "nome": "AP 500 S", "unita": "min"}, {"val": 222, "nome": "AR 2000 L", "unita": "min"}, {"val": 318, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · asta corta telescopica · Smart Connector · senza batteria
+4659a08b-ea90-4f3b-8fb6-16a52d556588	STIHL	4243 740 5006	FH-KM 145°	Sistema Kombi	Accessorio tosasiepi HL-KM 145°, utilizzo su siepi alte e rasoterra, variatore meccanico regolabile a scatti, lunghezza di taglio 60 cm, peso 2,4 kg	519.00	472.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · tagliasterpi 145°
+d743f7ad-122b-47db-abbd-392db26cb2e4	STIHL	4243 740 5008	HL-KM 145°	Sistema Kombi	Accessorio tosasiepi HL-KM 145°, utilizzo su siepi alte e rasoterra, variatore meccanico regolabile a scatti, lunghezza di taglio 60 cm, peso 2,4 kg	519.00	472.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · tosasiepi 145°
+d5521b7a-bba7-427f-9c62-ecd7de3f7448	STIHL	MA02 200 0092	MSA 300 C-O 45cm	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	949.00	860.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	\N	NOVITÀ · Professionale AP · sensore olio · 45cm RS Pro · SC2A
+a62a1723-5c0d-4138-8567-608fb7b9c23d	STIHL	6165 200 0013	RT 4112 SZ	Trattorini	Trattorino da giardino Stihl RT 4112 SZ, motore Stihl EVC 7000 bicilindrico 635 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm. 110 a scarico laterale, altezza di taglio regolabile 35-90 mm. Cambio idrostatico a pedale, peso kg 224	4219.00	3780.22	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 110cm · 2 cilindri · scarico laterale
+0f0fe1f8-9858-4302-bc03-99f41422f8d8	STIHL	FA08 011 6820	KMA 120 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 120 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	399.00	374.42	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 25, "nome": "AP 20", "unita": "min", "val_min": 15}, {"val": 45, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"val": 45, "nome": "AP 300 S", "unita": "min", "val_min": 25}, {"val": 55, "nome": "AP 500 S", "unita": "min", "val_min": 30}, {"val": 190, "nome": "AR 2000 L", "unita": "min", "val_min": 110}, {"val": 290, "nome": "AR 3000 L", "unita": "min", "val_min": 170}]}	AP · 2 velocità ECO/Max · impugnatura circolare · Smart Connector
+9aac8d4b-2a56-4279-a792-c07033a25920	STIHL	FA02 011 6810	KMA 135 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 135 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a tre livelli, regolazione continua della velocità, peso 3,4 kg.	479.00	449.49	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 11}, {"val": 43, "nome": "AP 30", "unita": "min", "val_min": 21}, {"val": 28, "nome": "AP 200 S", "unita": "min", "val_min": 14, "raccomandata": true}, {"val": 45, "nome": "AP 300 S", "unita": "min", "val_min": 22}, {"val": 54, "nome": "AP 500 S", "unita": "min", "val_min": 26}, {"val": 170, "nome": "AR 2000 L", "unita": "min", "val_min": 85}, {"val": 213, "nome": "AR 3000 L", "unita": "min", "val_min": 122}]}	AP · protezione antispruzzo · SC2A · P+S
+a1c2c7f8-aa93-4d07-95c4-965c8edd0ad5	STIHL	1145 200 0267	MS 201 TC-M 14cm	Motoseghe	Motosega MS 201 TC-M, motore 2 Mix, cilindrata 35,2 cc, sistema STIHL M-Tronic, lunghezza spranga cm 30	1049.00	900.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · M-Tronic · 35cm
+57e866cb-e455-496f-a1ba-9ac9c55d2404	STIHL	1145 200 0270	MS 201 TC-M 12cm	Motoseghe	Motosega MS 201 TC-M, motore 2 Mix, cilindrata 35,2 cc, sistema STIHL M-Tronic, lunghezza spranga cm 30	1039.00	890.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · M-Tronic · 30cm
+afdf865c-c4b9-4216-801f-0253f9e74008	STIHL	1137 200 0324	MS 201 TC-M	Motoseghe	Motosega MS 201 TC-M, motore 2 Mix, cilindrata 35,2 cc, sistema STIHL M-Tronic, lunghezza spranga cm 30	509.00	460.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · M-Tronic · 2-MIX · 30cm PM3
+df60abde-4531-4e35-9d47-19213bfefd59	STIHL	1252 200 0043	MSA 161 T	Motoseghe	Motosega a batteria Stihl MSA 161 T: Motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 16 m/s, lunghezza barra 25 cm, peso 2,5 kg	439.00	400.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 60, "nome": "AP 20", "tagli": 290, "unita": "min", "val_min": 32}, {"val": 60, "nome": "AP 30", "tagli": 290, "unita": "min", "val_min": 60}, {"val": 62, "nome": "AP 200 S", "tagli": 300, "unita": "min", "val_min": 42, "raccomandata": true}, {"val": 62, "nome": "AP 300 S", "tagli": 300, "unita": "min", "val_min": 62}, {"val": 74, "nome": "AP 500 S", "tagli": 360, "unita": "min", "val_min": 74}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Arboricoltori · Smart Connector · 25cm PM3
+5d71370a-9f1d-4634-b8b2-a204a79f50eb	STIHL	1252 200 0044	MSA 161 T 30cm	Motoseghe	Motosega a batteria Stihl MSA 161 T: Motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 16 m/s, lunghezza barra 25 cm, peso 2,5 kg	449.00	410.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	Tophandle · Arboricoltori · Smart Connector · 30cm PM3
+3f816498-1104-45bb-a7c2-9a779018f3bd	STIHL	MA05 200 0000	MSA 190 T	Motoseghe	Motosega a batteria Stihl MSA 190 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 20 m/s, lunghezza barra 30 cm, peso 3,07 kg	369.00	350.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 72, "nome": "AP 20", "tagli": 245, "unita": "min", "val_min": 37}, {"val": 72, "nome": "AP 30", "tagli": 245, "unita": "min", "val_min": 72}, {"val": 75, "nome": "AP 200 S", "tagli": 225, "unita": "min", "val_min": 48, "raccomandata": true}, {"val": 75, "nome": "AP 300 S", "tagli": 225, "unita": "min", "val_min": 75}, {"val": 90, "nome": "AP 500 S", "tagli": 306, "unita": "min", "val_min": 90}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Arboricoltori · Smart Connector · 30cm PM3
+e4e956d5-65fb-479c-bbf7-adf382fbfcf6	STIHL	MA05 200 0002	MSA 190 T 30cm v2	Motoseghe	Motosega a batteria Stihl MSA 190 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 20 m/s, lunghezza barra 30 cm, peso 3,07 kg	369.00	350.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	Tophandle · Arboricoltori · Smart Connector · 30cm · variante
+2da673c5-3903-4430-892f-9059de501191	STIHL	MA03 200 0021	MSA 220 C-B 40cm	Motoseghe	Motosega a batteria Stihl MSA 220 C, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	499.00	470.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Sistema AP · 40cm PS3 Pro · Smart Connector · senza batteria
+47ae0e82-3d09-43ef-90d7-fa7c6f0e4938	STIHL	MA03 200 0027	MSA 220 C-B Duro 35cm	Motoseghe	Motosega a batteria Stihl MSA 220 C, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	529.00	490.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Sistema AP · catena DURO 3 · 35cm · Smart Connector · senza batteria
+112e170a-686f-414b-89aa-6d6680f4fd91	STIHL	MA03 200 0020	MSA 220 C-B	Motoseghe	Motosega a batteria Stihl MSA 220 C, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	489.00	460.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 36, "nome": "AP 200 S", "tagli": 290, "unita": "min", "val_min": 36, "raccomandata": true}, {"val": 32, "nome": "AP 300 S", "tagli": 150, "unita": "min", "val_min": 32}, {"val": 37, "nome": "AP 500 S", "tagli": 300, "unita": "min", "val_min": 37}, {"val": 44, "nome": "AR 2000 L", "tagli": 350, "unita": "min", "val_min": 44}, {"nome": "AR 3000 L", "incompatibile": true}]}	Sistema AP · 35cm PS3 Pro · Smart Connector · senza batteria
+03b72cb7-7e20-4d3b-9d68-3a32ea376bff	STIHL	MA02 200 0007	MSA 300 45cm	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	809.00	770.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	\N	Professionale AP · 45cm RS Pro · SC2A · senza batteria
+02e9bf83-95e4-472a-9384-3bede2228809	STIHL	MA02 200 0004	MSA 300	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	799.00	760.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"nome": "AP 300 S", "incompatibile": true}, {"nome": "AP 500 S", "incompatibile": true}, {"val": 44, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 20, "raccomandata": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Professionale AP · 40cm RS Pro · SC2A · senza batteria
+d767acdc-482e-44e9-b027-c82cf8fdda33	STIHL	MA02 200 0082	MSA 300 C-O	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	939.00	850.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"nome": "AP 300 S", "incompatibile": true}, {"nome": "AP 500 S", "incompatibile": true}, {"val": 44, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 20, "raccomandata": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · Professionale AP · sensore olio · 40cm RS Pro · SC2A
+3a8eee14-987f-4303-9236-474b0b450c68	STIHL	MA02 200 0113	MSA 300 C-O R	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	1329.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"nome": "AP 300 S", "incompatibile": true}, {"nome": "AP 500 S", "incompatibile": true}, {"val": 44, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 20, "raccomandata": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Professionale · Sensore olio · NOVITÀ
+1ed8fb89-9480-471b-9bc5-2ec8787acfdb	STIHL	4950 011 4560	RE 130 PLUS	Idropulitrici	Idropulitrice Stihl RE 130 Plus, motore brushless 220-240 V, pressione max. 170 bar, portata acqua max. 500 l/h. Dotata di un tamburo per tubo flessibile con guida, che consente di riporre il tubo facilmente. Include un tubo flessibile ad alta pressione di 9 metri, rinforzato con armatura in acciaio. Pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 21,2 kg.	539.00	469.00	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	135 bar, tubo acciaio 9m
+133327b0-3743-4a08-bdad-a39281df2e51	STIHL	RE01 011 4541	RE 170 PLUS	Idropulitrici	Idropulitrice Stihl RE 170 Plus, modello professionale con pompa in ottone che eroga 180 bar e 648 l/h. Dotata di tubo ad alta pressione armato in acciaio da 12 metri con avvolgitubo, peso totale 31 kg.	874.00	799.37	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	150 bar, tamburo integrato
+aedee996-701c-40d0-b265-9f90f5d185cd	STIHL	RE02 011 4505	RE 80 X	Idropulitrici	Idropulitrice Stihl RE 80, motore brushless 220-240 V, pressione max. 120 bar, portata acqua max. 430 l/h, lunghezza tubo in dotazione 5 m, pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 7,5 kg.	144.00	131.70	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	90 bar, 430 l/h, versione portatile
+f114bdbf-c0d2-47ab-8286-0e8e2528bd54	STIHL	RE02 011 4502	RE 80	Idropulitrici	Idropulitrice Stihl RE 80, motore brushless 220-240 V, pressione max. 120 bar, portata acqua max. 430 l/h, lunghezza tubo in dotazione 5 m, pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 7,5 kg.	159.00	145.21	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	90 bar, 430 l/h
+a156be06-bde0-4d48-849e-6e5b82993598	STIHL	WA41 200 0002	RMA 448 PV Set	Tosaerba	Tosaerba a batteria Stihl RMA 448 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	1239.00	1145.76	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	\N	AP 500 S · 46cm · trazione Vario · con AP 500 S e AL 301
+2a9f3c73-a7c6-4627-987b-1e4c36c82cb7	STIHL	WA41 011 1420	RMA 448 PV	Tosaerba	Tosaerba a batteria Stihl RMA 448 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	869.00	807.13	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 260, "nome": "AP 20", "unita": "m²"}, {"val": 480, "nome": "AP 30", "unita": "m²"}, {"val": 340, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 510, "nome": "AP 300 S", "unita": "m²"}, {"val": 610, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 46cm · trazione Vario · senza batteria
+ae8c2828-b481-4992-9575-9bc4d39350d3	STIHL	WA71 011 1400	RMA 756 V	Tosaerba	Tosaerba a batteria Stihl RMA 756 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2669.00	2482.56	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 610, "nome": "AP 30", "unita": "m²", "val_min": 610}, {"val": 410, "nome": "AP 200 S", "unita": "m²", "val_min": 410}, {"val": 640, "nome": "AP 300 S", "unita": "m²", "val_min": 640, "raccomandata": true}, {"val": 765, "nome": "AP 500 S", "unita": "m²", "val_min": 765}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 54cm · trazione Vario · professionale · senza batteria
+de3bde2c-a977-4aaa-a2b3-ae6f52c559fe	STIHL	6165 200 0012	RT 4097 SX	Trattorini	Trattorino da giardino Stihl RT 4097 SX, motore Stihl 452 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm 95 a scarico laterale, altezza di taglio regolabile 35-90 mm, cambio idrostatico a pedale, peso kg 202	3379.00	2854.58	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 4000 · 95cm · scarico laterale
+de0eb143-ee60-4ed7-ab68-0475039b1ad1	STIHL	4147-200-0716	FR 460.0 TC-E	Decespugliatori professionali	\N	1189.0	1002.9	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+6a2b5009-43ce-4d59-a6c0-0a90a07db751	STIHL	HA07-011-3530	HSA 100.1	Tosasiepi batteria	Tosasiepe a batteria Stihl HSA 100 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	399.0	374.42	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+d4bb4252-b2a0-4f33-9d3d-20c0db0857a5	STIHL	HA02-011-3510	HSA 140.0 T 600mm	Tosasiepi batteria	Tosasiepe a batteria Stihl HSA 140 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	659.0	618.4	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+f1dee710-3536-43e5-89d2-c1606070b618	STIHL	4859-011-2910	HLA 66	Tosasiepi su palo batteria	Tosasiepe a batteria Stihl HLA 66, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	429.0	402.57	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+4d74575e-9c26-4e02-849c-9c717e2fbd8f	STIHL	HA04-200-0038	HLA 140.0-B	Tosasiepi su palo batteria	Tosasiepe a batteria Stihl HLA 140 B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	699.0	655.94	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+892dbf9a-90d3-405d-9ff9-e27c71e4e9d7	STIHL	LA03-200-0004	HTA 66 25cm	Potatori su palo batteria	Potatore a batteria Stihl HTA 66, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	564.01	529.26	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e55ea5a1-7e26-416f-b19f-1fb2ee42c3bb	STIHL	LA01-200-0056	HTA 140.0-B	Potatori su palo batteria	\N	899.01	843.63	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+cb762403-bef8-4651-9622-8eb3f6a7956a	STIHL	MA05-200-0000	MSA 190.0 T 30cm	Motoseghe batteria	Motosega a batteria Stihl MSA 190 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 20 m/s, lunghezza barra 30 cm, peso 3,07 kg	369.0	350.0	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+8199f9f7-18aa-4604-9226-b370c684b397	STIHL	MA02-200-0007	MSA 300.0 45cm	Motoseghe batteria	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	808.99	770.0	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+0802175c-d062-4bae-9f8c-e7678ed96e93	STIHL	WA41-011-1420	RMA 448.3 PV	Tosaerba batteria	Tosaerba a batteria Stihl RMA 448 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	869.01	807.13	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+b031f028-5ef1-406f-9ddc-53460e3c0f9e	STIHL	WA71-011-1400	RMA 756.0 V	Tosaerba batteria	Tosaerba a batteria Stihl RMA 756 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2668.99	2482.56	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+297b66f4-18a1-4dbf-ac3d-56dd9d237f8a	STIHL	WB40-011-3420	RM 443.3 V	Tosaerba termici	\N	639.0	546.47	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+d2cefc7b-2a4e-4cb3-acaf-380c757d8ed6	STIHL	6374-011-3401	RM 655.0 V	Tosaerba termici	\N	1299.0	1100.52	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+70fc4c73-8edf-44a0-9e15-42692cd4bbcc	STIHL	6165-200-0012	RT 4097.1 SX	Trattorini	Trattorino da giardino Stihl RT 4097 SX, motore Stihl 452 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm 95 a scarico laterale, altezza di taglio regolabile 35-90 mm, cambio idrostatico a pedale, peso kg 202	3379.0	2854.58	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+13419547-738e-43c0-9d77-38e5d92e2f3f	STIHL	6165-200-0013	RT 4112.1 SZ	Trattorini	Trattorino da giardino Stihl RT 4112 SZ, motore Stihl EVC 7000 bicilindrico 635 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm. 110 a scarico laterale, altezza di taglio regolabile 35-90 mm. Cambio idrostatico a pedale, peso kg 224	4219.0	3780.22	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+5caa7118-8442-45b6-802c-060ac80a73af	STIHL	BA02-011-5900	BGA 86	Soffiatori batteria	Soffiatore a batteria Stihl BGA 86, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	309.0	289.97	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+7e39a917-9770-4edf-8fd8-6adb7e03180a	STIHL	BA07-011-5910	BRA 600.0-B	Soffiatori a zaino batteria	Soffiatore a batteria Stihl BRA600, tensione di utilizzo 72 V, potenza di soffiaggio 35 N, sistema di trasporto a zaino ergonomico, tubo di soffiaggio regolabile in lunghezza, peso 10,5 kg.	1149.0	1078.22	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+09522adf-a400-48bc-ae2a-c173ad812c65	STIHL	FA08-011-6820	KMA 120.0 R	Motori Kombi batteria	Motore Kombi a batteria Stihl KMA 120 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	399.0	374.42	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+dd54c0d6-83db-4b67-a0b7-334c12122b1e	STIHL	FA03-011-6800	KMA 200.0 R	Motori Kombi batteria	\N	599.0	562.1	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+a98eb25f-c106-497f-9143-f3f80bd491be	STIHL	4180-200-0474	FS-KM Decespugliatore	Accessori Kombi	\N	179.0	163.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+1caaa556-6f63-494b-879b-a48b73a7d249	STIHL	4243-740-5008	HL-KM 145 Tosasiepi	Accessori Kombi	Accessorio tosasiepi HL-KM 145°, utilizzo su siepi alte e rasoterra, variatore meccanico regolabile a scatti, lunghezza di taglio 60 cm, peso 2,4 kg	519.0	472.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+82165dcb-7ca3-4cda-a2ab-795b2abd601a	STIHL	4182-200-0212	HT-KM Sramatore lungo	Accessori Kombi	\N	429.0	390.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+8686363e-9589-431c-8e8c-c59c08a5d568	STIHL	4950-011-4560	RE 130 PLUS	Idropulitrici	Idropulitrice Stihl RE 130 Plus, motore brushless 220-240 V, pressione max. 170 bar, portata acqua max. 500 l/h. Dotata di un tamburo per tubo flessibile con guida, che consente di riporre il tubo facilmente. Include un tubo flessibile ad alta pressione di 9 metri, rinforzato con armatura in acciaio. Pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 21,2 kg.	539.0	469.0	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+e0628e5c-9f93-4e68-a963-7ddcdf71e555	STIHL	TB01-011-2800	TS 710.0i 350mm	Troncatrici termiche	\N	2169.0	1799.06	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+630deb7e-3543-4122-b9f6-93b1bb925aba	STIHL	TA01-011-6600	TSA 500.0-B	Troncatrici batteria	\N	1499.0	1402.39	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+f198c163-4e43-434f-8f65-278929d0b2c9	STIHL	MA01 200 0003	MSA 220 TC-O 14cm v2	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	819.00	780.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Tophandle · Sensore olio · Display 180° · 35cm PS3 Pro
+82876e14-17dc-453d-b6c4-7ecfa30316eb	STIHL	MA01 200 0002	MSA 220 TC-O 14cm	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	809.00	770.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Tophandle · Sensore olio · Display 180° · Smart Connector · 35cm PS3 Pro
+34e7092e-4eb1-4444-8d2f-3c6a6329e702	STIHL	MA01 200 0022	MSA 220 T 14cm	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	759.00	570.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Tophandle · Display 180° · Smart Connector · 35cm PS3
+a64683e4-69b7-4e67-9686-dc0009403bea	STIHL	1148 200 0003	MS 162 C-BE	Motoseghe	Motosega a benzina Stihl MS 162, cilindrata 30,1 cc, potenza 1,2 kW, catena 61PMM3.	239.00	240.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · tendicatena rapido · 35cm PMM3
+fde132ef-25e3-4565-9235-bf8f0a0801d8	STIHL	1148 200 0011	MS 172	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	299.00	270.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 35cm PM3
+8276f12b-241c-4dd6-9604-e7af5472c200	STIHL	1148 200 0033	MS 172 C-BE	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	339.00	320.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 35cm PM3
+f69cc83a-3774-4d87-b773-bb72cfc68e4c	STIHL	1148 200 0014	MS 172 40cm	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	309.00	280.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 40cm PM3
+4ecd0cc0-2d2e-443a-8f7f-81523dfdc03c	STIHL	1148 200 0035	MS 172 C-BE 40cm	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	349.00	330.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 40cm PM3
+910591fb-3dd8-440e-9e71-3f11b2bea560	STIHL	1148-200-0011	MS 172 35cm	Motoseghe termiche	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	299.0	270.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+be978227-ebbb-433f-b120-f69d20efa89e	STIHL	1148 200 0059	MS 182	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	399.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 35cm PM3
+e4ea36a2-71b7-4955-a46e-beb5ceebc5bc	STIHL	1148 200 0099	MS 182 C-BE	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	439.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · pompa carburante · 35cm PM3
+89d9e8ff-64fd-4de2-8053-c74e09de439f	STIHL	1148 200 0064	MS 182 40cm	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	409.00	370.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 40cm PM3
+25976aa6-40e4-4fce-8a26-2dd4fa63892b	STIHL	1148 200 0104	MS 182 C-BE 40cm	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	449.00	420.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 40cm PM3
+812ce56d-ea0c-4324-bd56-f5eb57d8d251	STIHL	1137 200 0312	MS 194 T 35cm	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	489.00	370.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · 2-MIX · 35cm
+8ffbaaf2-6eeb-46ec-8b62-006e0aac803d	STIHL	1137 200 0323	MS 194 T 35cm	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	489.00	370.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · 3/8"P · 35cm
+a3e54f7a-c2e2-4e74-a424-d601d2b969b9	STIHL	1137 200 0370	MS 194 TC-E 35cm	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	519.00	470.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 35cm
+a407e68b-3f07-4ee2-af61-af1a8c226866	STIHL	1137 200 0314	MS 194 T	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	479.00	360.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · 2-MIX · 30cm PM3
+e33142aa-bc88-462e-a0bb-2cbfa20fbf68	STIHL	1137 200 0322	MS 194 TC-E	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	479.00	360.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · ErgoStart · 2-MIX · 30cm PM3
+ef2031f9-6a86-42ab-868d-8f02ad1dff05	STIHL	1143 200 0721	MS 231 45cm	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	599.00	520.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 45cm
+8ae7edc1-b6ff-457b-872e-4bf552ee5247	STIHL	1143 200 0683	MS 251	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	659.00	570.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 40cm RM Pro
+473a4460-1552-4756-90fe-9a2d1ec12f4e	STIHL	1143 200 0686	MS 251 C-BE	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	729.00	630.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 40cm RM Pro
+a87e0d72-d568-4391-9298-79abe86b8989	STIHL	1143 200 0719	MS 251 45cm	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	669.00	580.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 45cm RM Pro
+20254a13-b36b-40b6-9c7c-b098f4ad2e66	STIHL	1143 200 0720	MS 251 C-BE 45cm	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	739.00	640.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 45cm RM Pro
+dc6a3be3-b733-4654-bbcc-973679b8a18e	STIHL	1143-200-0683	MS 251 40cm	Motoseghe termiche	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	659.0	570.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+dbfdaa82-1ec1-4f6a-8ded-6db93bb53620	STIHL	1141 200 0647	MS 261 C-M	Motoseghe	Motosega a benzina Stihl MS 261 C-M, cilindrata 50,2 cc, potenza 3,0 kW, sistema STIHL M-Tronic, tendicatena rapido.	1159.00	1000.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 40cm RS Pro
+7232aff8-18f2-4653-9258-49db7741bfac	STIHL	1141 200 0651	MS 261 C-M VW	Motoseghe	Motosega a benzina Stihl MS 261 C-M, cilindrata 50,2 cc, potenza 3,0 kW, sistema STIHL M-Tronic, tendicatena rapido.	1279.00	1100.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · riscaldamento · 40cm RS Pro
+0f8fa1ec-4802-47ef-bc07-d9cf980e3816	STIHL	1141 200 0652	MS 261 C-M 45cm	Motoseghe	Motosega a benzina Stihl MS 261 C-M, cilindrata 50,2 cc, potenza 3,0 kW, sistema STIHL M-Tronic, tendicatena rapido.	1169.00	990.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 45cm RS
+b3062b94-3879-4c61-9b65-f1d04a6544aa	STIHL	1141 200 0645	MS 271	Motoseghe	Motosega a benzina Stihl MS 271, cilindrata 50,2 cc, potenza 3,0 kW.	799.00	690.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 40cm RM3 Pro
+8d2eae0f-8cfc-4f1c-98f4-b5e17cac1fa6	STIHL	1141 200 0660	MS 271 45cm	Motoseghe	Motosega a benzina Stihl MS 271, cilindrata 50,2 cc, potenza 3,0 kW.	809.00	700.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 45cm RM3 Pro
+21e4c014-c02f-4c00-850b-4879ad8f995d	STIHL	1140 200 0730	MS 291	Motoseghe	Motosega a benzina Stihl MS 291, cilindrata 55,5 cc, potenza 3,2 kW, catena 36RM.	939.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 45cm RM
+7c801b5b-26c7-4ab9-9df8-ac70905b2f67	STIHL	1141 200 0690	MS 291 45cm	Motoseghe	Motosega a benzina Stihl MS 291, cilindrata 55,5 cc, potenza 3,2 kW, catena 36RM.	859.00	750.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 45cm RM
+c3b43316-28aa-4137-8758-7d95194f138b	STIHL	1140 200 0731	MS 311	Motoseghe	Motosega a benzina Stihl MS 311, cilindrata 59,0 cc, potenza 3,5 kW, catena 36RM.	1009.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	Professionale · 2-MIX · 45cm RM
+537428ca-4afa-41b1-8f08-94becd6cafca	STIHL	1140 200 0777	MS 311 50cm	Motoseghe	Motosega a benzina Stihl MS 311, cilindrata 59,0 cc, potenza 3,5 kW, catena 36RM.	949.00	850.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · 2-MIX · 50cm RM
+4b281177-c057-4c42-be83-a8e168a0c348	STIHL	1141 200 0687	MS 391	Motoseghe	Motosega a benzina Stihl MS 391, cilindrata 64,1 cc, potenza 4,0 kW, catena 36RM.	849.00	740.00	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	Professionale · 2-MIX · 40cm RM3
+9652e03f-fc35-4414-bfce-faa50f27724b	STIHL	1140 200 0741	MS 391 50cm	Motoseghe	Motosega a benzina Stihl MS 391, cilindrata 64,1 cc, potenza 4,0 kW, catena 36RM.	1019.00	910.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · 2-MIX · 50cm RM3
+34214dcd-d505-49d5-8df0-ef7c3e6deca0	STIHL	MB01 200 0007	MS 400 C-M	Motoseghe	Motosega a benzina Stihl MS 400 C-M, cilindrata 66,8 cc, potenza 4,0 kW, sistema STIHL M-Tronic, catena 36RS.	1509.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 45cm RS
+195bfe7b-1a35-40db-b652-105505c80594	STIHL	1142 200 0032	MS 462 C-M 50cm	Motoseghe	Motosega a benzina Stihl MS 462 C-M, cilindrata 72,2 cc, potenza 4,4 kW, sistema STIHL M-Tronic, catena 36RS3.	1659.00	1400.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 50cm RS3
+dd75124f-7df0-4dc6-a463-a745c063b514	STIHL	1142 200 0033	MS 462 C-M 63cm	Motoseghe	Motosega a benzina Stihl MS 462 C-M, cilindrata 72,2 cc, potenza 4,4 kW, sistema STIHL M-Tronic, catena 36RS3.	1679.00	1430.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 63cm RS3
+f0b2c9ac-1fc0-4a11-93e2-944f5388dce2	STIHL	1142 200 0025	MS 462 C-M R	Motoseghe	Motosega a benzina Stihl MS 462 C-M, cilindrata 72,2 cc, potenza 4,4 kW, sistema STIHL M-Tronic, catena 36RS3.	2139.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale soccorso · M-Tronic · 50cm RDR
+3ee5935e-bb73-4b31-9330-9adad4c9219d	STIHL	1147 200 0000	MS 500 i	Motoseghe	Motosega a benzina Stihl MS 500i, cilindrata 79,2 cc, potenza 5,0 kW, iniezione elettronica carburante, catena 36RS.	1199.00	1700.00	t	2026-04-11 18:29:22.623135+00	Miscela Injection	\N	\N	Injection · top gamma · 50cm RS
+0baf2141-407d-4d02-8b4f-8e32e0b0418b	STIHL	1147 200 0001	MS 500i 63cm	Motoseghe	Motosega a benzina Stihl MS 500i, cilindrata 79,2 cc, potenza 5,0 kW, iniezione elettronica carburante, catena 36RS.	2019.00	1720.00	t	2026-04-11 18:29:22.623135+00	Miscela Injection	\N	\N	Injection · top gamma · 63cm RS
+e22763ff-ef36-422f-b16a-06f4a97fa4b3	STIHL	1147-200-0000	MS 500i 50cm	Motoseghe termiche	Motosega a benzina Stihl MS 500i, cilindrata 79,2 cc, potenza 5,0 kW, iniezione elettronica carburante, catena 36RS.	1998.99	1700.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+5b6aa500-44b1-4bc9-8bc2-b8b0322b2169	STIHL	1144 200 0319	MS 661 C-M 71cm	Motoseghe	Motosega a benzina Stihl MS 661 C-M, cilindrata 91,6 cc, potenza 5,4 kW, sistema STIHL M-Tronic, catena 36RS.	1899.00	1630.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale potente · M-Tronic · 71cm RS
+d578c9ec-3a62-4e94-91bc-d314c1d739c3	STIHL	1144 200 0322	MS 661 C-M	Motoseghe	Motosega a benzina Stihl MS 661 C-M, cilindrata 91,6 cc, potenza 5,4 kW, sistema STIHL M-Tronic, catena 36RS.	1879.00	1600.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale potente · M-Tronic · 63cm RS
+c9d2090a-8a9a-4957-8b5a-ecb4f05bdb05	STIHL	1124 200 0204	MS 881	Motoseghe	Motosega a benzina Stihl MS 881, cilindrata 121,6 cc, potenza 6,4 kW, catena 46RS.	2329.00	1990.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	TIMBERSPORTS · top gamma · 90cm .404"
+22d23555-bfab-4a6e-a7bb-763e5dac2b8f	STIHL	1124 200 0206	MS 881 105cm	Motoseghe	Motosega a benzina Stihl MS 881, cilindrata 121,6 cc, potenza 6,4 kW, catena 46RS.	2369.00	2020.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	TIMBERSPORTS · top gamma · 105cm .404"
+91023c0b-b7d2-42b4-8192-d5cc275de1cb	STIHL	4144 200 0016	KM 56 RC-E	Sistema Kombi	Motore Kombi a benzina Stihl KM 56 RC-E, cilindrata 27,2 cc, potenza 0,90 kW, motore 2-MIX, STIHL ErgoStart.	409.00	347.86	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · ErgoStart · impugnatura circolare · Smart Connector
+aeec84dd-6432-4dd3-bc66-cf7013f3fb60	STIHL	4149 200 0089	KM 94 RC-E	Sistema Kombi	Motore Kombi a benzina Stihl KM 94 RC-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, STIHL ErgoStart.	539.00	458.42	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	4-MIX · ErgoStart · ECOSPEED · Smart Connector
+b18fd045-99f6-4cf4-a189-339b9e2aed98	STIHL	4149-200-0089	KM 94 RC-E	Motori Kombi termici	Motore Kombi a benzina Stihl KM 94 RC-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, STIHL ErgoStart.	539.0	458.42	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+4851638d-11d8-40b3-a335-7eb0d24af92c	STIHL	4180 200 0562	KM 111 R	Sistema Kombi	Motore Kombi a benzina Stihl KM 111 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	579.00	492.44	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	4-MIX · potente · Smart Connector
+6edbb7b6-9737-45e3-a0c9-b92b4e1db82e	STIHL	4151 011 5303	KM 235 R	Sistema Kombi	Motore Kombi a benzina Stihl KM 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	469.00	398.89	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · impugnatura circolare · decompressione automatica
+53214eff-5dea-4a46-bb67-69ae2b453b4b	STIHL	4151 011 5302	KM 235	Sistema Kombi	Motore Kombi a benzina Stihl KM 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	489.00	415.89	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · massima potenza · decompressione automatica
+08092689-bcc7-4ac6-9b6b-bfe033d88090	STIHL	4151-011-5302	KM 235	Motori Kombi termici	Motore Kombi a benzina Stihl KM 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	489.0	415.89	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+abb78822-cd64-491a-a99e-1c6f2e8065fd	STIHL	FA08 011 6800	KMA 80 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 80 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	319.00	319.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 10, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 20, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK · 2 velocità ECO/Max · impugnatura circolare regolabile · Smart Connector
+331ab29a-19ca-48ad-bb40-4956a7ba6804	STIHL	FA03 011 6800	KMA 200 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 200 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	599.00	562.10	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 28, "nome": "AP 30", "unita": "min", "val_min": 14}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 10, "raccomandata": true}, {"val": 30, "nome": "AP 300 S", "unita": "min", "val_min": 15}, {"val": 36, "nome": "AP 500 S", "unita": "min", "val_min": 18}, {"val": 115, "nome": "AR 2000 L", "unita": "min", "val_min": 57}, {"val": 172, "nome": "AR 3000 L", "unita": "min", "val_min": 86}]}	AP · potente · protezione antispruzzo · SC2A · P+S
+cedb582e-919c-4a86-90c0-1bc585a95ccd	STIHL	6311 011 1415	RMA 235	Tosaerba	Tosaerba a batteria Stihl RMA 235, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	199.00	199.56	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 150, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 300, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 400, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 33cm · senza batteria
+fcc5f266-95eb-428b-985e-2e5424085ba3	STIHL	6311 011 2410	RME 235	Tosaerba	Tosaerba elettrico Stihl RME 235, motore elettrico 230 V, larghezza taglio 33 cm, altezza taglio regolabile.	194.00	169.57	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 33cm · 1.2kW
+49ca6288-f0ce-4d60-8333-1f4c67c84866	STIHL	6311-011-2410	RME 235.0	Tosaerba elettrici	Tosaerba elettrico Stihl RME 235, motore elettrico 230 V, larghezza taglio 33 cm, altezza taglio regolabile.	194.0	169.57	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+7a74ea32-8378-4976-a418-9b4370ef3853	STIHL	6320 011 1430	RMA 239	Tosaerba	Tosaerba a batteria Stihl RMA 239, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	309.00	308.19	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 120, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 250, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 330, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 37cm · senza batteria
+9e75be32-44f1-428d-9a50-2aa18535b69f	STIHL	6320 011 1435	RMA 239 C	Tosaerba	Tosaerba a batteria Stihl RMA 239, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	359.00	358.54	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 120, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 250, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 330, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 37cm · mono-stegola comfort · senza batteria
+6021dede-27b0-42be-ba8a-317749783346	STIHL	6320 011 2415	RME 339 C	Tosaerba	Tosaerba elettrico Stihl RME 339, motore elettrico 230 V, larghezza taglio 37 cm, altezza taglio regolabile.	374.00	326.90	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 37cm · mono-stegola comfort · 1.2kW
+85cc00cd-0055-4876-9888-0e5dd302acc6	STIHL	6320 011 2405	RME 339	Tosaerba	Tosaerba elettrico Stihl RME 339, motore elettrico 230 V, larghezza taglio 37 cm, altezza taglio regolabile.	314.00	274.46	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 37cm · 1.2kW
+f5bb2d6e-2718-4b8e-9caf-07ece587bc92	STIHL	6320-011-2415	RME 339.0 C	Tosaerba elettrici	Tosaerba elettrico Stihl RME 339, motore elettrico 230 V, larghezza taglio 37 cm, altezza taglio regolabile.	374.0	326.9	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+a101ec34-8bf1-4bf1-bced-602ca8a057c1	STIHL	6291 011 6610	RLA 240	Arieggiatori	Robot tosaerba a batteria Stihl RLA 240, sistema 40 V AK, superficie fino a 400 m², altezza taglio 20-60 mm.	259.00	258.32	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 96, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 190, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 250, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 34cm · senza batteria · cesto 50L
+de6f76d1-644f-497c-94ed-227a6e9acbe9	STIHL	WA20 011 1400	RMA 243	Tosaerba	Tosaerba a batteria Stihl RMA 243, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	549.00	518.22	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 115, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 230, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 300, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 41cm · senza batteria · Smart Connector
+171559c9-bb32-4dbb-b0c7-86c781910d4f	STIHL	WA21 011 1400	RMA 248	Tosaerba	Tosaerba a batteria Stihl RMA 248, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	599.00	566.23	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 110, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 220, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 285, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 46cm · senza batteria · Smart Connector
+bb762bfb-6888-43c5-b0df-8899fe3446bd	STIHL	WA21 011 1410	RMA 248 T	Tosaerba	Tosaerba a batteria Stihl RMA 248, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	679.00	642.79	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 130, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 260, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 340, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 46cm · trazione 1 marcia · senza batteria
+f6437b29-9861-4683-b0c6-34c843261623	STIHL	WA22 011 1410	RMA 253 T	Tosaerba	Tosaerba a batteria Stihl RMA 253, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	759.00	720.60	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 125, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 250, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 325, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 51cm · trazione 1 marcia · senza batteria
+b4a86e61-aee1-4a4c-88f0-c2510710b146	STIHL	WA22 011 1400	RMA 253	Tosaerba	Tosaerba a batteria Stihl RMA 253, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	679.00	648.37	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 105, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 210, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 275, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 30 S · 51cm · senza batteria · Smart Connector
+afd62487-b16a-4c58-9c99-b4c117682843	STIHL	WA40 200 0000	RMA 443 PV Set	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	1169.00	1081.04	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	\N	AP 500 S · 41cm · trazione Vario · con AP 500 S e AL 301
+7f174c4b-4829-4811-9abe-d0f286cceb39	STIHL	WA40 011 1400	RMA 443	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	729.00	687.13	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 115, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 230, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 300, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 41cm · senza batteria · Smart Connector
+7a9cc7a5-eebb-42d3-b4bf-2cffa3a1ee92	STIHL	WA40 011 1420	RMA 443 V	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	749.00	709.05	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 135, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 270, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 350, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 41cm · trazione Vario · senza batteria
+2ef9dc2c-ec7b-4816-980f-b1786d496c3c	STIHL	BA01-011-5900	BGA 200	Soffiatori batteria	Soffiatore a batteria Stihl BGA 200, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	569.0	533.95	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+f21eed17-25c2-4ca2-bd7b-ba9e14fb148f	STIHL	6241 011 3932	MH 685	Motozappe	Motozappa a benzina Stihl MH 685, cilindrata 212 cc, potenza 3,7 kW, larghezza lavoro 50-95 cm.	1099.00	1020.75	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	85cm larghezza lavoro, Kohler HD775
+2d3190bb-5dfd-4806-8be1-740bf02f9511	STIHL	WA40 011 1410	RMA 443 PV	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	799.00	743.19	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 270, "nome": "AP 20", "unita": "m²"}, {"val": 510, "nome": "AP 30", "unita": "m²"}, {"val": 360, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 530, "nome": "AP 300 S", "unita": "m²"}, {"val": 640, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 41cm · trazione Vario · senza batteria
+ab9011af-f140-470e-bf47-254ad8b777e4	STIHL	WA41 011 1400	RMA 448 V	Tosaerba	Tosaerba a batteria Stihl RMA 448 V, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	819.00	770.83	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 130, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 260, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 340, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 46cm · trazione Vario · senza batteria
+944f533d-174f-453c-ae4b-d75c5d25b610	STIHL	WA42 200 0002	RMA 453 PV Set	Tosaerba	Tosaerba a batteria Stihl RMA 453 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	1319.00	1185.92	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	\N	AP 500 S · 51cm · trazione Vario · con AP 300 S e AL 301
+52c78927-00d5-41e8-bfbb-bf5a31d54522	STIHL	WA42 011 1400	RMA 453 PV	Tosaerba	Tosaerba a batteria Stihl RMA 453 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	949.00	855.81	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 230, "nome": "AP 20", "unita": "m²"}, {"val": 430, "nome": "AP 30", "unita": "m²"}, {"val": 300, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 450, "nome": "AP 300 S", "unita": "m²"}, {"val": 540, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 51cm · trazione Vario · senza batteria
+c1340622-4801-4328-8fb3-87b58dff060b	STIHL	WB40 011 3420	RM 443 V	Tosaerba	Tosaerba a benzina Stihl RM 443 V, larghezza taglio 43 cm, trazione variatore.	639.00	546.47	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 41cm · trazione Vario
+845d4df1-dc81-475e-a09e-07920f14c555	STIHL	WB41 011 3400	RM 448 T	Tosaerba	Tosaerba a benzina Stihl RM 448 T, larghezza taglio 48 cm, trazione.	699.00	584.76	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 46cm · trazione 1 marcia
+e602c05b-c56f-4234-96b8-3e8e6caa7221	STIHL	WB41 011 3410	RM 448 V	Tosaerba	Tosaerba a benzina Stihl RM 448 V, larghezza taglio 48 cm, trazione variatore.	769.00	643.32	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 46cm · trazione Vario
+51a0147d-b8df-427c-a11c-e6a3e056c466	STIHL	WB42 011 3400	RM 453 T	Tosaerba	Tosaerba a benzina Stihl RM 453 T, larghezza taglio 53 cm, trazione.	799.00	676.92	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 51cm · trazione 1 marcia
+ad286b28-3ca2-41e0-8508-978b38a10c42	STIHL	WB42 011 3410	RM 453 V	Tosaerba	Tosaerba a benzina Stihl RM 453 V, larghezza taglio 53 cm, trazione variatore.	869.00	730.45	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 51cm · trazione Vario
+03c291b0-0094-4b4c-835a-ece4b31face8	STIHL	6392 011 1400	RMA 765 V	Tosaerba	Tosaerba a batteria Stihl RMA 765 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2389.00	2235.03	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 600, "nome": "AP 30", "unita": "m²", "val_min": 600}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 630, "nome": "AP 300 S", "unita": "m²", "val_min": 630, "raccomandata": true}, {"val": 750, "nome": "AP 500 S", "unita": "m²", "val_min": 750}, {"val": 2100, "nome": "AR 2000 L", "unita": "m²", "val_min": 2100}, {"val": 3130, "nome": "AR 3000 L", "unita": "m²", "val_min": 3130}]}	AR 3000 L · 63cm · trazione Vario · professionale · senza batteria
+ef8a6645-2acf-42fc-88b6-efbcdec52c12	STIHL	WA70 011 1400	RMA 750 V	Tosaerba	Tosaerba a batteria Stihl RMA 750 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2459.00	2287.23	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 610, "nome": "AP 30", "unita": "m²", "val_min": 610}, {"val": 420, "nome": "AP 200 S", "unita": "m²", "val_min": 420}, {"val": 630, "nome": "AP 300 S", "unita": "m²", "val_min": 630, "raccomandata": true}, {"val": 760, "nome": "AP 500 S", "unita": "m²", "val_min": 760}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 48cm · trazione Vario · professionale · senza batteria
+f78c81cc-7d60-4c4f-a247-c6f5f7fd4b4d	STIHL	6250 011 3915	MH 600	Motozappe	Motozappa a benzina Stihl MH 600, cilindrata 163 cc, potenza 3,0 kW, larghezza lavoro 45-90 cm, ruote pneumatiche.	939.00	744.11	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	79cm larghezza lavoro, EHC 600
+94a17fb2-c7fa-4c74-92d7-1ac8d43b9828	STIHL	6291 200 0015	RLA 240 Set	Arieggiatori	Robot tosaerba a batteria Stihl RLA 240, sistema 40 V AK, superficie fino a 400 m², altezza taglio 20-60 mm.	429.00	427.28	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 96, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 190, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 250, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 34cm · con AK 30 e AL 101 · cesto 50L
+dc13e21a-edb3-4647-909e-fcd69b102a28	STIHL	6291-011-6610	RLA 240.0	Robot tosaerba	Robot tosaerba a batteria Stihl RLA 240, sistema 40 V AK, superficie fino a 400 m², altezza taglio 20-60 mm.	259.01	258.32	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+d153001a-5071-4136-848f-81395242f92b	STIHL	BA08 011 5900	BGA 30 Set	Soffiatori	Soffiatore a batteria Stihl BGA 30, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	109.00	109.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 25, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Con 2×AS 2 e AL 1
+c584b1cd-b963-4c82-b4b6-a1fdd08f5e9c	STIHL	BA08 011 5910	BGA 30	Soffiatori	Soffiatore a batteria Stihl BGA 30, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	169.00	169.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 25, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Senza batteria
+ef8044d3-d473-4e1c-93f4-ae5c9bd8ca75	STIHL	BA03 011 5910	BGA 300	Soffiatori	Soffiatore a batteria Stihl BGA 30, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	869.00	815.48	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 24, "nome": "AP 30", "unita": "min", "val_min": 9}, {"val": 16, "nome": "AP 200 S", "unita": "min", "val_min": 13, "raccomandata": true}, {"val": 25, "nome": "AP 300 S", "unita": "min", "val_min": 10}, {"val": 29, "nome": "AP 500 S", "unita": "min", "val_min": 12}, {"val": 105, "nome": "AR 2000 L", "unita": "min", "val_min": 50}, {"val": 150, "nome": "AR 3000 L", "unita": "min", "val_min": 65}]}	Senza batteria
+6f94ac44-036c-4cd7-bdfa-7df559aa3c88	STIHL	BA05 011 5930	BGA 50 Set	Soffiatori	Soffiatore a batteria Stihl BGA 50, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	159.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 55, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 115, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 140, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Con AK 20 e AL 101
+8ebbdfe4-c556-40aa-b1de-db652a9d3e44	STIHL	BA05 011 5910	BGA 50	Soffiatori	Soffiatore a batteria Stihl BGA 50, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	299.00	299.03	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 55, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 115, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 140, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Senza batteria
+933244fa-c2c4-43cf-8c47-9e904c9ea8df	STIHL	BA05 011 5900	BGA 50	Soffiatori	Soffiatore a batteria Stihl BGA 50, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	159.00	159.02	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 55, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 115, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 140, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Senza batteria
+eb5c8832-affa-4687-b29e-f024c47ceb0c	STIHL	BA04 011 5900	BGA 60 Set	Soffiatori	Soffiatore a batteria Stihl BGA 60, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	199.00	199.01	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 105, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Con AK 30 S e AL 101
+0fd46a7a-8fc0-4018-bcb5-2f124a69f51e	STIHL	BA04 011 5940	BGA 60	Soffiatori	Soffiatore a batteria Stihl BGA 60, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	369.00	369.04	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 105, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Senza batteria
+b3182c28-290f-4ff3-9b0a-edbd182871e7	STIHL	BA09 011 5900	BGA 160	Soffiatori	Soffiatore a batteria Stihl BGA 160, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	359.00	336.88	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 58, "nome": "AP 20", "unita": "min", "val_min": 8}, {"val": 106, "nome": "AP 30", "unita": "min", "val_min": 14}, {"val": 75, "nome": "AP 200 S", "unita": "min", "val_min": 10, "raccomandata": true}, {"val": 110, "nome": "AP 300 S", "unita": "min", "val_min": 15}, {"val": 130, "nome": "AP 500 S", "unita": "min", "val_min": 17}, {"val": 430, "nome": "AR 2000 L", "unita": "min", "val_min": 56}, {"val": 670, "nome": "AR 3000 L", "unita": "min", "val_min": 85}]}	Senza batteria
+3dcb2a3d-3b95-4dbd-b982-f16197aa71a4	STIHL	BA01 011 5900	BGA 200	Soffiatori	Soffiatore a batteria Stihl BGA 200, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	569.00	533.95	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 91, "nome": "AP 30", "unita": "min", "val_min": 13}, {"val": 49, "nome": "AP 200 S", "unita": "min", "val_min": 7}, {"val": 95, "nome": "AP 300 S", "unita": "min", "val_min": 14, "raccomandata": true}, {"val": 114, "nome": "AP 500 S", "unita": "min", "val_min": 17}, {"val": 335, "nome": "AR 2000 L", "unita": "min", "val_min": 55}, {"val": 535, "nome": "AR 3000 L", "unita": "min", "val_min": 90}]}	Senza batteria
+5cfe8cb5-ae1f-4138-ab4b-d7d45e598df0	STIHL	BA07 011 5900	BRA 500 B	Soffiatori dorsali	Soffiatore a batteria Stihl BRA 500-B, tensione di utilizzo 72 V, potenza di soffiaggio 35 N, sistema di trasporto a zaino ergonomico, tubo di soffiaggio regolabile in lunghezza, peso 10,5 kg.	1099.00	1031.30	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 30, "nome": "AP 30", "unita": "min", "val_min": 15}, {"val": 22, "nome": "AP 200 S", "unita": "min", "val_min": 13}, {"val": 32, "nome": "AP 300 S", "unita": "min", "val_min": 16, "raccomandata": true}, {"val": 39, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ, Bluetooth, Smart Connector integrato
+55d62fc1-9ca6-4752-87fb-e82511bf07a8	STIHL	4241 011 1750	BG 56	Soffiatori	Soffiatore a benzina Stihl BG 56, cilindrata 27,2 cc, potenza 0,75 kW, motore 2-MIX, portata aria 770 m³/h, peso 4,5 kg.	349.00	290.23	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+a84a4f7d-d166-4c16-8643-6a3d1607d4a6	STIHL	4241-011-1750	BG 56	Soffiatori termici	Soffiatore a benzina Stihl BG 56, cilindrata 27,2 cc, potenza 0,75 kW, motore 2-MIX, portata aria 770 m³/h, peso 4,5 kg.	349.01	290.23	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+26189ce0-a3a1-4788-b3d0-b0bf608ad8a9	STIHL	4241 011 1753	BG 86	Soffiatori	Soffiatore a benzina Stihl BG 86, cilindrata 27,2 cc, potenza 0,85 kW, motore 2-MIX, portata aria 900 m³/h.	489.00	406.65	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+ab8a805f-d54c-455a-99ff-800d573be158	STIHL	4241 011 1605	BR 200	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 200, cilindrata 27,2 cc, potenza 0,75 kW, motore 2-MIX, sistema di trasporto a zaino.	549.00	478.29	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+0b93ee10-0faf-42f0-b954-b22032534691	STIHL	4244 011 1620	BR 430	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 430, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, regolazione continua.	749.00	642.64	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, ElastoStart
+56ad54dc-4bb2-439c-81dc-e63ecdc98e9d	STIHL	4244-011-1620	BR 430	Soffiatori a zaino termici	Soffiatore a zaino a benzina Stihl BR 430, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, regolazione continua.	748.99	642.64	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+3b55d740-3b10-40ca-8ec0-ce0b0dedc251	STIHL	4244 011 1635	BR 450	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 450, cilindrata 42,7 cc, potenza 1,6 kW, sistema di trasporto a zaino.	799.00	685.54	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+664f858c-4562-47c4-a986-a47a990193bc	STIHL	4244 011 1632	BR 450 C-EF	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 450, cilindrata 42,7 cc, potenza 1,6 kW, sistema di trasporto a zaino.	879.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, avviamento elettrico
+dc97729a-55a8-4cc2-8f40-82eb0b9a6b9e	STIHL	4282 200 0022	BR 600	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 600, cilindrata 64,8 cc, potenza 2,3 kW, sistema di trasporto a zaino professionale.	899.00	783.21	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX
+17c2fd14-5e9b-46c8-a50e-d7c1ee58b16b	STIHL	4282 200 0021	BR 700	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 700, cilindrata 64,8 cc, potenza 2,6 kW, sistema di trasporto a zaino professionale.	969.00	844.19	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX
+48fe3445-9880-40b5-8a23-8f82e3bfd4fd	STIHL	4283 011 1606	BR 800 C-E	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 800 C-E, cilindrata 79,9 cc, potenza 3,0 kW, sistema di trasporto a zaino, STIHL ErgoStart.	1019.00	887.76	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX, avviamento laterale
+16a51183-e494-4036-a77d-55aeead229cc	STIHL	RE02 011 4540	RE 90	Idropulitrici	Idropulitrice elettrica Stihl RE 90, pressione max 125 bar, portata max 420 l/h, pompa in alluminio.	199.00	173.98	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	100 bar, 440 l/h
+a321f357-4e44-4a8a-aa99-afb533f97628	STIHL	RE02 011 4529	RE 100 PLUS CONTROL	Idropulitrici	Idropulitrice elettrica Stihl RE 100, pressione max 130 bar, portata max 420 l/h, pompa in alluminio.	269.00	234.81	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	110 bar, regolazione pressione sulla pistola
+ecbfeff6-e753-41b7-8603-4fdb57fd91e6	STIHL	4950 011 4520	RE 110	Idropulitrici	Idropulitrice elettrica Stihl RE 110, pressione max 130 bar, portata max 420 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	309.00	281.33	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	110 bar, brushless, manico telescopico
+f321021c-3936-49a1-9d7d-b605caa3dce4	STIHL	4950 011 4533	RE 110 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 110, pressione max 130 bar, portata max 420 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	349.00	317.75	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	110 bar, brushless, tamburo integrato
+63c063f4-9203-4427-834c-bb2108a251eb	STIHL	4950-011-4520	RE 110	Idropulitrici	Idropulitrice elettrica Stihl RE 110, pressione max 130 bar, portata max 420 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	309.0	281.33	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+24e5d4e2-b5c9-4844-b49c-0fc71a3a796a	STIHL	4950 011 4540	RE 120	Idropulitrici	Idropulitrice elettrica Stihl RE 120, pressione max 150 bar, portata max 450 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	399.00	363.27	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	125 bar, brushless
+82e0438b-9ba2-4525-bb0e-31e0535e869d	STIHL	4950 011 4550	RE 120 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 120, pressione max 150 bar, portata max 450 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	439.00	399.69	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	125 bar, tamburo integrato
+91443bcf-0035-4d56-9de9-c571470ac20d	STIHL	4950 011 4580	RE 140 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 140 PLUS, pressione max 170 bar, portata max 500 l/h, avvolgitubo integrato.	589.00	536.26	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	145 bar, tubo acciaio 10m
+7e0a2ca3-a2e9-4c66-8174-5e46faac87ca	STIHL	RE01 011 4510	RE 150	Idropulitrici	Idropulitrice elettrica Stihl RE 150, pressione max 170 bar, portata max 500 l/h, pompa in ottone.	749.00	686.09	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	140 bar, testa ottone
+d5e3fa80-151e-41b9-8bc9-889b30bbc631	STIHL	RE01 011 4512	RE 150 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 150, pressione max 170 bar, portata max 500 l/h, pompa in ottone.	789.00	721.63	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	140 bar, tamburo integrato
+ff6bd84b-7263-4670-8508-1d4947f5b7d1	STIHL	RE01 011 4540	RE 170	Idropulitrici	Idropulitrice elettrica Stihl RE 170, pressione max 180 bar, portata max 648 l/h, pompa in ottone, tubo armato 12 m con avvolgitubo, peso 31 kg.	834.00	765.12	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	150 bar, testa ottone
+a13db3f6-f322-4ec7-99b9-02dde1e14cbf	STIHL	RE01-011-4540	RE 170.0	Idropulitrici	Idropulitrice elettrica Stihl RE 170, pressione max 180 bar, portata max 648 l/h, pompa in ottone, tubo armato 12 m con avvolgitubo, peso 31 kg.	834.0	765.12	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+eb503cca-9aea-4be3-9424-974120397277	STIHL	6241 011 3905	MH 445	Motozappe	Motozappa a benzina Stihl MH 445, cilindrata 139 cc, potenza 2,5 kW, larghezza lavoro 40-85 cm, frese reversibili.	849.00	796.57	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45cm larghezza lavoro, EVC 200 C
+4574373f-4420-4aa8-970e-8f98f52610b4	STIHL	6241 011 3914	MH 445 R	Motozappe	Motozappa a benzina Stihl MH 445, cilindrata 139 cc, potenza 2,5 kW, larghezza lavoro 40-85 cm, frese reversibili.	899.00	835.00	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45cm con retromarcia, EVC 200 C
+b7190088-a5b4-430f-b3b1-2c7d6f0d414e	STIHL	6241-011-3905	MH 445.1	Motozappe	Motozappa a benzina Stihl MH 445, cilindrata 139 cc, potenza 2,5 kW, larghezza lavoro 40-85 cm, frese reversibili.	849.0	796.57	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+1c2e9a58-e022-46ec-82f2-772813396130	STIHL	6251 011 3910	MH 700	Motozappe	Motozappa a benzina Stihl MH 700, cilindrata 212 cc, potenza 3,7 kW, larghezza lavoro 50-100 cm, frese robuste.	1399.00	1110.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	121cm larghezza lavoro, EHC 700
+bae2765b-5d68-4d5d-a099-0514e6c3bc0d	STIHL	6251-011-3910	MH 700.1	Motozappe	Motozappa a benzina Stihl MH 700, cilindrata 212 cc, potenza 3,7 kW, larghezza lavoro 50-100 cm, frese robuste.	1399.0	1110.52	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+728f095d-a573-48ab-8386-86d99ea7f951	STIHL	6001 200 0010	GH 370 S	Biotrituratori	Biotrituratore a benzina Stihl GH 370, cilindrata 173 cc, diametro rami fino a 55 mm.	1529.00	1430.46	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 1000, ramo max 45mm
+bbdee5aa-e9f8-4432-861b-6f71ec32cae1	STIHL	6012 200 0011	GH 460	Biotrituratori	Biotrituratore a benzina Stihl GH 460, cilindrata 173 cc, potenza 3,7 kW, diametro rami fino a 60 mm.	2279.00	2107.50	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	B&S, ramo max 60mm
+ea44006f-f7a5-427f-927f-72923eda4e59	STIHL	6012 200 0016	GH 460 C	Biotrituratori	Biotrituratore a benzina Stihl GH 460, cilindrata 173 cc, potenza 3,7 kW, diametro rami fino a 60 mm.	2739.00	2555.07	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 2000, ramo max 75mm
+beef0f2e-093f-4d42-9aca-4d26cdca3c9e	STIHL	6012-200-0011	GH 460.0	Biotrituratori termici	Biotrituratore a benzina Stihl GH 460, cilindrata 173 cc, potenza 3,7 kW, diametro rami fino a 60 mm.	2279.0	2107.5	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+dcc9b2c3-5c65-43b4-9421-48cbd9a19a22	STIHL	6007 011 1150	GHE 105	Biotrituratori	Biotrituratore elettrico Stihl GHE 105, potenza 0,5 kW, diametro rami fino a 35 mm, compatto.	499.00	443.93	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm
+e34b0a7a-d8f2-4676-a01f-6c4405c683df	STIHL	6013 011 1140	GHE 135 L	Biotrituratori	Biotrituratore elettrico Stihl GHE 135, potenza 0,6 kW, diametro rami fino a 40 mm.	444.00	393.80	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm, silenzioso
+35106826-9e26-47ba-a13d-492b03b885c8	STIHL	6013 011 1150	GHE 140 L	Biotrituratori	Biotrituratore elettrico Stihl GHE 140, potenza 0,7 kW, diametro rami fino a 40 mm.	519.00	461.02	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 40mm, silenzioso
+322d52e5-3585-434f-8abd-2c875745a6ae	STIHL	6008 011 1160	GHE 150	Biotrituratori	Biotrituratore elettrico Stihl GHE 150, potenza 0,85 kW, diametro rami fino a 45 mm.	579.00	514.33	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm
+94493a1e-09f7-4222-9b6d-564b8d85c8ae	STIHL	6008 011 1040	GHE 250	Biotrituratori	Biotrituratore elettrico Stihl GHE 250, potenza 2,5 kW, diametro rami fino a 55 mm, tramoggia di carica ampia.	679.00	605.90	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 30mm
+93b15055-7ef3-4319-83c0-8fca48643e85	STIHL	6008 011 1170	GHE 250 S	Biotrituratori	Biotrituratore elettrico Stihl GHE 250, potenza 2,5 kW, diametro rami fino a 55 mm, tramoggia di carica ampia.	679.00	603.15	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm, cippare
+2e32d376-3ec5-4895-9b49-b387ca3675ff	STIHL	6008-011-1040	GHE 250.0	Biotrituratori elettrici	Biotrituratore elettrico Stihl GHE 250, potenza 2,5 kW, diametro rami fino a 55 mm, tramoggia di carica ampia.	678.99	605.9	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+3cc45bd7-61f5-4f9d-a7f4-bd6415074d7b	STIHL	6012 200 0020	GHE 420	Biotrituratori	Biotrituratore elettrico Stihl GHE 420, potenza 3,0 kW, diametro rami fino a 60 mm, tramoggia di carica ampia, uso professionale.	1569.00	1395.85	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 50mm
+df0682b0-49ab-4860-9cab-a7716c08fa92	STIHL	4864 011 6620	TSA 230	Troncatrici	Troncatrice a batteria Stihl TSA 230, sistema 36 V AP, disco 230 mm, motore EC brushless.	599.00	559.58	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 14, "nome": "AP 200 S", "unita": "min", "val_min": 9}, {"val": 24, "nome": "AP 300 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"nome": "AP 500 S", "incompatibile": true}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Batteria AP · disco 230mm · con batteria e caricatore
+22b62cd4-7a85-41af-a193-bf848a35380c	STIHL	TA02 011 6600	TSA 300	Troncatrici	Troncatrice a batteria Stihl TSA 300, sistema 36 V AP, potenza 0,9 kW, disco 230 mm, profondità taglio max 76 mm, motore EC brushless.	999.00	934.61	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 9, "nome": "AP 200 S", "unita": "min", "val_min": 5}, {"val": 16, "nome": "AP 300 S", "unita": "min", "val_min": 9, "raccomandata": true}, {"val": 22, "nome": "AP 500 S", "unita": "min", "val_min": 12}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · disco 300mm · Magnetic Filter · SC2A · senza batteria
+48961ceb-6611-46bf-9835-9b7fc80f35c1	STIHL	TA02-011-6600	TSA 300.0	Troncatrici batteria	Troncatrice a batteria Stihl TSA 300, sistema 36 V AP, potenza 0,9 kW, disco 230 mm, profondità taglio max 76 mm, motore EC brushless.	999.0	934.61	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e3ef394b-c928-4827-9da4-d288d3eadca2	STIHL	TA01 011 6600	TSA 500 B	Troncatrici	Troncatrice a batteria Stihl TSA 500-B, sistema doppio 36 V AP, disco 350 mm, motore EC brushless, uso professionale.	1499.00	1402.39	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 16, "nome": "AP 200 S", "unita": "min", "val_min": 8}, {"val": 30, "nome": "AP 300 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"val": 30, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	disco 350mm · la più potente a batteria · Magnetic Filter · senza batteria
+14c05920-b155-4458-ba60-0f83132b0d55	STIHL	4238 011 2800	TS 410	Troncatrici	Troncatrice a benzina Stihl TS 410, cilindrata 70,7 cc, disco 300 mm, per calcestruzzo e laterizio.	1579.00	1315.75	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · disco 300mm · ciclone
+56abb174-119c-4855-b861-56ecaa1fa06f	STIHL	4238 011 2810	TS 420	Troncatrici	Troncatrice a benzina Stihl TS 420, cilindrata 70,7 cc, disco 350 mm, per calcestruzzo e laterizio.	1669.00	1283.93	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · disco 350mm · ciclone
+52ed47a6-7af3-41bb-b520-c774c922d27d	STIHL	4250-011-2810	TS 500i-A 350mm	Troncatrici termiche	Troncatrice a benzina Stihl TS 500i-A, cilindrata 79,9 cc, disco 350 mm, iniezione elettronica carburante.	1889.0	1576.48	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+0d9b4d39-dd2c-4495-9c03-d4ccff07a7dd	STIHL	TB01 011 2800	TS 710i	Troncatrici	Troncatrice a benzina Stihl TS 710i, cilindrata 97,6 cc, disco 350 mm, iniezione elettronica, uso professionale.	2169.00	1799.06	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Injection · disco 350mm · ElastoStart
+8e926af3-7f86-4a8d-adc8-2cf85f822360	STIHL	TB01 011 2820	TS 910i	Troncatrici	Troncatrice a benzina Stihl TS 910i, cilindrata 97,6 cc, disco 400 mm, iniezione elettronica, uso professionale.	2439.00	2026.13	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Injection · disco 400mm · ElastoStart · la più potente
+a279b8da-7d73-4555-af57-a29bd62f3888	STIHL	SA09 011 7000	SGA 30	Irroratori	Irroratore a batteria Stihl SGA 30, sistema AK, serbatoio 5 litri, portata 0,6 l/min.	119.00	119.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 30, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ, 5L, senza batteria
+a80d89bd-cad0-4060-8fe1-a6c32f922477	STIHL	SA09 011 7010	SGA 30 Set	Irroratori	Irroratore a batteria Stihl SGA 30, sistema AK, serbatoio 5 litri, portata 0,6 l/min.	159.00	159.02	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 30, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ, con AS 2 e AL 1
+7cf4249a-c75c-46cc-9f4b-f3b626ca7e1d	STIHL	SA10 011 7010	SGA 60 Set	Irroratori	Irroratore a batteria Stihl SGA 60, sistema AK, serbatoio 10 litri, portata 1,2 l/min.	289.00	288.64	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 270, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 520, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 630, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	NOVITÀ, con AK 10 e AL 101
+45004a21-9fa5-4e3d-be65-99071d456f67	STIHL	SA10 011 7000	SGA 60	Irroratori	Irroratore a batteria Stihl SGA 60, sistema AK, serbatoio 10 litri, portata 1,2 l/min.	189.00	189.28	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 270, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 520, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 630, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	NOVITÀ, 15L, senza batteria
+5864154c-3503-4f0a-9d00-a7906958ec1e	STIHL	4854 011 7005	SGA 85	Irroratori	Irroratore a batteria Stihl SGA 85, lancia in ottone, serbatoio 17 litri, pressione esercizio 1-6 bar, portata max 3,6 l/min, peso 6,2 kg.	651.00	605.53	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 770, "nome": "AP 30", "unita": "min"}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 1440, "nome": "AP 300 S", "unita": "min", "raccomandata": true}, {"val": 1000, "nome": "AP 500 S", "unita": "min"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	17L, Smart Connector
+96144ef3-dad7-4e73-8a0c-88cbd205ff2f	STIHL	4854-011-7005	SGA 85.0	Irroratori batteria	Irroratore a batteria Stihl SGA 85, lancia in ottone, serbatoio 17 litri, pressione esercizio 1-6 bar, portata max 3,6 l/min, peso 6,2 kg.	651.0	605.53	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e616ecee-b2c8-4e7f-adbc-0e50d1bf1a7c	STIHL	4241-011-2601	SR 200	Irroratori termici a zaino	Irroratore a benzina Stihl SR 200, cilindrata 27,2 cc, serbatoio 13,5 litri, portata max 3,0 l/min.	629.0	590.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+6306b344-ce5f-4ac7-83c4-9b3f42aee00b	STIHL	6140 200 0005	RT 4082	Trattorini	Trattorino da giardino Stihl RT 4082, motore Stihl 452 cc 4 tempi, piatto di taglio ventrale da 82 cm, altezza taglio regolabile 35-90 mm, cambio idrostatico a pedale.	3769.00	3280.54	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 4000 · 80cm · cesto 250L · idrostatico
+f1093c3f-8f8d-4600-98bf-c121608c871b	STIHL	6160 200 0023	RT 5097	Trattorini	Trattorino da giardino Stihl RT 5097, motore Stihl bicilindrico 477 cc 4 tempi, piatto di taglio ventrale da 97 cm, cambio idrostatico.	4039.00	3618.94	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 4000 · 95cm · cesto 250L · idrostatico
+bee15738-62e3-45d9-97a1-c354c95eace8	STIHL	6160 200 0024	RT 5097 Z	Trattorini	Trattorino da giardino Stihl RT 5097, motore Stihl bicilindrico 477 cc 4 tempi, piatto di taglio ventrale da 97 cm, cambio idrostatico.	4719.00	4228.22	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 95cm · 2 cilindri · cesto 250L
+c3d1037c-5236-4707-8338-0ce573236885	STIHL	6160 200 0025	RT 5112 Z	Trattorini	Trattorino da giardino Stihl RT 5112 Z, motore Stihl bicilindrico 540 cc 4 tempi, piatto di taglio da 112 cm con scarico zeroturn, cambio idrostatico.	5369.00	4810.62	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 110cm · 2 cilindri · cesto 350L
+b9a44d94-303c-4368-9b78-dc0c6b8dc4ec	STIHL	6170 200 0029	RT 6112 ZL	Trattorini	Trattorino da giardino Stihl RT 6112 ZL, motore Stihl bicilindrico 618 cc 4 tempi, piatto di taglio da 112 cm con scarico laterale zeroturn, cambio idrostatico.	6249.00	5599.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 110cm · 2 cilindri · cruise control · cesto 350L
+38e6f4a9-ec5d-4ff1-a732-c2acdbabbc33	STIHL	6170 200 0030	RT 6127 ZL	Trattorini	Trattorino da giardino Stihl RT 6127 ZL, motore Stihl bicilindrico 618 cc 4 tempi, piatto di taglio da 127 cm con scarico laterale zeroturn, cambio idrostatico.	6549.00	5867.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 8000 · 125cm · 2 cilindri · cruise control · display LCD
 \.
 
 
@@ -4875,176 +5635,214 @@ a78ddf9e-9b8e-4a33-9450-11e09edb35a8	2026-03-01 18:24:36.226009+00	2026-03-01 18
 -- Data for Name: commissioni; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.commissioni (id, created_at, cliente, cliente_info, telefono, operatore, prodotti, accessori, totale, caparra, metodo_pagamento, note, tipo_documento, status, completed_at, iva_compresa, user_id, tipo_operazione, privacy_required, privacy_acknowledged, is_preventivo, stato_preventivo) FROM stdin;
-1773154024602	2026-03-10 14:47:04.601+00	Cenedese Paolo	{"id": "501568", "cap": "31057", "nome": "Cenedese Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3393170646", "indirizzo": "VIA CRETA, 2", "provincia": "TV", "searchText": "cenedese paolo silea ", "telefonoOriginale": "3393170646"}	3393170646	Simone	[]	[{"id": 1773154012039, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-10 14:47:04.601+00	f	user_1773139186105	vendita	f	f	f	in_attesa
-1773245655924	2026-03-11 16:14:15.315+00	Zanetti Sergio	{"cf": null, "id": "ab516c2b-278b-493d-9a04-574dbaefb17b", "cap": null, "sdi": null, "nome": "Zanetti Sergio", "piva": null, "email": "magali.ditadi@virgilio.it", "nomeP": "Zanetti Sergio", "localita": "Marcon", "telefono": "3477341198", "indirizzo": "Via Fornace 24", "provincia": "VE", "searchText": "Zanetti Sergio"}	3477341198	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 55 R", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838434202"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-11 16:14:15.315+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771333556925	2026-02-17 11:00:00+00	Eos Cooperativa Sociale	{"id": "508412", "cap": "31033", "nome": "Eos Cooperativa Sociale", "email": "info@eoscooperativa.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3402249187", "indirizzo": "VIA OSPEDALE, 10", "provincia": "TV", "searchText": "eos cooperativa sociale castelfranco veneto ", "telefonoOriginale": "3402249187"}	3402249187	Simone	[]	[{"id": 1771333442068, "nome": "Stihl bobina filo tondo 2,7 MT 208 art. 0000 930 2227", "prezzo": 29.28, "quantita": 51, "matricola": null, "aliquotaIva": 22}]	0	\N	\N	Consegnare e ritirare 36 bobine filo 2,7 347 MT art. 0000 930 2289 per cambio articolo	fattura	completed	2026-02-17 11:00:00+00	t	user_1769961017929	cambio	f	f	f	in_attesa
-1772470754631	2026-03-02 16:59:14.321+00	Edil Demi Di Covassin Demido	{"id": "502529", "cap": "31048", "nome": "Edil Demi Di Covassin Demido", "email": "edil-demi@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3482652180", "indirizzo": "VIA POSTUMIA CENTRO , 16/A", "provincia": "TV", "searchText": "edil demi di covassin demido san biagio di callalta ", "telefonoOriginale": "3482652180"}	3482652180	Simone	[{"brand": "STIHL", "model": "Troncatrice TS 910.0i, 400mm/16\\"", "prezzo": 1980, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196978666"}]	[{"id": 1772470732908, "nome": "Motomix 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2007	\N	\N	\N	fattura	completed	2026-03-02 16:59:14.321+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772698454042	2026-03-05 08:14:14.042+00	Visentin Roberto	{"id": "509469", "cap": "31030", "nome": "Visentin Roberto", "email": "spazzioverde1@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3467443956", "indirizzo": "VIA ANGELA VERONESE, 22", "provincia": "TV", "searchText": "visentin roberto breda di piave ", "telefonoOriginale": "3467443956"}	3467443956	Simone	[]	[{"id": 1772698447121, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	81.5	\N	\N	\N	scontrino	completed	2026-03-05 08:14:14.042+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1772810660020	2026-03-06 15:24:20.02+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1772810629122, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	86	\N	\N	\N	scontrino	completed	2026-03-06 15:24:20.02+00	f	user_1772789533838	vendita	f	f	f	in_attesa
-1773050032197	2026-03-09 11:00:00+00	Battistel Denis	{"cf": null, "id": "aab0f8c6-cd23-40a0-bb56-3d2137d0591a", "cap": "31048", "sdi": null, "nome": "Battistel Denis", "piva": null, "email": "battisteldenis@gmail.com", "nomeP": "Battistel Denis", "localita": "San Biagio di Callalta", "telefono": "3280864412", "indirizzo": "Via Francescata 6", "provincia": "TV", "searchText": "Battistel Denis"}	3280864412	Simone	[]	[{"id": 1773050023366, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1773050391718, "nome": "HURRICANE KG 5", "prezzo": 54.45, "quantita": 1}]	149.85	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773331552845	2026-03-12 16:05:52.845+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773331548714, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-12 16:05:52.845+00	t	user_1773313248876	vendita	f	f	f	in_attesa
-1773393167815	2026-03-13 09:12:47.063+00	Massolin Franco	{"id": "511612", "cap": "31030", "nome": "Massolin Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3332889392", "indirizzo": "VIA SILE, 9", "provincia": "TV", "searchText": "massolin franco casier ", "telefonoOriginale": "3332889392"}	3332889392	Simone	[{"brand": "VOLPI", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0633NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-13 09:12:47.063+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773479195906	2026-03-14 09:06:35.507+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451614118"}]	[{"id": 1773479187913, "nome": "Cuffia Peltor", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	204	\N	\N	\N	scontrino	completed	2026-03-14 09:06:35.507+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773482595511	2026-03-14 10:03:15.133+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80.R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548926738"}]	[{"id": 1773482575778, "nome": "Zaino Volpi Vita 12", "prezzo": 119, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	498	\N	\N	\N	scontrino	completed	2026-03-14 10:03:15.133+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772193413182	2026-02-27 11:56:52.399+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[{"brand": "Volpi", "model": "Decespugliatore Ciao", "prezzo": 36, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	36	\N	\N	\N	scontrino	completed	2026-02-27 11:56:52.399+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1772471899116	2026-03-02 17:18:18.951+00	Viviani Antonio	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS-280TES", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C75138079230"}]	[{"id": 1772471856132, "nome": "Marline 2 T 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772471886378, "nome": "Olio catena Pro Up 2 litri", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	337	\N	\N	\N	scontrino	completed	2026-03-02 17:18:18.951+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772814552841	2026-03-06 16:29:12.841+00	Lombardi Pietro	\N	\N	Simone	[{"brand": "Stocker", "model": "Irroratore Geyser Pro", "prezzo": 1590, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "2541572916785"}]	[{"id": 1772814456411, "nome": "Alimentatore", "prezzo": 124, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1714	\N	\N	\N	fattura	completed	2026-03-06 16:29:53.647+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1773052842702	2026-03-09 10:40:42.702+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773052836762, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-09 10:40:42.702+00	t	user_1773043211070	vendita	f	f	f	in_attesa
-1773159163790	2026-03-10 16:12:43.197+00	Il Filo D'ERBA Di De Bernardo Sebastiano	{"id": "202718", "cap": "30020", "nome": "Il Filo D'ERBA Di De Bernardo Sebastiano", "email": "sebastiano.ilfiloderba@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MARCON", "telefono": "3395274358", "indirizzo": "VIA MONTE PELMO, 8", "provincia": "VE", "searchText": "il filo d'erba di de bernardo sebastiano marcon ", "telefonoOriginale": "3395274358"}	3395274358	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1069705"}]	[]	959	\N	\N	\N	fattura	completed	2026-03-10 16:12:43.197+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773248038153	2026-03-11 16:53:58.152+00	CARDIN SIMONE	\N	\N	Simone	[]	[{"id": 1773247391717, "nome": "NEBUZAN REPELLENTE LT. 5", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1773247441666, "nome": "PIREKRAFT INSETTICIDA CON CONCENTRATO", "prezzo": 42, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	182	\N	\N	\N	scontrino	completed	2026-03-11 16:53:58.152+00	f	user_1773240946720	vendita	f	f	f	in_attesa
-1772699565277	2026-03-05 08:32:45.274+00	Fantuzzo Luca	\N	\N	Simone	[{"brand": "Honda", "model": "Trattorino HF2625 HME", "prezzo": 6199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBWF-1600622"}]	[]	6199	3000	pos	Consegna a domicilio appena pronto. Saldo con bonifico bancario	scontrino	completed	2026-03-12 13:28:13.02+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773336328776	2026-03-12 17:25:28.775+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1773336279404, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	104	\N	\N	\N	scontrino	completed	2026-03-12 17:25:28.775+00	t	user_1773313248876	vendita	f	f	f	in_attesa
-1773396968435	2026-03-13 10:16:08.435+00	Rizzo Ennio	\N	\N	Simone	[]	[{"id": 1773396950449, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773396959427, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	162	\N	\N	\N	scontrino	completed	2026-03-13 10:16:08.435+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-recovered-131	2026-01-28 11:00:00+00	Favero Giardini Di Favero Mirco	\N	\N	Simone	[]	[{"nome": "GANCIO TRAINO AVANT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	200	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-130	2026-01-28 11:00:00+00	Haprilla Kola	\N	\N	Simone	[]	[{"nome": "Trattorino John Deere x 165 usato, visto e piaciuto nello stato in cui si trova", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	1350	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-1773479316134	2026-03-14 09:08:35.998+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 100.0 PLUS CONTROL", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "970360968"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-14 09:08:35.998+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773481363098	2026-03-14 09:42:42.231+00	Bortolato Franco	{"id": "512977", "cap": "30173", "nome": "Bortolato Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3461355202", "indirizzo": "VIA CA' FORNONI, 84", "provincia": "VE", "searchText": "bortolato franco favaro veneto ", "telefonoOriginale": "3461355202"}	3461355202	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519976"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "701192870"}, {"brand": "STIHL", "model": "Batteria AK 30.0 S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937874"}]	[{"id": 1773481125813, "nome": "Ritiro Vs decespugliatore usato ", "prezzo": -49, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	500	\N	\N	\N	scontrino	completed	2026-03-14 09:42:42.231+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772267744154	2026-02-28 08:35:43.824+00	Bergamo Nello - Impresa Edile	{"id": "202992", "cap": "31048", "nome": "Bergamo Nello - Impresa Edile", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422 897964", "indirizzo": "VIA G. GALILEI N. 19", "provincia": "TV", "searchText": "bergamo nello - impresa edile san biagio di callalta ", "telefonoOriginale": "0422 897964"}	0422 897964	Simone	[{"brand": "NEGRI", "model": "Biotrituratore R95BRAHP65", "prezzo": 1600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "27489101"}]	[]	1600	\N	\N	\N	fattura	completed	2026-02-28 08:35:43.824+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772529500057	2026-03-03 09:18:18.637+00	Ortolan Sara	\N	\N	Simone	[{"brand": "STIHL", "model": "Tosaerba RMA 239.1", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451990095"}, {"brand": "STIHL", "model": "AL 101", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "986413411"}, {"brand": "STIHL", "model": "AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736954"}, {"brand": "STIHL", "model": "Tagliabordi FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451521369"}, {"brand": "STIHL", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452100454"}]	[]	807	\N	\N	\N	scontrino	completed	2026-03-03 09:18:18.637+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1772706224154	2026-03-05 10:23:43.113+00	Tegon Sergio	{"id": "508520", "cap": "31048", "nome": "Tegon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422790312", "indirizzo": "VIA GOITO, 7 - SANT'ANDREA D I BARBARANA", "provincia": "TV", "searchText": "tegon sergio san biagio di callalta ", "telefonoOriginale": "0422790312"}	0422790312	Simone	[{"brand": "Honda", "model": "Motozappa F220K1 GET2", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "FAAJ-3620207"}]	[]	999	50	contanti	\N	scontrino	completed	2026-03-05 10:23:43.113+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772869167515	2026-03-07 07:39:27.513+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1772869122905, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-07 07:39:27.513+00	f	user_1772867117490	vendita	f	f	f	in_attesa
-recovered-165	2026-02-14 11:00:00+00	Osan Emil Augustin	\N	\N	Simone	[{"brand": "STIHL", "model": "Tagliasiepi HL 92 C-E", "prezzo": 790, "aliquotaIva": 22, "serialNumber": "542187474"}]	[]	790	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-143	2026-02-07 11:00:00+00	Menegaldo Bruno	\N	\N	Simone	[{"brand": "Stihl", "model": "MOTOSEGA STIHL MS 661", "prezzo": 1630, "aliquotaIva": 22, "serialNumber": "193 545 593"}]	[]	1630	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-144	2026-02-07 11:00:00+00	XHELAJ REMZI	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "POTATORE KVS 8000", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "SL3325 371 NB"}, {"brand": "ACCESSORI", "model": "FORBICE KV 390", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "PZ 2925 390NB"}]	[{"nome": "1 CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	840	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-145	2026-02-07 11:00:00+00	Xhelaj Kreshnik	\N	\N	Simone	[{"brand": "ECHO", "model": "Motosega CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C 74638144456"}]	[]	439	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-140	2026-02-06 11:00:00+00	COMMISSATI FRANCESCA	\N	\N	Simone	[{"brand": "STIHL", "model": "BIOTRITURATORE GHE 105", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "451998874"}]	[{"nome": "Stihl POTATORE GTA 26 942966195", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AS 2 937201708", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 1 718061245", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	609	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-141	2026-02-06 11:00:00+00	CARRARO PAOLO	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 231", "prezzo": 539, "aliquotaIva": 22, "serialNumber": "194 053 082"}]	[]	539	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-142	2026-02-05 11:00:00+00	AZ. AGR. SEMPREVERDE DI TOFFOLI SONIA	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HLA 135", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "449925313"}]	[{"nome": "CUFFIA OPTIME", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "CUFFIA KRAMP", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	704.1	\N	\N	\N	scontrino	completed	2026-02-05 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-162	2026-02-02 11:00:00+00	Bimetal	\N	\N	Simone	[]	[{"nome": "61 PMM3 Piccolo Micro Mini Catena", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "catena m47-91", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA 91 - 53M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "CATENA 1/4 1,1 52M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}]	132.55	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-136	2026-01-30 11:00:00+00	Tonini Srl	\N	\N	Simone	[]	[{"nome": "Pantalone Echo antitaglio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	95	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-134	2026-01-30 11:00:00+00	Taffarello Daniele	\N	\N	Simone	[{"brand": "Volpi", "model": "POTATORE VOLPI KVS 7100P", "prezzo": 409, "aliquotaIva": 22, "serialNumber": "SRØ123 Ø773LS"}]	[]	409	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-135	2026-01-30 11:00:00+00	Piovesan Andrea	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "Motosega MS 231", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "194053039"}]	[{"nome": "TANICA MOTOMIX 5 L", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	566.5	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-132	2026-01-28 11:00:00+00	Vacilotto Valerio	\N	\N	Simone	[{"brand": "STIHL", "model": "FORBICE STIHL ASA 20", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "707610915"}]	[{"nome": "BATTERIA AS 2", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	219	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-133	2026-01-28 11:00:00+00	AZ. AGR. POSSAMAI GIULIANO e C.	\N	\N	Simone	[{"brand": "ECHO", "model": "MOTOSEGA DCS 2500 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "T 91435039178"}]	[{"nome": "BATTERIA LBP 50-150", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ-560", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-128	2026-01-23 11:00:00+00	TONINI SRL	\N	\N	Simone	[{"brand": "Echo", "model": "MOTOSEGA CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C87940041531"}]	[]	439	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-124	2026-01-20 11:00:00+00	CORTESE MIRCO	\N	\N	Simone	[]	[{"nome": "POTATORE HTA 50", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATTERIA AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK2O", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	459	\N	\N	\N	scontrino	completed	2026-01-20 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-1772269324233	2026-02-28 09:02:04.233+00	M&A Saterini Snc	{"id": "512498", "cap": "31100", "nome": "M&A Saterini Snc", "email": "saterinisnc@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3341760622", "indirizzo": "VIA UGO FOSCOLO, 19", "provincia": "TV", "searchText": "m&a saterini snc treviso ", "telefonoOriginale": "3341760622"}	3341760622	Simone	[]	[{"id": 1772269310543, "nome": "Svettatoio RCM Wolf", "prezzo": 82, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	82	\N	\N	\N	fattura	completed	2026-02-28 09:02:04.233+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772530049616	2026-03-03 09:27:29.616+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[]	[{"id": 1772530032547, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-03 09:27:29.616+00	t	user_1772521427039	vendita	f	f	f	in_attesa
-1773217623696	2026-03-11 08:27:03.352+00	Boccardelli Alessandro	{"id": "501331", "cap": "31030", "nome": "Boccardelli Alessandro", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3477767769", "indirizzo": "VIA PER CAVRIE, 16 - SAN BARTOLOMEO", "provincia": "TV", "searchText": "boccardelli alessandro breda di piave ", "telefonoOriginale": "3477767769"}	3477767769	Simone	[{"brand": "Honda", "model": "Rasaerba HRX476C2 HYEH", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBYF1064510"}]	[]	1250	\N	\N	\N	scontrino	completed	2026-03-11 08:27:03.352+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-recovered-129	2026-01-26 11:00:00+00	PAOLO BARBON	\N	\N	Simone	[]	[{"nome": "WEIBANG TRINCIAERBA CARDANO 3 VELOCITA WBBC537SCV", "prezzo": 1350, "quantita": 1, "aliquotaIva": 22}]	1350	100	contanti	cell. 3464744611	scontrino	completed	2026-01-26 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-1772785776569	2026-03-06 08:29:36.569+00	Taffarello Giuliano	{"id": "504173", "cap": "31030", "nome": "Taffarello Giuliano", "email": "giuliano.taffarello@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3356947922", "indirizzo": "VIA GRANDE DI MIGNAGOLA, 73", "provincia": "TV", "searchText": "taffarello giuliano carbonera ", "telefonoOriginale": "3356947922"}	3356947922	Simone	[{"brand": "Segway", "model": "Robot tosaerba X430E", "prezzo": 3500, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	3500	500	pos	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa
-1772872572362	2026-03-07 08:36:11.624+00	Favaro Arnaldo	{"id": "512983", "cap": "31056", "nome": "Favaro Arnaldo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3391572851", "indirizzo": "VIA GALLI, 39/B", "provincia": "TV", "searchText": "favaro arnaldo roncade ", "telefonoOriginale": "3391572851"}	3391572851	Admin	[{"brand": "STIHL", "model": " MSA 70.0 C", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200572"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "45204006535AE021G02910599504"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702287103"}]	[]	398	\N	\N	\N	scontrino	completed	2026-03-07 08:36:11.624+00	t	user_1772723709793	vendita	f	f	f	in_attesa
-1773068231847	2026-03-09 11:00:00+00	vivai lovisetto marco	\N	\N	Simone	[]	[{"id": 1773068091299, "nome": "MOLLA A TAZZA 40 X20,4X0,5", "prezzo": 1.56, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091300, "nome": "PERNO LAMA FD", "prezzo": 7.95, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091301, "nome": "LAMA PIATTO CLS9/CLS10/TRINCIA", "prezzo": 16.8, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091302, "nome": "RONDELLA 35 X 12,5 X 6", "prezzo": 2.05, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091303, "nome": "DADO 12X1,75 AUTUBL BASSO", "prezzo": 0.33, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	57.38	\N	\N	\N	fattura	completed	2026-03-09 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1773338235441	2026-03-12 17:57:15.441+00	CENEDESE FABRIZIO	\N	\N	Simone	[]	[{"id": 1773338206431, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-12 17:57:15.441+00	t	user_1773313248876	vendita	f	f	f	in_attesa
-1773419112396	2026-03-13 16:25:12.044+00	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	{"id": "511430", "cap": "31056", "nome": "Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS", "email": "amministrazione@castellodironcade.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3336023178 GEROMEL", "indirizzo": "VIA ROMA, 141- INT.8", "provincia": "TV", "searchText": "castello di roncade soc.agr.di ciani bassetti claudio e c.ss roncade ", "telefonoOriginale": "3336023178 GEROMEL"}	3336023178 GEROMEL	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105586"}]	[]	599	\N	\N	\N	fattura	completed	2026-03-13 16:25:12.044+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-recovered-126	2026-01-23 11:00:00+00	AZ. AGR. Moz Moreno	\N	\N	Simone	[]	[{"nome": "SET CINTURA ADVANCE X-FLEX N°4", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	98	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-127	2026-01-23 11:00:00+00	Bortolato Alessandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "1 Motosega MS 182", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "837 262 464"}]	[{"nome": "1 Mix Marline 5LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "1 Olio PRO-UP 2LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	417	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-125	2026-01-22 11:00:00+00	BIANCO DAVIDE	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS3410", "prezzo": 269, "aliquotaIva": 22, "serialNumber": "F09238003622"}]	[]	269	\N	\N	\N	scontrino	completed	2026-01-22 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-123	2026-01-19 11:00:00+00	Toffolo Alessandro	\N	\N	Simone	[]	[{"nome": "Pantalone Stihl Function", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	119	\N	\N	\N	scontrino	completed	2026-01-19 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-119	2026-01-17 11:00:00+00	Gardin Adriano	\N	\N	Simone	[{"brand": "VARIE", "model": "POTATORE VOLPI KVS 8000", "prezzo": 220, "aliquotaIva": 22, "serialNumber": "SL 2025.165NB"}]	[]	220	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-120	2026-01-17 11:00:00+00	WALTER RIZZATO	\N	\N	Simone	[{"brand": "STIHL", "model": "MOTOSGA MS 182", "prezzo": 379, "aliquotaIva": 22, "serialNumber": "837 262 267"}]	[]	379	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-122	2026-01-17 11:00:00+00	Fossaluzza Sandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "MOTOSEGA MS 194 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "547317805"}]	[{"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	359	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-121	2026-01-17 11:00:00+00	CARNIEL MARCO	\N	\N	Simone	[]	[{"nome": "IMPIANTO ANTIZANZARE GEYSER PRO, 43 UGELLI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	2350	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-118	2026-01-16 11:00:00+00	Moretti Marco	\N	\N	Simone	[{"brand": "VARIE", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "aliquotaIva": 22, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-1772269630211	2026-02-28 09:07:10.21+00	Gobbo Pietro	\N	\N	Simone	[]	[{"id": 1772269574702, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772269588707, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	100.8	\N	\N	\N	scontrino	completed	2026-02-28 09:07:10.21+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-recovered-114	2026-01-16 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	\N	\N	Simone	[]	[{"nome": "CATENE 52 MAGLIE 1,1 mm", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "BIOPLUS 20 LITRI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "HP ULTRA LT 5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	203.8	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-112	2026-01-14 11:00:00+00	Zanardo Fabio	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "ECHO MOTOSEGA CS 2511 TES", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C87940041634"}]	[{"nome": "FORBICE", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	488	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-113	2026-01-14 11:00:00+00	GRACIS PAOLO VIA C. BATTIISTI 47/A VOLPAGO	\N	\N	Simone	[]	[{"nome": "SPACCALEGNA SUG 700 7 TONN.", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-108	2026-01-12 11:00:00+00	Green Style Srl	\N	\N	Simone	[{"brand": "VARIE", "model": "Tosasiepi Stihl HLA 66", "prezzo": 405, "aliquotaIva": 22, "serialNumber": "452306770"}]	[]	405	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-110	2026-01-12 11:00:00+00	MORO ENRICO	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega ECHO DCS 2500T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C 81535021918"}]	[{"nome": "BATTERIA LBP 56V 125  E83935013630", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-111	2026-01-12 11:00:00+00	IFAF SPA VIA CALNOVA 105 30020 NOVENTA DIP.	\N	\N	Simone	[]	[{"nome": "SNOWEX SPARGISALS SNOWEX", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "VEE PRO 6000", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	7900	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-116	2026-01-10 11:00:00+00	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	\N	\N	Simone	[{"brand": "WEIBANG", "model": "TRINCIAERBA WEIBANG 3. VEL. WBBC 532 SCV", "prezzo": 1350, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&250103036"}]	[]	1350	\N	\N	\N	scontrino	completed	2026-01-10 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-115	2026-01-09 11:00:00+00	De Zottis sas	\N	\N	Simone	[]	[{"nome": "SOFFIATORE BGA 60 452325465", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK30 912721072", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATTERIE AL 101 702817745", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	369	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-105	2026-01-09 11:00:00+00	MICHELE GOLFETTO	\N	\N	Simone	[]	[{"nome": "TRONCARAMI RS 750", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}]	134	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-104	2026-01-07 11:00:00+00	Battistel Thomas	\N	\N	Simone	[{"brand": "STIHL", "model": "SOFFIATORI BGA 160", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "450906088"}]	[{"nome": "SPRAY SUPERCLEAN", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	360	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "SEGACCIO ARS 470mm", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "MANICO TELES. EXP 5.5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	190	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-1772270715735	2026-02-28 09:25:15.284+00	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRG466C1 SKEP", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1301493"}]	[]	669	\N	\N	\N	scontrino	completed	2026-02-28 09:25:15.284+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772531425040	2026-03-03 09:50:25.04+00	Uliana Giovanni	{"id": "511193", "cap": "31100", "nome": "Uliana Giovanni", "email": "uligio.uliana@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3515565939", "indirizzo": "VIALE TRENTO TRIESTE, 10/A", "provincia": "TV", "searchText": "uliana giovanni treviso ", "telefonoOriginale": "3515565939"}	3515565939	Simone	[{"brand": "Weibang", "model": "Tosaerba WBC537SCV", "prezzo": 1425, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&251212012"}]	[]	1425	425	contanti	\N	scontrino	completed	2026-03-05 12:54:46.828+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771139919865	2026-02-14 11:00:00+00	Piovesan Andrea	{"id": "513052", "cap": "31050", "nome": "Piovesan Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3202725545", "indirizzo": "VIA PAVANI, 37A", "provincia": "TV", "searchText": "piovesan andrea monastier di treviso ", "telefonoOriginale": "3202725545"}	3202725545	Simone	[]	[{"id": 1771139908345, "nome": "Affilatore catena Stihl", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1772791614338	2026-03-06 10:06:54.338+00	Pasquali Silvano	{"id": "501948", "cap": "31048", "nome": "Pasquali Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3493238900", "indirizzo": "VIA SAN FRANCESCO, 28 -ROVARE'", "provincia": "TV", "searchText": "pasquali silvano san biagio di callalta ", "telefonoOriginale": "3493238900"}	3493238900	Simone	[]	[{"id": 1772791609911, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-06 10:06:54.338+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1772872964693	2026-03-07 08:42:42.893+00	Caredi S.R.L.	{"id": "503694", "cap": "31057", "nome": "Caredi S.R.L.", "email": "info@caredi.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294073", "indirizzo": "VIA S. ELENA, 52", "provincia": "TV", "searchText": "caredi s.r.l. silea ", "telefonoOriginale": "042294073"}	042294073	Admin	[{"brand": "STIHL", "model": " HSA 60.1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452246465"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "910695337"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644370"}]	[]	390	\N	\N	\N	fattura	completed	2026-03-07 08:42:42.893+00	t	user_1772723709793	vendita	f	f	f	in_attesa
-1773069322800	2026-03-09 15:15:22.799+00	Bresolin Andrea	{"id": "511309", "cap": "31034", "nome": "Bresolin Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVASO DEL TOMBA", "telefono": "", "indirizzo": "VIA SAN PIO X 197 I 5", "provincia": "TV", "searchText": "bresolin andrea cavaso del tomba ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1773069220485, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}, {"id": 1773069249381, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1773069296739, "nome": "Albatros Vigor Active Kg 25 kg", "prezzo": 47.9, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	595.3	\N	\N	\N	fattura	completed	2026-03-09 15:15:22.799+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773221325833	2026-03-11 09:28:45.472+00	Pavan Claudio	{"cf": null, "id": "6bf65e71-0cb6-4772-a26c-085a7619a0ff", "cap": null, "sdi": null, "nome": "Pavan Claudio", "piva": null, "email": null, "nomeP": "Pavan Claudio", "localita": "Musile Di Piave", "telefono": "3246197179", "indirizzo": "Via Rovigo 10", "provincia": "VE", "searchText": "Pavan Claudio"}	3246197179	Simone	[{"brand": "Grillo", "model": " Trimmer HWT600", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "695024"}]	[]	1250	300	contanti	\N	scontrino	completed	2026-03-11 09:28:45.472+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773388672091	2026-03-13 11:00:00+00	De Zottis A. Sas REALIZZAZ. Del Verde	{"id": "201872", "cap": "31030", "nome": "De Zottis A. Sas REALIZZAZ. Del Verde", "email": "", "nomeP": "", "cognome": "", "contatto": "Andrea / Erica", "localita": "SALETTO DI PIAVE", "telefono": "348-4526755 ANDREA", "indirizzo": "VIA ARGINE 13", "provincia": "TV", "searchText": "de zottis a. sas realizzaz. del verde saletto di piave andrea / erica", "telefonoOriginale": "348-4526755 ANDREA"}	348-4526755 ANDREA	Simone	[{"brand": "Honda", "model": "Rasaerba HRX537C7 HYEH", "prezzo": 1479, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "1035893"}]	[]	1479	\N	\N	\N	fattura	completed	2026-03-13 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773421198889	2026-03-13 16:59:58.889+00	Urban Sandro	{"id": "506872", "cap": "31020", "nome": "Urban Sandro", "email": "urban.sandro@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "3280187377", "indirizzo": "VIA SANTA GIUSTINA, 3", "provincia": "TV", "searchText": "urban sandro san fior ", "telefonoOriginale": "3280187377"}	3280187377	Simone	[]	[{"id": 1773421188921, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 10, "matricola": null, "aliquotaIva": 4}]	583	\N	\N	\N	fattura	completed	2026-03-13 16:59:58.889+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773481059548	2026-03-14 09:37:39.548+00	BROLLO MARCO	{"cf": "", "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": "", "nome": "BROLLO MARCO", "piva": "", "email": "", "nomeP": "MARCO", "_fonte": "db", "cognome": "BROLLO", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "", "indirizzo": "VIA FRIULI", "provincia": "", "searchText": "brollo marco"}	\N	Simone	[]	[{"id": 1773481045921, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	15.7	\N	\N	\N	scontrino	completed	2026-03-14 09:37:39.548+00	t	user_1773478718487	vendita	f	f	f	in_attesa
-1770385464630	2026-02-06 13:44:24.631+00	AZ. AGR. Moz Moreno	{"id": "510801", "cap": "30100", "nome": "AZ. AGR. Moz Moreno", "email": "fattoriaimpronta@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VENEZIA", "telefono": "3408032699", "indirizzo": "VIA PASSO CAMPALTO, 15A - CAMPALTO", "provincia": "VE", "searchText": "az. agr. moz moreno venezia ", "telefonoOriginale": "3408032699"}	3408032699	Simone	[]	[{"id": 1770385435974, "nome": "Zaino supporto tosasiepi", "prezzo": 400, "quantita": 1, "descrizione": "ZAINO SUPPORTO TOSASIEPI"}]	400	\N	\N	I.C.	fattura	completed	2026-02-06 13:44:24.631+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772274248500	2026-02-28 10:24:07.909+00	Buscato Mattia via Ca' Memo 29 Noventa di Piave 340 4519357 mbuschy04@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1028729"}]	[]	959	\N	\N	\N	scontrino	completed	2026-02-28 10:24:07.909+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1770626009165	2026-02-09 08:33:29.165+00	Moretti Marco	{"id": "202904", "cap": "31100", "nome": "Moretti Marco", "email": "moretti72.marco@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3392050119", "indirizzo": "VIA TIMAVO", "provincia": "TV", "searchText": "moretti marco treviso ", "telefonoOriginale": "3392050119"}	3392050119	Simone	[{"brand": "", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "isOmaggio": false, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	fattura	completed	2026-02-09 08:33:29.165+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1770744173693	2026-02-10 17:22:53.693+00	Camarotto Michele	{"id": "502091", "cap": "30020", "nome": "Camarotto Michele", "email": "saradilegui@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3484460983", "indirizzo": "VIA PASSO LAMPOL, 27/A", "provincia": "VE", "searchText": "camarotto michele fossalta di piave ", "telefonoOriginale": "3484460983"}	3484460983	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV295", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "ZA1625.124NB"}]	[]	199	\N	\N	\N	scontrino	completed	2026-02-10 17:22:53.693+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1770801828120	2026-02-11 09:23:48.12+00	Nico Giardini Di Bastarolo Nicola	{"id": "504139", "cap": "31059", "nome": "Nico Giardini Di Bastarolo Nicola", "email": "nickbast74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco ", "telefonoOriginale": "3498200169"}	3498200169	Simone	[]	[{"id": 1770801600789, "nome": "Manicotti antitaglio ", "prezzo": 48, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801636352, "nome": "Ricambio Archman svettatoio ", "prezzo": 16, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801660760, "nome": "Visiera completa", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801714594, "nome": "Cosciale copri pantaloni ", "prezzo": 17, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801775018, "nome": "Filo dice 3 mm 50 metri quadro R304342", "prezzo": 13.9, "quantita": 3, "matricola": null, "aliquotaIva": 22}, {"id": 1770801796561, "nome": "Svettatoio Archman ", "prezzo": 120, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	252.7	\N	\N	\N	fattura	completed	2026-02-11 09:23:48.12+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1770997818464	2026-02-13 15:50:18.464+00	Scomparin Pierino	{"id": "502251", "cap": "31057", "nome": "Scomparin Pierino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3394191177", "indirizzo": "VIA BELVEDERE, 71", "provincia": "TV", "searchText": "scomparin pierino silea ", "telefonoOriginale": "3394191177"}	3394191177	Simone	[{"brand": "STIHL", "model": "Batteria AS2 (28 Wh)", "prezzo": 42, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "950420572"}]	[]	42	\N	\N	\N	scontrino	completed	2026-02-13 15:50:18.464+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772791840067	2026-03-06 10:10:40.067+00	Torresan Silvano	{"id": "504548", "cap": "31050", "nome": "Torresan Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3280309741", "indirizzo": "VIA EMILIA, 24", "provincia": "TV", "searchText": "torresan silvano monastier di treviso ", "telefonoOriginale": "3280309741"}	3280309741	Simone	[{"brand": "Stiga", "model": "Trattorino Rider usato con cambio manuale e piatto da 72 cm", "prezzo": 1100, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "usato giallo"}]	[]	1100	\N	\N	Preparare e chiamare per consegna appena pronto	scontrino	completed	2026-03-06 10:11:09.298+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1771231859301	2026-02-16 11:00:00+00	Bisetto Mario	{"id": "502153", "cap": "31030", "nome": "Bisetto Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3493730882", "indirizzo": "VIA CODALUNGA, 135", "provincia": "TV", "searchText": "bisetto mario carbonera ", "telefonoOriginale": "3493730882"}	3493730882	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 509, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519977"}, {"brand": "STIHL", "model": "Caricabatterie AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817744"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736933"}]	[]	509	\N	\N	\N	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773044516572	2026-03-09 08:21:56.571+00	Piave Service Srl	{"id": "503141", "cap": "31030", "nome": "Piave Service Srl", "email": "piave-service@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3488994157", "indirizzo": "VIA SAN GIACOMO, 5", "provincia": "TV", "searchText": "piave service srl breda di piave ", "telefonoOriginale": "3488994157"}	3488994157	Simone	[]	[{"id": 1773044495289, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1773044503779, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	156	\N	\N	\N	fattura	completed	2026-03-09 08:21:56.571+00	t	user_1773043211070	vendita	f	f	f	in_attesa
-1773240850390	2026-03-11 14:54:10.39+00	Palma Paolo	\N	\N	Simone	[]	[{"id": 1773240834044, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773240842536, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-03-11 14:54:10.39+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773669150174	2026-03-16 13:52:30.174+00	Cibin Omar	{"id": "514092", "cap": "", "nome": "Cibin Omar", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "", "telefono": "3463790667", "indirizzo": "", "provincia": "", "searchText": "cibin omar  ", "telefonoOriginale": "3463790667"}	3463790667	Simone	[]	[{"id": 1773669143245, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-16 13:52:30.174+00	t	user_1773667360453	vendita	f	f	f	in_attesa
-1771258833161	2026-02-16 11:00:00+00	Balanza Marino	{"id": "509979", "cap": "31048", "nome": "Balanza Marino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3466323236", "indirizzo": "VIA CLAUDIA AUGUSTA, 6", "provincia": "TV", "searchText": "balanza marino san biagio di callalta ", "telefonoOriginale": "3466323236"}	3466323236	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV390", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PZ2925.389NB"}, {"brand": "VOLPI", "model": "Potatore KVS6000", "prezzo": 200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SM4222498LS"}]	[{"id": 1771258823114, "nome": "Occhiali ", "prezzo": 5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	664	\N	\N	Potatore senza batterie	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771492465151	2026-02-19 11:00:00+00	Sartori Luca	{"id": "203045", "cap": "31100", "nome": "Sartori Luca", "email": "sartoriluca74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494968896", "indirizzo": "VIA S.ANTONINO 288", "provincia": "TV", "searchText": "sartori luca treviso ", "telefonoOriginale": "3494968896"}	3494968896	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310977"}]	[]	350	\N	\N	Pagamento BB fine mese	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771493646908	2026-02-19 11:00:00+00	Buffon Giancarlo	{"id": "512986", "cap": "31038", "nome": "Buffon Giancarlo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3496148085", "indirizzo": "VIA MARONCELLI 6", "provincia": "TV", "searchText": "buffon giancarlo paese ", "telefonoOriginale": "3496148085"}	3496148085	Simone	[{"brand": "STIHL", "model": "Tagliabordi FSA 30.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838110682"}, {"brand": "STIHL", "model": "Caricabatterie AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "935280185"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "937056842"}]	[{"id": 1771493623647, "nome": "Ricambio polycut", "prezzo": 4, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	167	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1771498408037	2026-02-19 11:00:00+00	AZ. AGR. Vivai Piante Di Dragancea Andrei	{"id": "202724", "cap": "31056", "nome": "AZ. AGR. Vivai Piante Di Dragancea Andrei", "email": "andrei.dragancea@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3282670287", "indirizzo": "VIA ARRIGO BOITO, 10 - BIANCADE", "provincia": "TV", "searchText": "az. agr. vivai piante di dragancea andrei roncade ", "telefonoOriginale": "3282670287"}	3282670287	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310979"}]	[]	350	\N	\N	\N	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771514517527	2026-02-19 11:00:00+00	Gasparini Francesco	{"id": "505627", "cap": "30020", "nome": "Gasparini Francesco", "email": "gasparini.francesco@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3939936820", "indirizzo": "VIA CA' CORNER SUD, 49", "provincia": "VE", "searchText": "gasparini francesco meolo ", "telefonoOriginale": "3939936820"}	3939936820	Simone	[{"brand": "Stihl", "model": "Atomizzatore SR 430 Mistblower", "prezzo": 760, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370193762"}]	[]	760	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771667848261	2026-02-21 11:00:00+00	Cadorin Roberto	{"id": "514044", "cap": "31056", "nome": "Cadorin Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3479715095", "indirizzo": "VIA PARIS BORDONE, 39 - BIANCADE", "provincia": "TV", "searchText": "cadorin roberto roncade ", "telefonoOriginale": "3479715095"}	3479715095	Simone	[]	[{"id": 1771667799331, "nome": "CONCIME GREEN 7", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	45.3	\N	\N	\N	scontrino	completed	2026-02-21 11:00:00+00	t	user_1771659500533	vendita	f	f	f	in_attesa
-1771596591121	2026-02-20 14:09:50.604+00	Bonetto Franco	{"id": "511303", "cap": "31048", "nome": "Bonetto Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3452383445", "indirizzo": "VIA ORTIGARA, 7 - FAGARE'", "provincia": "TV", "searchText": "bonetto franco san biagio di callalta ", "telefonoOriginale": "3452383445"}	3452383445	Simone	[{"brand": "VOLPI", "model": "Potatore KVS8000", "prezzo": 370, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SL3325.372NB"}]	[]	370	\N	\N	\N	scontrino	completed	2026-02-20 14:09:50.604+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771670427449	2026-02-21 10:40:26.358+00	Chiericati Massimo	{"id": "505901", "cap": "31100", "nome": "Chiericati Massimo", "email": "", "nomeP": "", "cognome": "", "contatto": "Fronte Hotel Carletto", "localita": "TREVISO", "telefono": "3407860739", "indirizzo": "VIA SEBASTIANO CABOTO, 13 - SELVANA", "provincia": "TV", "searchText": "chiericati massimo treviso fronte hotel carletto", "telefonoOriginale": "3407860739"}	3407860739	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 1/4 P Chainsaw", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "540455888"}]	[{"id": 1771670392224, "nome": "Olio catena bioplus 1 litro", "prezzo": 6, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1771670408727, "nome": "Guanti ", "prezzo": 3.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	358.9	\N	\N	\N	scontrino	completed	2026-02-21 10:40:26.358+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771664967655	2026-02-21 09:09:27.655+00	D'AMELIO Vincenzo	{"id": "502893", "cap": "31056", "nome": "D'AMELIO Vincenzo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3450818865", "indirizzo": "VIA PRINCIPE, 85/A - MUSESTRE", "provincia": "TV", "searchText": "d'amelio vincenzo roncade ", "telefonoOriginale": "3450818865"}	3450818865	Simone	[{"brand": "GGP", "model": "Trattorino XF 135 HD", "prezzo": 2200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "25CA3RON005540"}]	[]	2200	400	pos	Contattare il cliente appena pronto per la consegna. Ritirare rider del cliente per rottamazione	scontrino	completed	2026-03-12 08:38:36.1+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1772276586896	2026-02-28 11:03:06.587+00	Patruno Franco	{"id": "506125", "cap": "31048", "nome": "Patruno Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3935553311", "indirizzo": "VIA TREVISO MARE, 8", "provincia": "TV", "searchText": "patruno franco san biagio di callalta ", "telefonoOriginale": "3935553311"}	3935553311	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 60 R", "prezzo": 185, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450921356"}]	[]	185	\N	\N	\N	scontrino	completed	2026-02-28 11:03:06.587+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772698023760	2026-03-05 08:07:03.759+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1772697630789, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1772697650836, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697668935, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697688240, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1772697704749, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	654.9	\N	\N	\N	fattura	completed	2026-03-05 08:07:03.759+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1771857311156	2026-02-23 14:35:10.084+00	Cenedese Andrea	{"id": "500594", "cap": "31048", "nome": "Cenedese Andrea", "email": "andrea.cenedese@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[{"brand": "Volpi", "model": "Forbice elettronica KV360", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	299	\N	\N	\N	scontrino	completed	2026-02-23 14:35:10.084+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773045271126	2026-03-09 11:00:00+00	BARBON IVAN	\N	\N	Simone	[]	[{"id": 1773045119753, "nome": "Universal Top 20 kg", "prezzo": 59.4, "quantita": 11, "matricola": null, "aliquotaIva": 4}]	653.4	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1773043211070	vendita	f	f	f	in_attesa
-1773075750834	2026-03-09 17:02:30.833+00	BROLLO MARCO	{"cf": null, "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": null, "nome": "BROLLO MARCO", "piva": null, "email": null, "nomeP": "BROLLO MARCO", "localita": "SAN BIAGIO DI CALLALTA", "telefono": null, "indirizzo": "VIA FRIULI", "provincia": null, "searchText": "BROLLO MARCO"}	\N	Simone	[]	[{"id": 1773075593716, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773075700238, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	46.9	\N	\N	\N	scontrino	completed	2026-03-09 17:02:30.833+00	t	user_1773043211070	vendita	f	f	f	in_attesa
-1773244078788	2026-03-11 15:47:58.787+00	Romanello Umberto	{"id": "508068", "cap": "31048", "nome": "Romanello Umberto", "email": "umbe.roma@yahoo.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3463719100", "indirizzo": "VIA FORNASATTA, 5", "provincia": "TV", "searchText": "romanello umberto san biagio di callalta ", "telefonoOriginale": "3463719100"}	3463719100	Simone	[]	[{"id": 1773244071793, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-11 15:47:58.787+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1771836731318	2026-02-23 11:00:00+00	Mareverde Srls	{"id": "501758", "cap": "30016", "nome": "Mareverde Srls", "email": "info@vivaisorgon.it", "nomeP": "", "cognome": "", "contatto": "Simone 335490390", "localita": "JESOLO", "telefono": "0421230013", "indirizzo": "Via Zuccarini, 11", "provincia": "VE", "searchText": "mareverde srls jesolo simone 335490390", "telefonoOriginale": "0421230013"}	0421230013	Simone	[{"brand": "Grillo", "model": "Trattorino FD500", "prezzo": 22326, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "772900"}]	[{"id": 1771836586694, "nome": "Ritiro Vs trattorino usato GF PG280D", "prezzo": -14640, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	7686	1300	bonifico	consegna a febbraio (il cliente è stato avvisato che la consegna sarà spostata a marzo). Pagamento con ricevuta bancaria a 30-60 giorni	fattura	completed	2026-03-24 10:48:14.169+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1773649605393	2026-03-16 08:26:45.108+00	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	{"id": "510978", "cap": "31020", "nome": "AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.", "email": "giuliano.possamai@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "", "indirizzo": "VIA SAN MACARIO DEI PALU 33", "provincia": "TV", "searchText": "az. agr. possamai di possamai giuliano & c. s.s. san fior ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 375, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452134555"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245642"}]	[]	704	\N	\N	\N	fattura	completed	2026-03-16 08:26:45.108+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773330444130	2026-02-16 11:00:00+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Simone	[]	[{"id": 1773330333121, "nome": "Green 7 25 kg", "prezzo": 38.7, "quantita": 30, "matricola": null, "aliquotaIva": 4}, {"id": 1773330347033, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	1900.5	\N	\N	\N	fattura	completed	2026-02-16 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1773762228782	2026-03-17 15:43:48.782+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1773762180768, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773762223076, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	127.7	\N	\N	\N	fattura	completed	2026-03-17 15:43:48.782+00	t	user_1773757201306	vendita	f	f	f	in_attesa
-1773829190451	2026-03-18 10:19:49.852+00	Gheller Giovanni	{"id": "501565", "cap": "31030", "nome": "Gheller Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3493203938", "indirizzo": "VIA MASERADE, 23", "provincia": "TV", "searchText": "gheller giovanni breda di piave ", "telefonoOriginale": "3493203938"}	3493203938	Simone	[{"brand": "Stihl", "model": "Potatore GTA 40.0", "prezzo": 399, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449980336"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511941"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511944"}, {"brand": "STIHL", "model": "Caricabatteria AL 5-2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "709055579"}]	[]	399	\N	\N	\N	scontrino	completed	2026-03-18 10:19:49.852+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773841339358	2026-03-18 13:42:18.807+00	Bergamo Pietro	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416XBPEEA", "prezzo": 700, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCEF1003260"}, {"brand": "Honda", "model": "Batteria 4.0 li-Ion", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY-1002910"}, {"brand": "Honda", "model": "Caricabatteria CV3620XA EM", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027252"}]	[]	700	\N	\N	\N	scontrino	completed	2026-03-18 13:42:18.807+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773843081488	2026-03-18 14:11:21.488+00	Battistel Stefano	{"id": "508028", "cap": "31030", "nome": "Battistel Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3479082926", "indirizzo": "VIA DEL PASSO, 10 - SALETTO", "provincia": "TV", "searchText": "battistel stefano breda di piave ", "telefonoOriginale": "3479082926"}	3479082926	Simone	[]	[{"id": 1773843061461, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773843072195, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	103.82	\N	\N	\N	scontrino	completed	2026-03-18 14:11:21.488+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1773848793676	2026-03-18 15:46:33.676+00	Carrer Gino via Monte Pelmo 1 Casale sul Sile	\N	\N	Simone	[{"brand": "STIHL", "model": "Rasaerba RMA 248.0", "prezzo": 315, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "446454562"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937876"}, {"brand": "STIHL", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706460476"}, {"brand": "Stihl", "model": "Decespugliatore FSA50", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "STIHL", "model": "Batteria AK 10", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "918924002"}, {"brand": "STIHL", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817738"}]	[]	774	\N	\N	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773846534889	2026-03-18 11:00:00+00	Collodo Vladimiro	{"id": "502882", "cap": "31021", "nome": "Collodo Vladimiro", "email": "vladimiro.collodo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MOGLIANO VENETO", "telefono": "041457189", "indirizzo": "VIA ROETTE, 5 - ZERMAN", "provincia": "TV", "searchText": "collodo vladimiro mogliano veneto ", "telefonoOriginale": "041457189"}	041457189	Simone	[{"brand": "ECHO", "model": "Tagliasiepi DHCA-310", "prezzo": 145, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E80435001582"}, {"brand": "ECHO", "model": "Caricabatteria LC-3604 EU35", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61535107521"}, {"brand": "ECHO", "model": "Batteria LBP-36-80 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61235054310"}]	[]	294	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773906930973	2026-03-19 07:55:30.973+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Admin	[]	[{"id": 1773906913033, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-19 07:55:30.973+00	f	user_1772446347578	vendita	f	f	f	in_attesa
-1773830769841	2026-03-18 11:00:00+00	Fontana Antonio	{"id": "512828", "cap": "31100", "nome": "Fontana Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3383385190", "indirizzo": "", "provincia": "TV", "searchText": "fontana antonio treviso ", "telefonoOriginale": "3383385190"}	3383385190	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0696N"}]	[]	179	\N	\N	Parrocchia S. Maria Ausiliatrice. Chiamare appena arriva	scontrino	completed	2026-03-27 11:07:22.782+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1773825316633	2026-03-18 11:00:00+00	Cavana 88	{"id": "514034", "cap": "30173", "nome": "Cavana 88", "email": "info@cavana88.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3772390407", "indirizzo": "VIA TRIESTINA, 54/24", "provincia": "VE", "searchText": "cavana 88 favaro veneto ", "telefonoOriginale": "3772390407"}	3394798537 Loris	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 4112 SZ", "prezzo": 3649, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "980361852"}]	[]	3649	\N	\N	Consegnare prima possibile. Chiamare Loris per consegna (Simone) Al ritorno scaricare il loro trattorino usato da un socio a Quarto d'Altino	fattura	completed	2026-03-27 14:06:13.924+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HS82 R cm 75", "prezzo": 779, "aliquotaIva": 22, "serialNumber": "197814730"}, {"brand": "Stihl", "model": "TOSASIEPI HSA140R cm 75", "prezzo": 618.54, "aliquotaIva": 22, "serialNumber": "451286601"}]	[{"nome": "PALETTA MANUALE", "prezzo": 9.15, "quantita": 4, "aliquotaIva": 22}, {"nome": "MANICO ZM-V4", "prezzo": 81, "quantita": 3, "aliquotaIva": 22}]	1677.14	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa
-1773917546685	2026-03-19 11:00:00+00	Marcon Andrea Piazza 2 Giugno 7 Roncade 3474535632	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA 235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[{"nome": "Decespugliatore FSA 50", "prezzo": 179, "quantita": 1, "aliquotaIva": 22}]	464.75	\N	\N	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773851463035	2026-03-18 11:00:00+00	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	\N	\N	Simone	[{"brand": "STIHL", "model": "Forbice elettronica ASA 20.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955836076"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773932783539	2026-03-19 15:06:23.539+00	.	\N	\N	Simone	[]	[{"id": 1773932729267, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-03-19 15:06:23.539+00	t	user_1773914846608	vendita	f	f	f	in_attesa
-1773936767474	2026-03-19 16:12:47.199+00	Pozzobon Johnny	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540013827"}]	[]	219	\N	\N	\N	scontrino	completed	2026-03-19 16:12:47.199+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1773850831948	2026-03-18 11:00:00+00	Uliana Cesare	{"id": "512723", "cap": "", "nome": "Uliana Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA", "telefono": "3474435875", "indirizzo": "", "provincia": "", "searchText": "uliana cesare maserada ", "telefonoOriginale": "3474435875"}	3474435875	Simone	[{"brand": "Stihl", "model": "Motosega MSA 80", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452156493"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937882"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706053487"}]	[]	559	\N	\N	Affilatore 2 in 1 in omaggio	scontrino	completed	2026-03-19 16:26:03.002+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1774002466996	2026-03-20 10:27:46.995+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1774002417747, "nome": "Green 7 25 kg", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774002446843, "nome": "BOBINA DI FILO COD. R303612", "prezzo": 12, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774002460270, "nome": "CARCASSA TESTINA", "prezzo": 5.2, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	62.5	\N	\N	\N	scontrino	completed	2026-03-20 10:27:46.995+00	t	user_1773995761120	vendita	f	f	f	in_attesa
-1774013807798	2026-03-20 13:36:47.184+00	Mariuzzo Francesco	{"id": "501909", "cap": "30020", "nome": "Mariuzzo Francesco", "email": "francesco.mariuzzo@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3358473755", "indirizzo": "VIA ROMA, 123", "provincia": "VE", "searchText": "mariuzzo francesco meolo ", "telefonoOriginale": "3358473755"}	3358473755	Simone	[{"brand": "STIHL", "model": "Forbice elettronica HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "942794191"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "949709835"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707132101"}]	[]	139	\N	\N	\N	scontrino	completed	2026-03-20 13:36:47.184+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774017494489	2026-03-20 14:38:14.3+00	Dossini Annalisa	{"id": "513303", "cap": "31030", "nome": "Dossini Annalisa", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3404622945", "indirizzo": "VICOLO TIEPOLO, 41", "provincia": "TV", "searchText": "dossini annalisa carbonera ", "telefonoOriginale": "3404622945"}	3404622945	Simone	[{"brand": "STIHL", "model": "Motosega MSA 70.0 C", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200582"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-20 14:38:14.3+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774029748667	2026-03-20 18:02:28.667+00	Lombardi Pietro	\N	\N	Simone	[]	[{"id": 1774029680871, "nome": "Ugelli anti-gocciolamento Ø 6 mm", "prezzo": 3.3, "quantita": 4, "matricola": null, "aliquotaIva": 22}, {"id": 1774029706883, "nome": "Raccordo a T Ø 8-6-8 mm", "prezzo": 1.8, "quantita": 4, "matricola": null, "aliquotaIva": 22}, {"id": 1774029719369, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774029726667, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	345.4	\N	\N	\N	scontrino	completed	2026-03-20 18:02:28.667+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1771837124604	2026-03-21 11:00:00+00	COOP. Sociale Idee Verdi	{"id": "501441", "cap": "35030", "nome": "COOP. Sociale Idee Verdi", "email": "areacontabile@ideeverdi.it", "nomeP": "", "cognome": "", "contatto": "CEL. Marco Neve", "localita": "SELVAZZANO DENTRO", "telefono": "3450914123", "indirizzo": "VIA GALVANI, 16", "provincia": "PD", "searchText": "coop. sociale idee verdi selvazzano dentro cel. marco neve", "telefonoOriginale": "3450914123"}	3450914123	Simone	[{"brand": "Altro", "model": "Trattorino Ferris ISX 3300", "prezzo": 20740, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "4002455332"}]	[{"id": 1772079631434, "nome": "Kit lame di ricambio ad alto lancio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	20740	1830	bonifico	Saldo prima della consegna	fattura	completed	2026-03-21 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1774077613580	2026-03-21 07:20:13.58+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774077608358, "nome": "Amino K 5 Kg 5 kg", "prezzo": 51, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	51	\N	\N	\N	fattura	completed	2026-03-21 07:20:13.58+00	f	user_1774077521447	vendita	f	f	f	in_attesa
-1774077856238	2026-03-21 07:24:15.812+00	Dametto Giulio	\N	\N	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "547285150"}]	[]	339	\N	\N	\N	scontrino	completed	2026-03-21 07:24:15.812+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1772794749226	2026-03-06 11:00:00+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[{"brand": "STIHL", "model": "Potatore HTA 86", "prezzo": 530, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449457136"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989674"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008377"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001603"}]	[{"id": 1772794630440, "nome": "Testina Polycut Stihl 28-2", "prezzo": 21, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772794675699, "nome": "Testina Autocut 27-2", "prezzo": 14.1, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"nome": "Ugello rotore", "prezzo": 21.8, "quantita": 1, "aliquotaIva": 22}]	1814.7800000000002	\N	\N	\N	fattura	completed	2026-03-06 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1774084657146	2026-03-21 09:17:36.944+00	Bonotto Franco	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3611T", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65140005458"}]	[]	669	\N	\N	\N	scontrino	completed	2026-03-21 09:17:36.944+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774086075538	2026-03-21 09:41:14.645+00	Daniel Enrico	{"id": "505262", "cap": "30020", "nome": "Daniel Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3402878607", "indirizzo": "VIA CALVISANO, 44", "provincia": "VE", "searchText": "daniel enrico fossalta di piave ", "telefonoOriginale": "3402878607"}	3402878607	Simone	[{"brand": "THE TORO COMPANY", "model": "Arieggiatore", "prezzo": 650, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "325000333"}]	[]	650	200	contanti	Ritira lunedì sera o martedì mattina	scontrino	completed	2026-03-21 09:41:14.645+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774088170002	2026-03-21 10:16:09.751+00	Bergamo Nello	\N	\N	Simone	[{"brand": "STIHL", "model": "Rasaerba RM 453.3 V", "prezzo": 699, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451098503"}]	[]	699	\N	\N	\N	scontrino	completed	2026-03-21 10:16:09.751+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774090454237	2026-03-21 10:54:14.236+00	Sabrina Botter	\N	\N	Simone	[]	[{"id": 1774090450357, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-03-21 10:54:14.236+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1774258633933	2026-03-23 09:37:13.932+00	Guerra Marco	{"id": "501368", "cap": "31100", "nome": "Guerra Marco", "email": "marco@guerra.tv.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3463219454", "indirizzo": "VIA S. PELAIO 1/B", "provincia": "TV", "searchText": "guerra marco treviso ", "telefonoOriginale": "3463219454"}	3463219454	Simone	[]	[{"id": 1774258619431, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-03-23 09:37:13.932+00	t	user_1774253083870	vendita	f	f	f	in_attesa
-1774271453115	2026-03-23 13:10:53.115+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774271430091, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	50	\N	\N	\N	fattura	completed	2026-03-23 13:10:53.115+00	t	user_1774264782378	vendita	f	f	f	in_attesa
-1774284270579	2026-03-23 16:44:30.578+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774284258060, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-23 16:44:30.578+00	t	user_1774264782378	vendita	f	f	f	in_attesa
-1774343263601	2026-03-24 09:07:43.6+00	DEL  FABBRO	\N	\N	Admin	[]	[{"id": 1774343198654, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774343220892, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1774343233664, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 40.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774343252936, "nome": "Micosat F Uno gr.200", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	119.25	\N	\N	\N	scontrino	completed	2026-03-24 09:07:43.6+00	f	user_1772446347578	vendita	f	f	f	in_attesa
-1774343996171	2026-03-24 09:19:55.237+00	Piovesan Aldo 3289160851 0422708651	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466XB", "prezzo": 630, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCDF1005757"}, {"brand": "Honda", "model": "Caricabatteria", "prezzo": 39, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027253"}, {"brand": "Honda", "model": "Batteria DP3640XA", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY1002444"}]	[]	818	\N	\N	\N	scontrino	completed	2026-03-24 09:19:55.237+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774364278232	2026-03-24 14:57:57.456+00	Deoni Giardinaggio S.R.L.	{"id": "203570", "cap": "31038", "nome": "Deoni Giardinaggio S.R.L.", "email": "info@deonigiardinaggio.it", "nomeP": "", "cognome": "", "contatto": "CEL:FRANCESCO/GIANLUCA/MANUELE-FIS.LUCIA", "localita": "PAESE", "telefono": "3497600981", "indirizzo": "VIA POSTUMIA, 49", "provincia": "TV", "searchText": "deoni giardinaggio s.r.l. paese cel:francesco/gianluca/manuele-fis.lucia", "telefonoOriginale": "3497600981"}	3497600981	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545073124"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997510"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997501"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "952262635"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245641"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008378"}]	[]	1814.76	\N	\N	\N	fattura	completed	2026-03-24 14:57:57.456+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1774365827810	2026-03-24 15:23:47.16+00	Lava Edo Autotrasporti	{"id": "203026", "cap": "30020", "nome": "Lava Edo Autotrasporti", "email": "lavaedo@gmail.com", "nomeP": "", "cognome": "", "contatto": "1 -SABRINA Moglie 2 -MARITO", "localita": "MEOLO", "telefono": "3480998841", "indirizzo": "VIA DELLE BALDANE 1", "provincia": "VE", "searchText": "lava edo autotrasporti meolo 1 -sabrina moglie 2 -marito", "telefonoOriginale": "3480998841"}	3480998841	Simone	[{"brand": "STIHL", "model": " MS 212 3/8\\" P", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "837888152"}]	[{"id": 1774365578646, "nome": "Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774365621530, "nome": "Filo decespugliatore 2.7 mm", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	465.5	\N	\N	\N	fattura	completed	2026-03-24 15:23:47.16+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774368267558	2026-03-24 16:04:27.558+00	Gastaldo Rossella	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK20", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	358	100	pos	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774373885963	2026-03-24 17:38:05.963+00	MATTIOLI ANDREA	\N	\N	Simone	[]	[{"id": 1774373868505, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 3, "matricola": null, "aliquotaIva": 4}, {"id": 1774373880492, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 3, "matricola": null, "aliquotaIva": 4}]	325.5	\N	\N	\N	scontrino	completed	2026-03-24 17:38:05.963+00	t	user_1774361283783	vendita	f	f	f	in_attesa
-1774373917720	2026-03-24 17:38:37.72+00	TREVISAN	\N	\N	Simone	[]	[{"id": 1774373914236, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-24 17:38:37.72+00	t	user_1774361283783	vendita	f	f	f	in_attesa
-1774424302603	2026-03-25 07:38:22.602+00	Spinola Domenico - Il Prato	{"id": "401305", "cap": "31027", "nome": "Spinola Domenico - Il Prato", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SPRESIANO", "telefono": "3356951355", "indirizzo": "VIA ARGINE SAN MARCO, 21 - LOVADINA", "provincia": "TV", "searchText": "spinola domenico - il prato spresiano ", "telefonoOriginale": "3356951355"}	3356951355	Simone	[]	[{"id": 1774424294991, "nome": "rullo spanditerriccio", "prezzo": 260, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	260	\N	\N	\N	fattura	completed	2026-03-25 07:38:22.602+00	f	user_1770584612559	vendita	f	f	f	in_attesa
-1774428273167	2026-03-25 08:44:33.167+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774428223154, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1774428268252, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	262.9	\N	\N	\N	fattura	completed	2026-03-25 08:44:33.167+00	t	user_1774428129575	vendita	f	f	f	in_attesa
-1774446958655	2026-03-25 13:55:58.655+00	.	\N	\N	Simone	[]	[{"id": 1774446952697, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	60.8	\N	\N	\N	scontrino	completed	2026-03-25 13:55:58.655+00	t	user_1774428129575	vendita	f	f	f	in_attesa
-1774456521482	2026-03-25 16:35:21.481+00	De Demo Daniele	{"id": "500278", "cap": "31030", "nome": "De Demo Daniele", "email": "polo.chiara@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3480880270", "indirizzo": "VIA VALDEMONEGHE, 18/A", "provincia": "TV", "searchText": "de demo daniele carbonera ", "telefonoOriginale": "3480880270"}	3480880270	Simone	[]	[{"id": 1774456513616, "nome": "Granustar 20 kg", "prezzo": 70.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	351.5	\N	\N	\N	scontrino	completed	2026-03-25 16:35:21.481+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774456568253	2026-03-25 16:36:08.253+00	Global Service Di Salvalaio Denis	{"id": "501590", "cap": "30013", "nome": "Global Service Di Salvalaio Denis", "email": "salvalaiodenis76@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3384199774", "indirizzo": "VIA DELLA FONTE 9", "provincia": "VE", "searchText": "global service di salvalaio denis cavallino-treporti ", "telefonoOriginale": "3384199774"}	3384199774	Simone	[]	[{"id": 1774456559648, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	874.5	\N	\N	\N	fattura	completed	2026-03-25 16:36:08.253+00	f	user_1769961017929	vendita	f	f	f	in_attesa
-1774522518663	2026-03-26 10:55:15.372+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 250.0", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452027047"}, {"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BA0601159"}, {"brand": "Stihl", "model": "Tagliasiepi MSA 140.0 R", "prezzo": 545, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451286599"}, {"brand": "Stihl", "model": "Tagliasiepi HSA 140.0 T", "prezzo": 545, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "HA0201135"}, {"brand": "Stihl", "model": "Motosega MSA 190.0 T", "prezzo": 286, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452311136"}, {"brand": "STIHL", "model": "Motore multifunzione KMA 120.0 R", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "542315700"}, {"brand": "STIHL", "model": "Caricabatteria AL 301-4", "prezzo": 291, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711612931"}, {"brand": "STIHL", "model": "Caricabatteria AL 301-4", "prezzo": 291, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711612935"}, {"brand": "STIHL", "model": "Caricabatterie AL501", "prezzo": 154.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "987011256"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001602"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001605"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001606"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008375"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008379"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921009376"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255776"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255780"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255781"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256589"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256593"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256596"}]	[{"id": 1774521750509, "nome": "Accessorio reciprocatore RG-KM", "prezzo": 291, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774521787365, "nome": "Asta stelo completa, ricambio per KM", "prezzo": 49, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1774521927531, "nome": "box portabatterie M", "prezzo": 53.7, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	6230	\N	\N	Pagamento 5 rate uguali, acconto alla consegna e poi 30-60-90-120 gg	fattura	completed	2026-03-26 10:55:15.372+00	f	user_1770584612559	vendita	f	f	f	in_attesa
-1774523155609	2026-03-26 11:05:55.608+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774523136448, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	54.8	\N	\N	\N	fattura	completed	2026-03-26 11:05:55.608+00	t	user_1774523116559	vendita	f	f	f	in_attesa
-1774532748335	2026-03-26 13:45:48.335+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[]	[{"id": 1774532700558, "nome": "Catena 40 M ", "prezzo": 9.3, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1774532733303, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	181.6	\N	\N	\N	scontrino	completed	2026-03-26 13:45:48.335+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774601809741	2026-03-27 08:56:49.74+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774601790529, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-27 08:56:49.74+00	t	user_1774595787870	vendita	f	f	f	in_attesa
-1774608201588	2026-03-27 10:43:21.588+00	Moro Monica 3482993659	\N	\N	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 6112 ZL", "prezzo": 5600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Rasaerba RMA 453 PV", "prezzo": 1149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Decespugliatore FSA135", "prezzo": 465, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria Al301-4", "prezzo": 360, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	8890	\N	\N	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774607711937	2026-03-27 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Echo", "model": "Motosega DCS2500T", "prezzo": 736, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535019972"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935010924"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935009404"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435022949"}, {"brand": "Bluebird", "model": "Trivella NEA560 T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BBLP1002585001"}]	[{"nome": "Rasaerba Stihl RM 655 V matr. 447005979", "prezzo": 901.6, "quantita": 1, "aliquotaIva": 22}, {"nome": "Trivella mm 100", "prezzo": 81, "quantita": 1, "aliquotaIva": 22}]	2177.6	\N	\N	\N	fattura	completed	2026-03-27 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1774629897606	2026-03-27 16:44:57.606+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774629894903, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-27 16:44:57.606+00	t	user_1774595787870	vendita	f	f	f	in_attesa
-1774630000147	2026-03-27 16:46:39.785+00	Maggiolo Roberto	{"id": "501465", "cap": "31030", "nome": "Maggiolo Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3923770865", "indirizzo": "VIA CAL DEL BROLO", "provincia": "TV", "searchText": "maggiolo roberto breda di piave ", "telefonoOriginale": "3923770865"}	3923770865	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466C1 PKEH", "prezzo": 489, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1227945"}]	[]	489	\N	\N	\N	scontrino	completed	2026-03-27 16:46:39.785+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774681347971	2026-03-28 07:02:27.97+00	Morellato Ugo REALIZ. Giardini	{"id": "202390", "cap": "31040", "nome": "Morellato Ugo REALIZ. Giardini", "email": "ugomorellato@tiscali.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVIGNANO", "telefono": "3471368331", "indirizzo": "VIA ALTA 41/A", "provincia": "TV", "searchText": "morellato ugo realiz. giardini trevignano ", "telefonoOriginale": "3471368331"}	3471368331	Simone	[]	[{"id": 1774681341119, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 89.3, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	89.3	\N	\N	\N	scontrino	completed	2026-03-28 07:02:27.97+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774682853729	2026-03-28 07:27:33.728+00	Scarabello Roberto	{"id": "508514", "cap": "31050", "nome": "Scarabello Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "VILLORBA", "telefono": "3779576217", "indirizzo": "VIA 2 GIUGNO 16/2", "provincia": "TV", "searchText": "scarabello roberto villorba ", "telefonoOriginale": "3779576217"}	3779576217	Simone	[]	[{"id": 1774682821215, "nome": "motopompa usata", "prezzo": 500, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774682831071, "nome": "palo iniettore", "prezzo": 360, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-03-28 07:27:33.728+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1774685003800	2026-03-28 08:03:23.8+00	Il giardino Astrologico	\N	\N	Simone	[]	[{"id": 1774684934955, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774684944653, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774684956743, "nome": "Amino K 5 Kg 5 kg", "prezzo": 56.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	160.62	\N	\N	\N	fattura	completed	2026-03-28 08:03:23.8+00	t	user_1770584612559	vendita	f	f	f	in_attesa
-1774689844346	2026-03-28 09:24:03.286+00	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105573"}]	[]	559	\N	\N	\N	scontrino	completed	2026-03-28 09:24:03.286+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774693001885	2026-03-28 11:00:00+00	Serafin Ermes Giardiniere	{"id": "203366", "cap": "31052", "nome": "Serafin Ermes Giardiniere", "email": "martesfaina@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3493648574", "indirizzo": "VIA CASTELLA, 47", "provincia": "TV", "searchText": "serafin ermes giardiniere maserada sul piave ", "telefonoOriginale": "3493648574"}	3493648574	Simone	[]	[{"nome": "BLIZZARD", "prezzo": 52, "quantita": 1, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-03-28 11:00:00+00	t	user_1774683423770	vendita	f	f	f	in_attesa
-1774693702297	2026-03-28 10:28:21.664+00	Cicutto Roberto loc. Mattonaia 315 Sandorligo della Valle TS 347 8062220 roberto.cicutto@gmail.com	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-301TES", "prezzo": 319, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U48738203070"}]	[]	319	\N	\N	\N	scontrino	completed	2026-03-28 10:28:21.664+00	t	user_1769961017929	vendita	f	f	f	in_attesa
-1774694659761	2026-03-28 10:44:19.217+00	Tollardo Palmerino	{"id": "507322", "cap": "31056", "nome": "Tollardo Palmerino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3488221359", "indirizzo": "VIA GALLI, 103 - BIANCADE", "provincia": "TV", "searchText": "tollardo palmerino roncade ", "telefonoOriginale": "3488221359"}	3488221359	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 130 PLUS", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "495001145"}]	[]	449	\N	\N	\N	scontrino	completed	2026-03-28 10:44:19.217+00	t	user_1769961017929	vendita	f	f	f	in_attesa
+COPY public.commissioni (id, created_at, cliente, cliente_info, telefono, operatore, prodotti, accessori, totale, caparra, metodo_pagamento, note, tipo_documento, status, completed_at, iva_compresa, user_id, tipo_operazione, privacy_required, privacy_acknowledged, is_preventivo, stato_preventivo, data_consegna) FROM stdin;
+1773154024602	2026-03-10 14:47:04.601+00	Cenedese Paolo	{"id": "501568", "cap": "31057", "nome": "Cenedese Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3393170646", "indirizzo": "VIA CRETA, 2", "provincia": "TV", "searchText": "cenedese paolo silea ", "telefonoOriginale": "3393170646"}	3393170646	Simone	[]	[{"id": 1773154012039, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-10 14:47:04.601+00	f	user_1773139186105	vendita	f	f	f	in_attesa	\N
+1773245655924	2026-03-11 16:14:15.315+00	Zanetti Sergio	{"cf": null, "id": "ab516c2b-278b-493d-9a04-574dbaefb17b", "cap": null, "sdi": null, "nome": "Zanetti Sergio", "piva": null, "email": "magali.ditadi@virgilio.it", "nomeP": "Zanetti Sergio", "localita": "Marcon", "telefono": "3477341198", "indirizzo": "Via Fornace 24", "provincia": "VE", "searchText": "Zanetti Sergio"}	3477341198	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 55 R", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838434202"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-11 16:14:15.315+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771333556925	2026-02-17 11:00:00+00	Eos Cooperativa Sociale	{"id": "508412", "cap": "31033", "nome": "Eos Cooperativa Sociale", "email": "info@eoscooperativa.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3402249187", "indirizzo": "VIA OSPEDALE, 10", "provincia": "TV", "searchText": "eos cooperativa sociale castelfranco veneto ", "telefonoOriginale": "3402249187"}	3402249187	Simone	[]	[{"id": 1771333442068, "nome": "Stihl bobina filo tondo 2,7 MT 208 art. 0000 930 2227", "prezzo": 29.28, "quantita": 51, "matricola": null, "aliquotaIva": 22}]	0	\N	\N	Consegnare e ritirare 36 bobine filo 2,7 347 MT art. 0000 930 2289 per cambio articolo	fattura	completed	2026-02-17 11:00:00+00	t	user_1769961017929	cambio	f	f	f	in_attesa	\N
+1772470754631	2026-03-02 16:59:14.321+00	Edil Demi Di Covassin Demido	{"id": "502529", "cap": "31048", "nome": "Edil Demi Di Covassin Demido", "email": "edil-demi@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3482652180", "indirizzo": "VIA POSTUMIA CENTRO , 16/A", "provincia": "TV", "searchText": "edil demi di covassin demido san biagio di callalta ", "telefonoOriginale": "3482652180"}	3482652180	Simone	[{"brand": "STIHL", "model": "Troncatrice TS 910.0i, 400mm/16\\"", "prezzo": 1980, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196978666"}]	[{"id": 1772470732908, "nome": "Motomix 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2007	\N	\N	\N	fattura	completed	2026-03-02 16:59:14.321+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772698454042	2026-03-05 08:14:14.042+00	Visentin Roberto	{"id": "509469", "cap": "31030", "nome": "Visentin Roberto", "email": "spazzioverde1@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3467443956", "indirizzo": "VIA ANGELA VERONESE, 22", "provincia": "TV", "searchText": "visentin roberto breda di piave ", "telefonoOriginale": "3467443956"}	3467443956	Simone	[]	[{"id": 1772698447121, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	81.5	\N	\N	\N	scontrino	completed	2026-03-05 08:14:14.042+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1772810660020	2026-03-06 15:24:20.02+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1772810629122, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	86	\N	\N	\N	scontrino	completed	2026-03-06 15:24:20.02+00	f	user_1772789533838	vendita	f	f	f	in_attesa	\N
+1773050032197	2026-03-09 11:00:00+00	Battistel Denis	{"cf": null, "id": "aab0f8c6-cd23-40a0-bb56-3d2137d0591a", "cap": "31048", "sdi": null, "nome": "Battistel Denis", "piva": null, "email": "battisteldenis@gmail.com", "nomeP": "Battistel Denis", "localita": "San Biagio di Callalta", "telefono": "3280864412", "indirizzo": "Via Francescata 6", "provincia": "TV", "searchText": "Battistel Denis"}	3280864412	Simone	[]	[{"id": 1773050023366, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1773050391718, "nome": "HURRICANE KG 5", "prezzo": 54.45, "quantita": 1}]	149.85	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773331552845	2026-03-12 16:05:52.845+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773331548714, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-12 16:05:52.845+00	t	user_1773313248876	vendita	f	f	f	in_attesa	\N
+1773393167815	2026-03-13 09:12:47.063+00	Massolin Franco	{"id": "511612", "cap": "31030", "nome": "Massolin Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3332889392", "indirizzo": "VIA SILE, 9", "provincia": "TV", "searchText": "massolin franco casier ", "telefonoOriginale": "3332889392"}	3332889392	Simone	[{"brand": "VOLPI", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0633NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-13 09:12:47.063+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773479195906	2026-03-14 09:06:35.507+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451614118"}]	[{"id": 1773479187913, "nome": "Cuffia Peltor", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	204	\N	\N	\N	scontrino	completed	2026-03-14 09:06:35.507+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773482595511	2026-03-14 10:03:15.133+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80.R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548926738"}]	[{"id": 1773482575778, "nome": "Zaino Volpi Vita 12", "prezzo": 119, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	498	\N	\N	\N	scontrino	completed	2026-03-14 10:03:15.133+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772193413182	2026-02-27 11:56:52.399+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[{"brand": "Volpi", "model": "Decespugliatore Ciao", "prezzo": 36, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	36	\N	\N	\N	scontrino	completed	2026-02-27 11:56:52.399+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772471899116	2026-03-02 17:18:18.951+00	Viviani Antonio	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS-280TES", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C75138079230"}]	[{"id": 1772471856132, "nome": "Marline 2 T 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772471886378, "nome": "Olio catena Pro Up 2 litri", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	337	\N	\N	\N	scontrino	completed	2026-03-02 17:18:18.951+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772814552841	2026-03-06 16:29:12.841+00	Lombardi Pietro	\N	\N	Simone	[{"brand": "Stocker", "model": "Irroratore Geyser Pro", "prezzo": 1590, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "2541572916785"}]	[{"id": 1772814456411, "nome": "Alimentatore", "prezzo": 124, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1714	\N	\N	\N	fattura	completed	2026-03-06 16:29:53.647+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1773052842702	2026-03-09 10:40:42.702+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1773052836762, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-09 10:40:42.702+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
+1773159163790	2026-03-10 16:12:43.197+00	Il Filo D'ERBA Di De Bernardo Sebastiano	{"id": "202718", "cap": "30020", "nome": "Il Filo D'ERBA Di De Bernardo Sebastiano", "email": "sebastiano.ilfiloderba@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MARCON", "telefono": "3395274358", "indirizzo": "VIA MONTE PELMO, 8", "provincia": "VE", "searchText": "il filo d'erba di de bernardo sebastiano marcon ", "telefonoOriginale": "3395274358"}	3395274358	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1069705"}]	[]	959	\N	\N	\N	fattura	completed	2026-03-10 16:12:43.197+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773248038153	2026-03-11 16:53:58.152+00	CARDIN SIMONE	\N	\N	Simone	[]	[{"id": 1773247391717, "nome": "NEBUZAN REPELLENTE LT. 5", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1773247441666, "nome": "PIREKRAFT INSETTICIDA CON CONCENTRATO", "prezzo": 42, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	182	\N	\N	\N	scontrino	completed	2026-03-11 16:53:58.152+00	f	user_1773240946720	vendita	f	f	f	in_attesa	\N
+1772699565277	2026-03-05 08:32:45.274+00	Fantuzzo Luca	\N	\N	Simone	[{"brand": "Honda", "model": "Trattorino HF2625 HME", "prezzo": 6199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBWF-1600622"}]	[]	6199	3000	pos	Consegna a domicilio appena pronto. Saldo con bonifico bancario	scontrino	completed	2026-03-12 13:28:13.02+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773336328776	2026-03-12 17:25:28.775+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1773336279404, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	104	\N	\N	\N	scontrino	completed	2026-03-12 17:25:28.775+00	t	user_1773313248876	vendita	f	f	f	in_attesa	\N
+1773396968435	2026-03-13 10:16:08.435+00	Rizzo Ennio	\N	\N	Simone	[]	[{"id": 1773396950449, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773396959427, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	162	\N	\N	\N	scontrino	completed	2026-03-13 10:16:08.435+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+recovered-131	2026-01-28 11:00:00+00	Favero Giardini Di Favero Mirco	\N	\N	Simone	[]	[{"nome": "GANCIO TRAINO AVANT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	200	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-130	2026-01-28 11:00:00+00	Haprilla Kola	\N	\N	Simone	[]	[{"nome": "Trattorino John Deere x 165 usato, visto e piaciuto nello stato in cui si trova", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	1350	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1773479316134	2026-03-14 09:08:35.998+00	Corazza Alberto	{"id": "505661", "cap": "31030", "nome": "Corazza Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3400527040", "indirizzo": "VIA ARMANDO DIAZ, 48 - VASCON", "provincia": "TV", "searchText": "corazza alberto carbonera ", "telefonoOriginale": "3400527040"}	3400527040	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 100.0 PLUS CONTROL", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "970360968"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-14 09:08:35.998+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773481363098	2026-03-14 09:42:42.231+00	Bortolato Franco	{"id": "512977", "cap": "30173", "nome": "Bortolato Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3461355202", "indirizzo": "VIA CA' FORNONI, 84", "provincia": "VE", "searchText": "bortolato franco favaro veneto ", "telefonoOriginale": "3461355202"}	3461355202	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519976"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "701192870"}, {"brand": "STIHL", "model": "Batteria AK 30.0 S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937874"}]	[{"id": 1773481125813, "nome": "Ritiro Vs decespugliatore usato ", "prezzo": -49, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	500	\N	\N	\N	scontrino	completed	2026-03-14 09:42:42.231+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772267744154	2026-02-28 08:35:43.824+00	Bergamo Nello - Impresa Edile	{"id": "202992", "cap": "31048", "nome": "Bergamo Nello - Impresa Edile", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422 897964", "indirizzo": "VIA G. GALILEI N. 19", "provincia": "TV", "searchText": "bergamo nello - impresa edile san biagio di callalta ", "telefonoOriginale": "0422 897964"}	0422 897964	Simone	[{"brand": "NEGRI", "model": "Biotrituratore R95BRAHP65", "prezzo": 1600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "27489101"}]	[]	1600	\N	\N	\N	fattura	completed	2026-02-28 08:35:43.824+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772529500057	2026-03-03 09:18:18.637+00	Ortolan Sara	\N	\N	Simone	[{"brand": "STIHL", "model": "Tosaerba RMA 239.1", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451990095"}, {"brand": "STIHL", "model": "AL 101", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "986413411"}, {"brand": "STIHL", "model": "AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736954"}, {"brand": "STIHL", "model": "Tagliabordi FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451521369"}, {"brand": "STIHL", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452100454"}]	[]	807	\N	\N	\N	scontrino	completed	2026-03-03 09:18:18.637+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772706224154	2026-03-05 10:23:43.113+00	Tegon Sergio	{"id": "508520", "cap": "31048", "nome": "Tegon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422790312", "indirizzo": "VIA GOITO, 7 - SANT'ANDREA D I BARBARANA", "provincia": "TV", "searchText": "tegon sergio san biagio di callalta ", "telefonoOriginale": "0422790312"}	0422790312	Simone	[{"brand": "Honda", "model": "Motozappa F220K1 GET2", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "FAAJ-3620207"}]	[]	999	50	contanti	\N	scontrino	completed	2026-03-05 10:23:43.113+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772869167515	2026-03-07 07:39:27.513+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1772869122905, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-07 07:39:27.513+00	f	user_1772867117490	vendita	f	f	f	in_attesa	\N
+recovered-165	2026-02-14 11:00:00+00	Osan Emil Augustin	\N	\N	Simone	[{"brand": "STIHL", "model": "Tagliasiepi HL 92 C-E", "prezzo": 790, "aliquotaIva": 22, "serialNumber": "542187474"}]	[]	790	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-143	2026-02-07 11:00:00+00	Menegaldo Bruno	\N	\N	Simone	[{"brand": "Stihl", "model": "MOTOSEGA STIHL MS 661", "prezzo": 1630, "aliquotaIva": 22, "serialNumber": "193 545 593"}]	[]	1630	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-144	2026-02-07 11:00:00+00	XHELAJ REMZI	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "POTATORE KVS 8000", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "SL3325 371 NB"}, {"brand": "ACCESSORI", "model": "FORBICE KV 390", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "PZ 2925 390NB"}]	[{"nome": "1 CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	840	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-145	2026-02-07 11:00:00+00	Xhelaj Kreshnik	\N	\N	Simone	[{"brand": "ECHO", "model": "Motosega CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C 74638144456"}]	[]	439	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-140	2026-02-06 11:00:00+00	COMMISSATI FRANCESCA	\N	\N	Simone	[{"brand": "STIHL", "model": "BIOTRITURATORE GHE 105", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "451998874"}]	[{"nome": "Stihl POTATORE GTA 26 942966195", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AS 2 937201708", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 1 718061245", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	609	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-141	2026-02-06 11:00:00+00	CARRARO PAOLO	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 231", "prezzo": 539, "aliquotaIva": 22, "serialNumber": "194 053 082"}]	[]	539	\N	\N	\N	scontrino	completed	2026-02-06 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-142	2026-02-05 11:00:00+00	AZ. AGR. SEMPREVERDE DI TOFFOLI SONIA	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HLA 135", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "449925313"}]	[{"nome": "CUFFIA OPTIME", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "CUFFIA KRAMP", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	704.1	\N	\N	\N	scontrino	completed	2026-02-05 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-162	2026-02-02 11:00:00+00	Bimetal	\N	\N	Simone	[]	[{"nome": "61 PMM3 Piccolo Micro Mini Catena", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "catena m47-91", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA 91 - 53M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}, {"nome": "CATENA 1/4 1,1 52M", "prezzo": 0, "quantita": 3, "aliquotaIva": 22}]	132.55	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-136	2026-01-30 11:00:00+00	Tonini Srl	\N	\N	Simone	[]	[{"nome": "Pantalone Echo antitaglio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	95	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-134	2026-01-30 11:00:00+00	Taffarello Daniele	\N	\N	Simone	[{"brand": "Volpi", "model": "POTATORE VOLPI KVS 7100P", "prezzo": 409, "aliquotaIva": 22, "serialNumber": "SRØ123 Ø773LS"}]	[]	409	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-135	2026-01-30 11:00:00+00	Piovesan Andrea	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "Motosega MS 231", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "194053039"}]	[{"nome": "TANICA MOTOMIX 5 L", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	566.5	\N	\N	\N	scontrino	completed	2026-01-30 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-132	2026-01-28 11:00:00+00	Vacilotto Valerio	\N	\N	Simone	[{"brand": "STIHL", "model": "FORBICE STIHL ASA 20", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "707610915"}]	[{"nome": "BATTERIA AS 2", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATT. AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	219	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-133	2026-01-28 11:00:00+00	AZ. AGR. POSSAMAI GIULIANO e C.	\N	\N	Simone	[{"brand": "ECHO", "model": "MOTOSEGA DCS 2500 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "T 91435039178"}]	[{"nome": "BATTERIA LBP 50-150", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ-560", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-28 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-128	2026-01-23 11:00:00+00	TONINI SRL	\N	\N	Simone	[{"brand": "Echo", "model": "MOTOSEGA CS 2511 TES", "prezzo": 439, "aliquotaIva": 22, "serialNumber": "C87940041531"}]	[]	439	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-124	2026-01-20 11:00:00+00	CORTESE MIRCO	\N	\N	Simone	[]	[{"nome": "POTATORE HTA 50", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATTERIA AL 101", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK2O", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	459	\N	\N	\N	scontrino	completed	2026-01-20 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1772269324233	2026-02-28 09:02:04.233+00	M&A Saterini Snc	{"id": "512498", "cap": "31100", "nome": "M&A Saterini Snc", "email": "saterinisnc@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3341760622", "indirizzo": "VIA UGO FOSCOLO, 19", "provincia": "TV", "searchText": "m&a saterini snc treviso ", "telefonoOriginale": "3341760622"}	3341760622	Simone	[]	[{"id": 1772269310543, "nome": "Svettatoio RCM Wolf", "prezzo": 82, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	82	\N	\N	\N	fattura	completed	2026-02-28 09:02:04.233+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772530049616	2026-03-03 09:27:29.616+00	Habitat Natura Di Simone Taffarello	{"id": "201214", "cap": "31048", "nome": "Habitat Natura Di Simone Taffarello", "email": "info@habitatnatura.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335312402", "indirizzo": "VIA SAN FLORIANO, 11/A - OLMI", "provincia": "TV", "searchText": "habitat natura di simone taffarello san biagio di callalta ", "telefonoOriginale": "335312402"}	335312402	Simone	[]	[{"id": 1772530032547, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-03 09:27:29.616+00	t	user_1772521427039	vendita	f	f	f	in_attesa	\N
+1773217623696	2026-03-11 08:27:03.352+00	Boccardelli Alessandro	{"id": "501331", "cap": "31030", "nome": "Boccardelli Alessandro", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3477767769", "indirizzo": "VIA PER CAVRIE, 16 - SAN BARTOLOMEO", "provincia": "TV", "searchText": "boccardelli alessandro breda di piave ", "telefonoOriginale": "3477767769"}	3477767769	Simone	[{"brand": "Honda", "model": "Rasaerba HRX476C2 HYEH", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MBYF1064510"}]	[]	1250	\N	\N	\N	scontrino	completed	2026-03-11 08:27:03.352+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+recovered-129	2026-01-26 11:00:00+00	PAOLO BARBON	\N	\N	Simone	[]	[{"nome": "WEIBANG TRINCIAERBA CARDANO 3 VELOCITA WBBC537SCV", "prezzo": 1350, "quantita": 1, "aliquotaIva": 22}]	1350	100	contanti	cell. 3464744611	scontrino	completed	2026-01-26 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1772785776569	2026-03-06 08:29:36.569+00	Taffarello Giuliano	{"id": "504173", "cap": "31030", "nome": "Taffarello Giuliano", "email": "giuliano.taffarello@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3356947922", "indirizzo": "VIA GRANDE DI MIGNAGOLA, 73", "provincia": "TV", "searchText": "taffarello giuliano carbonera ", "telefonoOriginale": "3356947922"}	3356947922	Simone	[{"brand": "Segway", "model": "Robot tosaerba X430E", "prezzo": 3500, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	3500	500	pos	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1772872572362	2026-03-07 08:36:11.624+00	Favaro Arnaldo	{"id": "512983", "cap": "31056", "nome": "Favaro Arnaldo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3391572851", "indirizzo": "VIA GALLI, 39/B", "provincia": "TV", "searchText": "favaro arnaldo roncade ", "telefonoOriginale": "3391572851"}	3391572851	Admin	[{"brand": "STIHL", "model": " MSA 70.0 C", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200572"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "45204006535AE021G02910599504"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702287103"}]	[]	398	\N	\N	\N	scontrino	completed	2026-03-07 08:36:11.624+00	t	user_1772723709793	vendita	f	f	f	in_attesa	\N
+1773068231847	2026-03-09 11:00:00+00	vivai lovisetto marco	\N	\N	Simone	[]	[{"id": 1773068091299, "nome": "MOLLA A TAZZA 40 X20,4X0,5", "prezzo": 1.56, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091300, "nome": "PERNO LAMA FD", "prezzo": 7.95, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091301, "nome": "LAMA PIATTO CLS9/CLS10/TRINCIA", "prezzo": 16.8, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091302, "nome": "RONDELLA 35 X 12,5 X 6", "prezzo": 2.05, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091303, "nome": "DADO 12X1,75 AUTUBL BASSO", "prezzo": 0.33, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	57.38	\N	\N	\N	fattura	completed	2026-03-09 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773338235441	2026-03-12 17:57:15.441+00	CENEDESE FABRIZIO	\N	\N	Simone	[]	[{"id": 1773338206431, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-12 17:57:15.441+00	t	user_1773313248876	vendita	f	f	f	in_attesa	\N
+1773419112396	2026-03-13 16:25:12.044+00	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	{"id": "511430", "cap": "31056", "nome": "Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS", "email": "amministrazione@castellodironcade.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3336023178 GEROMEL", "indirizzo": "VIA ROMA, 141- INT.8", "provincia": "TV", "searchText": "castello di roncade soc.agr.di ciani bassetti claudio e c.ss roncade ", "telefonoOriginale": "3336023178 GEROMEL"}	3336023178 GEROMEL	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105586"}]	[]	599	\N	\N	\N	fattura	completed	2026-03-13 16:25:12.044+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+recovered-126	2026-01-23 11:00:00+00	AZ. AGR. Moz Moreno	\N	\N	Simone	[]	[{"nome": "SET CINTURA ADVANCE X-FLEX N°4", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	98	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-127	2026-01-23 11:00:00+00	Bortolato Alessandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "1 Motosega MS 182", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "837 262 464"}]	[{"nome": "1 Mix Marline 5LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "1 Olio PRO-UP 2LT", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	417	\N	\N	\N	scontrino	completed	2026-01-23 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-125	2026-01-22 11:00:00+00	BIANCO DAVIDE	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS3410", "prezzo": 269, "aliquotaIva": 22, "serialNumber": "F09238003622"}]	[]	269	\N	\N	\N	scontrino	completed	2026-01-22 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-123	2026-01-19 11:00:00+00	Toffolo Alessandro	\N	\N	Simone	[]	[{"nome": "Pantalone Stihl Function", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	119	\N	\N	\N	scontrino	completed	2026-01-19 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-119	2026-01-17 11:00:00+00	Gardin Adriano	\N	\N	Simone	[{"brand": "VARIE", "model": "POTATORE VOLPI KVS 8000", "prezzo": 220, "aliquotaIva": 22, "serialNumber": "SL 2025.165NB"}]	[]	220	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-120	2026-01-17 11:00:00+00	WALTER RIZZATO	\N	\N	Simone	[{"brand": "STIHL", "model": "MOTOSGA MS 182", "prezzo": 379, "aliquotaIva": 22, "serialNumber": "837 262 267"}]	[]	379	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-122	2026-01-17 11:00:00+00	Fossaluzza Sandro	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "MOTOSEGA MS 194 T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "547317805"}]	[{"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	359	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-121	2026-01-17 11:00:00+00	CARNIEL MARCO	\N	\N	Simone	[]	[{"nome": "IMPIANTO ANTIZANZARE GEYSER PRO, 43 UGELLI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	2350	\N	\N	\N	scontrino	completed	2026-01-17 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-118	2026-01-16 11:00:00+00	Moretti Marco	\N	\N	Simone	[{"brand": "VARIE", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "aliquotaIva": 22, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1772269630211	2026-02-28 09:07:10.21+00	Gobbo Pietro	\N	\N	Simone	[]	[{"id": 1772269574702, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772269588707, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 53.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	100.8	\N	\N	\N	scontrino	completed	2026-02-28 09:07:10.21+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+recovered-114	2026-01-16 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	\N	\N	Simone	[]	[{"nome": "CATENE 52 MAGLIE 1,1 mm", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}, {"nome": "BIOPLUS 20 LITRI", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "HP ULTRA LT 5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	203.8	\N	\N	\N	scontrino	completed	2026-01-16 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-112	2026-01-14 11:00:00+00	Zanardo Fabio	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "ECHO MOTOSEGA CS 2511 TES", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C87940041634"}]	[{"nome": "FORBICE", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	488	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-113	2026-01-14 11:00:00+00	GRACIS PAOLO VIA C. BATTIISTI 47/A VOLPAGO	\N	\N	Simone	[]	[{"nome": "SPACCALEGNA SUG 700 7 TONN.", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-01-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-108	2026-01-12 11:00:00+00	Green Style Srl	\N	\N	Simone	[{"brand": "VARIE", "model": "Tosasiepi Stihl HLA 66", "prezzo": 405, "aliquotaIva": 22, "serialNumber": "452306770"}]	[]	405	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-110	2026-01-12 11:00:00+00	MORO ENRICO	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega ECHO DCS 2500T", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "C 81535021918"}]	[{"nome": "BATTERIA LBP 56V 125  E83935013630", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	708	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-111	2026-01-12 11:00:00+00	IFAF SPA VIA CALNOVA 105 30020 NOVENTA DIP.	\N	\N	Simone	[]	[{"nome": "SNOWEX SPARGISALS SNOWEX", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "VEE PRO 6000", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	7900	\N	\N	\N	scontrino	completed	2026-01-12 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-116	2026-01-10 11:00:00+00	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	\N	\N	Simone	[{"brand": "WEIBANG", "model": "TRINCIAERBA WEIBANG 3. VEL. WBBC 532 SCV", "prezzo": 1350, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&250103036"}]	[]	1350	\N	\N	\N	scontrino	completed	2026-01-10 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-115	2026-01-09 11:00:00+00	De Zottis sas	\N	\N	Simone	[]	[{"nome": "SOFFIATORE BGA 60 452325465", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK30 912721072", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATTERIE AL 101 702817745", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	369	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-105	2026-01-09 11:00:00+00	MICHELE GOLFETTO	\N	\N	Simone	[]	[{"nome": "TRONCARAMI RS 750", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}]	134	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-104	2026-01-07 11:00:00+00	Battistel Thomas	\N	\N	Simone	[{"brand": "STIHL", "model": "SOFFIATORI BGA 160", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "450906088"}]	[{"nome": "SPRAY SUPERCLEAN", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	360	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "SEGACCIO ARS 470mm", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "MANICO TELES. EXP 5.5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	190	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1772270715735	2026-02-28 09:25:15.284+00	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRG466C1 SKEP", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1301493"}]	[]	669	\N	\N	\N	scontrino	completed	2026-02-28 09:25:15.284+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772531425040	2026-03-03 09:50:25.04+00	Uliana Giovanni	{"id": "511193", "cap": "31100", "nome": "Uliana Giovanni", "email": "uligio.uliana@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3515565939", "indirizzo": "VIALE TRENTO TRIESTE, 10/A", "provincia": "TV", "searchText": "uliana giovanni treviso ", "telefonoOriginale": "3515565939"}	3515565939	Simone	[{"brand": "Weibang", "model": "Tosaerba WBC537SCV", "prezzo": 1425, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "WBC537SCV/S021B&251212012"}]	[]	1425	425	contanti	\N	scontrino	completed	2026-03-05 12:54:46.828+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771139919865	2026-02-14 11:00:00+00	Piovesan Andrea	{"id": "513052", "cap": "31050", "nome": "Piovesan Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3202725545", "indirizzo": "VIA PAVANI, 37A", "provincia": "TV", "searchText": "piovesan andrea monastier di treviso ", "telefonoOriginale": "3202725545"}	3202725545	Simone	[]	[{"id": 1771139908345, "nome": "Affilatore catena Stihl", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1772791614338	2026-03-06 10:06:54.338+00	Pasquali Silvano	{"id": "501948", "cap": "31048", "nome": "Pasquali Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3493238900", "indirizzo": "VIA SAN FRANCESCO, 28 -ROVARE'", "provincia": "TV", "searchText": "pasquali silvano san biagio di callalta ", "telefonoOriginale": "3493238900"}	3493238900	Simone	[]	[{"id": 1772791609911, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-06 10:06:54.338+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1772872964693	2026-03-07 08:42:42.893+00	Caredi S.R.L.	{"id": "503694", "cap": "31057", "nome": "Caredi S.R.L.", "email": "info@caredi.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294073", "indirizzo": "VIA S. ELENA, 52", "provincia": "TV", "searchText": "caredi s.r.l. silea ", "telefonoOriginale": "042294073"}	042294073	Admin	[{"brand": "STIHL", "model": " HSA 60.1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452246465"}, {"brand": "STIHL", "model": " AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "910695337"}, {"brand": "STIHL", "model": " AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644370"}]	[]	390	\N	\N	\N	fattura	completed	2026-03-07 08:42:42.893+00	t	user_1772723709793	vendita	f	f	f	in_attesa	\N
+1773069322800	2026-03-09 15:15:22.799+00	Bresolin Andrea	{"id": "511309", "cap": "31034", "nome": "Bresolin Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVASO DEL TOMBA", "telefono": "", "indirizzo": "VIA SAN PIO X 197 I 5", "provincia": "TV", "searchText": "bresolin andrea cavaso del tomba ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1773069220485, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}, {"id": 1773069249381, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1773069296739, "nome": "Albatros Vigor Active Kg 25 kg", "prezzo": 47.9, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	595.3	\N	\N	\N	fattura	completed	2026-03-09 15:15:22.799+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773221325833	2026-03-11 09:28:45.472+00	Pavan Claudio	{"cf": null, "id": "6bf65e71-0cb6-4772-a26c-085a7619a0ff", "cap": null, "sdi": null, "nome": "Pavan Claudio", "piva": null, "email": null, "nomeP": "Pavan Claudio", "localita": "Musile Di Piave", "telefono": "3246197179", "indirizzo": "Via Rovigo 10", "provincia": "VE", "searchText": "Pavan Claudio"}	3246197179	Simone	[{"brand": "Grillo", "model": " Trimmer HWT600", "prezzo": 1250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "695024"}]	[]	1250	300	contanti	\N	scontrino	completed	2026-03-11 09:28:45.472+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773388672091	2026-03-13 11:00:00+00	De Zottis A. Sas REALIZZAZ. Del Verde	{"id": "201872", "cap": "31030", "nome": "De Zottis A. Sas REALIZZAZ. Del Verde", "email": "", "nomeP": "", "cognome": "", "contatto": "Andrea / Erica", "localita": "SALETTO DI PIAVE", "telefono": "348-4526755 ANDREA", "indirizzo": "VIA ARGINE 13", "provincia": "TV", "searchText": "de zottis a. sas realizzaz. del verde saletto di piave andrea / erica", "telefonoOriginale": "348-4526755 ANDREA"}	348-4526755 ANDREA	Simone	[{"brand": "Honda", "model": "Rasaerba HRX537C7 HYEH", "prezzo": 1479, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "1035893"}]	[]	1479	\N	\N	\N	fattura	completed	2026-03-13 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773421198889	2026-03-13 16:59:58.889+00	Urban Sandro	{"id": "506872", "cap": "31020", "nome": "Urban Sandro", "email": "urban.sandro@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "3280187377", "indirizzo": "VIA SANTA GIUSTINA, 3", "provincia": "TV", "searchText": "urban sandro san fior ", "telefonoOriginale": "3280187377"}	3280187377	Simone	[]	[{"id": 1773421188921, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 10, "matricola": null, "aliquotaIva": 4}]	583	\N	\N	\N	fattura	completed	2026-03-13 16:59:58.889+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773481059548	2026-03-14 09:37:39.548+00	BROLLO MARCO	{"cf": "", "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": "", "nome": "BROLLO MARCO", "piva": "", "email": "", "nomeP": "MARCO", "_fonte": "db", "cognome": "BROLLO", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "", "indirizzo": "VIA FRIULI", "provincia": "", "searchText": "brollo marco"}	\N	Simone	[]	[{"id": 1773481045921, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	15.7	\N	\N	\N	scontrino	completed	2026-03-14 09:37:39.548+00	t	user_1773478718487	vendita	f	f	f	in_attesa	\N
+1770385464630	2026-02-06 13:44:24.631+00	AZ. AGR. Moz Moreno	{"id": "510801", "cap": "30100", "nome": "AZ. AGR. Moz Moreno", "email": "fattoriaimpronta@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VENEZIA", "telefono": "3408032699", "indirizzo": "VIA PASSO CAMPALTO, 15A - CAMPALTO", "provincia": "VE", "searchText": "az. agr. moz moreno venezia ", "telefonoOriginale": "3408032699"}	3408032699	Simone	[]	[{"id": 1770385435974, "nome": "Zaino supporto tosasiepi", "prezzo": 400, "quantita": 1, "descrizione": "ZAINO SUPPORTO TOSASIEPI"}]	400	\N	\N	I.C.	fattura	completed	2026-02-06 13:44:24.631+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772274248500	2026-02-28 10:24:07.909+00	Buscato Mattia via Ca' Memo 29 Noventa di Piave 340 4519357 mbuschy04@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRN536C2 VYEH", "prezzo": 959, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1028729"}]	[]	959	\N	\N	\N	scontrino	completed	2026-02-28 10:24:07.909+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1770626009165	2026-02-09 08:33:29.165+00	Moretti Marco	{"id": "202904", "cap": "31100", "nome": "Moretti Marco", "email": "moretti72.marco@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3392050119", "indirizzo": "VIA TIMAVO", "provincia": "TV", "searchText": "moretti marco treviso ", "telefonoOriginale": "3392050119"}	3392050119	Simone	[{"brand": "", "model": "MOTOSEGA MSA 161 T", "prezzo": 425, "isOmaggio": false, "serialNumber": "451890971"}]	[]	425	\N	\N	\N	fattura	completed	2026-02-09 08:33:29.165+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1770744173693	2026-02-10 17:22:53.693+00	Camarotto Michele	{"id": "502091", "cap": "30020", "nome": "Camarotto Michele", "email": "saradilegui@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3484460983", "indirizzo": "VIA PASSO LAMPOL, 27/A", "provincia": "VE", "searchText": "camarotto michele fossalta di piave ", "telefonoOriginale": "3484460983"}	3484460983	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV295", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "ZA1625.124NB"}]	[]	199	\N	\N	\N	scontrino	completed	2026-02-10 17:22:53.693+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1770801828120	2026-02-11 09:23:48.12+00	Nico Giardini Di Bastarolo Nicola	{"id": "504139", "cap": "31059", "nome": "Nico Giardini Di Bastarolo Nicola", "email": "nickbast74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco ", "telefonoOriginale": "3498200169"}	3498200169	Simone	[]	[{"id": 1770801600789, "nome": "Manicotti antitaglio ", "prezzo": 48, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801636352, "nome": "Ricambio Archman svettatoio ", "prezzo": 16, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801660760, "nome": "Visiera completa", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801714594, "nome": "Cosciale copri pantaloni ", "prezzo": 17, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1770801775018, "nome": "Filo dice 3 mm 50 metri quadro R304342", "prezzo": 13.9, "quantita": 3, "matricola": null, "aliquotaIva": 22}, {"id": 1770801796561, "nome": "Svettatoio Archman ", "prezzo": 120, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	252.7	\N	\N	\N	fattura	completed	2026-02-11 09:23:48.12+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1770997818464	2026-02-13 15:50:18.464+00	Scomparin Pierino	{"id": "502251", "cap": "31057", "nome": "Scomparin Pierino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3394191177", "indirizzo": "VIA BELVEDERE, 71", "provincia": "TV", "searchText": "scomparin pierino silea ", "telefonoOriginale": "3394191177"}	3394191177	Simone	[{"brand": "STIHL", "model": "Batteria AS2 (28 Wh)", "prezzo": 42, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "950420572"}]	[]	42	\N	\N	\N	scontrino	completed	2026-02-13 15:50:18.464+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772791840067	2026-03-06 10:10:40.067+00	Torresan Silvano	{"id": "504548", "cap": "31050", "nome": "Torresan Silvano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MONASTIER DI TREVISO", "telefono": "3280309741", "indirizzo": "VIA EMILIA, 24", "provincia": "TV", "searchText": "torresan silvano monastier di treviso ", "telefonoOriginale": "3280309741"}	3280309741	Simone	[{"brand": "Stiga", "model": "Trattorino Rider usato con cambio manuale e piatto da 72 cm", "prezzo": 1100, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "usato giallo"}]	[]	1100	\N	\N	Preparare e chiamare per consegna appena pronto	scontrino	completed	2026-03-06 10:11:09.298+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1771231859301	2026-02-16 11:00:00+00	Bisetto Mario	{"id": "502153", "cap": "31030", "nome": "Bisetto Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3493730882", "indirizzo": "VIA CODALUNGA, 135", "provincia": "TV", "searchText": "bisetto mario carbonera ", "telefonoOriginale": "3493730882"}	3493730882	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 80 R", "prezzo": 509, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546519977"}, {"brand": "STIHL", "model": "Caricabatterie AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817744"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736933"}]	[]	509	\N	\N	\N	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773044516572	2026-03-09 08:21:56.571+00	Piave Service Srl	{"id": "503141", "cap": "31030", "nome": "Piave Service Srl", "email": "piave-service@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3488994157", "indirizzo": "VIA SAN GIACOMO, 5", "provincia": "TV", "searchText": "piave service srl breda di piave ", "telefonoOriginale": "3488994157"}	3488994157	Simone	[]	[{"id": 1773044495289, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1773044503779, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	156	\N	\N	\N	fattura	completed	2026-03-09 08:21:56.571+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
+1773240850390	2026-03-11 14:54:10.39+00	Palma Paolo	\N	\N	Simone	[]	[{"id": 1773240834044, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773240842536, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-03-11 14:54:10.39+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773669150174	2026-03-16 13:52:30.174+00	Cibin Omar	{"id": "514092", "cap": "", "nome": "Cibin Omar", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "", "telefono": "3463790667", "indirizzo": "", "provincia": "", "searchText": "cibin omar  ", "telefonoOriginale": "3463790667"}	3463790667	Simone	[]	[{"id": 1773669143245, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-16 13:52:30.174+00	t	user_1773667360453	vendita	f	f	f	in_attesa	\N
+1771258833161	2026-02-16 11:00:00+00	Balanza Marino	{"id": "509979", "cap": "31048", "nome": "Balanza Marino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3466323236", "indirizzo": "VIA CLAUDIA AUGUSTA, 6", "provincia": "TV", "searchText": "balanza marino san biagio di callalta ", "telefonoOriginale": "3466323236"}	3466323236	Simone	[{"brand": "VOLPI", "model": "Forbice elettronica KV390", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PZ2925.389NB"}, {"brand": "VOLPI", "model": "Potatore KVS6000", "prezzo": 200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SM4222498LS"}]	[{"id": 1771258823114, "nome": "Occhiali ", "prezzo": 5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	664	\N	\N	Potatore senza batterie	scontrino	completed	2026-02-16 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771492465151	2026-02-19 11:00:00+00	Sartori Luca	{"id": "203045", "cap": "31100", "nome": "Sartori Luca", "email": "sartoriluca74@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494968896", "indirizzo": "VIA S.ANTONINO 288", "provincia": "TV", "searchText": "sartori luca treviso ", "telefonoOriginale": "3494968896"}	3494968896	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310977"}]	[]	350	\N	\N	Pagamento BB fine mese	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771493646908	2026-02-19 11:00:00+00	Buffon Giancarlo	{"id": "512986", "cap": "31038", "nome": "Buffon Giancarlo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3496148085", "indirizzo": "VIA MARONCELLI 6", "provincia": "TV", "searchText": "buffon giancarlo paese ", "telefonoOriginale": "3496148085"}	3496148085	Simone	[{"brand": "STIHL", "model": "Tagliabordi FSA 30.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838110682"}, {"brand": "STIHL", "model": "Caricabatterie AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "935280185"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "937056842"}]	[{"id": 1771493623647, "nome": "Ricambio polycut", "prezzo": 4, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	167	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771498408037	2026-02-19 11:00:00+00	AZ. AGR. Vivai Piante Di Dragancea Andrei	{"id": "202724", "cap": "31056", "nome": "AZ. AGR. Vivai Piante Di Dragancea Andrei", "email": "andrei.dragancea@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3282670287", "indirizzo": "VIA ARRIGO BOITO, 10 - BIANCADE", "provincia": "TV", "searchText": "az. agr. vivai piante di dragancea andrei roncade ", "telefonoOriginale": "3282670287"}	3282670287	Simone	[{"brand": "STIHL", "model": "Motosega MSA 190.0 T", "prezzo": 350, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452310979"}]	[]	350	\N	\N	\N	fattura	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771514517527	2026-02-19 11:00:00+00	Gasparini Francesco	{"id": "505627", "cap": "30020", "nome": "Gasparini Francesco", "email": "gasparini.francesco@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3939936820", "indirizzo": "VIA CA' CORNER SUD, 49", "provincia": "VE", "searchText": "gasparini francesco meolo ", "telefonoOriginale": "3939936820"}	3939936820	Simone	[{"brand": "Stihl", "model": "Atomizzatore SR 430 Mistblower", "prezzo": 760, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370193762"}]	[]	760	\N	\N	\N	scontrino	completed	2026-02-19 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771667848261	2026-02-21 11:00:00+00	Cadorin Roberto	{"id": "514044", "cap": "31056", "nome": "Cadorin Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3479715095", "indirizzo": "VIA PARIS BORDONE, 39 - BIANCADE", "provincia": "TV", "searchText": "cadorin roberto roncade ", "telefonoOriginale": "3479715095"}	3479715095	Simone	[]	[{"id": 1771667799331, "nome": "CONCIME GREEN 7", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	45.3	\N	\N	\N	scontrino	completed	2026-02-21 11:00:00+00	t	user_1771659500533	vendita	f	f	f	in_attesa	\N
+1771596591121	2026-02-20 14:09:50.604+00	Bonetto Franco	{"id": "511303", "cap": "31048", "nome": "Bonetto Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3452383445", "indirizzo": "VIA ORTIGARA, 7 - FAGARE'", "provincia": "TV", "searchText": "bonetto franco san biagio di callalta ", "telefonoOriginale": "3452383445"}	3452383445	Simone	[{"brand": "VOLPI", "model": "Potatore KVS8000", "prezzo": 370, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SL3325.372NB"}]	[]	370	\N	\N	\N	scontrino	completed	2026-02-20 14:09:50.604+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771670427449	2026-02-21 10:40:26.358+00	Chiericati Massimo	{"id": "505901", "cap": "31100", "nome": "Chiericati Massimo", "email": "", "nomeP": "", "cognome": "", "contatto": "Fronte Hotel Carletto", "localita": "TREVISO", "telefono": "3407860739", "indirizzo": "VIA SEBASTIANO CABOTO, 13 - SELVANA", "provincia": "TV", "searchText": "chiericati massimo treviso fronte hotel carletto", "telefonoOriginale": "3407860739"}	3407860739	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 1/4 P Chainsaw", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "540455888"}]	[{"id": 1771670392224, "nome": "Olio catena bioplus 1 litro", "prezzo": 6, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1771670408727, "nome": "Guanti ", "prezzo": 3.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	358.9	\N	\N	\N	scontrino	completed	2026-02-21 10:40:26.358+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771664967655	2026-02-21 09:09:27.655+00	D'AMELIO Vincenzo	{"id": "502893", "cap": "31056", "nome": "D'AMELIO Vincenzo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3450818865", "indirizzo": "VIA PRINCIPE, 85/A - MUSESTRE", "provincia": "TV", "searchText": "d'amelio vincenzo roncade ", "telefonoOriginale": "3450818865"}	3450818865	Simone	[{"brand": "GGP", "model": "Trattorino XF 135 HD", "prezzo": 2200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "25CA3RON005540"}]	[]	2200	400	pos	Contattare il cliente appena pronto per la consegna. Ritirare rider del cliente per rottamazione	scontrino	completed	2026-03-12 08:38:36.1+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1772276586896	2026-02-28 11:03:06.587+00	Patruno Franco	{"id": "506125", "cap": "31048", "nome": "Patruno Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3935553311", "indirizzo": "VIA TREVISO MARE, 8", "provincia": "TV", "searchText": "patruno franco san biagio di callalta ", "telefonoOriginale": "3935553311"}	3935553311	Simone	[{"brand": "STIHL", "model": "Decespugliatore FSA 60 R", "prezzo": 185, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450921356"}]	[]	185	\N	\N	\N	scontrino	completed	2026-02-28 11:03:06.587+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772698023760	2026-03-05 08:07:03.759+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1772697630789, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1772697650836, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697668935, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697688240, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1772697704749, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	654.9	\N	\N	\N	fattura	completed	2026-03-05 08:07:03.759+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1771857311156	2026-02-23 14:35:10.084+00	Cenedese Andrea	{"id": "500594", "cap": "31048", "nome": "Cenedese Andrea", "email": "andrea.cenedese@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[{"brand": "Volpi", "model": "Forbice elettronica KV360", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	299	\N	\N	\N	scontrino	completed	2026-02-23 14:35:10.084+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773045271126	2026-03-09 11:00:00+00	BARBON IVAN	\N	\N	Simone	[]	[{"id": 1773045119753, "nome": "Universal Top 20 kg", "prezzo": 59.4, "quantita": 11, "matricola": null, "aliquotaIva": 4}]	653.4	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
+1773075750834	2026-03-09 17:02:30.833+00	BROLLO MARCO	{"cf": null, "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": null, "nome": "BROLLO MARCO", "piva": null, "email": null, "nomeP": "BROLLO MARCO", "localita": "SAN BIAGIO DI CALLALTA", "telefono": null, "indirizzo": "VIA FRIULI", "provincia": null, "searchText": "BROLLO MARCO"}	\N	Simone	[]	[{"id": 1773075593716, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773075700238, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	46.9	\N	\N	\N	scontrino	completed	2026-03-09 17:02:30.833+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
+1773244078788	2026-03-11 15:47:58.787+00	Romanello Umberto	{"id": "508068", "cap": "31048", "nome": "Romanello Umberto", "email": "umbe.roma@yahoo.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3463719100", "indirizzo": "VIA FORNASATTA, 5", "provincia": "TV", "searchText": "romanello umberto san biagio di callalta ", "telefonoOriginale": "3463719100"}	3463719100	Simone	[]	[{"id": 1773244071793, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-11 15:47:58.787+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1771836731318	2026-02-23 11:00:00+00	Mareverde Srls	{"id": "501758", "cap": "30016", "nome": "Mareverde Srls", "email": "info@vivaisorgon.it", "nomeP": "", "cognome": "", "contatto": "Simone 335490390", "localita": "JESOLO", "telefono": "0421230013", "indirizzo": "Via Zuccarini, 11", "provincia": "VE", "searchText": "mareverde srls jesolo simone 335490390", "telefonoOriginale": "0421230013"}	0421230013	Simone	[{"brand": "Grillo", "model": "Trattorino FD500", "prezzo": 22326, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "772900"}]	[{"id": 1771836586694, "nome": "Ritiro Vs trattorino usato GF PG280D", "prezzo": -14640, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	7686	1300	bonifico	consegna a febbraio (il cliente è stato avvisato che la consegna sarà spostata a marzo). Pagamento con ricevuta bancaria a 30-60 giorni	fattura	completed	2026-03-24 10:48:14.169+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1773649605393	2026-03-16 08:26:45.108+00	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	{"id": "510978", "cap": "31020", "nome": "AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.", "email": "giuliano.possamai@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "", "indirizzo": "VIA SAN MACARIO DEI PALU 33", "provincia": "TV", "searchText": "az. agr. possamai di possamai giuliano & c. s.s. san fior ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 375, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452134555"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245642"}]	[]	704	\N	\N	\N	fattura	completed	2026-03-16 08:26:45.108+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773330444130	2026-02-16 11:00:00+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Simone	[]	[{"id": 1773330333121, "nome": "Green 7 25 kg", "prezzo": 38.7, "quantita": 30, "matricola": null, "aliquotaIva": 4}, {"id": 1773330347033, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	1900.5	\N	\N	\N	fattura	completed	2026-02-16 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1773762228782	2026-03-17 15:43:48.782+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1773762180768, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773762223076, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	127.7	\N	\N	\N	fattura	completed	2026-03-17 15:43:48.782+00	t	user_1773757201306	vendita	f	f	f	in_attesa	\N
+1773829190451	2026-03-18 10:19:49.852+00	Gheller Giovanni	{"id": "501565", "cap": "31030", "nome": "Gheller Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3493203938", "indirizzo": "VIA MASERADE, 23", "provincia": "TV", "searchText": "gheller giovanni breda di piave ", "telefonoOriginale": "3493203938"}	3493203938	Simone	[{"brand": "Stihl", "model": "Potatore GTA 40.0", "prezzo": 399, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449980336"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511941"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511944"}, {"brand": "STIHL", "model": "Caricabatteria AL 5-2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "709055579"}]	[]	399	\N	\N	\N	scontrino	completed	2026-03-18 10:19:49.852+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773841339358	2026-03-18 13:42:18.807+00	Bergamo Pietro	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416XBPEEA", "prezzo": 700, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCEF1003260"}, {"brand": "Honda", "model": "Batteria 4.0 li-Ion", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY-1002910"}, {"brand": "Honda", "model": "Caricabatteria CV3620XA EM", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027252"}]	[]	700	\N	\N	\N	scontrino	completed	2026-03-18 13:42:18.807+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773843081488	2026-03-18 14:11:21.488+00	Battistel Stefano	{"id": "508028", "cap": "31030", "nome": "Battistel Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3479082926", "indirizzo": "VIA DEL PASSO, 10 - SALETTO", "provincia": "TV", "searchText": "battistel stefano breda di piave ", "telefonoOriginale": "3479082926"}	3479082926	Simone	[]	[{"id": 1773843061461, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773843072195, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	103.82	\N	\N	\N	scontrino	completed	2026-03-18 14:11:21.488+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1773846534889	2026-03-18 11:00:00+00	Collodo Vladimiro	{"id": "502882", "cap": "31021", "nome": "Collodo Vladimiro", "email": "vladimiro.collodo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MOGLIANO VENETO", "telefono": "041457189", "indirizzo": "VIA ROETTE, 5 - ZERMAN", "provincia": "TV", "searchText": "collodo vladimiro mogliano veneto ", "telefonoOriginale": "041457189"}	041457189	Simone	[{"brand": "ECHO", "model": "Tagliasiepi DHCA-310", "prezzo": 145, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E80435001582"}, {"brand": "ECHO", "model": "Caricabatteria LC-3604 EU35", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61535107521"}, {"brand": "ECHO", "model": "Batteria LBP-36-80 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61235054310"}]	[]	294	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773906930973	2026-03-19 07:55:30.973+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Admin	[]	[{"id": 1773906913033, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-19 07:55:30.973+00	f	user_1772446347578	vendita	f	f	f	in_attesa	\N
+1773830769841	2026-03-18 11:00:00+00	Fontana Antonio	{"id": "512828", "cap": "31100", "nome": "Fontana Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3383385190", "indirizzo": "", "provincia": "TV", "searchText": "fontana antonio treviso ", "telefonoOriginale": "3383385190"}	3383385190	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0696N"}]	[]	179	\N	\N	Parrocchia S. Maria Ausiliatrice. Chiamare appena arriva	scontrino	completed	2026-03-27 11:07:22.782+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1773825316633	2026-03-18 11:00:00+00	Cavana 88	{"id": "514034", "cap": "30173", "nome": "Cavana 88", "email": "info@cavana88.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3772390407", "indirizzo": "VIA TRIESTINA, 54/24", "provincia": "VE", "searchText": "cavana 88 favaro veneto ", "telefonoOriginale": "3772390407"}	3394798537 Loris	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 4112 SZ", "prezzo": 3649, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "980361852"}]	[]	3649	\N	\N	Consegnare prima possibile. Chiamare Loris per consegna (Simone) Al ritorno scaricare il loro trattorino usato da un socio a Quarto d'Altino	fattura	completed	2026-03-27 14:06:13.924+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1773848793676	2026-03-18 11:00:00+00	Carrer Gino via Monte Pelmo 1 Casale sul Sile	\N	\N	Simone	[{"brand": "STIHL", "model": "Rasaerba RMA 248.0", "prezzo": 315, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "446454562"}, {"brand": "STIHL", "model": "Batteria AK 30.0S", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937876"}, {"brand": "STIHL", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706460476"}, {"brand": "Stihl", "model": "Decespugliatore FSA50", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452390479"}, {"brand": "STIHL", "model": "Batteria AK 10", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "918924002"}, {"brand": "STIHL", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702817738"}]	[]	774	475	carta	\N	scontrino	completed	2026-03-31 09:19:18.715+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HS82 R cm 75", "prezzo": 779, "aliquotaIva": 22, "serialNumber": "197814730"}, {"brand": "Stihl", "model": "TOSASIEPI HSA140R cm 75", "prezzo": 618.54, "aliquotaIva": 22, "serialNumber": "451286601"}]	[{"nome": "PALETTA MANUALE", "prezzo": 9.15, "quantita": 4, "aliquotaIva": 22}, {"nome": "MANICO ZM-V4", "prezzo": 81, "quantita": 3, "aliquotaIva": 22}]	1677.14	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1773917546685	2026-03-19 11:00:00+00	Marcon Andrea Piazza 2 Giugno 7 Roncade 3474535632	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA 235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "956698916"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948817207"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644372"}]	[{"nome": "Decespugliatore FSA 50 MATR. 452391137", "prezzo": 179, "quantita": 1, "aliquotaIva": 22}]	567	\N	\N	\N	scontrino	completed	2026-03-31 09:10:34.306+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773851463035	2026-03-18 11:00:00+00	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	\N	\N	Simone	[{"brand": "STIHL", "model": "Forbice elettronica ASA 20.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955836076"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773932783539	2026-03-19 15:06:23.539+00	.	\N	\N	Simone	[]	[{"id": 1773932729267, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-03-19 15:06:23.539+00	t	user_1773914846608	vendita	f	f	f	in_attesa	\N
+1773936767474	2026-03-19 16:12:47.199+00	Pozzobon Johnny	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540013827"}]	[]	219	\N	\N	\N	scontrino	completed	2026-03-19 16:12:47.199+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1773850831948	2026-03-18 11:00:00+00	Uliana Cesare	{"id": "512723", "cap": "", "nome": "Uliana Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA", "telefono": "3474435875", "indirizzo": "", "provincia": "", "searchText": "uliana cesare maserada ", "telefonoOriginale": "3474435875"}	3474435875	Simone	[{"brand": "Stihl", "model": "Motosega MSA 80", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452156493"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937882"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706053487"}]	[]	559	\N	\N	Affilatore 2 in 1 in omaggio	scontrino	completed	2026-03-19 16:26:03.002+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774002466996	2026-03-20 10:27:46.995+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1774002417747, "nome": "Green 7 25 kg", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774002446843, "nome": "BOBINA DI FILO COD. R303612", "prezzo": 12, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774002460270, "nome": "CARCASSA TESTINA", "prezzo": 5.2, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	62.5	\N	\N	\N	scontrino	completed	2026-03-20 10:27:46.995+00	t	user_1773995761120	vendita	f	f	f	in_attesa	\N
+1774013807798	2026-03-20 13:36:47.184+00	Mariuzzo Francesco	{"id": "501909", "cap": "30020", "nome": "Mariuzzo Francesco", "email": "francesco.mariuzzo@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3358473755", "indirizzo": "VIA ROMA, 123", "provincia": "VE", "searchText": "mariuzzo francesco meolo ", "telefonoOriginale": "3358473755"}	3358473755	Simone	[{"brand": "STIHL", "model": "Forbice elettronica HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "942794191"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "949709835"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707132101"}]	[]	139	\N	\N	\N	scontrino	completed	2026-03-20 13:36:47.184+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774017494489	2026-03-20 14:38:14.3+00	Dossini Annalisa	{"id": "513303", "cap": "31030", "nome": "Dossini Annalisa", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3404622945", "indirizzo": "VICOLO TIEPOLO, 41", "provincia": "TV", "searchText": "dossini annalisa carbonera ", "telefonoOriginale": "3404622945"}	3404622945	Simone	[{"brand": "STIHL", "model": "Motosega MSA 70.0 C", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200582"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-20 14:38:14.3+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774029748667	2026-03-20 18:02:28.667+00	Lombardi Pietro	\N	\N	Simone	[]	[{"id": 1774029680871, "nome": "Ugelli anti-gocciolamento Ø 6 mm", "prezzo": 3.3, "quantita": 4, "matricola": null, "aliquotaIva": 22}, {"id": 1774029706883, "nome": "Raccordo a T Ø 8-6-8 mm", "prezzo": 1.8, "quantita": 4, "matricola": null, "aliquotaIva": 22}, {"id": 1774029719369, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774029726667, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	345.4	\N	\N	\N	scontrino	completed	2026-03-20 18:02:28.667+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1771837124604	2026-03-21 11:00:00+00	COOP. Sociale Idee Verdi	{"id": "501441", "cap": "35030", "nome": "COOP. Sociale Idee Verdi", "email": "areacontabile@ideeverdi.it", "nomeP": "", "cognome": "", "contatto": "CEL. Marco Neve", "localita": "SELVAZZANO DENTRO", "telefono": "3450914123", "indirizzo": "VIA GALVANI, 16", "provincia": "PD", "searchText": "coop. sociale idee verdi selvazzano dentro cel. marco neve", "telefonoOriginale": "3450914123"}	3450914123	Simone	[{"brand": "Altro", "model": "Trattorino Ferris ISX 3300", "prezzo": 20740, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "4002455332"}]	[{"id": 1772079631434, "nome": "Kit lame di ricambio ad alto lancio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	20740	1830	bonifico	Saldo prima della consegna	fattura	completed	2026-03-21 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774077613580	2026-03-21 07:20:13.58+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774077608358, "nome": "Amino K 5 Kg 5 kg", "prezzo": 51, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	51	\N	\N	\N	fattura	completed	2026-03-21 07:20:13.58+00	f	user_1774077521447	vendita	f	f	f	in_attesa	\N
+1774077856238	2026-03-21 07:24:15.812+00	Dametto Giulio	\N	\N	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "547285150"}]	[]	339	\N	\N	\N	scontrino	completed	2026-03-21 07:24:15.812+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1772794749226	2026-03-06 11:00:00+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[{"brand": "STIHL", "model": "Potatore HTA 86", "prezzo": 530, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449457136"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989674"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008377"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001603"}]	[{"id": 1772794630440, "nome": "Testina Polycut Stihl 28-2", "prezzo": 21, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772794675699, "nome": "Testina Autocut 27-2", "prezzo": 14.1, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"nome": "Ugello rotore", "prezzo": 21.8, "quantita": 1, "aliquotaIva": 22}]	1814.7800000000002	\N	\N	\N	fattura	completed	2026-03-06 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774084657146	2026-03-21 09:17:36.944+00	Bonotto Franco	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3611T", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65140005458"}]	[]	669	\N	\N	\N	scontrino	completed	2026-03-21 09:17:36.944+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774086075538	2026-03-21 09:41:14.645+00	Daniel Enrico	{"id": "505262", "cap": "30020", "nome": "Daniel Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3402878607", "indirizzo": "VIA CALVISANO, 44", "provincia": "VE", "searchText": "daniel enrico fossalta di piave ", "telefonoOriginale": "3402878607"}	3402878607	Simone	[{"brand": "THE TORO COMPANY", "model": "Arieggiatore", "prezzo": 650, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "325000333"}]	[]	650	200	contanti	Ritira lunedì sera o martedì mattina	scontrino	completed	2026-03-21 09:41:14.645+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774088170002	2026-03-21 10:16:09.751+00	Bergamo Nello	\N	\N	Simone	[{"brand": "STIHL", "model": "Rasaerba RM 453.3 V", "prezzo": 699, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451098503"}]	[]	699	\N	\N	\N	scontrino	completed	2026-03-21 10:16:09.751+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774090454237	2026-03-21 10:54:14.236+00	Sabrina Botter	\N	\N	Simone	[]	[{"id": 1774090450357, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-03-21 10:54:14.236+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774258633933	2026-03-23 09:37:13.932+00	Guerra Marco	{"id": "501368", "cap": "31100", "nome": "Guerra Marco", "email": "marco@guerra.tv.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3463219454", "indirizzo": "VIA S. PELAIO 1/B", "provincia": "TV", "searchText": "guerra marco treviso ", "telefonoOriginale": "3463219454"}	3463219454	Simone	[]	[{"id": 1774258619431, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-03-23 09:37:13.932+00	t	user_1774253083870	vendita	f	f	f	in_attesa	\N
+1774271453115	2026-03-23 13:10:53.115+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774271430091, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	50	\N	\N	\N	fattura	completed	2026-03-23 13:10:53.115+00	t	user_1774264782378	vendita	f	f	f	in_attesa	\N
+1774284270579	2026-03-23 16:44:30.578+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774284258060, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-23 16:44:30.578+00	t	user_1774264782378	vendita	f	f	f	in_attesa	\N
+1774343263601	2026-03-24 09:07:43.6+00	DEL  FABBRO	\N	\N	Admin	[]	[{"id": 1774343198654, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774343220892, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1774343233664, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 40.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774343252936, "nome": "Micosat F Uno gr.200", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	119.25	\N	\N	\N	scontrino	completed	2026-03-24 09:07:43.6+00	f	user_1772446347578	vendita	f	f	f	in_attesa	\N
+1774343996171	2026-03-24 09:19:55.237+00	Piovesan Aldo 3289160851 0422708651	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466XB", "prezzo": 630, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCDF1005757"}, {"brand": "Honda", "model": "Caricabatteria", "prezzo": 39, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027253"}, {"brand": "Honda", "model": "Batteria DP3640XA", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY1002444"}]	[]	818	\N	\N	\N	scontrino	completed	2026-03-24 09:19:55.237+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774880649187	2026-03-30 14:24:07.753+00	Tuon Adriano	{"id": "501316", "cap": "31030", "nome": "Tuon Adriano", "email": "adrianotuon@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3472767486", "indirizzo": "VIA DON A ANTONIO ASTI 49", "provincia": "TV", "searchText": "tuon adriano breda di piave ", "telefonoOriginale": "3472767486"}	3472767486	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-267", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U4843B006692"}]	[]	269	\N	\N	\N	scontrino	completed	2026-03-30 14:24:07.753+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774364278232	2026-03-24 14:57:57.456+00	Deoni Giardinaggio S.R.L.	{"id": "203570", "cap": "31038", "nome": "Deoni Giardinaggio S.R.L.", "email": "info@deonigiardinaggio.it", "nomeP": "", "cognome": "", "contatto": "CEL:FRANCESCO/GIANLUCA/MANUELE-FIS.LUCIA", "localita": "PAESE", "telefono": "3497600981", "indirizzo": "VIA POSTUMIA, 49", "provincia": "TV", "searchText": "deoni giardinaggio s.r.l. paese cel:francesco/gianluca/manuele-fis.lucia", "telefonoOriginale": "3497600981"}	3497600981	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545073124"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997510"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997501"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "952262635"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245641"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008378"}]	[]	1814.76	\N	\N	\N	fattura	completed	2026-03-24 14:57:57.456+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774365827810	2026-03-24 15:23:47.16+00	Lava Edo Autotrasporti	{"id": "203026", "cap": "30020", "nome": "Lava Edo Autotrasporti", "email": "lavaedo@gmail.com", "nomeP": "", "cognome": "", "contatto": "1 -SABRINA Moglie 2 -MARITO", "localita": "MEOLO", "telefono": "3480998841", "indirizzo": "VIA DELLE BALDANE 1", "provincia": "VE", "searchText": "lava edo autotrasporti meolo 1 -sabrina moglie 2 -marito", "telefonoOriginale": "3480998841"}	3480998841	Simone	[{"brand": "STIHL", "model": " MS 212 3/8\\" P", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "837888152"}]	[{"id": 1774365578646, "nome": "Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774365621530, "nome": "Filo decespugliatore 2.7 mm", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	465.5	\N	\N	\N	fattura	completed	2026-03-24 15:23:47.16+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774373885963	2026-03-24 17:38:05.963+00	MATTIOLI ANDREA	\N	\N	Simone	[]	[{"id": 1774373868505, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 3, "matricola": null, "aliquotaIva": 4}, {"id": 1774373880492, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 3, "matricola": null, "aliquotaIva": 4}]	325.5	\N	\N	\N	scontrino	completed	2026-03-24 17:38:05.963+00	t	user_1774361283783	vendita	f	f	f	in_attesa	\N
+1774373917720	2026-03-24 17:38:37.72+00	TREVISAN	\N	\N	Simone	[]	[{"id": 1774373914236, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-24 17:38:37.72+00	t	user_1774361283783	vendita	f	f	f	in_attesa	\N
+1774424302603	2026-03-25 07:38:22.602+00	Spinola Domenico - Il Prato	{"id": "401305", "cap": "31027", "nome": "Spinola Domenico - Il Prato", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SPRESIANO", "telefono": "3356951355", "indirizzo": "VIA ARGINE SAN MARCO, 21 - LOVADINA", "provincia": "TV", "searchText": "spinola domenico - il prato spresiano ", "telefonoOriginale": "3356951355"}	3356951355	Simone	[]	[{"id": 1774424294991, "nome": "rullo spanditerriccio", "prezzo": 260, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	260	\N	\N	\N	fattura	completed	2026-03-25 07:38:22.602+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774428273167	2026-03-25 08:44:33.167+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774428223154, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1774428268252, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	262.9	\N	\N	\N	fattura	completed	2026-03-25 08:44:33.167+00	t	user_1774428129575	vendita	f	f	f	in_attesa	\N
+1774446958655	2026-03-25 13:55:58.655+00	.	\N	\N	Simone	[]	[{"id": 1774446952697, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	60.8	\N	\N	\N	scontrino	completed	2026-03-25 13:55:58.655+00	t	user_1774428129575	vendita	f	f	f	in_attesa	\N
+1774456521482	2026-03-25 16:35:21.481+00	De Demo Daniele	{"id": "500278", "cap": "31030", "nome": "De Demo Daniele", "email": "polo.chiara@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3480880270", "indirizzo": "VIA VALDEMONEGHE, 18/A", "provincia": "TV", "searchText": "de demo daniele carbonera ", "telefonoOriginale": "3480880270"}	3480880270	Simone	[]	[{"id": 1774456513616, "nome": "Granustar 20 kg", "prezzo": 70.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	351.5	\N	\N	\N	scontrino	completed	2026-03-25 16:35:21.481+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774456568253	2026-03-25 16:36:08.253+00	Global Service Di Salvalaio Denis	{"id": "501590", "cap": "30013", "nome": "Global Service Di Salvalaio Denis", "email": "salvalaiodenis76@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3384199774", "indirizzo": "VIA DELLA FONTE 9", "provincia": "VE", "searchText": "global service di salvalaio denis cavallino-treporti ", "telefonoOriginale": "3384199774"}	3384199774	Simone	[]	[{"id": 1774456559648, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 15, "matricola": null, "aliquotaIva": 4}]	874.5	\N	\N	\N	fattura	completed	2026-03-25 16:36:08.253+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774368267558	2026-03-24 11:00:00+00	Gastaldo Rossella	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "956698926"}, {"brand": "Stihl", "model": "Batteria AK20", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948666076"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644364"}]	[]	358	100	pos	\N	scontrino	completed	2026-03-31 09:14:30.786+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1775232100203	2026-04-03 16:01:39.398+00	Cracco Ortensia	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 30.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "840710134"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707554389"}]	[]	159	\N	\N	\N	scontrino	completed	2026-04-03 16:01:39.398+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1774522518663	2026-03-26 10:55:15.372+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 250.0", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452027047"}, {"brand": "STIHL", "model": "Soffiatore BGA 250.0", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BA0601159"}, {"brand": "Stihl", "model": "Tagliasiepi MSA 140.0 R", "prezzo": 545, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451286599"}, {"brand": "Stihl", "model": "Tagliasiepi HSA 140.0 T", "prezzo": 545, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "HA0201135"}, {"brand": "Stihl", "model": "Motosega MSA 190.0 T", "prezzo": 286, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452311136"}, {"brand": "STIHL", "model": "Motore multifunzione KMA 120.0 R", "prezzo": 306.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "542315700"}, {"brand": "STIHL", "model": "Caricabatteria AL 301-4", "prezzo": 291, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711612931"}, {"brand": "STIHL", "model": "Caricabatteria AL 301-4", "prezzo": 291, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711612935"}, {"brand": "STIHL", "model": "Caricabatterie AL501", "prezzo": 154.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "987011256"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001602"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001605"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001606"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008375"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008379"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921009376"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255776"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255780"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953255781"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256589"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256593"}, {"brand": "STIHL", "model": "Batteria AP 200S", "prezzo": 180.33, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256596"}]	[{"id": 1774521750509, "nome": "Accessorio reciprocatore RG-KM", "prezzo": 291, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774521787365, "nome": "Asta stelo completa, ricambio per KM", "prezzo": 49, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1774521927531, "nome": "box portabatterie M", "prezzo": 53.7, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	6230	\N	\N	Pagamento 5 rate uguali, acconto alla consegna e poi 30-60-90-120 gg	fattura	completed	2026-03-26 10:55:15.372+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774523155609	2026-03-26 11:05:55.608+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774523136448, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	54.8	\N	\N	\N	fattura	completed	2026-03-26 11:05:55.608+00	t	user_1774523116559	vendita	f	f	f	in_attesa	\N
+1774532748335	2026-03-26 13:45:48.335+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[]	[{"id": 1774532700558, "nome": "Catena 40 M ", "prezzo": 9.3, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1774532733303, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	181.6	\N	\N	\N	scontrino	completed	2026-03-26 13:45:48.335+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774601809741	2026-03-27 08:56:49.74+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774601790529, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-27 08:56:49.74+00	t	user_1774595787870	vendita	f	f	f	in_attesa	\N
+1774608201588	2026-03-27 10:43:21.588+00	Moro Monica 3482993659	\N	\N	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 6112 ZL", "prezzo": 5600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Rasaerba RMA 453 PV", "prezzo": 1149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Decespugliatore FSA135", "prezzo": 465, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria Al301-4", "prezzo": 360, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	8890	\N	\N	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774947376114	2026-03-31 08:56:16.114+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1774947361909, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1774947370877, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	141.8	\N	\N	\N	scontrino	completed	2026-03-31 08:56:16.114+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776067680889	2026-04-13 10:00:00+00	Morellato Ugo REALIZ. Giardini	{"id": "202390", "cap": "31040", "nome": "Morellato Ugo REALIZ. Giardini", "email": "ugomorellato@tiscali.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVIGNANO", "telefono": "3471368331", "indirizzo": "VIA ALTA 41/A", "provincia": "TV", "searchText": "morellato ugo realiz. giardini trevignano ", "telefonoOriginale": "3471368331"}	3471368331	Admin	[]	[{"id": 1776067676091, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	208	\N	\N	\N	fattura	completed	2026-04-13 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776071912652	2026-04-13 09:18:32.651+00	AZ.AGR. Il Filo Verde Di Trentin Francesco	{"id": "203286", "cap": "31050", "nome": "AZ.AGR. Il Filo Verde Di Trentin Francesco", "email": "info@ilfiloverde.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VILLORBA", "telefono": "3492316204", "indirizzo": "VIA A. MANZONI, 10/B - FONTANE", "provincia": "TV", "searchText": "az.agr. il filo verde di trentin francesco villorba ", "telefonoOriginale": "3492316204"}	3492316204	Simone	[]	[{"id": 1776071892168, "nome": "Hurricane 7 10 kg", "prezzo": 89, "quantita": 8, "matricola": null, "aliquotaIva": 10}]	712	\N	\N	\N	scontrino	completed	2026-04-13 09:18:32.651+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774607711937	2026-03-27 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Echo", "model": "Motosega DCS2500T", "prezzo": 736, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535019972"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935010924"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935009404"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435022949"}, {"brand": "Bluebird", "model": "Trivella NEA560 T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BBLP1002585001"}]	[{"nome": "Rasaerba Stihl RM 655 V matr. 447005979", "prezzo": 901.6, "quantita": 1, "aliquotaIva": 22}, {"nome": "Trivella mm 100", "prezzo": 81, "quantita": 1, "aliquotaIva": 22}]	2177.6	\N	\N	\N	fattura	completed	2026-03-27 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774629897606	2026-03-27 16:44:57.606+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774629894903, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-27 16:44:57.606+00	t	user_1774595787870	vendita	f	f	f	in_attesa	\N
+1774630000147	2026-03-27 16:46:39.785+00	Maggiolo Roberto	{"id": "501465", "cap": "31030", "nome": "Maggiolo Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3923770865", "indirizzo": "VIA CAL DEL BROLO", "provincia": "TV", "searchText": "maggiolo roberto breda di piave ", "telefonoOriginale": "3923770865"}	3923770865	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466C1 PKEH", "prezzo": 489, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1227945"}]	[]	489	\N	\N	\N	scontrino	completed	2026-03-27 16:46:39.785+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774681347971	2026-03-28 07:02:27.97+00	Morellato Ugo REALIZ. Giardini	{"id": "202390", "cap": "31040", "nome": "Morellato Ugo REALIZ. Giardini", "email": "ugomorellato@tiscali.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVIGNANO", "telefono": "3471368331", "indirizzo": "VIA ALTA 41/A", "provincia": "TV", "searchText": "morellato ugo realiz. giardini trevignano ", "telefonoOriginale": "3471368331"}	3471368331	Simone	[]	[{"id": 1774681341119, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 89.3, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	89.3	\N	\N	\N	scontrino	completed	2026-03-28 07:02:27.97+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774682853729	2026-03-28 07:27:33.728+00	Scarabello Roberto	{"id": "508514", "cap": "31050", "nome": "Scarabello Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "VILLORBA", "telefono": "3779576217", "indirizzo": "VIA 2 GIUGNO 16/2", "provincia": "TV", "searchText": "scarabello roberto villorba ", "telefonoOriginale": "3779576217"}	3779576217	Simone	[]	[{"id": 1774682821215, "nome": "motopompa usata", "prezzo": 500, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774682831071, "nome": "palo iniettore", "prezzo": 360, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	860	\N	\N	\N	scontrino	completed	2026-03-28 07:27:33.728+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774685003800	2026-03-28 08:03:23.8+00	Il giardino Astrologico	\N	\N	Simone	[]	[{"id": 1774684934955, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774684944653, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774684956743, "nome": "Amino K 5 Kg 5 kg", "prezzo": 56.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	160.62	\N	\N	\N	fattura	completed	2026-03-28 08:03:23.8+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1774689844346	2026-03-28 09:24:03.286+00	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105573"}]	[]	559	\N	\N	\N	scontrino	completed	2026-03-28 09:24:03.286+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774693001885	2026-03-28 11:00:00+00	Serafin Ermes Giardiniere	{"id": "203366", "cap": "31052", "nome": "Serafin Ermes Giardiniere", "email": "martesfaina@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3493648574", "indirizzo": "VIA CASTELLA, 47", "provincia": "TV", "searchText": "serafin ermes giardiniere maserada sul piave ", "telefonoOriginale": "3493648574"}	3493648574	Simone	[]	[{"nome": "BLIZZARD", "prezzo": 52, "quantita": 1, "aliquotaIva": 22}]	52	\N	\N	\N	scontrino	completed	2026-03-28 11:00:00+00	t	user_1774683423770	vendita	f	f	f	in_attesa	\N
+1774693702297	2026-03-28 10:28:21.664+00	Cicutto Roberto loc. Mattonaia 315 Sandorligo della Valle TS 347 8062220 roberto.cicutto@gmail.com	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-301TES", "prezzo": 319, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U48738203070"}]	[]	319	\N	\N	\N	scontrino	completed	2026-03-28 10:28:21.664+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774694659761	2026-03-28 10:44:19.217+00	Tollardo Palmerino	{"id": "507322", "cap": "31056", "nome": "Tollardo Palmerino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3488221359", "indirizzo": "VIA GALLI, 103 - BIANCADE", "provincia": "TV", "searchText": "tollardo palmerino roncade ", "telefonoOriginale": "3488221359"}	3488221359	Simone	[{"brand": "STIHL", "model": "Idropulitrice RE 130 PLUS", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "495001145"}]	[]	449	\N	\N	\N	scontrino	completed	2026-03-28 10:44:19.217+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1774864402107	2026-03-30 09:53:22.106+00	Imberti	\N	\N	Simone	[]	[{"id": 1774864382784, "nome": "AllRound 20 kg", "prezzo": 61.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	61.3	\N	\N	\N	scontrino	completed	2026-03-30 09:53:22.106+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1775046680946	2026-04-01 12:31:20.345+00	AZ. AGR. Vivai Piante Di Dragancea Andrei	{"cf": "", "id": "261a7915-ee90-4765-8365-fe199a9205bc", "cap": "31056", "sdi": "", "nome": "AZ. AGR. Vivai Piante Di Dragancea Andrei", "piva": "", "email": "andrei.dragancea@gmail.com", "nomeP": "AZ. AGR. Vivai Piante Di Dragancea Andrei", "_fonte": "db", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3282670287", "indirizzo": "VIA ARRIGO BOITO, 10 - BIANCADE", "provincia": "TV", "searchText": "az. agr. vivai piante di dragancea andrei roncade "}	3282670287	Simone	[{"brand": "Echo", "model": "Soffiatore PB-2620", "prezzo": 369, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "P55040007374"}]	[]	369	\N	\N	\N	fattura	completed	2026-04-01 12:31:20.345+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1775054254144	2026-04-01 14:37:34.144+00	.	\N	\N	Simone	[]	[{"id": 1775054250047, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	15.7	\N	\N	\N	scontrino	completed	2026-04-01 14:37:34.144+00	t	user_1775027182951	vendita	f	f	f	in_attesa	\N
+1775056714848	2026-04-01 15:18:34.848+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Admin	[]	[{"id": 1775056692488, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775056710471, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	157.8	\N	\N	\N	fattura	completed	2026-04-01 15:18:34.848+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1775192600373	2026-04-03 05:03:20.373+00	Cazziolati Luca V. & V. Srl	{"id": "513558", "cap": "31052", "nome": "Cazziolati Luca V. & V. Srl", "email": "cazziolativv@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3475302153", "indirizzo": "VIA GRAVE, 15", "provincia": "TV", "searchText": "cazziolati luca v. & v. srl maserada sul piave ", "telefonoOriginale": "3475302153"}	3475302153	Simone	[]	[{"id": 1775192586856, "nome": "Rullo spanditerriccio", "prezzo": 260, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	260	\N	\N	\N	fattura	completed	2026-04-03 05:03:20.373+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1775206591299	2026-04-03 08:56:31.299+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1775206586803, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 50.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	50.4	\N	\N	\N	scontrino	completed	2026-04-03 08:56:31.299+00	t	user_1775199829736	vendita	f	f	f	in_attesa	\N
+1775219409403	2026-04-03 12:30:09.403+00	Checchin Alberto	\N	\N	Simone	[]	[{"id": 1775218702579, "nome": "Eden 8 5 kg", "prezzo": 18.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218713254, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218728396, "nome": "Leokare 5 kg 5 kg", "prezzo": 62, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218739032, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 40.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218816044, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	166.2	\N	\N	\N	scontrino	completed	2026-04-03 12:30:09.403+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775222679188	2026-04-03 13:24:37.424+00	Lazzaro Stefano	{"id": "514059", "cap": "31057", "nome": "Lazzaro Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3485204187", "indirizzo": "", "provincia": "TV", "searchText": "lazzaro stefano silea ", "telefonoOriginale": "3485204187"}	3485204187	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 70 R", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452785537"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702673116"}, {"brand": "Stihl", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937881"}]	[]	458	\N	\N	\N	scontrino	completed	2026-04-03 13:24:37.424+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775225947606	2026-04-03 10:00:00+00	Falanga Guglielmo	{"id": "510614", "cap": "31057", "nome": "Falanga Guglielmo", "email": "g.falanga@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "", "indirizzo": "VIA LANZAGHE, 95", "provincia": "TV", "searchText": "falanga guglielmo silea ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1775225658060, "nome": "Kit Expanding 10 ugelli", "prezzo": 270, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"nome": "Silver Shield lt 1", "prezzo": 55, "quantita": 1, "aliquotaIva": 22}]	595	\N	\N	\N	scontrino	completed	2026-04-03 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1775228882541	2026-04-03 15:08:02.54+00	.	\N	\N	Simone	[]	[{"id": 1775228857698, "nome": "Blizzard (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-04-03 15:08:02.54+00	t	user_1775217703102	vendita	f	f	f	in_attesa	\N
+1775230498649	2026-04-03 15:34:58.648+00	Carniel Marco	\N	\N	Simone	[]	[{"id": 1775230479703, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775230489198, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	scontrino	completed	2026-04-03 15:34:58.648+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1775231955995	2026-04-03 15:59:15.995+00	Rosa Rosae Di Sordi Edward	{"id": "503406", "cap": "31050", "nome": "Rosa Rosae Di Sordi Edward", "email": "edwardesse@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PONZANO VENETO", "telefono": "3406829364", "indirizzo": "VICOLO DELLA SERENISSIMA, 11", "provincia": "TV", "searchText": "rosa rosae di sordi edward ponzano veneto ", "telefonoOriginale": "3406829364"}	3406829364	Admin	[]	[{"id": 1775231950392, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	208	\N	\N	\N	fattura	completed	2026-04-03 15:59:15.995+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1775279049872	2026-04-04 05:04:09.872+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1775278985565, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1775278999179, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1775279017757, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1775279036649, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	617.8	\N	\N	\N	fattura	completed	2026-04-04 05:04:09.872+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1775286919426	2026-04-04 07:15:18.84+00	Casagrande Roberto	{"id": "510332", "cap": "30020", "nome": "Casagrande Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "", "indirizzo": "VIA CA' TRON, 114 O 112", "provincia": "VE", "searchText": "casagrande roberto meolo ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "Stihl", "model": "Idropulitrice RE 130 PLUS", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "840267090"}]	[{"id": 1775286864026, "nome": "Set pulizia tubi 4910 500 8000", "prezzo": 55, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	504	\N	\N	\N	scontrino	completed	2026-04-04 07:15:18.84+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775289481961	2026-04-04 07:58:01.202+00	Dario Manuel	\N	\N	Simone	[{"brand": "Echo", "model": "Soffiatore DPB-310", "prezzo": 99, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U60535100095"}]	[]	99	\N	\N	\N	scontrino	completed	2026-04-04 07:58:01.202+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775294510007	2026-04-04 09:21:48.879+00	Cazanesco Dimitri	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 151", "prezzo": 409, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "198189221"}, {"brand": "Stihl", "model": "Soffiatore BG 56/C", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196165943"}]	[{"id": 1775294303210, "nome": "Copri pantaloni ", "prezzo": 25.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775294313925, "nome": "Visiera", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775294471988, "nome": "Olio catena Bioplus 5 litri ", "prezzo": 23.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775294497461, "nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	759.9	\N	\N	\N	scontrino	completed	2026-04-04 09:21:48.879+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775548202087	2026-04-07 07:50:01.638+00	Basso Mario via Aldo Moro 24/B Frescada	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 70.0 R", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452785538"}]	[]	269	\N	\N	\N	scontrino	completed	2026-04-07 07:50:01.638+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775549008029	2026-04-07 08:03:27.351+00	Santagà Elena via Grande 2 Rovaré di San Biagio di Callalta	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545377758"}]	[{"id": 1775548863814, "nome": "Tanica 5 litri", "prezzo": 7.4, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548879419, "nome": "Cuneo", "prezzo": 4.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548897670, "nome": "Catena 44 M", "prezzo": 14.4, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548944487, "nome": "Olio catena Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548966530, "nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548981640, "nome": "Visiera", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	404.3	\N	\N	\N	scontrino	completed	2026-04-07 08:03:27.351+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775573105389	2026-04-07 14:45:05.389+00	Cariato Mario	\N	\N	Simone	[]	[{"id": 1775573051135, "nome": "Leokare 5 kg 5 kg", "prezzo": 62, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573065891, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573078019, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573086478, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	184.1	\N	\N	\N	scontrino	completed	2026-04-07 14:45:05.389+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775578363836	2026-04-07 16:12:43.835+00	Romanello Giulio Cesare	{"id": "210036", "cap": "31048", "nome": "Romanello Giulio Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3406175521", "indirizzo": "VIA MARIO DEL MONACO 4 - CAVRIE", "provincia": "TV", "searchText": "romanello giulio cesare san biagio di callalta ", "telefonoOriginale": "3406175521"}	3406175521	Simone	[]	[{"id": 1775578307588, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775578313362, "nome": "Hurricane 1 kg", "prezzo": 13.75, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	61.45	\N	\N	\N	scontrino	completed	2026-04-07 16:12:43.835+00	t	user_1775577353749	vendita	f	f	f	in_attesa	\N
+1775578568959	2026-04-07 16:16:08.959+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1775578563982, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-07 16:16:08.959+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776072128511	2026-04-13 10:00:00+00	Cavezzan Ermes	\N	\N	Simone	[]	[{"id": 1776072106535, "nome": "Tornado 10 kg", "prezzo": 71, "quantita": 9, "matricola": null, "aliquotaIva": 10}, {"id": 1776072118551, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 50.4, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	739.8	\N	\N	\N	scontrino	completed	2026-04-13 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1775656456162	2026-04-08 13:54:16.162+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775656430952, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-04-08 13:54:16.162+00	t	user_1775655848781	vendita	f	f	f	in_attesa	\N
+1775726124789	2026-04-09 09:15:24.788+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775726117028, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-09 09:15:24.788+00	t	user_1775721113292	vendita	f	f	f	in_attesa	\N
+1775738232391	2026-04-09 12:37:12.39+00	Giardino Verde Di Maiorano Devid	{"id": "514216", "cap": "31040", "nome": "Giardino Verde Di Maiorano Devid", "email": "lion.leonardo2004@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VOLPAGO DEL MONTELLO", "telefono": "3457613676", "indirizzo": "VIA SAN PIO X, 101", "provincia": "TV", "searchText": "giardino verde di maiorano devid volpago del montello ", "telefonoOriginale": "3457613676"}	3457613676	Admin	[]	[{"id": 1775738191872, "nome": "hurrica", "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775738228460, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	108.9	\N	\N	\N	scontrino	completed	2026-04-09 12:37:12.39+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1775811024050	2026-04-10 08:50:24.049+00	veronese andrea	\N	\N	Simone	[]	[{"id": 1775810899963, "nome": "AllRound 20 kg", "prezzo": 64.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775810990828, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	79	\N	\N	\N	scontrino	completed	2026-04-10 08:50:24.049+00	t	user_1775805459637	vendita	f	f	f	in_attesa	\N
+1775825346524	2026-04-10 12:49:05.86+00	Palmas Michele Francesco	{"id": "509006", "cap": "31022", "nome": "Palmas Michele Francesco", "email": "fscopalmas@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PREGANZIOL", "telefono": "0422330486", "indirizzo": "VIA MARCELLO DEL MAJNO,9", "provincia": "TV", "searchText": "palmas michele francesco preganziol ", "telefonoOriginale": "0422330486"}	0422330486	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0699NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-04-10 12:49:05.86+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775894412956	2026-04-11 08:00:12.301+00	Nena Massimo	{"id": "507430", "cap": "31057", "nome": "Nena Massimo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3382269912", "indirizzo": "VICOLO OSOPO, 7", "provincia": "TV", "searchText": "nena massimo silea ", "telefonoOriginale": "3382269912"}	3382269912	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416C1", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCBF1127032"}]	[]	339	\N	\N	\N	scontrino	completed	2026-04-11 08:00:12.301+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775899862697	2026-04-11 09:31:01.06+00	Moro Ivano	{"id": "511510", "cap": "30024", "nome": "Moro Ivano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3358408807", "indirizzo": "VIA ROSSETTA, 2", "provincia": "VE", "searchText": "moro ivano musile di piave ", "telefonoOriginale": "3358408807"}	3358408807	Simone	[{"brand": "Echo", "model": "Motosega CS-3410", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "F09238006191"}]	[{"id": 1775899797985, "nome": "Olik catena Pro Up 5 litri ", "prezzo": 23.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775899822809, "nome": "Marline 2T 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	359.9	\N	\N	\N	scontrino	completed	2026-04-11 09:31:01.06+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775902203338	2026-04-11 10:10:03.338+00	Rodighiero Manuele	{"id": "505254", "cap": "31057", "nome": "Rodighiero Manuele", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3471830676", "indirizzo": "VIA BASSA TREVIGIANA, 4", "provincia": "TV", "searchText": "rodighiero manuele silea ", "telefonoOriginale": "3471830676"}	3471830676	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMA 448.3 V", "prezzo": 770, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	959	\N	\N	Avvisare il cliente appena arriva per il ritiro	scontrino	pending	\N	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776070246862	2026-04-13 08:50:45.815+00	Burato Pierluigi	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416C1", "prezzo": 499, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCBF1107292"}]	[]	499	\N	\N	\N	scontrino	completed	2026-04-13 08:50:45.815+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776087669751	2026-04-13 13:41:09.751+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1776087665124, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-13 13:41:09.751+00	t	user_1776067412336	vendita	f	f	f	in_attesa	\N
+1775643436602	2026-04-08 10:00:00+00	De Bortoli Emilio	{"id": "511975", "cap": "30013", "nome": "De Bortoli Emilio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3420471047", "indirizzo": "VIA FAUSTA 167", "provincia": "VE", "searchText": "de bortoli emilio cavallino-treporti ", "telefonoOriginale": "3420471047"}	3420471047	Simone	[{"brand": "GGP", "model": "Trattorino rasaerba XDC 150 HD", "prezzo": 2600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "26BA3RON003900"}]	[{"id": 1775643339417, "nome": "Kit traino GGP", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2650	300	pos	Chiamare cliente appena pronto e ritirare trattorino vecchio da rottamare	scontrino	completed	2026-04-13 14:40:06.242+00	f	user_1775131564325	vendita	f	f	f	in_attesa	\N
 \.
 
 
@@ -5330,6 +6128,40 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 427	2026-03-28 10:28:21.664+00	SCARICO	Echo	Decespugliatore SRM-301TES	U48738203070	Cicutto Roberto loc. Mattonaia 315 Sandorligo della Valle TS 347 8062220 roberto.cicutto@gmail.com	0	0	sold	user_1769961017929	main	f
 428	2026-03-28 10:41:56.067+00	CARICO	STIHL	Idropulitrice RE 130 PLUS	495001145	\N	\N	\N	available	user_1769961017929	main	t
 429	2026-03-28 10:44:19.218+00	SCARICO	STIHL	Idropulitrice RE 130 PLUS	495001145	Tollardo Palmerino	0	0	sold	user_1769961017929	main	f
+430	2026-03-30 14:20:14.637+00	CARICO	Echo	Decespugliatore SRM-267	U4843B006692	\N	\N	\N	available	user_1769961017929	main	t
+431	2026-03-30 14:24:07.754+00	SCARICO	Echo	Decespugliatore SRM-267	U4843B006692	Tuon Adriano	0	0	sold	user_1769961017929	main	f
+432	2026-04-01 12:30:27.926+00	CARICO	Echo	Soffiatore PB-2620	P55040007374	\N	\N	\N	available	user_1769961017929	main	t
+433	2026-04-01 12:31:20.345+00	SCARICO	Echo	Soffiatore PB-2620	P55040007374	AZ. AGR. Vivai Piante Di Dragancea Andrei	0	0	sold	user_1769961017929	main	f
+434	2026-04-03 13:23:03+00	CARICO	Stihl	Decespugliatore FSA 70 R	452785537	\N	\N	\N	available	user_1775131564325	main	t
+435	2026-04-03 13:23:49.378+00	CARICO	Stihl	Caricabatteria AL 101	702673116	\N	\N	\N	available	user_1775131564325	main	t
+436	2026-04-03 13:24:24.147+00	CARICO	Stihl	Batteria AK 30.0S	919937881	\N	\N	\N	available	user_1775131564325	main	t
+437	2026-04-03 13:24:37.424+00	SCARICO	Stihl	Decespugliatore FSA 70 R	452785537	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
+438	2026-04-03 13:24:38.331+00	SCARICO	Stihl	Caricabatteria AL 101	702673116	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
+439	2026-04-03 13:24:38.844+00	SCARICO	Stihl	Batteria AK 30.0S	919937881	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
+440	2026-04-03 16:00:03.051+00	CARICO	Stihl	Decespugliatore FSA 30.0	840710134	\N	\N	\N	available	user_1775131564325	main	t
+442	2026-04-03 16:01:28.632+00	CARICO	Stihl	Caricabatteria AL 1	707554389	\N	\N	\N	available	user_1775131564325	main	t
+443	2026-04-03 16:01:39.398+00	SCARICO	Stihl	Decespugliatore FSA 30.0	840710134	Cracco Ortensia	0	0	sold	user_1775131564325	main	f
+444	2026-04-03 16:01:39.879+00	SCARICO	Stihl	Caricabatteria AL 1	707554389	Cracco Ortensia	0	0	sold	user_1775131564325	main	f
+445	2026-04-04 07:12:27.424+00	CARICO	Stihl	Idropulitrice RE 130 PLUS	840267090	\N	\N	\N	available	user_1775131564325	main	t
+446	2026-04-04 07:15:18.84+00	SCARICO	Stihl	Idropulitrice RE 130 PLUS	840267090	Casagrande Roberto	0	0	sold	user_1775131564325	main	f
+447	2026-04-04 07:57:26.051+00	CARICO	Echo	Soffiatore DPB-310	U60535100095	\N	\N	\N	available	user_1775131564325	main	t
+448	2026-04-04 07:58:01.203+00	SCARICO	Echo	Soffiatore DPB-310	U60535100095	Dario Manuel	0	0	sold	user_1775131564325	main	f
+449	2026-04-04 09:14:39.905+00	CARICO	Stihl	Motosega MS 151	198189221	\N	\N	\N	available	user_1775131564325	main	t
+450	2026-04-04 09:16:32.215+00	CARICO	Stihl	Soffiatore BG 56/C	196165943	\N	\N	\N	available	user_1775131564325	main	t
+451	2026-04-04 09:21:48.88+00	SCARICO	Stihl	Motosega MS 151	198189221	Cazanesco Dimitri	0	0	sold	user_1775131564325	main	f
+452	2026-04-04 09:21:49.548+00	SCARICO	Stihl	Soffiatore BG 56/C	196165943	Cazanesco Dimitri	0	0	sold	user_1775131564325	main	f
+453	2026-04-07 07:49:45.1+00	CARICO	Stihl	Decespugliatore FSA 70.0 R	452785538	\N	\N	\N	available	user_1775131564325	main	t
+454	2026-04-07 07:50:01.638+00	SCARICO	Stihl	Decespugliatore FSA 70.0 R	452785538	Basso Mario via Aldo Moro 24/B Frescada	0	0	sold	user_1775131564325	main	f
+455	2026-04-07 08:00:36.799+00	CARICO	Stihl	Motosega MS 194 T 3/8"P Chainsaw	545377758	\N	\N	\N	available	user_1775131564325	main	t
+456	2026-04-07 08:03:27.351+00	SCARICO	Stihl	Motosega MS 194 T 3/8"P Chainsaw	545377758	Santagà Elena via Grande 2 Rovaré di San Biagio di Callalta	0	0	sold	user_1775131564325	main	f
+457	2026-04-10 12:48:45.884+00	CARICO	Volpi	Potatore KVS5100	SC2624.0699NB	\N	\N	\N	available	user_1775131564325	main	t
+458	2026-04-10 12:49:05.86+00	SCARICO	Volpi	Potatore KVS5100	SC2624.0699NB	Palmas Michele Francesco	0	0	sold	user_1775131564325	main	f
+459	2026-04-11 07:59:59.923+00	CARICO	Honda	Rasaerba HRG416C1	MCBF1127032	\N	\N	\N	available	user_1775131564325	main	t
+460	2026-04-11 08:00:12.302+00	SCARICO	Honda	Rasaerba HRG416C1	MCBF1127032	Nena Massimo	0	0	sold	user_1775131564325	main	f
+461	2026-04-11 09:28:18.417+00	CARICO	Echo	Motosega CS-3410	F09238006191	\N	\N	\N	available	user_1775131564325	main	t
+462	2026-04-11 09:31:01.061+00	SCARICO	Echo	Motosega CS-3410	F09238006191	Moro Ivano	0	0	sold	user_1775131564325	main	f
+463	2026-04-13 08:49:54.411+00	CARICO	Honda	Rasaerba HRG416C1	MCBF1107292	\N	\N	\N	available	user_1775131564325	main	t
+464	2026-04-13 08:50:45.815+00	SCARICO	Honda	Rasaerba HRG416C1	MCBF1107292	Burato Pierluigi	0	0	sold	user_1775131564325	main	f
 \.
 
 
@@ -5338,196 +6170,8 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 --
 
 COPY public.listini (id, brand, categoria, codice, descrizione, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva, data_aggiornamento, prezzo_promo, promo_dal, promo_al) FROM stdin;
-8baaeeae-10c8-42c9-8897-d88db56cc0ed	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB455HCOP	Tagliaerba a spinta 45cm - 139cc	\N	340.00	299.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-856f26b3-9a5f-4128-adc5-751a0b0a826b	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB455HC	Tagliaerba a spinta 45cm - 139cc	\N	410.00	359.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-c81380cc-5e32-431a-ac28-608ecda79c1a	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB455SCOP	Tagliaerba semovente 45cm - 139cc	\N	420.00	369.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-b9908cb1-dd5a-45e8-962e-1fe04eede261	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB455SC	Tagliaerba semovente 45cm - 139cc	\N	505.00	445.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-8905b536-644e-4a8b-953a-7ceeda12e1fa	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB455SC3	Tagliaerba semovente 3x1 45cm - 139cc	\N	575.00	499.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-21ffc78d-aadb-4796-9471-3d5a8896c689	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB456SCVE3	Tagliaerba semovente 3x1 45cm - 166cc	\N	805.00	709.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-98db5bf2-b395-4b0d-a4e0-cbaf35806751	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB506SC	Tagliaerba semovente 50cm - 166cc	\N	610.00	535.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-9edeaae8-7ebf-45c6-b94e-be4095a1290a	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB506SC3	Tagliaerba semovente 3x1 50cm - 166cc	\N	685.00	599.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-4d0c1f77-f531-4b31-a066-22c85af5862b	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB537SC	Tagliaerba semovente 53cm - 196cc	\N	735.00	645.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-31588e30-3de1-4535-a5b4-001900fca9c4	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB537SC3	Tagliaerba semovente 3x1 53cm - 196cc	\N	805.00	709.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-f0b760bb-b3c5-4171-b24a-255af789e4ef	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB466HCM	Tagliaerba Mulching a spinta 46cm - 166cc - NEW	\N	660.00	579.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-98bf5a34-fe77-44d0-ac8f-2de4e46b2a58	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB466SCM	Tagliaerba Mulching semovente 46cm - 166cc	\N	795.00	699.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-42de4b5b-4e18-4091-b961-58ac6398cdc0	WEIBANG	TAGLIAERBA HOME SERIES	WBMWB537SCM	Tagliaerba Mulching semovente 53cm - 196cc	\N	980.00	859.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-ffd327b1-4487-4833-9725-959e8af502ba	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB507SCV3	Tagliaerba semovente 3x1 50cm - 196cc – Cardanica 3v	\N	950.00	835.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-06966ba2-3b77-416f-9904-d98ae046c873	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCV3	Tagliaerba semovente 3x1 53cm - 196cc - Cardanica 3v	\N	1050.00	925.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-ad26511c-f7ed-46ee-9908-e085426e0cb0	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCV3LV	Tagliaerba semovente 3x1 53cm - 196cc – Low Vibration	\N	1180.00	1039.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-2b72b537-718b-4b01-bb6a-59cfb46cdc0b	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCV3B	Tagliaerba semovente 3x1 53cm - 196cc - Freno lama	\N	1360.00	1199.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-8f118a21-df56-4e7e-a6a5-38c1e9b318fa	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCVM	Tagliaerba Mulching semovente 53cm - 196cc – Mecc. 3v	\N	1090.00	959.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-63f40d9f-f34c-4a7f-9367-e3ff5d8ebe07	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCVMLV	Tagliaerba Mulching semovente 53cm - 196cc – Low Vib.	\N	1240.00	1089.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-31dcdcc4-5fcd-40dc-ae6e-cd1212a40a47	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB536SKVM	Tagliaerba Mulching semovente 53cm - 180cc – Kawasaki	\N	1210.00	1069.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-b3872826-c248-4e56-92df-e6ee1f1b4b80	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCVAL	Tagliaerba semovente 53cm - 196cc – Alluminio	\N	1210.00	1069.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-ee87d827-9aba-4fd1-9489-b1ddc3a33df4	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB537SCVALB	Tagliaerba semovente 53cm - 196cc – Allum. - Freno lama	\N	1540.00	1355.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-5b2f5bcc-f61f-4e74-abc5-3f5c952052ef	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB778SCV3	Tagliaerba bilama semovente 3x1 77cm - 300cc	\N	2990.00	2789.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-f8b468db-bc74-4c96-a521-7ff283258829	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB778SCV3P	Tagliaerba bilama semovente 3x1 77cm - 300cc Ruote Piv.	\N	3210.00	2989.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-a29d5109-22a8-45bd-962f-56f47f637289	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB486SKVRB	Tagliaerba a rullo semovente 48cm - 179cc	\N	1950.00	1799.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-88f5d2c3-16fd-4e08-b2a1-1bef3edf8683	WEIBANG	TAGLIAERBA PROFESSIONAL SERIES	WBMWB567SKVRB	Tagliaerba a rullo semovente 56cm - 196cc	\N	2300.00	2099.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-d907f50c-d881-436b-a942-5a114f5dcbac	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWB384RC	Arieggiatore a coltelli 38cm - 163cc - Lama flottante	\N	990.00	869.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-3f851b84-fc3e-465e-b375-0e7cb1a816df	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWB486CRC	Arieggiatore a coltelli 48cm - 163cc - Lama flottante	\N	1350.00	1189.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-fa320984-5abb-4cad-9988-279ff15bd40b	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBLV506C	Aspirafoglie a ruote 80cm - 163cc (Sacco 240L,)	\N	1840.00	1619.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-5709bee4-fe09-40bd-a522-c4943edf2a77	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBLV50K	Aspirafoglie da sponda - 180cc Kawasaki	\N	1710.00	1499.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-919f5cfe-2d97-4670-b6aa-a6ea745980df	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBTR126H	Catenaria 163cc	\N	4500.00	4199.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-f4d06e69-b213-45c8-8722-43021391aba2	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBSH4003E	Biotrituratore elettrico 2400W - Diametro 40mm	\N	960.00	845.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-3fc5483a-9adf-4dd4-8d99-8bd83e249ea7	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBCH507LC	Cippatore compatto 196cc - Diametro 50mm	\N	1510.00	1329.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-80bb0949-2b36-44a3-9c9a-45d109b9ad7d	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBCH1013LCD	Cippatore professionale 400cc - Diametro 100mm	\N	3650.00	3399.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-182362cd-6497-4bfa-bf3d-f5db44f954ce	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBLT567HLC	Decespugliatore a ruote a spinta 56cm - 196cc	\N	870.00	765.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-470301bc-f163-4a56-adf2-42821ff39d0a	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBLT567SLC	Decespugliatore a ruote semovente 56cm - 196cc	\N	1270.00	1099.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-fac4b4c9-7722-4698-bffd-574d994da4ee	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBBC537SCV	Falciatrice professionale 53cm - 196cc	\N	1620.00	1425.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-50b22df2-9a35-43d1-bbc8-edda811d8b94	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBBC538	SCV Falciatrice professionale 53cm - 224cc	\N	1950.00	1715.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-40356fe4-7574-41e3-b096-f55d512ee450	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBBC7623LC	Falciatrice professionale 76cm - 764cc	\N	4900.00	4599.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-e9d59488-ffa7-4bbf-bbf6-bf0a2590a8f5	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBGT6813	Trinciasermenti a ruote 68cm - 392cc - Trasmis. CVT	\N	4800.00	4499.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-2783eef9-7c04-49da-aae8-8bfa94b0ca63	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBMWBGT6813TE	Trinciasermenti cingolato 68cm - 392cc	\N	7050.00	6599.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-320f9ed9-6546-42b1-bad3-2a10aec84ee0	WEIBANG	ALTRE MACCHINE PROFESSIONAL SERIES	WBAWBGTRC	Trinciasermenti cingolato 68cm - 392cc + Radiocomando	\N	8550.00	7999.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-fde017ab-9535-4c84-875a-49d7b427e061	WEIBANG	ACCESSORI	WBA4510104015	WBA4510104015 Tappo Mulching X WB454HB/SB, WB455HCOP	\N	18.00	16.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-a69ad91a-9dfb-4222-b674-c837f1450d51	WEIBANG	ACCESSORI	WBA4560104010	WBA4560104010 Tappo Mulching X WB455HC, WB455SC, WB455SC3	\N	15.00	13.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-79a0965e-924b-4ef8-a972-3aa797ef2b6f	WEIBANG	ACCESSORI	WBA5020124010	WBA5020124010 Tappo Mulching X WB506SB	\N	16.00	14.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-271acb9d-2e70-4ef6-8b84-c5024fde66a0	WEIBANG	ACCESSORI	WBA5040104010	WBA5040104010 Tappo Mulching X WB506SC, WB506SC3, WB507SCV3	\N	18.00	16.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-9e3f8de3-d441-458b-840e-a28d392c01fa	WEIBANG	ACCESSORI	WBA5330113010	WBA5330113010 Tappo Mulching X WB536SK/536SB, WB537SCV3B	\N	16.00	14.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-92331b49-b8ab-40d1-baed-e2a79b1fa78b	WEIBANG	ACCESSORI	WBA5360115010	WBA5360115010 Tappo Mulching X WB537SC, WB537SCV3	\N	24.00	21.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-ff0b43be-c2b5-4ce2-80ef-d27acbeeb27e	WEIBANG	ACCESSORI	WBA5340122010	WBA5340122010 Tappo Mulching X WB536SKAL/SBALV	\N	20.00	17.50	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-58fd9552-e11c-4e47-83e9-f507575c373a	WEIBANG	ACCESSORI	WBA5380107010	WBA5380107010 Tappo Mulching X WB537SCVAL, WB537SCVALB	\N	24.00	21.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-6bf46d12-f80f-4992-add4-8a501965f241	WEIBANG	ACCESSORI	WBR4520300000	WBR4520300000 Tappo Mulching X WB452HE, WB452SE3	\N	10.11	9.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-8f581630-91f6-4135-892c-94ae480bba9a	WEIBANG	ACCESSORI	WBAPIVOT53	WBAPIVOT53 Ruote piroettanti x 537SCV3	\N	165.00	145.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-2490e263-592b-48a4-9c25-778dc3881a3c	WEIBANG	ACCESSORI	WBABAT120	WBABAT120 Batteria Litio 120V - 4AH	\N	499.00	439.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-888c0473-c3b5-4ea9-a73d-eb6ecd125f8a	WEIBANG	ACCESSORI	WBACBAT120	WBACBAT120 Caricabatteria Litio 120V - 4AH	\N	219.00	199.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-4d5a6c1b-8f66-4563-bae4-055bde63f2e1	WEIBANG	ACCESSORI	WBA13720001	WBA13720001 Filo 4,5X660mm WBLT56HLC/SLC (Confezione da 12pz)	\N	16.00	14.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-5a179264-ae0d-4934-94c9-847b85ffe3a1	WEIBANG	ACCESSORI	WBA13430001	WBA13430001 Kit filtro aria WBBC537SCV	\N	29.00	25.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-502eb402-dd2c-47cd-831d-2d0ea2c2c038	WEIBANG	ACCESSORI	WBA12010012	WBA12010012 Kit spazzola 48cm Rasaerba a rullo	\N	150.00	130.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-50840d4a-bc57-458f-bae4-423d11de70bf	WEIBANG	ACCESSORI	WBA12110012	WBA12110012 Kit spazzola 56cm Rasaerba a rullo	\N	175.00	155.00	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-0b7bbd4f-5d2a-4a88-a0a0-533138368299	WEIBANG	ACCESSORI	WBA150406WM1	WBA150406WM1 Olio 10W-30 MOTION 4T 600ml (Confezione da 24PZ)	\N	7.50	6.50	\N	\N	22.00	2026-02-24 20:39:42.322+00	\N	\N	\N
-eca1b43b-2800-40de-bf6d-bdfb8e024bd1	ECHO	MOTOSEGHE E POTATORI	ECMACS2200	Motosega elettrica ACS 2200 - 2200W	\N	199.00	175.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-0bcd045c-0290-49c0-a127-c1dc8a2a3c3e	ECHO	MOTOSEGHE E POTATORI	ECMCS2511TES	Motosega potatura X Series - CS 2511 TES	\N	525.00	459.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-01b0a643-c245-421c-9bae-ddfb7975868f	ECHO	MOTOSEGHE E POTATORI	ECMCS2511TESC	Motosega potatura X Series - CS 2511 TESC (Barra Carving)	\N	575.00	509.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-284c3975-1245-4eb2-af51-e1b4313e32cf	ECHO	MOTOSEGHE E POTATORI	ECMCS280TES	Motosega potatura CS 280 TES	\N	399.00	349.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-8ca4d9f1-4a62-4916-825d-2d1ab622402c	ECHO	MOTOSEGHE E POTATORI	ECMCS280TESC	Motosega potatura CS 280 TESC (Barra Carving)	\N	455.00	399.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-6881d41e-0901-48de-819f-f74b08fead3f	ECHO	MOTOSEGHE E POTATORI	ECMCS362TES	- 35 Motosega potatura CS 362 TES - 35 (Barra 35cm)	\N	495.00	439.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-b31f3a72-db99-4203-938b-45ba7645bf59	ECHO	MOTOSEGHE E POTATORI	ECMCS2511WES	Motosega multiuso X Series - CS 2511 WES	\N	575.00	509.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-8a7dab2a-95a9-47bb-90d8-56f56883e77f	ECHO	MOTOSEGHE E POTATORI	ECMCS362WES	Motosega multiuso CS 362 WES	\N	525.00	459.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-eb2eab07-ed09-4f84-8647-0899597c2151	ECHO	MOTOSEGHE E POTATORI	ECMCS310ES	Motosega multiuso CS 310 ES	\N	309.00	269.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-01fca3f2-dd39-41ad-80e3-5181f606c107	ECHO	MOTOSEGHE E POTATORI	ECMCS34	10ES Motosega multiuso CS 3410 ES	\N	349.00	309.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-453a8d5c-0df2-4a65-8235-1cc9296c431b	ECHO	MOTOSEGHE E POTATORI	ECMCS3510ES	Motosega multiuso CS 3510 ES	\N	389.00	339.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-6a047e8d-4312-429a-a645-e7e14e15c69f	ECHO	MOTOSEGHE E POTATORI	ECMCS3510AC	Motosega multiuso CS 3510 AC	\N	439.00	389.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-46c04876-2169-4135-aacb-bc7ac7e28f0a	ECHO	MOTOSEGHE E POTATORI	ECMCS4010ES	Motosega multiuso CS 4010 ES	\N	559.00	489.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-557f0e5b-11c1-433c-b451-77fa6c93dede	ECHO	MOTOSEGHE E POTATORI	ECMCS4310SX	Motosega multiuso X Series - CS 4310 SX	\N	795.00	699.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-0b0357cd-b381-4cbf-9cb3-adab4bb3d9ac	ECHO	MOTOSEGHE E POTATORI	ECMCS4510ES	Motosega multiuso CS 4510 ES	\N	599.00	529.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-d2edb81d-86d3-4ce3-a361-6aab519ee42b	ECHO	MOTOSEGHE E POTATORI	ECMCS4920ES	Motosega multiuso CS 4920 ES	\N	680.00	599.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-4890b3a3-c332-4467-b35b-09a2d9ca3458	ECHO	MOTOSEGHE E POTATORI	ECMCS501SX	Motosega multiuso X Series - CS 501 SX	\N	885.00	779.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-0dc4e054-a38e-43b9-8d67-119319aee3a3	ECHO	MOTOSEGHE E POTATORI	ECMCS621SX	Motosega forestale X Series - CS 621 SX	\N	1050.00	929.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-ee6b1416-f05e-4986-a13d-ce2ed8e9f22e	ECHO	MOTOSEGHE E POTATORI	ECMCS7310	- 24 Motosega forestale X Series - CS 7310 SX 24 (Barra 24")	\N	1380.00	1219.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-18cb6319-df7c-4fb0-b000-cefbe73b52f9	ECHO	MOTOSEGHE E POTATORI	ECMPPF236ES	Potatore asta fissa PPF 236 ES	\N	589.00	519.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-68f37d03-d58b-4511-9701-fee29d0e4087	ECHO	MOTOSEGHE E POTATORI	ECMPPT236ES	Potatore telescopico PPT 236 ES	\N	719.00	629.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-4765b625-103c-485b-b642-a3eaa7d3862d	ECHO	MOTOSEGHE E POTATORI	ECMPPT2620ES	Potatore telescopico Xseries - PPT 2620 ES	\N	870.00	769.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-fed4e899-08bd-42fa-8e1d-3541e1d45a98	ECHO	MOTOSEGHE E POTATORI	ECMPPAAHHD	ECMPPAAHHD Potatore accessorio Attacco tagliasiepi	\N	522.00	459.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-022afb8f-abbd-4cdd-b3e2-fb1136764216	ECHO	MOTOSEGHE E POTATORI	ECM99946400023	ECM99946400023 Potatore accessorio Attacco estensone 1.2 mt	\N	210.00	185.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-f92802cf-98dc-4a4d-9a8a-c94ae4fd539a	ECHO	DECESPUGLIATORI	ECMEGT	350 Bordatore elettrico EGT350 - 350W	\N	99.00	89.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-28c69137-1f1d-4a8b-a5fb-9afb080535c3	ECHO	DECESPUGLIATORI	ECMSRM222ESL	Decespugliatore SRM 222 ESL	\N	289.00	255.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-6b966159-c0e7-4b02-b10a-6a2dc0ed9649	ECHO	DECESPUGLIATORI	ECMSRM237TESL	Decespugliatore SRM 237 TESL	\N	449.00	395.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-351215a8-8c72-475c-a12e-1aa4c43f7cff	ECHO	DECESPUGLIATORI	ECMSRM267L	Decespugliatore SRM 267 L	\N	370.00	325.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-702a0a4a-c380-4c47-9d15-9c91916fc885	ECHO	DECESPUGLIATORI	ECMSRM2621TESL	Decespugliatore X Series - SRM 2621 TESL	\N	565.00	499.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-929d8a52-186b-4320-b549-c55adff65fdc	ECHO	DECESPUGLIATORI	ECMSRM301TESL	Decespugliatore SRM 301 TESL	\N	485.00	429.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-4edd02fe-1841-4330-a411-0bcd0a478182	ECHO	DECESPUGLIATORI	ECMSRM3021TESL	Decespugliatore X Series - SRM 3021 TESL	\N	685.00	599.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-ac1fccb7-1333-4fc3-94be-a2245155a40c	ECHO	DECESPUGLIATORI	ECMSRM3021TESU	Decespugliatore X Series - SRM 3021 TESU	\N	740.00	649.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-84af2a77-55c1-4da9-ad87-0187c6b49f4c	ECHO	DECESPUGLIATORI	ECMSRM3611TL	Decespugliatore X Series - SRM 3611 TL	\N	765.00	669.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-a3b268e1-9288-46fc-92be-8e5944808ef5	ECHO	DECESPUGLIATORI	ECMSRM3611TU	Decespugliatore X Series - SRM 3611 TU	\N	820.00	719.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-75a71894-8288-40a2-a56c-e8c6949f757e	ECHO	DECESPUGLIATORI	ECMSRM420ESLW	Decespugliatore SRM 420 ESLW	\N	695.00	615.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-0e282b7f-1f03-4b2c-9668-27b8e22f755d	ECHO	DECESPUGLIATORI	ECMSRM420TESL	Decespugliatore X Series - SRM 420 TESL	\N	890.00	785.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-c195c5d9-3780-4b26-b635-07e20fe22d23	ECHO	DECESPUGLIATORI	ECMSRM420TESU	Decespugliatore X Series - SRM 420 TESU	\N	975.00	859.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-2ee12ec3-b1a5-4db9-a869-9a39e6937d88	ECHO	DECESPUGLIATORI	ECMSRM520ESU/A	Decespugliatore X Series - SRM 520 ESU	\N	1100.00	969.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-fd7cbbcf-748f-4589-a304-4872a6fcca50	ECHO	DECESPUGLIATORI	ECMCLS520ESU	Decespugliatore X Series - CLS 520 ESU	\N	1200.00	1055.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-acc7a4e4-fcac-4c11-a4b0-34d3a514e7e3	ECHO	DECESPUGLIATORI	ECMRM3020T	Decespugliatore Zaino X Series - RM 3020 T	\N	725.00	639.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
 e4ae5802-3602-401c-beab-0f702ac88710	GEOGREEN	Sementi	MICOTPWM01	Micosat F Tab Plus Wp Mini	gr.100	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N
-bbdfab6f-66c1-4bf8-bf3e-6e62b57a6382	ECHO	DECESPUGLIATORI	ECMRM520ES	Decespugliatore Zaino X Series - RM 520 ES	\N	1035.00	909.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-f4152a7e-49e7-4d6b-bea4-5ac969797e46	ECHO	DECESPUGLIATORI	ECARMAM520ES	ECARMAM520ES Asta decespugliatore RM520ES	\N	240.00	215.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-03225163-e0b9-4f32-8c80-ae673ce46056	ECHO	DECESPUGLIATORI	ECMPRS231M	Attacco reciprocatore per SRM222 fino a SRM420	\N	410.00	359.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-7af2d706-0109-4726-a00a-4e6752f976bf	ECHO	TAGLIASIEPI	ECMHCAS236ESLW	Tagliasiepi ad asta corta HCAS 236 ESLW	\N	679.00	599.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-98852a0e-214a-45c8-8998-94b651645bc4	ECHO	TAGLIASIEPI	ECMHCAS2620ESHD	Tagliasiepi ad asta corta X Series - HCAS 2620 ESHD	\N	760.00	669.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-a0f26f20-fea2-45aa-9b2c-1b82f17b7b1e	ECHO	TAGLIASIEPI	ECMHCA236ESLW	Tagliasiepi ad asta lunga HCA 236 ESLW	\N	695.00	615.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-55ac951f-e96e-4ec7-83b6-f16228cc3e1d	ECHO	TAGLIASIEPI	ECMHCA2620ESHD	Tagliasiepi ad asta lunga X Series - HCA 2620 ESHD	\N	790.00	699.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-e87e6549-c6b1-4acd-8155-5d3cbcf21072	ECHO	TAGLIASIEPI	ECMHCAA2403A	Attacco Tagliasiepi 2403A	\N	430.00	379.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-30abe91b-51a4-485b-abb5-7a1df33e5f46	ECHO	TAGLIASIEPI	ECMHCAA2403ALW	Attacco Tagliasiepi 2403A LW (Low Weight)	\N	430.00	379.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-caf3091f-487b-47d5-9d38-330511b46a6c	ECHO	TAGLIASIEPI	ECM28350250	Attacco Tagliasiepi 28350250	\N	460.00	405.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-952160f2-48dc-44f5-a3c5-60842c3eae5b	ECHO	TAGLIASIEPI	ECMHC2020R	Tagliasiepi HC 2020R	\N	440.00	389.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-30424a97-c292-4a06-b55b-2608f6b2525c	ECHO	TAGLIASIEPI	ECMHC2320	Tagliasiepi HC 2320	\N	495.00	435.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-14380517-c805-41c8-821d-7d98aefcab7e	ECHO	TAGLIASIEPI	ECMHCR165ES	Tagliasiepi HCR 165ES	\N	659.00	579.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-c9186ce3-5548-4d36-bb98-d0704d96f440	ECHO	TAGLIASIEPI	ECMHCR185ES	Tagliasiepi HCR 185ES	\N	669.00	589.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-b788143f-7c1c-45e7-b323-8bb96add1fe1	ECHO	TAGLIASIEPI	ECMHC2810ESR	Tagliasiepi X Series - HC 2810ESR	\N	705.00	620.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-c879e909-8f39-4b8f-a5d9-8b7cec18ed9b	ECHO	TAGLIASIEPI	ECMHCS2810ES	Tagliasiepi X Series - HCS 2810ES	\N	705.00	620.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-1d077791-9247-4013-91bb-e11b412ae528	ECHO	TAGLIASIEPI	ECMHCS3210ES	Tagliasiepi X Series - HCS 3210ES	\N	735.00	649.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-3e625437-d50e-4229-bbcd-401aabaea92f	ECHO	TAGLIASIEPI	ECMHCS3810ES	Tagliasiepi X Series - HCS 3810ES	\N	770.00	679.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-6015d94c-5296-4174-85a2-e3c330736df9	ECHO	TAGLIASIEPI	ECMHC560	Tagliasiepi elettrico HC 560 - 500W (Doppia lama 560mm)	\N	199.00	175.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-363157ce-0b87-46e4-a61f-d7424436db18	ECHO	TAGLIASIEPI	ECMHCR610	Tagliasiepi elettrico HC 610 - 700W (Doppia lama 600mm)	\N	229.00	199.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-426de3f8-c718-4907-924a-1aa5b8149a73	ECHO	SOFFIATORI	ECMES250ES	Soffiatore e aspiratore ES 250ES	\N	375.00	329.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-f95a395c-6294-483b-911f-c22be2f5b781	ECHO	SOFFIATORI	ECMES255ES	Soffiatore e aspiratore ES 255ES	\N	430.00	379.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-72cd1301-3e84-412f-a9d2-3a7f0254ffca	ECHO	SOFFIATORI	ECMPB2520	Soffiatore PB 2520	\N	319.00	279.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-18f67158-33e8-4d4b-bb0a-9818ff367b21	ECHO	SOFFIATORI	ECMPB2620	Soffiatore X Series - PB 2620	\N	419.00	369.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-7e111075-25e3-48d6-af00-d34233847a89	ECHO	SOFFIATORI	ECMPB580	Soffiatore a zaino PB 580	\N	675.00	599.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-52acc4bc-9a46-46ce-8469-2f523b5f5f00	ECHO	SOFFIATORI	ECMPB5810T	Soffiatore a zaino PB 5810 T NEW	\N	725.00	639.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-a626ed7c-4bab-4d2e-a6ea-b8eabe9834a0	ECHO	SOFFIATORI	ECMPB770	Soffiatore a zaino X Series - PB 770	\N	810.00	715.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-63defb8c-51ee-4ff0-851a-62ce862b12b6	ECHO	SOFFIATORI	ECMPB7910T	Soffiatore a zaino PB 7910 T NEW	\N	940.00	829.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-885e21f4-d27b-483f-97ca-6a919e6e48ad	ECHO	SOFFIATORI	ECMPB8010	Soffiatore a zaino X Series - PB 8010	\N	995.00	875.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-14a64fda-8388-43b2-9671-4a913dad3ae8	ECHO	SOFFIATORI	ECMPB9010T	Soffiatore a zaino PB 9010 T NEW	\N	1080.00	949.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-3b06f8a9-1de0-4324-b665-bdaaef186ed4	ECHO	ALTRE MACCHINE	ECMPAS2620ES	Multifunzione X Series - PAS 2620 ES	\N	510.00	449.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-531ec776-c8a8-4d53-99b7-2763c2f7a626	ECHO	ALTRE MACCHINE	ECMMTAAHSHD	Attacco multifunz. MTA AHS HD - Tagliasiepi asta corta HD	\N	460.00	405.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-a0d7905d-b897-4ee6-8399-e30b77d52190	ECHO	ALTRE MACCHINE	ECMMTAAHHD	Attacco multifunz. MTA AH HD - Tagliasiepi asta lunga HD	\N	515.00	449.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-8e091011-bf0d-4294-b782-d878b9500e83	ECHO	ALTRE MACCHINE	ECMMTADAH	Attacco multifunzione MTA DAH - Tagliasiepi asta lunga	\N	485.00	429.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-bd0b876a-48d5-478a-81c6-21df1f3e6738	ECHO	ALTRE MACCHINE	ECMMTALE/E	Attacco multifunzione MTA LE E - Tagliabordi	\N	210.00	185.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-f67ab365-b65f-4124-b5b9-7bbc09bca8bf	ECHO	ALTRE MACCHINE	ECMMTAPB	Attacco multifunzione MTA PB - Soffiatore	\N	195.00	169.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-63d9b4aa-cfff-43ea-a69b-989ef7d0dc5a	ECHO	ALTRE MACCHINE	ECMMTADPP	Attacco multifunzione MTA DPP - Potatore	\N	312.00	275.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-101c98ca-c7d7-4a30-9bbb-b9b778f57590	ECHO	ALTRE MACCHINE	ECMMTAPS	Attacco multifunzione MTA PS - Spazzolatrice	\N	560.00	489.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-b1631b35-7730-4beb-ba4c-f46a53a7dca6	ECHO	ALTRE MACCHINE	ECMMTADTB	Attacco multifunzione MTA DTB - Testina a filo	\N	185.00	165.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-7d893d92-6cd9-4c62-bfc9-96dba2db8d9c	ECHO	ALTRE MACCHINE	ECMMTATC	Attacco multifunzione MTA TC - Zappetta	\N	390.00	349.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-26c02121-da78-4a80-89cd-676f2dd4638d	ECHO	ALTRE MACCHINE	ECMMTA3EXT	Attacco multifunzione MTA 3EXT - Estensione	\N	79.00	69.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-9b847ecc-95f9-4e89-9aa1-9bff6faf9101	ECHO	ALTRE MACCHINE	ECMMB5810	Atomizzatore spalleggiato	\N	970.00	855.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-5eaed462-d0a5-4282-8904-3678502e5b5f	ECHO	ALTRE MACCHINE	ECAMBAD5810	ECAMBAD5810 Kit polveri	\N	115.00	99.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-91d63632-09f5-4d97-9faa-1b00dff790e4	ECHO	ALTRE MACCHINE	ECMCSG7410ES	Mototroncatrice	\N	1550.00	1365.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-f313214c-f1dd-4b07-be63-9bb6cbb8e281	ECHO	ALTRE MACCHINE	ECACWT7410	ECACWT7410 Carrello per mototroncatrice	\N	1220.00	1075.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-7b7a2f68-a7cd-448f-b0b1-37dfda85c838	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDPB310	Soffiatore a batteria 40V - DPB 310	\N	131.00	115.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-1be93d21-dd67-43b9-8ce9-2ccd6be872a9	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDCS310	Motosega a batteria 40V - DCS 310	\N	254.00	225.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-476278ba-f075-4acb-92bc-6adca329e403	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDSRM310L	Decespugliatore a batteria 40V - DSRM 310	\N	193.00	169.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-e8924add-8dab-4e21-9497-17d45260d1d3	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDHC310	Tagliasiepi a batteria 40V - DHC 310	\N	143.00	125.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-48f3dddf-a3b1-431a-94ed-a624a933650f	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDPPF310	Potatore a batteria 40V - DPPF 310	\N	190.00	169.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-97075137-dfb3-45aa-a494-81b2040aad28	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDHCA310	Tagliasiepi ad asta a batteria 40V - DHCA 310	\N	190.00	169.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-a30cac86-9c76-4daf-8b6b-f11465dcb206	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDLM310/35P	Tagliaerba a batteria 40V - DLM31035P (35cm)	\N	252.00	219.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-638ee3e2-c180-44fe-b5bb-00c067ea7f24	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDLM310/46P	Tagliaerba a batteria 40V - DLM31046P (46cm)	\N	398.00	349.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-7a33cfa3-3826-4284-b83f-371554c0c382	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECMDLM310/46SP	Tagliaerba a batteria 40V - DLM31046SP (46cm, semovente)	\N	532.00	469.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
 175e2172-3d06-43b8-ad6c-1d5413ac6ecc	GEOGREEN	Sementi	MICOLWM01	Micosat F Len Wp Mini	gr.100	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N
-671675e9-059d-4936-a8f6-c0911821270a	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECALBP3680	ECALBP3680 Batteria Garden+ 40V 72Wh	\N	125.00	110.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-36c900f3-a654-4337-bf8d-8094baeddc9a	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECALBP36150	ECALBP36150 Batteria Garden+ 40V 144Wh	\N	179.00	159.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-6a7faf8b-5c93-47d5-933b-381a0a15fe6a	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECALC3604	ECALC3604 Caricabatterie Garden+ Rapido 40V	\N	67.00	59.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-5c1611d3-f0ab-4903-9961-a7812eb97ec3	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECAKIT40V2AH	ECAKIT40V2AH Kit energia 40V con 1x Batt. 2Ah 72Wh + 1x Caricabatteria	\N	192.00	169.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-d8e3abf2-a699-49ce-86ad-ae220f460644	ECHO	GAMMA A BATTERIA GARDEN+ 40V	ECAKIT40V4AH	ECAKIT40V4AH Kit energia 40V con 1x Batt. 4Ah 144Wh + 1x Caricabatteria	\N	246.00	215.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-1aca7f2a-0c25-4c43-99ee-4674324aad7d	ECHO	CODICE DESCRIZIONE	ECMDCS2500	Motosega a batteria 56V - DCS 2500	\N	470.00	415.00	\N	\N	22.00	2026-02-24 20:40:04.187+00	\N	\N	\N
-58eb8611-2745-4af5-abdf-bfa3aa9ef1b0	ECHO	CODICE DESCRIZIONE	ECMDCS2500T	Motosega a batteria 56V - DCS 2500 T (Barra Carving)	\N	520.00	459.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-cd6f4e49-edd3-4607-9786-b4f5ec855f0a	ECHO	CODICE DESCRIZIONE	ECMDCS2500W	Motosega a batteria 56V - DCS 2500 W	\N	518.00	459.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-36f8b651-fabf-4f6b-be78-4625302383a1	ECHO	CODICE DESCRIZIONE	ECMDCS30	00 T Motosega a batteria 56V - DCS 3000T	\N	360.00	315.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-89712498-4dcd-48c6-b99a-18b30205ada5	ECHO	CODICE DESCRIZIONE	ECMDCS3500	T Motosega a batteria 56V - DCS 3500T	\N	670.00	589.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-81588caa-52f5-41c9-ab88-c1dd975fefd7	ECHO	CODICE DESCRIZIONE	ECMDHS3006	Potatore manuale a batteria 56V – DHS 3006	\N	210.00	185.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-97a513da-d347-48c4-a929-225cc06778e4	ECHO	CODICE DESCRIZIONE	OFF253001	KIT DHS3006 + Kit energia 1	\N	570.00	499.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-c238caf0-68c2-47e6-8efd-f331a6ac9f75	ECHO	CODICE DESCRIZIONE	ECMDHCAS2600HD	Tagliasiepi asta corta a batt. 56V - DHCAS2600HD (536mm)	\N	720.00	635.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-2d1d85cf-1016-4138-b023-3a6a4dec62e9	ECHO	CODICE DESCRIZIONE	ECMDHCA2600HD	Tagliasiepi asta a batt. 56V - DHCA2600HD (536mm)	\N	750.00	659.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-d594313c-0256-42b0-b122-eba5527681b7	ECHO	CODICE DESCRIZIONE	ECMDHC2200R	Tagliasiepi a batteria 56V - DHC 2200 R (562mm)	\N	575.00	509.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-e77ff647-4857-4b96-a739-c412c0dd4d1a	ECHO	CODICE DESCRIZIONE	ECMDHC2800R	Tagliasiepi a batteria 56V - DHC 2800 R (714mm)	\N	625.00	549.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-249007fc-b817-4c01-942e-d5e4bb0e926a	ECHO	CODICE DESCRIZIONE	ECMDHCS2800	Tagliasiepi a batteria 56V - DHC 2800 (714mm)	\N	750.00	659.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-f9eec67a-da29-4df9-b662-8e34647677bc	ECHO	CODICE DESCRIZIONE	ECMDLM5100SP	Tagliaerba a batteria MID Series 56V - DLM 5100 35P	\N	750.00	659.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-da635abb-87b9-455a-8d9d-81332176092c	ECHO	CODICE DESCRIZIONE	ECMDPAS2600	Multifunzione a batteria 56V - DPAS 2600	\N	450.00	399.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-1bbda70e-1283-4e32-9010-00dfc20094c4	ECHO	CODICE DESCRIZIONE	ECMDPAS300	Multifunzione a batteria 56V - DPAS 300	\N	299.00	259.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-77cbdd9c-cdb9-4bee-8e46-46154cead8ea	ECHO	CODICE DESCRIZIONE	ECMDPB2500	Soffiatore a batteria MidSeries 56V - DPB 2500	\N	350.00	309.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-e4c0faae-2628-43e5-9099-dd54c70ffd1f	ECHO	CODICE DESCRIZIONE	ECMDPB2600	Soffiatore a batteria 56V - DPB 2600	\N	490.00	429.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-6d585f46-fcd7-4556-8048-77603e2257f2	ECHO	CODICE DESCRIZIONE	ECMDPPT2600LW	Potatore telescopico a batteria 56V - DPPT 2600LW	\N	870.00	765.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-728a69ff-ad55-463f-a6fc-37fc9785ee7c	ECHO	CODICE DESCRIZIONE	ECMDSRM2600L	Decespugliatore a batteria X Series 56V - DSRM 2600 L	\N	525.00	459.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-63bd528f-4626-4477-9ec2-ca8b00f49180	ECHO	CODICE DESCRIZIONE	ECMDSRM2600U	Decespugliatore a batteria X Series 56V - DSRM 2600 U	\N	565.00	499.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-2dc8e93c-2fab-475d-9858-5de79f7cd27d	ECHO	CODICE DESCRIZIONE	ECMDSRM	3500U Decespugliatore a batteria X Series 56V - DSRM 3500 U	\N	795.00	699.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-21eee7a4-7c80-4d2b-9af0-b80fb7ed445a	ECHO	CODICE DESCRIZIONE	ECMDTT2100	Decespugliatore a batteria X Series 56V - DTT 2100	\N	780.00	689.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-41912e70-aff6-4f20-ba50-0a33a8d017cc	ECHO	CODICE DESCRIZIONE	ECADBC560	ECADBC560 Caricabatterie 56eForce Rapido 56V	\N	125.00	109.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-86631adc-3d0a-431a-ae66-1d21f32e27fc	ECHO	CODICE DESCRIZIONE	ECADBC560RC	ECADBC560RC Caricabatterie 56eForce UltraRapido 56V	\N	190.00	169.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-b45c1657-4265-48fb-b192-20fc06388be1	ECHO	CODICE DESCRIZIONE	ECALBP56V125	ECA LBP56V125 Batteria 56eForce 56V 126Wh 2,5AH	\N	235.00	209.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-f70f305a-3615-4f80-a738-16b378d3f213	ECHO	CODICE DESCRIZIONE	ECALBP56V250	ECALBP56V250 Batteria 56eForce 56V 252Wh 5AH	\N	335.00	295.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-72dfe254-bc44-43ee-87bc-b11b0d24acc2	ECHO	CODICE DESCRIZIONE	OFF233012	Kit energia 56V con 1x Batt. 2,5Ah 126Wh + 1x Caricabatt.	\N	360.00	319.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-37098dbf-6129-4988-9855-acaef980b2d7	ECHO	CODICE DESCRIZIONE	OFF233014	Kit energia 56V con 1x Batt. 5Ah 252Wh + 1x Caricabatt.	\N	595.00	399.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-6ed33d26-fa1b-43ed-a492-21a7ff0ffc47	ECHO	CODICE DESCRIZIONE	OFF233013	Kit energia 56V con 2x Batt. 2,5Ah 126Wh + 1x Caricabatt.	\N	460.00	519.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
-9e95e6b0-ba9c-40a4-a657-b0e0840b2cb2	ECHO	CODICE DESCRIZIONE	OFF233015	Kit energia 56V con 2x Batt. 5Ah 226Wh + 1x Caricabatt.	\N	795.00	699.00	\N	\N	22.00	2026-02-24 20:40:04.494+00	\N	\N	\N
 6cc7a4dc-c6cc-495f-a352-28e0fa48a544	GEOGREEN	Sementi	SHUR701	Hurricane 7	10 kg	108.90	104.00	98.80	89.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N
 07750d08-1f29-4846-a980-da59cba44781	GEOGREEN	Sementi	SHUR005	Hurricane (Sole+Ombra)	5 kg	54.45	52.00	50.00	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N
 1f7813eb-b0af-4ea9-b873-5314fa95967c	GEOGREEN	Sementi	SHUR001	Hurricane	1 kg	13.75	\N	\N	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N
@@ -5762,9 +6406,6 @@ e9d66e44-5ea4-4ba9-b17a-caf7d7f32f1d	GGP	Trattorini	XDL210HD	Trattorino GGP XDL 
 b2f0a726-35cd-4739-86be-65a4b0974a36	GGP	Zero Turning	ZTX275RD	Zero Turning ZTX 275RD scar.post.+mulch B&S 24HP bic. 122cm	\N	7400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
 207e9bcd-48aa-4429-86f5-4c79f19c8380	GGP	Zero Turning	ZTX350	Zero Turning ZTX 350 scarico lat. B&S 27HP bic. 132cm	\N	8400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
 c96cd1dd-5345-4324-b712-78d39f517335	GGP	Accessori trattorini	KIT-MULCH-ZTX	Kit Mulching ZTX	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
-1ca48515-47c1-4fc4-a8ea-efd2ad3a2bb8	WEIBANG	Rasaerba	WB537SCVMLV-G	Rasaerba Mulching 3v. WB537SCVMLV 196cc 53cm	\N	1120.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
-0ce070d3-1c49-42c3-a63e-bb9f97f7824d	WEIBANG	Falciatrici	WBBC537SCV-G	Trinciaerba cardano 3v. WBBC537SCV 196cc 53cm	\N	1350.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
-e2d585b6-d738-4568-9a64-1b195cab0ffc	WEIBANG	Arieggiatori	WB486CRC-G	Arieggiatore lame mobili WB486CRC 163cc 47cm	\N	1150.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
 71899647-6eda-4228-b25c-c5525787d78f	WORX	Soffiatori	WG505E	Soffiatore/aspiratore WG 505E 220V 3000W	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
 7548979c-fc4a-4064-8f2d-8676a1b79bb2	WORX	Soffiatori	WG547E	Soffiatore WG 547E 1 batt. 2Ah	\N	139.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
 c5eb530b-4055-44a6-a159-a15b187a21a4	WORX	Soffiatori	WG543E	Soffiatore WG 543E 1 batt. 4Ah	\N	210.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N
@@ -6069,10 +6710,6 @@ eb8e6ae8-437f-4d3b-bdc6-4d0404dc54a7	WORTEX	Compressori	WX-CP200-K	Compressore 2
 d5af5bb6-728a-458a-8f09-3b4f2cfd0d26	STIHL	Olii	0781-319-8013	Olio motore HP Ultra 100ml miscela 2T	100ml	3.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 5050808f-c1d8-4165-b1fe-655a4b12d17c	STIHL	Olii	0781-319-8012-4	Olio motore HP Ultra 4L miscela 2T	4L	48.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 0d6aafa8-b44c-47d9-8ed9-b5b5066c9978	STIHL	Olii	0781-120-1109	Olio motore 4T SAE 30 1L	1L	7.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
-96769c7b-b674-4628-a266-099c255ff2c6	ECHO	Olii	EC-OIL-2T-100	Olio miscela Echo 2T 100ml	100ml	3.20	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
-e9d0ee95-afea-4012-a62a-1ae7dff8f5e5	ECHO	Olii	EC-OIL-2T-1L	Olio miscela Echo Power Blend 2T 1L	1L	12.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
-9061127f-5167-4f46-91a8-548a222888fb	ECHO	Olii	EC-OIL-2T-5L	Olio miscela Echo Power Blend 2T 5L	5L	52.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
-1b88c953-dd2f-48de-8914-81b876847ca3	ECHO	Olii	EC-OIL-4T-1L	Olio motore Echo 4T SAE 30 1L	1L	8.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 da40a78a-d6bb-4761-9a44-4c27eabe923f	BRIGGS	Olii	100005E	Olio motore B&S SAE 30 600ml	600ml	7.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 90a246b1-bc3e-4a81-8830-a0770ab7b36f	BRIGGS	Olii	100028E	Olio motore B&S SAE 30 5L	5L	38.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 0006ebef-5ad3-4984-86bf-54ce5f250e9f	BRIGGS	Olii	100005E-10W30	Olio motore B&S 10W-30 600ml	600ml	7.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
@@ -6117,76 +6754,14 @@ b1244952-5c16-4c78-8e16-a100e49df445	TURBO-TURF	Materiali idrosemina	TT-FIBER-20
 56bd3525-13c0-4c19-9d5d-f558f6d1ee23	TURBO-TURF	Materiali idrosemina	TT-COLLANTE-25	Collante idrosemina 25kg	25kg	180.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 bc47efe6-9735-4515-9502-d41eb9172cc0	TURBO-TURF	Materiali idrosemina	TT-COLORANTE	Colorante verde idrosemina 1kg	1kg	18.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
 f97c327b-7aca-40a1-8873-a166a7889798	TURBO-TURF	Materiali idrosemina	TT-KIT-BASE	Kit base idrosemina (fibra 20kg + collante 5kg + colorante)	\N	140.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N
-6921d2cf-407a-4ff9-8635-595a7e5eaae8	Echo	\N	ECMACS2200	Motosega elettrica ACS 2200 - 2200W	\N	199.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e126d285-f5eb-4e81-8497-77feed2dfcd9	Echo	\N	ECMCS2511TES	Motosega potatura X Series - CS 2511 TES	\N	525.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e668b697-c247-4410-96db-6598ffbf06bb	Echo	\N	ECMCS2511TESC	Motosega potatura X Series - CS 2511 TESC (Barra Carving)	\N	575.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-38fc20ec-51e5-44a0-8780-2cb76eabafc9	Echo	\N	ECMCS280TES	Motosega potatura CS 280 TES	\N	399.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-0e20f711-182e-425d-a7e1-e7824e9b9976	Echo	\N	ECMCS280TESC	Motosega potatura CS 280 TESC (Barra Carving)	\N	455.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-86db108c-9147-49cf-956d-2816272ad5ef	Echo	\N	ECMCS362TES-30	Motosega potatura CS 362 TES - 30 (Barra 30cm)	\N	475.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-d9ab6a23-be4c-49e3-8df5-0de2be6957d5	Echo	\N	ECMCS362TES-35	Motosega potatura CS 362 TES - 35 (Barra 35cm)	\N	495.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-485779a0-1814-4d66-abed-db5ba11b072a	Echo	\N	ECMCS2511WES	Motosega multiuso X Series - CS 2511 WES	\N	575.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-55277d27-90fe-479a-83f9-9ad0f56ffc55	Echo	\N	ECMCS362WES	Motosega multiuso CS 362 WES	\N	525.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a7613a9a-0d8e-4067-b5da-fda0e4e366dc	Echo	\N	ECMCS310ES	Motosega multiuso CS 310 ES (accensione facilitata ES Start)	\N	309.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a58f48d7-c3db-4601-a029-bbd79ccc4e8f	Echo	\N	ECMCS3410ES	Motosega multiuso CS 3410 ES (accensione facilitata ES Start)	\N	349.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-6e2a578b-cb9e-4f3f-bc5d-a90418047d8f	Echo	\N	ECMCS3510ES	Motosega multiuso CS 3510 ES (accensione facilitata ES Start)	\N	389.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a2b6bb32-078c-4a8d-b6ea-b8c579ade090	Echo	\N	ECMCS4010ES	Motosega multiuso CS 4010 ES (accensione facilitata ES Start)	\N	559.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-7f9fe018-6cf8-4de8-a6c7-d75b52b6ae33	Echo	\N	ECMCS4310SX	Motosega multiuso X Series - CS 4310 SX	\N	795.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-7bcfd244-f604-472a-98fe-0167c330d318	Echo	\N	ECMCS4510ES	Motosega multiuso CS 4510 ES (accensione facilitata ES Start)	\N	599.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5edf5d56-8704-444c-99ad-0421322c0838	Echo	\N	ECMCS4920ES	Motosega multiuso CS 4920 ES (accensione facilitata ES Start)	\N	680.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-54155e9f-af4e-4cfe-8ddf-9d7f116e31c5	Echo	\N	ECMCS501SX	Motosega multiuso X Series - CS 501 SX	\N	885.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-26dfeadc-b035-4271-bc07-dfea8d689dcf	Echo	\N	ECMCS621SX	Motosega forestale X Series - CS 621 SX	\N	1050.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a81940f0-0e34-469a-b50e-0b21f8e32671	Echo	\N	ECMCS7310-20	Motosega forestale X Series - CS 7310 SX 20 (Barra 20")	\N	1350.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-05bf1b92-65e0-4041-8c1e-4c068ea6bdab	Echo	\N	ECMCS7310-24	Motosega forestale X Series - CS 7310 SX 24 (Barra 24")	\N	1380.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-2a9e380a-d6c6-4c2b-85a4-17f7651d7c67	Echo	\N	ECMPPF236ES	Potatore asta fissa PPF 236 ES (accensione facilitata ES Start)	\N	589.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-d15fcdc6-874c-4d73-8c9e-8efa0e3179e9	Echo	\N	ECMPPT236ES	Potatore telescopico PPT 236 ES (accensione facilitata ES Start)	\N	719.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-353f67bd-fe56-4b95-b1ea-d53dbe74f582	Echo	\N	ECMPPT2620ES	Potatore telescopico Xseries - PPT 2620 ES (accensione facilitata ES Start)	\N	870.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 e5e25637-23ef-4168-a0d2-f6284d0989d9	Echo	\N	ECMPPAAHHD	Potatore accessorio Attacco tagliasiepi	\N	522.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 beca29e4-4d60-4f50-ad30-1a539c63d413	Echo	\N	ECM99946400023	Potatore accessorio Attacco estensone 1.2 mt	\N	210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-948b635b-ddec-4864-9ebf-0caa786df64e	Echo	\N	ECMSRM222ESL	Decespugliatore SRM 222 ESL (accensione facilitata ES Start) ACCESSORI(Tagliasiepi ECMHCAA 2403A o ECM28350250)	\N	289.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-3a742117-88f7-403b-aec0-739640b0be20	Echo	\N	ECMSRM237TESL	Decespugliatore SRM 237 TESL (High Torque + accensione facilitata ES Start)	\N	449.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-ef12a7b3-a1d6-43eb-893d-5b6f722a49d7	Echo	\N	ECMSRM267L	Decespugliatore SRM 267 L	\N	370.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c831c573-bc82-4461-8156-c2762b2acebc	Echo	\N	ECMSRM2621TESL	Decespugliatore X Series - SRM 2621 TESL (High Torque + accensione facilitata ES Start)	\N	565.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-9c7fcdff-3290-43c8-999e-9eddcaa18297	Echo	\N	ECMSRM301TESL	Decespugliatore SRM 301 TESL (High Torque + accensione facilitata ES Start)	\N	485.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c99d20b9-b5df-4880-ad3f-dbabffb27883	Echo	\N	ECMSRM3021TESL	Decespugliatore X Series - SRM 3021 TESL (High Torque + accensione facilitata ES Start)	\N	685.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-b5c47059-4fa0-48a5-bfa4-c7d1fcac7ef6	Echo	\N	ECMSRM3021TESU	Decespugliatore X Series - SRM 3021 TESU (Impugnatura a U + High Torque + accensione facilitata ES Start)	\N	740.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-8387b45c-7fcd-43d0-8c5f-d71fb6ed9dbb	Echo	\N	ECMSRM3611TL	Decespugliatore X Series - SRM 3611 TL (HighTorque + Motore similare 4 tempi)	\N	765.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-054870aa-aec1-4291-95a2-1a8a9c3b9b67	Echo	\N	ECMSRM3611TU	Decespugliatore X Series - SRM 3611 TU (Impugnatura a U + HighTorque + Motore similare 4 tempi)	\N	820.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-829520ab-4e2b-4db3-80ad-d81e863f6a7f	Echo	\N	ECMSRM420ESLW	Decespugliatore SRM 420 ESLW  (Impugnatura a U + accensione facilitata ES Start)	\N	695.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-45e9bc07-648c-44c4-a39a-a581fcecc9df	Echo	\N	ECMSRM420TESL	Decespugliatore X Series - SRM 420 TESL (High Torque + accensione facilitata ES Start)	\N	890.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-fab0280e-f993-4c72-ae79-2bc0b58eea7b	Echo	\N	ECMSRM420TESU	Decespugliatore X Series - SRM 420 TESU (Impugnatura a U + High Torque + accensione facilitata ES Start)	\N	975.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 e4e126dd-0b5c-4d8b-84d0-e8db5a4e979c	Echo	\N	ECMSRM520ESU/A	Decespugliatore X Series - SRM 520 ESU (Impugnatura a U + accensione facilitata ES Start)	\N	1100.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-0050117e-00b9-4247-9a44-9fbe9a284cad	Echo	\N	ECMCLS520ESU	Decespugliatore X Series - CLS 520 ESU (Impugnatura a U + accensione facilitata ES Start + Disco)	\N	1200.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a4dda727-97fc-4cdc-95f0-b7a70bb9b89f	Echo	\N	ECMRM3020T	Decespugliatore Zaino X Series - RM 3020 T (High Torque)	\N	725.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-df00ca01-b24e-4e05-83be-5dd8beb1bc09	Echo	\N	ECMRM520ES	Decespugliatore Zaino X Series - RM 520 ES (accensione facilitata ES Start)	\N	1035.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 025b9000-765e-4fbc-88c3-328981c64802	Echo	\N	ECARMAM520ES	Asta decespugliatore RM520ES (Asta, coppia conica, flessibile. Non compresi: parasassi, testina, manubri, ecc...)	\N	240.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 a3ffa2a4-d004-430e-a37d-19d755f3f22d	Echo	\N	ECMPRS231M	Attacco reciprocatore per SRM222 fino a SRM420 (compreso inserti per attacchi quadro o mille righe)	\N	410.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-81934a47-ac5d-47cc-b9f5-6f2d8dcccc36	Echo	\N	ECMHCAS236ESLW	Tagliasiepi ad asta corta HCAS 236 ESLW  (accensione facilitata ES Start)	\N	679.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-ad26d937-28e6-425d-8a99-96cb26f32e08	Echo	\N	ECMHCAS2620ESHD	Tagliasiepi ad asta corta X Series - HCAS 2620 ESHD (accensione facilitata ES Start, Hard Duty 3 lame 3 lati)	\N	760.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-8ebc0b43-08b7-4dea-b015-14f7928c1204	Echo	\N	ECMHCA236ESLW	Tagliasiepi ad asta lunga HCA 236 ESLW  (accensione facilitata ES Start)	\N	695.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e213dd5d-8db3-49e0-a175-70921225b1bc	Echo	\N	ECMHCA2620ESHD	Tagliasiepi ad asta lunga X Series - HCA 2620 ESHD (accensione facilitata ES Start, Hard Duty 3 lame 3 lati)	\N	790.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 21f8f437-ec5a-4132-a74f-4d7ebf069d98	Echo	\N	ECMHCAA2403A	Attacco Tagliasiepi 2403A	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 250fdc36-0502-44cc-8e57-5a39e36e1714	Echo	\N	ECMHCAA2403ALW	Attacco Tagliasiepi 2403A LW (Low Weight)	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 f82dcf26-d6ec-4b4d-a651-139e8bd70a83	Echo	\N	ECM28350250	Attacco Tagliasiepi 28350250	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-d052d11d-6e50-4544-920a-2086075ca83c	Echo	\N	ECMHC2020R	Tagliasiepi HC 2020R (Doppia lama 534mm, Impugnatura rotante)	\N	440.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-34824e3b-136f-4718-9823-a1b4e769c68c	Echo	\N	ECMHC2320	Tagliasiepi HC 2320 (Doppia lama 639mm)	\N	495.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-360413a6-21b2-4486-8ccd-c1f5705fa67c	Echo	\N	ECMHCR165ES	Tagliasiepi HCR 165ES (Doppia lama 639mm, accensione facilitata ES Start)	\N	659.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-1026b58e-e74b-4cd6-9dda-0bc745e07eab	Echo	\N	ECMHCR185ES	Tagliasiepi HCR 185ES (Doppia lama 744mm, accensione facilitata ES Start)	\N	669.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a2f7dcf6-2efb-4189-a984-e81c48315713	Echo	\N	ECMHC2810ESR	Tagliasiepi X Series - HC 2810ESR (Doppia lama 624mm, accensione facilitata ES Start)	\N	705.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5b8c822d-b36f-4a44-82f7-cabdbbee7d45	Echo	\N	ECMHCS2810ES	Tagliasiepi X Series - HCS 2810ES (Mono lama 589mm, accensione facilitata ES Start)	\N	705.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a4b2a061-bdbb-4960-a1e2-45140f2e970d	Echo	\N	ECMHCS3210ES	Tagliasiepi X Series - HCS 3210ES (Mono lama 729mm, accensione facilitata ES Start)	\N	735.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-fad346ae-4ca5-43c1-8cf8-f5f9cab9196e	Echo	\N	ECMHCS3810ES	Tagliasiepi X Series - HCS 3810ES (Mono lama 834mm, accensione facilitata ES Start)	\N	770.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-f3eed3d6-b483-428d-84c6-61f8c821cd8d	Echo	\N	ECMHCR610	Tagliasiepi elettrico HC 610 - 700W (Doppia lama 600mm)	\N	229.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-02724ee2-c9a3-49e4-9cb1-a1e73235c4c3	Echo	\N	ECMES250ES	Soffiatore e aspiratore ES 250ES AD ESAURIMENTO	\N	375.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a327f1f7-ea77-42b9-8acd-0f7069d7049a	Echo	\N	ECMES255ES	Soffiatore e aspiratore ES 255ES	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-f9c34999-0a9f-4cb2-aeb9-4474166e232a	Echo	\N	ECMPB2520	Soffiatore PB 2520	\N	319.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5652e9a2-3dc2-48e2-b4b8-55dea0abc8f3	Echo	\N	ECMPB2620	Soffiatore X Series - PB 2620	\N	419.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-2e062ccb-2e56-44e4-b3e8-c084ecadf6c8	Echo	\N	ECMPB580	Soffiatore a zaino PB 580	\N	675.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-37a82683-d1ae-4e75-85a0-04a0c4a09f28	Echo	\N	ECMPB5810T	Soffiatore a zaino PB 5810 T	\N	725.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-433cfd78-63a5-4957-831c-0598d3e9561f	Echo	\N	ECMPB770	Soffiatore a zaino X Series - PB 770	\N	810.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-26fa65d0-8348-4008-be22-19c12d020530	Echo	\N	ECMPB7910T	Soffiatore a zaino PB 7910 T	\N	940.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-3ae5f567-8f9c-4d0b-b3a0-ee77d8407afa	Echo	\N	ECMPB8010	Soffiatore a zaino X Series - PB 8010	\N	995.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-ff7ce441-60be-43cc-8b77-197f09200a49	Echo	\N	ECMPB9010T	Soffiatore a zaino PB 9010 T	\N	1080.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-8e3febe8-9cee-446d-8e88-03d7675df269	Echo	\N	ECMPAS2620ES	Multifunzione X Series - PAS 2620 ES - Possibilità di inserire 9 diversi attacchi	\N	510.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 dc23bd0a-b96d-4120-b7d8-d9bf10742e69	Echo	\N	ECMMTAAHSHD	Attacco multifunzione MTA AHS HD - Tagliasiepi asta corta HD (Hard Duty 3 lame 3 lati)	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 ccb8df8d-ddbd-4507-ba98-104857b07313	Echo	\N	ECMMTAAHHD	Attacco multifunzione MTA AH HD - Tagliasiepi asta lunga HD (Hard Duty 3 lame 3 lati)	\N	515.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 2cd8c78c-adca-418c-89da-568a93510c01	Echo	\N	ECMMTADAH	Attacco multifunzione MTA DAH - Tagliasiepi asta lunga	\N	485.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
@@ -6197,98 +6772,15 @@ b3624ee9-1ba0-493a-89b8-ca685cfa8feb	Echo	\N	ECMMTAPB	Attacco multifunzione MTA 
 d2a13118-4027-41ed-9483-ecc1801be6f6	Echo	\N	ECMMTADTB	Attacco multifunzione MTA DTB - Testina a filo	\N	185.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 e3f1544f-2610-41d9-a9c6-4ca1bf7a5653	Echo	\N	ECMMTATC	Attacco multifunzione MTA TC - Zappetta	\N	390.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 dcb131cb-2a9d-435f-8fb0-7795fe359dc4	Echo	\N	ECMMTA3EXT	Attacco multifunzione MTA 3EXT - Estensione	\N	79.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-1302cf82-5491-43a2-bc88-8f145a271ae4	Echo	\N	ECMMB5810	Atomizzatore spalleggiato	\N	970.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 97ad55b5-dc73-492e-a510-0683d3c84cba	Echo	\N	ECAMBAD5810	Kit polveri	\N	115.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-69b12634-38f8-4d55-bd58-3d52d876b29b	Echo	\N	ECMCSG7410ES	Mototroncatrice	\N	1550.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 9f2979bf-b719-4021-8abf-9f53f208fb55	Echo	\N	ECACWT7410	Carrello per mototroncatrice	\N	1220.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c3c1c6c9-883a-4722-8bce-556dce08dd9e	Echo	\N	ECMDCS2500	Motosega a batteria X Series 56V - DCS 2500 (Prestazioni comparabili alla CS 2511 TES)	\N	470.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-806067f5-e448-4cf5-84fc-f0c5ac0f3641	Echo	\N	ECMDCS2500T	Motosega a batteria X Series 56V - DCS 2500 T (Barra Carving)	\N	520.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-2f3271e3-7ef2-40a3-8644-89421579d2ea	Echo	\N	ECMDCS2500W	Motosega a batteria X Series 56V - DCS 2500 W (Doppia impugnatura)	\N	518.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-eb8cb62d-29f4-4a52-82e9-f3c3b490edef	Echo	\N	ECMDCS3000T	Motosega a batteria MID Series 56V - DCS 3000T (Prestazioni comparabili ad una 35/40cc - impugnatura Top Handle)  NEW	\N	360.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-33824063-ec4a-414e-9f97-a7bd927b422f	Echo	\N	ECMDCS3500	Motosega a batteria X Series 56V - DCS 3500 (Prestazioni comparabili ad una 35/40cc - Doppia impugnatura)	\N	565.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-2daa59cf-a7df-4195-8bb7-5f087734d753	Echo	\N	ECMDCS3500T	Motosega a batteria X Series 56V - DCS 3500T (Prestazioni comparabili ad una 35/40cc -  impugnatura Top Handle) NEW	\N	670.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-d3719865-f36e-48b5-84fd-20438ecd7f0e	Echo	\N	ECMDHS3006	Potatore manuale a batteria 56V - DHS 3006  NEW	\N	210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 a46efe18-21ab-48e1-82dd-1e740f3f0b6d	Echo	\N	OFF253001	Kit Potatore manuale a batteria 56V - DHS 3006 con 1x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	570.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-7deeed42-abc8-426c-8332-4aba69d9a06e	Echo	\N	ECMDHCAS2600HD	Tagliasiep ad asta corta a batteria X Series 56V - DHCAS 2600 HD (Doppia lama 536mm)	\N	720.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-7fa9b5b0-8c56-41af-a1a4-998373bf9df6	Echo	\N	ECMDHCA2600HD	Tagliasiep ad asta a batteria X Series 56V - DHCA 2600 HD (Doppia lama 536mm)	\N	750.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-11196f5b-44d0-4d5b-a69e-834b8937a47d	Echo	\N	ECMDHC2200R	Tagliasiepi a batteria X Series 56V - DHC 2200 R  (Doppia lama 562mm)	\N	575.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-070e6f48-dab9-47a0-be41-650111eda370	Echo	\N	ECMDHC2800R	Tagliasiepi a batteria X Series 56V - DHC 2800 R  (Doppia lama 714mm)	\N	625.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-26ad6055-edc6-4b89-9556-decfa1e61225	Echo	\N	ECMDHCS2800	Tagliasiepi a batteria X Series 56V - DHC 2800  (Mono lama 714mm)	\N	750.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-0d8bc11d-5d75-48d8-bf25-cb4c16e8a522	Echo	\N	ECMDLM5100SP	Tagliaerba a batteria MID Series 56V - DLM 5100 35P (Larghezza taglio 51cm)	\N	750.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-d3a3f697-1789-4e13-a029-52aee03f6372	Echo	\N	ECMDPAS2600	Multifunzione a batteria X Series 56V - DPAS 2600 (Possibilità di inserire 9 diversi attacchi)	\N	450.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5b47e2ce-fd87-4ded-a2b9-e573f145b68d	Echo	\N	ECMDPAS300	Multifunzione a batteria 56V - DPAS 300 (Possibilità di inserire 9 diversi attacchi) AD ESAURIMENTO	\N	299.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-9fc6ce76-9919-4d74-88df-7853ca555a53	Echo	\N	ECMDPB2500	Soffiatore a batteria MidSeries 56V - DPB 2500	\N	350.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-bcb9390c-9636-4166-8424-cd97e2ca5819	Echo	\N	ECMDPB2600	Soffiatore a batteria X Series 56V - DPB 2600	\N	490.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-2df5eed2-24bc-4690-bb77-e341f09d1725	Echo	\N	ECMDPPT2600LW	Potatore telescopico X Series 56V - DPPT 2600LW NEW	\N	870.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-87dc34a2-23e4-4794-8873-2dbd9feadb4e	Echo	\N	ECMDSRM2400L	Decespugliatore a batteria MID Series 56V - DSRM 2400 L  (Impugnatura standard) NEW	\N	370.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-37b3585a-f534-4a59-9d86-9b0abb94c55c	Echo	\N	ECMDSRM2600L	Decespugliatore a batteria X Series 56V - DSRM 2600 L  (Impugnatura standard)	\N	525.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-32517063-1c42-4ac4-b071-fb66964a4f28	Echo	\N	ECMDSRM2600U	Decespugliatore a batteria X Series 56V - DSRM 2600 U  (Impugnatura a "U")	\N	565.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-65a6d704-1460-4ca6-a436-306ef50d5d9f	Echo	\N	ECMDSRM3500L	Decespugliatore a batteria X Series 56V - DSRM 3500 L  (Impugnatura standard) NEW	\N	760.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-f7cd02f9-da29-42fb-b3e6-5f5724a10775	Echo	\N	ECMDSRM3500U	Decespugliatore a batteria X Series 56V - DSRM 3500 U  (Impugnatura a "U") NEW	\N	795.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-3afa3e66-64fd-485e-923f-e71617f1319b	Echo	\N	ECMDTT2100	Decespugliatore a batteria X Series 56V - DTT 2100 (Reciprocatore lineare)	\N	780.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-041dc3ed-a8bf-49de-aef5-3b3397bd5df3	Echo	\N	ECADBC560	Caricabatterie 56eForce Rapido 56V	\N	125.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5fe70745-a161-4513-8c49-8af136670525	Echo	\N	ECADBC560RC	Caricabatterie 56eForce UltraRapido 56V	\N	190.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-7e2d664f-3c4c-43a5-a409-cf129990e043	Echo	\N	ECALBP56V125	Batteria 56eForce 56V 126Wh 2,5AH	\N	235.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-02b7176d-5d85-4abc-85e4-487168949232	Echo	\N	ECALBP56V250	Batteria 56eForce 56V 252Wh 5,0AH	\N	335.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 e42b31bd-f009-48f2-877f-572d4399d597	Echo	\N	OFF233012	Kit energia 56eForce 56V con 1x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	360.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 9bf67c77-c112-41d8-81fc-2a65e63bc1c5	Echo	\N	OFF233014	Kit energia 56eForce 56V con 1x Batteria 56V 5Ah 226Wh + 1x Caricabatteria	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 eb574004-5cd7-475e-84e2-49ade5ec2f9d	Echo	\N	OFF233013	Kit energia 56eForce 56V con 2x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	595.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 431dfc4e-76cd-4937-bf08-91a31fb53c1a	Echo	\N	OFF233015	Kit energia 56eForce 56V con 2x Batteria 56V 5Ah 226Wh + 1x Caricabatteria	\N	795.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-8179f1ee-8ef0-4ba2-92ad-4ee4d2b8b066	Echo	\N	ECMDPB310	Soffiatore a batteria Garden+ 40V - DPB 310	\N	131.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c3432221-bcc2-42bc-b0a0-a36881bf3d35	Echo	\N	ECMDCS310	Motosega a batteria Garden+ 40V - DCS 310	\N	254.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-3b8232c3-d93a-4a1c-9994-d100591eab72	Echo	\N	ECMDSRM310L	Decespugliatore a batteria Garden+ 40V - DSRM 310	\N	193.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-0d9a3144-93e4-4e86-bb09-b32d362e3f1c	Echo	\N	ECMDHC310	Tagliasiepi a batteria Garden+ 40V - DHC 310	\N	143.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-41b09b80-12ee-4bbb-a6ec-0791c46fd274	Echo	\N	ECMDPPF310	Potatore a batteria Garden+ 40V - DPPF 310	\N	190.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-f57c691f-cbf1-4c52-92a9-c752c377f68a	Echo	\N	ECMDHCA310	Tagliasiepi ad asta a batteria Garden+ 40V - DHCA 310	\N	190.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c53af04d-5781-4611-84fd-61bfc9001c82	Echo	\N	ECMDLM310/35P	Tagliaerba a batteria Garden+ 40V - DLM 310 35P (Larghezza taglio 35cm)	\N	252.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-fd778ce3-aee5-4cd6-90ba-71921b6367c0	Echo	\N	ECMDLM310/46P	Tagliaerba a batteria Garden+ 40V - DLM 310 46P (Larghezza taglio 46cm)	\N	398.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c36d0b41-9a61-4037-a8a7-7a9c2f73a17e	Echo	\N	ECMDLM310/46SP	Tagliaerba a batteria Garden+ 40V - DLM 310 46SP (Larghezza taglio 46cm, semovente)	\N	532.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-022fc96f-a406-4ea9-a3d1-5703703fe332	Echo	\N	ECALBP3680	Batteria Garden+ 40V 72Wh	\N	125.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-2166eabc-5dde-4b32-9c23-666b3328236b	Echo	\N	ECALBP36150	Batteria Garden+ 40V 144Wh	\N	179.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-9172637c-db58-4ac6-98dd-be119d2ec8af	Echo	\N	ECALC3604	Caricabatterie Garden+ Rapido 40V	\N	67.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 f5a8bdf9-ec76-4f39-8290-f84527189d84	Echo	\N	ECAKIT40V2AH	Kit energia Garden+ 40V con 1x Batteria 40V 2Ah 72Wh + 1x Caricabatteria	\N	192.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 b05d76ff-b1e1-4481-935d-8b8d57031b20	Echo	\N	ECAKIT40V4AH	Kit energia Garden+ 40V con 1x Batteria 40V 4Ah 144Wh + 1x Caricabatteria	\N	246.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-65910c2b-1274-4257-a970-1a79d6f44a26	Weibang	\N	WBMWB455HCOP	Tagliaerba a spinta 45cm - 139cc (Versione più economica rispetto al WB455HC, 400m²)	\N	340.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-040cb028-915e-42e7-800d-b626b1c0c4f8	Weibang	\N	WBMWB455HC	Tagliaerba a spinta 45cm - 139cc (Altezza 8 liv. 20/70mm, 400m²)	\N	410.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-cafdaa2b-46d4-487e-a28d-75692bb73012	Weibang	\N	WBMWB455SCOP	Tagliaerba semovente 45cm - 139cc - Trasmis. Standard 1v (Vers. più economica rispetto al WB455SC, 400m²)	\N	420.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-f0aac836-b83b-4219-92b5-5118e8ee65cf	Weibang	\N	WBMWB455SC	Tagliaerba semovente 45cm - 139cc - Trasmis. Standard 1v  (Altezza 8 liv. 20/70mm, 400m²)	\N	505.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a8f00a9b-abeb-43c2-bfe7-18538b45976f	Weibang	\N	WBMWB455SC3	Tagliaerba semovente 3x1 45cm - 139cc - Trasmis. Standard 1v  (Altezza 8 liv. 20/70mm, 400m²)	\N	575.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-4aa31fa8-2c1f-4ca7-944d-f454d9a2ce3b	Weibang	\N	WBMWB456SCVE3	Tagliaerba semovente 3x1 45cm - 166cc - Trasmis. Variabile (Avviam. elettrico, Altezza 8 liv. 20/70mm, 400m²)	\N	805.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-af948981-f3be-4598-803d-7064e087f5c9	Weibang	\N	WBMWB506SC	Tagliaerba semovente 50cm - 166cc - Trasmis. Standard 1v (Altezza 8 liv. 20/70mm, 1000m²)	\N	610.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-d48c02c4-18fa-4bbf-9424-c4bf5cd8831c	Weibang	\N	WBMWB506SC3	Tagliaerba semovente 3x1 50cm - 166cc - Trasmis. Standard 1v (Altezza 8 liv. 20/70mm, 1000m²)	\N	685.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-460a7e5d-fdbc-46e3-9c64-d806cb0c1b6b	Weibang	\N	WBMWB537SC	Tagliaerba semovente 53cm - 196cc - Trasmis. Standard 1v (Altezza 8 liv. 25/70mm, 3000m²)	\N	735.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-8a151d51-2885-48a2-9326-0caf9035f87a	Weibang	\N	WBMWB537SC3	Tagliaerba semovente 3x1 53cm - 196cc - Trasmis. Standard 1v (Altezza 8 liv. 25/70mme, 3000m²)	\N	805.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-24947323-3e86-48a2-96db-99ef5d4bc640	Weibang	\N	WBMWB466HCM	Tagliaerba Mulching a spinta 46cm - 166cc - (Altezza 7 liv. 15/76mm, 1000m²)	\N	660.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-aaf97097-41b1-4dfe-82b3-02a3559b3b0f	Weibang	\N	WBMWB466SCM	Tagliaerba Mulching semovente 46cm - 166cc - Trasmis. Standard 1v (Altezza 7 liv. 15/76mm, 1000m²)	\N	795.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-3328010c-6a0b-4723-bf9b-b753f3afca47	Weibang	\N	WBMWB537SCM	Tagliaerba Mulching semovente 53cm - 196cc - Trasmis. Standard 1v (Altezza 8 liv. 15/67mm, 3000m²)	\N	980.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-dcb33285-0901-49ef-9893-49c0dfab0ab0	Weibang	\N	WBMWB507SCV3	Tagliaerba semovente 3x1 50cm - 196cc - Trasmis. Cardanica 3v  (Altezza 8 liv. 25/70mm, 1000m²)	\N	950.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e634aa28-ccb2-492f-a0bd-bffa0ee91cc5	Weibang	\N	WBMWB537SCV3	Tagliaerba semovente 3x1 53cm - 196cc - Trasmis. Cardanica 3v  (Altezza 9 liv. 15/85mm, 3000m²)	\N	1050.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-445b4ecc-14a6-430e-9f2e-b686f75b941d	Weibang	\N	WBMWB537SCV3LV	Tagliaerba semovente 3x1 53cm - 196cc - Trasmis. Cardanica 3v - Low Vibration  (Altezza 9 liv. 15/85mm, 3000m²) NEW	\N	1180.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-f260bc32-8a20-429b-93ac-45670e63c430	Weibang	\N	WBMWB537SCV3B	Tagliaerba semovente 3x1 53cm - 196cc - Trasmis. Cardanica 3v - Frizione Freno lama  (Altezza 9 liv. 15/85mm, 3000m²)	\N	1360.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-1b4c8826-e39e-4d26-a546-1145dd2aa383	Weibang	\N	WBMWB537SCVM	Tagliaerba Mulching semovente 53cm - 196cc - Trasmis. Meccanica 3v (Altezza 8 liv. 15/67mm, 3000m²)	\N	1090.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5734384c-e91f-4661-8c04-6b45605d954e	Weibang	\N	WBMWB537SCVMLV	Tagliaerba Mulching semovente 53cm - 196cc - Trasmis. Meccanica 3v  - Low Vibration (Altezza 8 liv. 15/67mm, 3000m²) NEW	\N	1240.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e6c79f43-a895-49c6-a5c9-c0e8cfd4c112	Weibang	\N	WBMWB536SKVM	Tagliaerba Mulching semovente 53cm - 180cc - Trasmis. Meccanica 3v - Motore Kawasaki (Altezza 8 liv. 15/67mm, 3000m²)	\N	1210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-ac44599f-1af4-4899-b0de-7b4314625bcc	Weibang	\N	WBMWB537SCVAL	Tagliaerba semovente 53cm - 196cc - Trasmis. Cardanica 3v - Alluminio (Altezza 7 liv. 25/76mm, 3000m²)	\N	1210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a718a739-c7f4-49ff-b915-f83d5f6242f1	Weibang	\N	WBMWB537SCVALB	Tagliaerba semovente 53cm - 196cc - Trasmis. Cardanica 3v - Alluminio - Frizione Freno lama  (Altezza 7 liv. 25/76mm, 3000m²)	\N	1540.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e9ffd558-4cb5-40b7-8c31-6f900d47568d	Weibang	\N	WBMWB778SCV3	Tagliaerba bilama semovente 3x1 77cm - 300cc - Trasmis. Meccanica 3v (Altezza 15 liv. 17/129mm, 3000m²)	\N	2990.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-b96f313b-0d8e-4fa2-80d3-a194a2cb7b28	Weibang	\N	WBMWB778SCV3P	Tagliaerba bilama semovente 3x1 77cm - 300cc - Trasmis. Meccanica 3v - Ruote Pivot (Altezza 15 liv. 17/129mm, 3000m²) NEW	\N	3210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-da33f692-df5e-4f41-9053-34faa8a7de5f	Weibang	\N	WBMWB486SKVRB	Tagliaerba a rullo semovente 48cm - 179cc - Trasmis. Meccanica 3v (Altezza 7 liv. 13/67mm, 1500m²)	\N	1950.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-dcccedd8-cb5f-47a7-8a42-fb1372ff718c	Weibang	\N	WBMWB567SKVRB	Tagliaerba a rullo semovente 56cm - 196cc - Trasmis. Meccanica 3v (Altezza 7 liv. 13/67mm, 3000m²)	\N	2300.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-b8bdb773-0dc0-4b94-a99f-2c19b6046f35	Weibang	\N	WBMWB384RC	Arieggiatore a coltelli 38cm - 163cc - Lama flottante (Regolazione altezza 40mm)	\N	990.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-44df9616-e19d-44b6-bc71-6893805acad9	Weibang	\N	WBMWB486CRC	Arieggiatore a coltelli 48cm - 163cc - Lama flottante (Lama fissa optional - Regolazione altezza 40mm)	\N	1350.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-b5078a73-d3ce-408c-a690-62ee6eb18424	Weibang	\N	WBMWBLV506C	Aspirafoglie a ruote 80cm - 163cc (Sacco 240L,)	\N	1840.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-014a45c3-cc9d-4e1b-91a1-bad090582734	Weibang	\N	WBMWBLV50K	Aspirafoglie da sponda - 180cc Kawasaki (Tubo aspirante lunghezza 4m)	\N	1710.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-9268f8a4-8215-47d8-9512-5e5637818e29	Weibang	\N	WBMWBTR126H	Catenaria 163cc (Larghezza di scavo 102mm, Profondità di scavo 305mm)	\N	4500.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e9b640ba-fd3c-45f6-90a5-ab2a387f4e4c	Weibang	\N	WBMWBSH4003E	Biotrituratore elettrico 2400W - Diametro 40mm (7 lame su un disco)	\N	960.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-c56599a2-d919-4808-a02f-fa78b6b1f3d6	Weibang	\N	WBMWBCH507LC	Cippatore compatto 196cc - Diametro 50mm (2 lame su un disco)	\N	1510.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-5a6a4546-226e-4597-b1cc-5db31fa1775a	Weibang	\N	WBMWBCH1013LCD	Cippatore professionale 400cc - Diametro 100mm (2 lame su un disco)	\N	3650.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-deb6e938-2868-417d-84a8-7423924a49fc	Weibang	\N	WBMWBLT567HLC	Decespugliatore a ruote a spinta 56cm - 196cc (Filo nylon 4,5mm, Altezza 8 liv. 51/137mm)	\N	870.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-e16a6f41-32be-40d7-9461-704378b64bed	Weibang	\N	WBMWBLT567SLC	Decespugliatore a ruote semovente 56cm - 196cc Trasmis. Meccanica 5v (Filo nylon 4,5mm, Altezza 8 liv. 51/137mm)	\N	1270.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-6879a57d-08cf-48d9-a201-9d923d484a76	Weibang	\N	WBMWBBC537SCV	Falciatrice professionale 53cm - 196cc - Trasmis. Cardanica 3v (Lama fissa con punte flottanti, Altezza 6 liv. 15/90mm, 1000m²)	\N	1620.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-973feb2a-8e30-4a23-9f74-adaf4b0fddcf	Weibang	\N	WBMWBBC538SCV	Falciatrice professionale 53cm - 224cc LV - Trasmis. Cardanica 3v (Lama fissa con punte flottanti, Altezza 6 liv. 15/90mm, 1000m²) NEW	\N	1950.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-156140de-becf-484b-a5b5-46ab99e3a6c8	Weibang	\N	WBMWBBC7623LC	Falciatrice professionale 76cm - 764cc - Trasmis. Meccanica 3v (Altezza 4 liv. 92/201mm, 6000m²) IN CODIFICA	\N	4900.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-943cd8b2-8add-4ae2-8276-a78796ea791b	Weibang	\N	WBMWBGT6813	Trinciasermenti a ruote 68cm - 392cc - Trasmis. CVT (38 lame a coltello Y su rotore orizzontale)	\N	4800.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
-a57d3386-4708-4414-abfc-af5bbf7b5b1e	Weibang	\N	WBMWBGT6813TE	Trinciasermenti cingolato 68cm - 392cc - Trazione 2 motori elettrici da 800W (38 lame a coltello Y su rotore orizzontale)	\N	7050.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 96715574-10aa-4716-88ac-84bce9a8116b	Weibang	\N	WBAWBGTRC	Radiocomando per WBGT6813TE	\N	1500.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 d5cb5a83-e3ad-43cb-a6c0-05bc9742b8ca	Weibang	\N	WBA4510104015	Tappo Mulching X WB454HB/SB, WB455HCOP	\N	18.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 6e639e2d-796b-4ad9-a72b-23523785edb3	Weibang	\N	WBA4560104010	Tappo Mulching X WB454HB/A-SB/A,WB455HC, WB455SC, WB455SC3, WB456SCVE3	\N	15.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
@@ -6308,6 +6800,155 @@ a17aaf7a-0b0d-4402-981b-b57ad7dcf153	Weibang	\N	WBA5380107010	Tappo Mulching X W
 40a7e203-03e7-4ac2-b601-76ed8e841d5a	Weibang	\N	WBA12010012	Kit spazzola 48cm Rasaerba a rullo	\N	150.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 0fa12d36-e3fd-435a-b42b-b5a41ee7a174	Weibang	\N	WBA12110012	Kit spazzola 56cm Rasaerba a rullo	\N	175.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
 e4248da2-1de5-4ecb-9e04-ecef34e70ff1	Weibang	\N	WBA150406WM1	Olio 10W-30 MOTION 4T 600ml (Confezione da 24PZ)	\N	7.50	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N
+6921d2cf-407a-4ff9-8635-595a7e5eaae8	Echo	\N	ECMACS2200	Motosega elettrica ACS 2200 - 2200W	\N	175.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e126d285-f5eb-4e81-8497-77feed2dfcd9	Echo	\N	ECMCS2511TES	Motosega potatura X Series - CS 2511 TES	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e668b697-c247-4410-96db-6598ffbf06bb	Echo	\N	ECMCS2511TESC	Motosega potatura X Series - CS 2511 TESC (Barra Carving)	\N	509.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+38fc20ec-51e5-44a0-8780-2cb76eabafc9	Echo	\N	ECMCS280TES	Motosega potatura CS 280 TES	\N	349.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+0e20f711-182e-425d-a7e1-e7824e9b9976	Echo	\N	ECMCS280TESC	Motosega potatura CS 280 TESC (Barra Carving)	\N	399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+86db108c-9147-49cf-956d-2816272ad5ef	Echo	\N	ECMCS362TES-30	Motosega potatura CS 362 TES - 30 (Barra 30cm)	\N	419.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5734384c-e91f-4661-8c04-6b45605d954e	Weibang	\N	WBMWB537SCVMLV	Tagliaerba Mulching semovente 53cm - 196cc Low Vib.	\N	1089.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e6c79f43-a895-49c6-a5c9-c0e8cfd4c112	Weibang	\N	WBMWB536SKVM	Tagliaerba Mulching semovente 53cm - 180cc Kawasaki	\N	1069.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+ac44599f-1af4-4899-b0de-7b4314625bcc	Weibang	\N	WBMWB537SCVAL	Tagliaerba semovente 53cm - 196cc Alluminio	\N	1069.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+d9ab6a23-be4c-49e3-8df5-0de2be6957d5	Echo	\N	ECMCS362TES-35	Motosega potatura CS 362 TES - 35 (Barra 35cm)	\N	439.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+485779a0-1814-4d66-abed-db5ba11b072a	Echo	\N	ECMCS2511WES	Motosega multiuso X Series - CS 2511 WES	\N	509.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+55277d27-90fe-479a-83f9-9ad0f56ffc55	Echo	\N	ECMCS362WES	Motosega multiuso CS 362 WES	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a7613a9a-0d8e-4067-b5da-fda0e4e366dc	Echo	\N	ECMCS310ES	Motosega multiuso CS 310 ES	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a58f48d7-c3db-4601-a029-bbd79ccc4e8f	Echo	\N	ECMCS3410ES	Motosega multiuso CS 3410 ES	\N	309.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+6e2a578b-cb9e-4f3f-bc5d-a90418047d8f	Echo	\N	ECMCS3510ES	Motosega multiuso CS 3510 ES	\N	339.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+70789eca-992f-458a-a944-192aec1d435a	Echo	\N	ECMCS3510AC	Motosega multiuso CS 3510 AC	\N	389.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a2b6bb32-078c-4a8d-b6ea-b8c579ade090	Echo	\N	ECMCS4010ES	Motosega multiuso CS 4010 ES	\N	489.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+7f9fe018-6cf8-4de8-a6c7-d75b52b6ae33	Echo	\N	ECMCS4310SX	Motosega multiuso X Series - CS 4310 SX	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+7bcfd244-f604-472a-98fe-0167c330d318	Echo	\N	ECMCS4510ES	Motosega multiuso CS 4510 ES	\N	529.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5edf5d56-8704-444c-99ad-0421322c0838	Echo	\N	ECMCS4920ES	Motosega multiuso CS 4920 ES	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+54155e9f-af4e-4cfe-8ddf-9d7f116e31c5	Echo	\N	ECMCS501SX	Motosega multiuso X Series - CS 501 SX	\N	779.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+26dfeadc-b035-4271-bc07-dfea8d689dcf	Echo	\N	ECMCS621SX	Motosega forestale X Series - CS 621 SX	\N	929.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a81940f0-0e34-469a-b50e-0b21f8e32671	Echo	\N	ECMCS7310-20	Motosega forestale X Series - CS 7310 SX (Barra 20")	\N	1199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+05bf1b92-65e0-4041-8c1e-4c068ea6bdab	Echo	\N	ECMCS7310-24	Motosega forestale X Series - CS 7310 SX (Barra 24")	\N	1219.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+2a9e380a-d6c6-4c2b-85a4-17f7651d7c67	Echo	\N	ECMPPF236ES	Potatore asta fissa PPF 236 ES	\N	519.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+d15fcdc6-874c-4d73-8c9e-8efa0e3179e9	Echo	\N	ECMPPT236ES	Potatore telescopico PPT 236 ES	\N	629.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+353f67bd-fe56-4b95-b1ea-d53dbe74f582	Echo	\N	ECMPPT2620ES	Potatore telescopico X Series - PPT 2620 ES	\N	769.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+36f17c3e-2daf-4a2b-bc57-4ba5b178aa14	Echo	\N	ECMEGT350	Bordatore elettrico EGT350 - 350W	\N	89.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+948b635b-ddec-4864-9ebf-0caa786df64e	Echo	\N	ECMSRM222ESL	Decespugliatore SRM 222 ESL	\N	219.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+3a742117-88f7-403b-aec0-739640b0be20	Echo	\N	ECMSRM237TESL	Decespugliatore SRM 237 TESL	\N	395.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+ef12a7b3-a1d6-43eb-893d-5b6f722a49d7	Echo	\N	ECMSRM267L	Decespugliatore SRM 267 L	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c831c573-bc82-4461-8156-c2762b2acebc	Echo	\N	ECMSRM2621TESL	Decespugliatore X Series - SRM 2621 TESL	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+9c7fcdff-3290-43c8-999e-9eddcaa18297	Echo	\N	ECMSRM301TESL	Decespugliatore SRM 301 TESL	\N	319.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c99d20b9-b5df-4880-ad3f-dbabffb27883	Echo	\N	ECMSRM3021TESL	Decespugliatore X Series - SRM 3021 TESL	\N	559.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+b5c47059-4fa0-48a5-bfa4-c7d1fcac7ef6	Echo	\N	ECMSRM3021TESU	Decespugliatore X Series - SRM 3021 TESU	\N	649.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+8387b45c-7fcd-43d0-8c5f-d71fb6ed9dbb	Echo	\N	ECMSRM3611TL	Decespugliatore X Series - SRM 3611 TL	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+054870aa-aec1-4291-95a2-1a8a9c3b9b67	Echo	\N	ECMSRM3611TU	Decespugliatore X Series - SRM 3611 TU	\N	719.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+829520ab-4e2b-4db3-80ad-d81e863f6a7f	Echo	\N	ECMSRM420ESLW	Decespugliatore SRM 420 ESLW	\N	519.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+45e9bc07-648c-44c4-a39a-a581fcecc9df	Echo	\N	ECMSRM420TESL	Decespugliatore X Series - SRM 420 TESL	\N	785.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+fab0280e-f993-4c72-ae79-2bc0b58eea7b	Echo	\N	ECMSRM420TESU	Decespugliatore X Series - SRM 420 TESU	\N	859.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+b5c622de-cea5-4349-82ce-43afab970881	Echo	\N	ECMSRM520ESU	Decespugliatore X Series - SRM 520 ESU	\N	969.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+0050117e-00b9-4247-9a44-9fbe9a284cad	Echo	\N	ECMCLS520ESU	Decespugliatore X Series - CLS 520 ESU	\N	1055.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a4dda727-97fc-4cdc-95f0-b7a70bb9b89f	Echo	\N	ECMRM3020T	Decespugliatore Zaino X Series - RM 3020 T	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+df00ca01-b24e-4e05-83be-5dd8beb1bc09	Echo	\N	ECMRM520ES	Decespugliatore Zaino X Series - RM 520 ES	\N	909.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+81934a47-ac5d-47cc-b9f5-6f2d8dcccc36	Echo	\N	ECMHCAS236ESLW	Tagliasiepi ad asta corta HCAS 236 ESLW	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+ad26d937-28e6-425d-8a99-96cb26f32e08	Echo	\N	ECMHCAS2620ESHD	Tagliasiepi ad asta corta X Series - HCAS 2620 ESHD	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+8ebc0b43-08b7-4dea-b015-14f7928c1204	Echo	\N	ECMHCA236ESLW	Tagliasiepi ad asta lunga HCA 236 ESLW	\N	615.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e213dd5d-8db3-49e0-a175-70921225b1bc	Echo	\N	ECMHCA2620ESHD	Tagliasiepi ad asta lunga X Series - HCA 2620 ESHD	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+d052d11d-6e50-4544-920a-2086075ca83c	Echo	\N	ECMHC2020R	Tagliasiepi HC 2020R	\N	329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+34824e3b-136f-4718-9823-a1b4e769c68c	Echo	\N	ECMHC2320	Tagliasiepi HC 2320	\N	435.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+360413a6-21b2-4486-8ccd-c1f5705fa67c	Echo	\N	ECMHCR165ES	Tagliasiepi HCR 165ES	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+1026b58e-e74b-4cd6-9dda-0bc745e07eab	Echo	\N	ECMHCR185ES	Tagliasiepi HCR 185ES	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a2f7dcf6-2efb-4189-a984-e81c48315713	Echo	\N	ECMHC2810ESR	Tagliasiepi X Series - HC 2810ESR	\N	620.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5b8c822d-b36f-4a44-82f7-cabdbbee7d45	Echo	\N	ECMHCS2810ES	Tagliasiepi X Series - HCS 2810ES	\N	620.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a4b2a061-bdbb-4960-a1e2-45140f2e970d	Echo	\N	ECMHCS3210ES	Tagliasiepi X Series - HCS 3210ES	\N	649.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+fad346ae-4ca5-43c1-8cf8-f5f9cab9196e	Echo	\N	ECMHCS3810ES	Tagliasiepi X Series - HCS 3810ES	\N	679.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+7541fedc-57c9-4e12-96dd-00817185db37	Echo	\N	ECMHC560	Tagliasiepi elettrico HC 560 - 500W	\N	175.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+f3eed3d6-b483-428d-84c6-61f8c821cd8d	Echo	\N	ECMHCR610	Tagliasiepi elettrico HC 610 - 700W	\N	199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+02724ee2-c9a3-49e4-9cb1-a1e73235c4c3	Echo	\N	ECMES250ES	Soffiatore e aspiratore ES 250ES	\N	329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a327f1f7-ea77-42b9-8acd-0f7069d7049a	Echo	\N	ECMES255ES	Soffiatore e aspiratore ES 255ES	\N	379.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+f9c34999-0a9f-4cb2-aeb9-4474166e232a	Echo	\N	ECMPB2520	Soffiatore PB 2520	\N	249.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5652e9a2-3dc2-48e2-b4b8-55dea0abc8f3	Echo	\N	ECMPB2620	Soffiatore X Series - PB 2620	\N	369.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+2e062ccb-2e56-44e4-b3e8-c084ecadf6c8	Echo	\N	ECMPB580	Soffiatore a zaino PB 580	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+37a82683-d1ae-4e75-85a0-04a0c4a09f28	Echo	\N	ECMPB5810T	Soffiatore a zaino PB 5810 T	\N	639.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+433cfd78-63a5-4957-831c-0598d3e9561f	Echo	\N	ECMPB770	Soffiatore a zaino X Series - PB 770	\N	715.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+26fa65d0-8348-4008-be22-19c12d020530	Echo	\N	ECMPB7910T	Soffiatore a zaino PB 7910 T	\N	829.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+3ae5f567-8f9c-4d0b-b3a0-ee77d8407afa	Echo	\N	ECMPB8010	Soffiatore a zaino X Series - PB 8010	\N	875.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+ff7ce441-60be-43cc-8b77-197f09200a49	Echo	\N	ECMPB9010T	Soffiatore a zaino PB 9010 T	\N	949.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+8e3febe8-9cee-446d-8e88-03d7675df269	Echo	\N	ECMPAS2620ES	Multifunzione X Series - PAS 2620 ES	\N	449.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+1302cf82-5491-43a2-bc88-8f145a271ae4	Echo	\N	ECMMB5810	Atomizzatore spalleggiato MB5810	\N	855.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+69b12634-38f8-4d55-bd58-3d52d876b29b	Echo	\N	ECMCSG7410ES	Mototroncatrice CSG 7410 ES	\N	1365.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+8179f1ee-8ef0-4ba2-92ad-4ee4d2b8b066	Echo	\N	ECMDPB310	Soffiatore a batteria 40V - DPB 310	\N	99.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c3432221-bcc2-42bc-b0a0-a36881bf3d35	Echo	\N	ECMDCS310	Motosega a batteria 40V - DCS 310	\N	199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+3b8232c3-d93a-4a1c-9994-d100591eab72	Echo	\N	ECMDSRM310L	Decespugliatore a batteria 40V - DSRM 310	\N	149.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+0d9a3144-93e4-4e86-bb09-b32d362e3f1c	Echo	\N	ECMDHC310	Tagliasiepi a batteria 40V - DHC 310	\N	109.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+41b09b80-12ee-4bbb-a6ec-0791c46fd274	Echo	\N	ECMDPPF310	Potatore a batteria 40V - DPPF 310	\N	145.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+f57c691f-cbf1-4c52-92a9-c752c377f68a	Echo	\N	ECMDHCA310	Tagliasiepi ad asta a batteria 40V - DHCA 310	\N	145.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c53af04d-5781-4611-84fd-61bfc9001c82	Echo	\N	ECMDLM310/35P	Tagliaerba a batteria 40V - DLM 310 35P	\N	189.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+fd778ce3-aee5-4cd6-90ba-71921b6367c0	Echo	\N	ECMDLM310/46P	Tagliaerba a batteria 40V - DLM 310 46P	\N	299.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c36d0b41-9a61-4037-a8a7-7a9c2f73a17e	Echo	\N	ECMDLM310/46SP	Tagliaerba a batteria 40V - DLM 310 46SP semovente	\N	399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+022fc96f-a406-4ea9-a3d1-5703703fe332	Echo	\N	ECALBP3680	Batteria Garden+ 40V 72Wh	\N	99.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+2166eabc-5dde-4b32-9c23-666b3328236b	Echo	\N	ECALBP36150	Batteria Garden+ 40V 144Wh	\N	139.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+9172637c-db58-4ac6-98dd-be119d2ec8af	Echo	\N	ECALC3604	Caricabatterie Garden+ Rapido 40V	\N	59.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c3c1c6c9-883a-4722-8bce-556dce08dd9e	Echo	\N	ECMDCS2500	Motosega a batteria 56V - DCS 2500	\N	415.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+806067f5-e448-4cf5-84fc-f0c5ac0f3641	Echo	\N	ECMDCS2500T	Motosega a batteria 56V - DCS 2500 T Barra Carving	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+2f3271e3-7ef2-40a3-8644-89421579d2ea	Echo	\N	ECMDCS2500W	Motosega a batteria 56V - DCS 2500 W	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+eb8cb62d-29f4-4a52-82e9-f3c3b490edef	Echo	\N	ECMDCS3000T	Motosega a batteria 56V - DCS 3000T	\N	279.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+33824063-ec4a-414e-9f97-a7bd927b422f	Echo	\N	ECMDCS3500	Motosega a batteria 56V - DCS 3500	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+2daa59cf-a7df-4195-8bb7-5f087734d753	Echo	\N	ECMDCS3500T	Motosega a batteria 56V - DCS 3500T	\N	589.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+d3719865-f36e-48b5-84fd-20438ecd7f0e	Echo	\N	ECMDHS3006	Potatore manuale a batteria 56V - DHS 3006	\N	169.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+7deeed42-abc8-426c-8332-4aba69d9a06e	Echo	\N	ECMDHCAS2600HD	Tagliasiepi asta corta a batteria 56V - DHCAS 2600HD	\N	635.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+7fa9b5b0-8c56-41af-a1a4-998373bf9df6	Echo	\N	ECMDHCA2600HD	Tagliasiepi asta a batteria 56V - DHCA 2600HD	\N	659.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+11196f5b-44d0-4d5b-a69e-834b8937a47d	Echo	\N	ECMDHC2200R	Tagliasiepi a batteria 56V - DHC 2200 R	\N	469.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+070e6f48-dab9-47a0-be41-650111eda370	Echo	\N	ECMDHC2800R	Tagliasiepi a batteria 56V - DHC 2800 R	\N	549.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+26ad6055-edc6-4b89-9556-decfa1e61225	Echo	\N	ECMDHCS2800	Tagliasiepi a batteria 56V - DHCS 2800	\N	659.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+0d8bc11d-5d75-48d8-bf25-cb4c16e8a522	Echo	\N	ECMDLM5100SP	Tagliaerba a batteria MID Series 56V - DLM 5100 SP	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+d3a3f697-1789-4e13-a029-52aee03f6372	Echo	\N	ECMDPAS2600	Multifunzione a batteria 56V - DPAS 2600	\N	369.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5b47e2ce-fd87-4ded-a2b9-e573f145b68d	Echo	\N	ECMDPAS300	Multifunzione a batteria 56V - DPAS 300	\N	249.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+9fc6ce76-9919-4d74-88df-7853ca555a53	Echo	\N	ECMDPB2500	Soffiatore a batteria MidSeries 56V - DPB 2500	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+bcb9390c-9636-4166-8424-cd97e2ca5819	Echo	\N	ECMDPB2600	Soffiatore a batteria 56V - DPB 2600	\N	429.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+2df5eed2-24bc-4690-bb77-e341f09d1725	Echo	\N	ECMDPPT2600LW	Potatore telescopico a batteria 56V - DPPT 2600LW	\N	765.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+87dc34a2-23e4-4794-8873-2dbd9feadb4e	Echo	\N	ECMDSRM2400L	Decespugliatore a batteria MID Series 56V - DSRM 2400 L	\N	289.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+37b3585a-f534-4a59-9d86-9b0abb94c55c	Echo	\N	ECMDSRM2600L	Decespugliatore a batteria X Series 56V - DSRM 2600 L	\N	429.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+32517063-1c42-4ac4-b071-fb66964a4f28	Echo	\N	ECMDSRM2600U	Decespugliatore a batteria X Series 56V - DSRM 2600 U	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+65a6d704-1460-4ca6-a436-306ef50d5d9f	Echo	\N	ECMDSRM3500L	Decespugliatore a batteria X Series 56V - DSRM 3500 L	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+f7cd02f9-da29-42fb-b3e6-5f5724a10775	Echo	\N	ECMDSRM3500U	Decespugliatore a batteria X Series 56V - DSRM 3500 U	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+3afa3e66-64fd-485e-923f-e71617f1319b	Echo	\N	ECMDTT2100	Decespugliatore a batteria X Series 56V - DTT 2100	\N	689.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+041dc3ed-a8bf-49de-aef5-3b3397bd5df3	Echo	\N	ECADBC560	Caricabatterie 56eForce Rapido 56V	\N	109.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5fe70745-a161-4513-8c49-8af136670525	Echo	\N	ECADBC560RC	Caricabatterie 56eForce UltraRapido 56V	\N	169.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+7e2d664f-3c4c-43a5-a409-cf129990e043	Echo	\N	ECALBP56V125	Batteria 56eForce 56V 126Wh 2.5AH	\N	209.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+02b7176d-5d85-4abc-85e4-487168949232	Echo	\N	ECALBP56V250	Batteria 56eForce 56V 252Wh 5AH	\N	295.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+65910c2b-1274-4257-a970-1a79d6f44a26	Weibang	\N	WBMWB455HCOP	Tagliaerba a spinta 45cm - 139cc	\N	259.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+040cb028-915e-42e7-800d-b626b1c0c4f8	Weibang	\N	WBMWB455HC	Tagliaerba a spinta 45cm - 139cc con raccolta	\N	359.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+cafdaa2b-46d4-487e-a28d-75692bb73012	Weibang	\N	WBMWB455SCOP	Tagliaerba semovente 45cm - 139cc	\N	319.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+f0aac836-b83b-4219-92b5-5118e8ee65cf	Weibang	\N	WBMWB455SC	Tagliaerba semovente 45cm - 139cc con raccolta	\N	445.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a8f00a9b-abeb-43c2-bfe7-18538b45976f	Weibang	\N	WBMWB455SC3	Tagliaerba semovente 3x1 45cm - 139cc	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+4aa31fa8-2c1f-4ca7-944d-f454d9a2ce3b	Weibang	\N	WBMWB456SCVE3	Tagliaerba semovente 3x1 45cm - 166cc	\N	709.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+af948981-f3be-4598-803d-7064e087f5c9	Weibang	\N	WBMWB506SC	Tagliaerba semovente 50cm - 166cc	\N	469.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+d48c02c4-18fa-4bbf-9424-c4bf5cd8831c	Weibang	\N	WBMWB506SC3	Tagliaerba semovente 3x1 50cm - 166cc	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+460a7e5d-fdbc-46e3-9c64-d806cb0c1b6b	Weibang	\N	WBMWB537SC	Tagliaerba semovente 53cm - 196cc	\N	569.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+8a151d51-2885-48a2-9326-0caf9035f87a	Weibang	\N	WBMWB537SC3	Tagliaerba semovente 3x1 53cm - 196cc	\N	709.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+24947323-3e86-48a2-96db-99ef5d4bc640	Weibang	\N	WBMWB466HCM	Tagliaerba Mulching a spinta 46cm - 166cc	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+aaf97097-41b1-4dfe-82b3-02a3559b3b0f	Weibang	\N	WBMWB466SCM	Tagliaerba Mulching semovente 46cm - 166cc	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+3328010c-6a0b-4723-bf9b-b753f3afca47	Weibang	\N	WBMWB537SCM	Tagliaerba Mulching semovente 53cm - 196cc	\N	859.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+dcb33285-0901-49ef-9893-49c0dfab0ab0	Weibang	\N	WBMWB507SCV3	Tagliaerba semovente 3x1 50cm - 196cc Cardanica 3v	\N	835.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e634aa28-ccb2-492f-a0bd-bffa0ee91cc5	Weibang	\N	WBMWB537SCV3	Tagliaerba semovente 3x1 53cm - 196cc Cardanica 3v	\N	925.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+445b4ecc-14a6-430e-9f2e-b686f75b941d	Weibang	\N	WBMWB537SCV3LV	Tagliaerba semovente 3x1 53cm - 196cc Low Vibration	\N	1039.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+f260bc32-8a20-429b-93ac-45670e63c430	Weibang	\N	WBMWB537SCV3B	Tagliaerba semovente 3x1 53cm - 196cc Freno lama	\N	1199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+1b4c8826-e39e-4d26-a546-1145dd2aa383	Weibang	\N	WBMWB537SCVM	Tagliaerba Mulching semovente 53cm - 196cc Mecc. 3v	\N	959.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a718a739-c7f4-49ff-b915-f83d5f6242f1	Weibang	\N	WBMWB537SCVALB	Tagliaerba semovente 53cm - 196cc Allum. Freno lama	\N	1355.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e9ffd558-4cb5-40b7-8c31-6f900d47568d	Weibang	\N	WBMWB778SCV3	Tagliaerba bilama semovente 3x1 77cm - 300cc	\N	2789.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+b96f313b-0d8e-4fa2-80d3-a194a2cb7b28	Weibang	\N	WBMWB778SCV3P	Tagliaerba bilama semovente 3x1 77cm - 300cc Ruote Piv.	\N	2989.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+da33f692-df5e-4f41-9053-34faa8a7de5f	Weibang	\N	WBMWB486SKVRB	Tagliaerba a rullo semovente 48cm - 179cc	\N	1799.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+dcccedd8-cb5f-47a7-8a42-fb1372ff718c	Weibang	\N	WBMWB567SKVRB	Tagliaerba a rullo semovente 56cm - 196cc	\N	2099.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+b8bdb773-0dc0-4b94-a99f-2c19b6046f35	Weibang	\N	WBMWB384RC	Arieggiatore a coltelli 38cm - 163cc Lama flottante	\N	869.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+44df9616-e19d-44b6-bc71-6893805acad9	Weibang	\N	WBMWB486CRC	Arieggiatore a coltelli 48cm - 163cc Lama flottante	\N	1189.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+b5078a73-d3ce-408c-a690-62ee6eb18424	Weibang	\N	WBMWBLV506C	Aspirafoglie a ruote 80cm - 163cc Sacco 240L	\N	1619.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+014a45c3-cc9d-4e1b-91a1-bad090582734	Weibang	\N	WBMWBLV50K	Aspirafoglie da sponda - 180cc Kawasaki	\N	1499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+9268f8a4-8215-47d8-9512-5e5637818e29	Weibang	\N	WBMWBTR126H	Catenaria 163cc	\N	4199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e9b640ba-fd3c-45f6-90a5-ab2a387f4e4c	Weibang	\N	WBMWBSH4003E	Biotrituratore elettrico 2400W - Diametro 40mm	\N	845.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+c56599a2-d919-4808-a02f-fa78b6b1f3d6	Weibang	\N	WBMWBCH507LC	Cippatore compatto 196cc - Diametro 50mm	\N	1329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+5a6a4546-226e-4597-b1cc-5db31fa1775a	Weibang	\N	WBMWBCH1013LCD	Cippatore professionale 400cc - Diametro 100mm	\N	3399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+deb6e938-2868-417d-84a8-7423924a49fc	Weibang	\N	WBMWBLT567HLC	Decespugliatore a ruote a spinta 56cm - 196cc	\N	765.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+e16a6f41-32be-40d7-9461-704378b64bed	Weibang	\N	WBMWBLT567SLC	Decespugliatore a ruote semovente 56cm - 196cc	\N	1099.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+6879a57d-08cf-48d9-a201-9d923d484a76	Weibang	\N	WBMWBBC537SCV	Falciatrice professionale 53cm - 196cc	\N	1425.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+973feb2a-8e30-4a23-9f74-adaf4b0fddcf	Weibang	\N	WBMWBBC538SCV	Falciatrice professionale 53cm - 224cc	\N	1715.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+156140de-becf-484b-a5b5-46ab99e3a6c8	Weibang	\N	WBMWBBC7623LC	Falciatrice professionale 76cm - 764cc	\N	4599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+943cd8b2-8add-4ae2-8276-a78796ea791b	Weibang	\N	WBMWBGT6813	Trinciasermenti a ruote 68cm - 392cc CVT	\N	4499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
+a57d3386-4708-4414-abfc-af5bbf7b5b1e	Weibang	\N	WBMWBGT6813TE	Trinciasermenti cingolato 68cm - 392cc	\N	6599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21
 \.
 
 
@@ -6335,8 +6976,9 @@ COPY public.noleggio_abbonamenti (id, cliente_nome, cliente_tel, tipo, credito_r
 -- Data for Name: noleggio_archivio; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.noleggio_archivio (id, created_at, nome_cliente, data_da, data_a, n_giorni, totale_preventivo, note, carrello, pdf_url) FROM stdin;
-86a311dc-d272-405d-9483-1d7ed5f4a6ed	2026-03-20 17:47:57.923036+00	\N	\N	\N	1	402	\N	[{"id": 1774028731966, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 142, "nome": "Carotatrice/Bucatrice PL 2501", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "B", "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 128, "prezzo_netto": 104.92, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 99.4, "prezzo_netto": 81.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 104, "prezzo_netto": 85.25, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 115, "prezzo_netto": 94.27, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 142, "prezzo_netto": 116.4, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 142, "fasciaScelta": "uno_giorno"}, {"id": 1774028758327, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 191, "nome": "Rete livella.76x10kg 122x30kg - 183x56kg", "attiva": true, "famiglia": null, "categoria": "tagliaerba", "carburante": null, "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 18, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 14, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 16, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 20, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 20, "fasciaScelta": "uno_giorno"}, {"id": 1774028830675, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 179, "nome": "Seminatrice SEMBDNER RS-60N", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "LA NR. 2 FA DA RIGENERA SE SI AGGIUNGE IL RULLO", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 179, "prezzo_netto": 146.72, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 145, "prezzo_netto": 118.85, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 161, "prezzo_netto": 131.97, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 199, "prezzo_netto": 163.12, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 199, "fasciaScelta": "uno_giorno"}, {"id": 1774028849807, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 167, "nome": "Rullo SEMBDNER da cm.60 bucatura", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "si può applicare a SEMIN. RS 60", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 36.6, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 32, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 34, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 41, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 41, "fasciaScelta": "uno_giorno"}]	\N
+COPY public.noleggio_archivio (id, created_at, nome_cliente, data_da, data_a, n_giorni, totale_preventivo, note, carrello, pdf_url, sopralluogo_id, cliente_id) FROM stdin;
+86a311dc-d272-405d-9483-1d7ed5f4a6ed	2026-03-20 17:47:57.923036+00	\N	\N	\N	1	402	\N	[{"id": 1774028731966, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 142, "nome": "Carotatrice/Bucatrice PL 2501", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "B", "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 128, "prezzo_netto": 104.92, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 99.4, "prezzo_netto": 81.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 104, "prezzo_netto": 85.25, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 115, "prezzo_netto": 94.27, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 142, "prezzo_netto": 116.4, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 142, "fasciaScelta": "uno_giorno"}, {"id": 1774028758327, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 191, "nome": "Rete livella.76x10kg 122x30kg - 183x56kg", "attiva": true, "famiglia": null, "categoria": "tagliaerba", "carburante": null, "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 18, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 14, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 16, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 20, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 20, "fasciaScelta": "uno_giorno"}, {"id": 1774028830675, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 179, "nome": "Seminatrice SEMBDNER RS-60N", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "LA NR. 2 FA DA RIGENERA SE SI AGGIUNGE IL RULLO", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 179, "prezzo_netto": 146.72, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 145, "prezzo_netto": 118.85, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 161, "prezzo_netto": 131.97, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 199, "prezzo_netto": 163.12, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 199, "fasciaScelta": "uno_giorno"}, {"id": 1774028849807, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 167, "nome": "Rullo SEMBDNER da cm.60 bucatura", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "si può applicare a SEMIN. RS 60", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 36.6, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 32, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 34, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 41, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 41, "fasciaScelta": "uno_giorno"}]	\N	\N	\N
+66d12267-655e-4860-bc8f-3d3ef2d72a2f	2026-03-31 07:03:40.55495+00	Habitat Natura	2026-04-02	2026-04-03	1	182.75	\N	[{"id": 1774940550604, "listino": "std_netto", "nGiorni": 1, "macchina": {"id": 134, "nome": "Motocoltivatore con fresa 12 HP", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "G", "is_accessorio": false, "note_tecniche": "FRESA NORMALE LARGH. CM 90", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 96, "prezzo_netto": 78.69, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 75, "prezzo_netto": 61.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 63.12, "prezzo_netto": 63.12, "tipo_listino": "c"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 77, "prezzo_netto": 63.12, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 70.49, "prezzo_netto": 70.49, "tipo_listino": "b"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 86, "prezzo_netto": 70.49, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 107, "prezzo_netto": 87.71, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 87.71, "fasciaScelta": "uno_giorno"}]	\N	\N	\N
 \.
 
 
@@ -6381,35 +7023,16 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 569	132	due_tre_giorni	std	128.00	104.92
 570	132	quattro_sette_giorni	std	115.00	94.27
 571	132	oltre_sette_giorni	std	104.00	85.25
-572	133	uno_giorno	std	107.00	\N
-573	133	due_tre_giorni	std	96.00	\N
-574	133	quattro_sette_giorni	std	86.00	\N
-575	133	oltre_sette_giorni	std	77.00	\N
 576	134	mezzo_giorno	std	75.00	61.48
 577	134	uno_giorno	std	107.00	87.71
 578	134	due_tre_giorni	std	96.00	78.69
 579	134	quattro_sette_giorni	std	86.00	70.49
 580	134	oltre_sette_giorni	std	77.00	63.12
-581	135	mezzo_giorno	std	33.60	\N
-582	135	uno_giorno	std	48.00	\N
-583	135	due_tre_giorni	std	43.00	\N
-584	135	quattro_sette_giorni	std	39.00	\N
-585	135	oltre_sette_giorni	std	35.00	\N
 586	136	mezzo_giorno	std	49.70	40.74
 587	136	uno_giorno	std	71.00	58.20
 588	136	due_tre_giorni	std	64.00	52.46
 589	136	quattro_sette_giorni	std	58.00	47.55
 590	136	oltre_sette_giorni	std	52.00	42.63
-591	137	mezzo_giorno	std	49.70	\N
-592	137	uno_giorno	std	71.00	\N
-593	137	due_tre_giorni	std	64.00	\N
-594	137	quattro_sette_giorni	std	58.00	\N
-595	137	oltre_sette_giorni	std	52.00	\N
-596	138	mezzo_giorno	std	152.00	\N
-597	138	uno_giorno	std	217.00	\N
-598	138	due_tre_giorni	std	195.00	\N
-599	138	quattro_sette_giorni	std	176.00	\N
-600	138	oltre_sette_giorni	std	158.00	\N
 601	139	uno_giorno	std	217.00	177.87
 602	139	due_tre_giorni	std	195.00	159.84
 603	139	quattro_sette_giorni	std	176.00	144.27
@@ -6429,35 +7052,11 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 617	142	due_tre_giorni	std	128.00	104.92
 618	142	quattro_sette_giorni	std	115.00	94.27
 619	142	oltre_sette_giorni	std	104.00	85.25
-620	143	uno_giorno	std	176.00	\N
-621	143	due_tre_giorni	std	158.60	\N
-622	143	quattro_sette_giorni	std	143.96	\N
-623	143	oltre_sette_giorni	std	129.32	\N
 624	144	mezzo_giorno	std	54.00	44.27
 625	144	uno_giorno	std	77.00	63.12
 626	144	due_tre_giorni	std	69.00	56.56
 627	144	quattro_sette_giorni	std	62.00	50.82
 628	144	oltre_sette_giorni	std	56.00	45.90
-629	145	mezzo_giorno	std	35.00	\N
-630	145	uno_giorno	std	50.00	\N
-631	145	due_tre_giorni	std	45.00	\N
-632	145	quattro_sette_giorni	std	41.00	\N
-633	145	oltre_sette_giorni	std	37.00	\N
-634	146	mezzo_giorno	std	75.00	\N
-635	146	uno_giorno	std	107.00	\N
-636	146	due_tre_giorni	std	96.00	\N
-637	146	quattro_sette_giorni	std	86.00	\N
-638	146	oltre_sette_giorni	std	77.00	\N
-639	147	mezzo_giorno	std	35.00	\N
-640	147	uno_giorno	std	50.00	\N
-641	147	due_tre_giorni	std	45.00	\N
-642	147	quattro_sette_giorni	std	41.00	\N
-643	147	oltre_sette_giorni	std	37.00	\N
-644	148	mezzo_giorno	std	42.70	\N
-645	148	uno_giorno	std	61.00	\N
-646	148	due_tre_giorni	std	55.00	\N
-647	148	quattro_sette_giorni	std	50.00	\N
-648	148	oltre_sette_giorni	std	45.00	\N
 649	149	uno_giorno	std	177.00	145.09
 650	149	due_tre_giorni	std	159.00	130.33
 651	149	quattro_sette_giorni	std	143.00	117.21
@@ -6479,34 +7078,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 667	153	due_tre_giorni	std	195.00	159.84
 668	153	quattro_sette_giorni	std	176.00	144.26
 669	153	oltre_sette_giorni	std	158.00	129.51
-670	154	uno_giorno	std	77.00	\N
-671	154	due_tre_giorni	std	69.00	\N
-672	154	quattro_sette_giorni	std	62.00	\N
-673	154	oltre_sette_giorni	std	56.00	\N
-674	155	uno_giorno	std	6.10	\N
-675	155	due_tre_giorni	std	6.10	\N
-676	155	quattro_sette_giorni	std	6.10	\N
-677	155	oltre_sette_giorni	std	6.10	\N
-678	156	uno_giorno	std	10.00	\N
-679	156	due_tre_giorni	std	10.00	\N
-680	156	quattro_sette_giorni	std	10.00	\N
-681	156	oltre_sette_giorni	std	10.00	\N
-682	157	uno_giorno	std	12.20	\N
-683	157	due_tre_giorni	std	12.20	\N
-684	157	quattro_sette_giorni	std	12.20	\N
-685	157	oltre_sette_giorni	std	12.20	\N
-686	158	uno_giorno	std	30.50	\N
-687	158	due_tre_giorni	std	30.50	\N
-688	158	quattro_sette_giorni	std	30.50	\N
-689	158	oltre_sette_giorni	std	30.50	\N
-690	159	uno_giorno	std	30.50	\N
-691	159	due_tre_giorni	std	30.50	\N
-692	159	quattro_sette_giorni	std	30.50	\N
-693	159	oltre_sette_giorni	std	30.50	\N
-694	160	uno_giorno	std	30.50	\N
-695	160	due_tre_giorni	std	30.50	\N
-696	160	quattro_sette_giorni	std	30.50	\N
-697	160	oltre_sette_giorni	std	30.50	\N
 698	161	uno_giorno	std	41.00	33.61
 699	161	due_tre_giorni	std	36.60	30.00
 700	161	quattro_sette_giorni	std	34.00	27.87
@@ -6516,64 +7087,14 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 704	162	due_tre_giorni	std	64.00	52.46
 705	162	quattro_sette_giorni	std	58.00	47.54
 706	162	oltre_sette_giorni	std	52.00	42.62
-707	163	mezzo_giorno	std	67.20	\N
-708	163	uno_giorno	std	96.00	\N
-709	163	due_tre_giorni	std	86.00	\N
-710	163	quattro_sette_giorni	std	77.00	\N
-711	163	oltre_sette_giorni	std	73.00	\N
-712	164	mezzo_giorno	std	28.70	\N
-713	164	uno_giorno	std	41.00	\N
-714	164	due_tre_giorni	std	36.60	\N
-715	164	quattro_sette_giorni	std	34.00	\N
-716	164	oltre_sette_giorni	std	32.00	\N
 717	165	uno_giorno	std	12.00	9.84
 718	165	due_tre_giorni	std	12.00	9.84
 719	165	quattro_sette_giorni	std	11.00	9.02
 720	165	oltre_sette_giorni	std	10.00	8.20
-721	166	mezzo_giorno	std	75.00	\N
-722	166	uno_giorno	std	107.00	\N
-723	166	due_tre_giorni	std	96.00	\N
-724	166	quattro_sette_giorni	std	86.00	\N
-725	166	oltre_sette_giorni	std	77.00	\N
-726	167	uno_giorno	std	41.00	\N
-727	167	due_tre_giorni	std	36.60	\N
-728	167	quattro_sette_giorni	std	34.00	\N
-729	167	oltre_sette_giorni	std	32.00	\N
-730	168	uno_giorno	std	77.00	\N
-731	168	due_tre_giorni	std	69.00	\N
-732	168	quattro_sette_giorni	std	62.00	\N
-733	168	oltre_sette_giorni	std	56.00	\N
-734	169	uno_giorno	std	161.00	\N
-735	169	due_tre_giorni	std	145.00	\N
-736	169	quattro_sette_giorni	std	131.00	\N
-737	169	oltre_sette_giorni	std	118.00	\N
-738	170	uno_giorno	std	176.00	\N
-739	170	due_tre_giorni	std	158.60	\N
-740	170	quattro_sette_giorni	std	144.00	\N
-741	170	oltre_sette_giorni	std	130.00	\N
-742	171	uno_giorno	std	221.00	\N
-743	171	due_tre_giorni	std	199.00	\N
-744	171	quattro_sette_giorni	std	179.00	\N
-745	171	oltre_sette_giorni	std	162.00	\N
 746	172	uno_giorno	std	262.00	214.76
 747	172	due_tre_giorni	std	236.00	193.45
 748	172	quattro_sette_giorni	std	212.00	173.77
 749	172	oltre_sette_giorni	std	191.00	156.56
-750	173	mezzo_giorno	std	112.70	\N
-751	173	uno_giorno	std	161.00	\N
-752	173	due_tre_giorni	std	145.00	\N
-753	173	quattro_sette_giorni	std	131.00	\N
-754	173	oltre_sette_giorni	std	118.00	\N
-755	174	mezzo_giorno	std	170.80	\N
-756	174	uno_giorno	std	244.00	\N
-757	174	due_tre_giorni	std	219.60	\N
-758	174	quattro_sette_giorni	std	201.30	\N
-759	174	oltre_sette_giorni	std	179.30	\N
-760	175	mezzo_giorno	std	227.00	\N
-761	175	uno_giorno	std	324.00	\N
-762	175	due_tre_giorni	std	292.00	\N
-763	175	quattro_sette_giorni	std	263.00	\N
-764	175	oltre_sette_giorni	std	237.00	\N
 765	176	mezzo_giorno	std	214.20	175.41
 766	176	uno_giorno	std	306.00	250.00
 767	176	due_tre_giorni	std	275.00	225.41
@@ -6584,14 +7105,15 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 772	177	due_tre_giorni	std	128.00	104.92
 773	177	quattro_sette_giorni	std	115.00	92.62
 774	177	oltre_sette_giorni	std	104.00	83.61
-775	178	uno_giorno	std	189.00	\N
-776	178	due_tre_giorni	std	170.00	\N
-777	178	quattro_sette_giorni	std	153.00	\N
-778	178	oltre_sette_giorni	std	138.00	\N
 779	179	uno_giorno	std	199.00	163.12
 780	179	due_tre_giorni	std	179.00	146.72
 781	179	quattro_sette_giorni	std	161.00	131.97
 782	179	oltre_sette_giorni	std	145.00	118.85
+825	189	mezzo_giorno	std	42.70	35.00
+826	189	uno_giorno	std	61.00	50.00
+827	189	due_tre_giorni	std	55.00	45.09
+828	189	quattro_sette_giorni	std	50.00	40.98
+829	189	oltre_sette_giorni	std	45.00	36.89
 783	180	uno_giorno	std	221.00	181.15
 784	180	due_tre_giorni	std	199.00	163.12
 785	180	quattro_sette_giorni	std	179.00	146.72
@@ -6613,63 +7135,26 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 801	184	uno_giorno	std	61.00	50.00
 802	184	due_tre_giorni	std	55.00	45.09
 803	184	quattro_sette_giorni	std	50.00	40.98
-804	184	oltre_sette_giorni	std	45.00	36.89
 805	185	mezzo_giorno	std	68.60	56.23
+804	184	oltre_sette_giorni	std	45.00	36.89
 806	185	uno_giorno	std	98.00	80.33
 807	185	due_tre_giorni	std	88.00	72.13
 808	185	quattro_sette_giorni	std	79.00	64.75
 809	185	oltre_sette_giorni	std	71.00	58.20
-810	186	mezzo_giorno	std	35.00	\N
-811	186	uno_giorno	std	50.00	\N
-812	186	due_tre_giorni	std	45.00	\N
-813	186	quattro_sette_giorni	std	41.00	\N
-814	186	oltre_sette_giorni	std	37.00	\N
-815	187	mezzo_giorno	std	35.00	\N
-816	187	uno_giorno	std	50.00	\N
-817	187	due_tre_giorni	std	45.00	\N
-818	187	quattro_sette_giorni	std	41.00	\N
-819	187	oltre_sette_giorni	std	37.00	\N
 820	188	mezzo_giorno	std	42.70	35.00
 821	188	uno_giorno	std	61.00	50.00
 822	188	due_tre_giorni	std	55.00	45.09
 823	188	quattro_sette_giorni	std	50.00	40.98
 824	188	oltre_sette_giorni	std	45.00	36.89
-825	189	mezzo_giorno	std	42.70	35.00
-826	189	uno_giorno	std	61.00	50.00
-827	189	due_tre_giorni	std	55.00	45.09
-828	189	quattro_sette_giorni	std	50.00	40.98
-829	189	oltre_sette_giorni	std	45.00	36.89
 830	190	uno_giorno	std	61.00	50.00
 831	190	due_tre_giorni	std	55.00	45.09
 832	190	quattro_sette_giorni	std	50.00	40.98
 833	190	oltre_sette_giorni	std	45.00	36.89
-834	191	uno_giorno	std	20.00	\N
-835	191	due_tre_giorni	std	18.00	\N
-836	191	quattro_sette_giorni	std	16.00	\N
-837	191	oltre_sette_giorni	std	14.00	\N
 838	192	mezzo_giorno	std	49.70	40.74
 839	192	uno_giorno	std	71.00	58.20
 840	192	due_tre_giorni	std	64.00	52.46
 841	192	quattro_sette_giorni	std	58.00	47.55
 842	192	oltre_sette_giorni	std	52.00	42.63
-843	193	uno_giorno	std	71.00	\N
-844	193	due_tre_giorni	std	64.00	\N
-845	193	quattro_sette_giorni	std	58.00	\N
-846	193	oltre_sette_giorni	std	52.00	\N
-847	194	mezzo_giorno	std	60.00	\N
-848	194	uno_giorno	std	86.00	\N
-849	194	due_tre_giorni	std	77.00	\N
-850	194	quattro_sette_giorni	std	69.30	\N
-851	194	oltre_sette_giorni	std	62.40	\N
-852	195	mezzo_giorno	std	42.70	\N
-853	195	uno_giorno	std	61.00	\N
-854	195	due_tre_giorni	std	55.00	\N
-855	195	quattro_sette_giorni	std	50.00	\N
-856	195	oltre_sette_giorni	std	45.00	\N
-857	196	uno_giorno	std	91.00	\N
-858	196	due_tre_giorni	std	82.00	\N
-859	196	quattro_sette_giorni	std	74.00	\N
-860	196	oltre_sette_giorni	std	67.00	\N
 861	197	mezzo_giorno	std	75.00	61.48
 862	197	uno_giorno	std	107.00	87.71
 863	197	due_tre_giorni	std	96.00	78.69
@@ -6693,24 +7178,24 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 881	201	due_tre_giorni	std	69.00	56.56
 882	201	quattro_sette_giorni	std	62.00	50.82
 883	201	oltre_sette_giorni	std	56.00	45.90
-884	202	uno_giorno	std	98.00	\N
-885	202	due_tre_giorni	std	88.00	\N
-886	202	quattro_sette_giorni	std	79.00	\N
-887	202	oltre_sette_giorni	std	71.00	\N
 888	203	mezzo_giorno	std	123.20	100.99
 889	203	uno_giorno	std	176.00	144.27
 890	203	due_tre_giorni	std	158.60	130.00
 891	203	quattro_sette_giorni	std	143.96	118.04
 892	203	oltre_sette_giorni	std	129.32	106.56
-893	204	uno_giorno	std	56.00	\N
-894	204	due_tre_giorni	std	50.00	\N
-895	204	quattro_sette_giorni	std	45.00	\N
-896	204	oltre_sette_giorni	std	40.50	\N
-897	205	uno_giorno	std	61.00	\N
-898	205	due_tre_giorni	std	55.00	\N
-899	205	quattro_sette_giorni	std	50.00	\N
-900	205	oltre_sette_giorni	std	45.00	\N
 901	206	uno_giorno	std	217.00	177.87
+990	227	uno_giorno	std	142.00	116.40
+991	227	due_tre_giorni	std	128.00	104.92
+992	227	quattro_sette_giorni	std	115.00	94.26
+993	227	oltre_sette_giorni	std	104.00	85.25
+674	155	uno_giorno	std	6.10	5.00
+675	155	due_tre_giorni	std	6.10	5.00
+676	155	quattro_sette_giorni	std	6.10	5.00
+677	155	oltre_sette_giorni	std	6.10	5.00
+678	156	uno_giorno	std	10.00	8.20
+679	156	due_tre_giorni	std	10.00	8.20
+680	156	quattro_sette_giorni	std	10.00	8.20
+681	156	oltre_sette_giorni	std	10.00	8.20
 902	206	due_tre_giorni	std	195.00	159.84
 903	206	quattro_sette_giorni	std	176.00	144.26
 904	206	oltre_sette_giorni	std	158.00	129.51
@@ -6718,18 +7203,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 906	207	due_tre_giorni	std	236.00	193.44
 907	207	quattro_sette_giorni	std	213.00	174.59
 908	207	oltre_sette_giorni	std	191.00	156.56
-909	208	uno_giorno	std	282.00	\N
-910	208	due_tre_giorni	std	253.00	\N
-911	208	quattro_sette_giorni	std	228.00	\N
-912	208	oltre_sette_giorni	std	205.50	\N
-913	209	uno_giorno	std	177.00	\N
-914	209	due_tre_giorni	std	159.00	\N
-915	209	quattro_sette_giorni	std	143.00	\N
-916	209	oltre_sette_giorni	std	129.00	\N
-917	210	uno_giorno	std	162.00	\N
-918	210	due_tre_giorni	std	146.40	\N
-919	210	quattro_sette_giorni	std	134.20	\N
-920	210	oltre_sette_giorni	std	119.50	\N
+909	208	uno_giorno	std	282.00	231.15
+910	208	due_tre_giorni	std	253.00	207.38
+911	208	quattro_sette_giorni	std	228.00	186.89
+912	208	oltre_sette_giorni	std	205.50	168.45
 921	211	uno_giorno	std	99.00	81.15
 922	211	due_tre_giorni	std	89.00	72.96
 923	211	quattro_sette_giorni	std	80.00	65.57
@@ -6745,30 +7222,254 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 933	214	uno_giorno	std	221.00	181.15
 934	214	due_tre_giorni	std	199.00	163.12
 935	214	quattro_sette_giorni	std	179.00	146.72
+572	133	uno_giorno	std	107.00	87.70
+573	133	due_tre_giorni	std	96.00	78.69
+574	133	quattro_sette_giorni	std	86.00	70.49
+575	133	oltre_sette_giorni	std	77.00	63.11
+581	135	mezzo_giorno	std	33.60	27.54
+582	135	uno_giorno	std	48.00	39.34
+583	135	due_tre_giorni	std	43.00	35.25
+584	135	quattro_sette_giorni	std	39.00	31.97
+585	135	oltre_sette_giorni	std	35.00	28.69
+591	137	mezzo_giorno	std	49.70	40.74
+592	137	uno_giorno	std	71.00	58.20
+593	137	due_tre_giorni	std	64.00	52.46
+594	137	quattro_sette_giorni	std	58.00	47.54
+595	137	oltre_sette_giorni	std	52.00	42.62
+596	138	mezzo_giorno	std	152.00	124.59
+597	138	uno_giorno	std	217.00	177.87
+598	138	due_tre_giorni	std	195.00	159.84
+599	138	quattro_sette_giorni	std	176.00	144.26
+600	138	oltre_sette_giorni	std	158.00	129.51
+620	143	uno_giorno	std	176.00	144.26
+621	143	due_tre_giorni	std	158.60	130.00
+622	143	quattro_sette_giorni	std	143.96	118.00
+623	143	oltre_sette_giorni	std	129.32	106.00
+629	145	mezzo_giorno	std	35.00	28.69
+630	145	uno_giorno	std	50.00	40.98
+631	145	due_tre_giorni	std	45.00	36.89
+632	145	quattro_sette_giorni	std	41.00	33.61
+633	145	oltre_sette_giorni	std	37.00	30.33
+634	146	mezzo_giorno	std	75.00	61.48
+635	146	uno_giorno	std	107.00	87.70
+636	146	due_tre_giorni	std	96.00	78.69
+637	146	quattro_sette_giorni	std	86.00	70.49
+638	146	oltre_sette_giorni	std	77.00	63.11
+639	147	mezzo_giorno	std	35.00	28.69
+640	147	uno_giorno	std	50.00	40.98
+641	147	due_tre_giorni	std	45.00	36.89
+642	147	quattro_sette_giorni	std	41.00	33.61
+643	147	oltre_sette_giorni	std	37.00	30.33
+644	148	mezzo_giorno	std	42.70	35.00
+645	148	uno_giorno	std	61.00	50.00
+646	148	due_tre_giorni	std	55.00	45.08
+647	148	quattro_sette_giorni	std	50.00	40.98
+648	148	oltre_sette_giorni	std	45.00	36.89
+670	154	uno_giorno	std	77.00	63.11
+671	154	due_tre_giorni	std	69.00	56.56
+672	154	quattro_sette_giorni	std	62.00	50.82
+673	154	oltre_sette_giorni	std	56.00	45.90
+682	157	uno_giorno	std	12.20	10.00
+683	157	due_tre_giorni	std	12.20	10.00
+684	157	quattro_sette_giorni	std	12.20	10.00
+685	157	oltre_sette_giorni	std	12.20	10.00
+686	158	uno_giorno	std	30.50	25.00
+687	158	due_tre_giorni	std	30.50	25.00
+688	158	quattro_sette_giorni	std	30.50	25.00
+689	158	oltre_sette_giorni	std	30.50	25.00
+690	159	uno_giorno	std	30.50	25.00
+691	159	due_tre_giorni	std	30.50	25.00
+692	159	quattro_sette_giorni	std	30.50	25.00
+693	159	oltre_sette_giorni	std	30.50	25.00
+694	160	uno_giorno	std	30.50	25.00
+695	160	due_tre_giorni	std	30.50	25.00
+696	160	quattro_sette_giorni	std	30.50	25.00
+697	160	oltre_sette_giorni	std	30.50	25.00
+707	163	mezzo_giorno	std	67.20	55.08
+708	163	uno_giorno	std	96.00	78.69
+709	163	due_tre_giorni	std	86.00	70.49
+710	163	quattro_sette_giorni	std	77.00	63.11
+711	163	oltre_sette_giorni	std	73.00	59.84
+712	164	mezzo_giorno	std	28.70	23.52
+713	164	uno_giorno	std	41.00	33.61
+714	164	due_tre_giorni	std	36.60	30.00
+715	164	quattro_sette_giorni	std	34.00	27.87
+716	164	oltre_sette_giorni	std	32.00	26.23
+721	166	mezzo_giorno	std	75.00	61.48
+722	166	uno_giorno	std	107.00	87.70
+723	166	due_tre_giorni	std	96.00	78.69
+724	166	quattro_sette_giorni	std	86.00	70.49
+725	166	oltre_sette_giorni	std	77.00	63.11
+726	167	uno_giorno	std	41.00	33.61
+727	167	due_tre_giorni	std	36.60	30.00
+728	167	quattro_sette_giorni	std	34.00	27.87
+729	167	oltre_sette_giorni	std	32.00	26.23
+730	168	uno_giorno	std	77.00	63.11
+731	168	due_tre_giorni	std	69.00	56.56
+732	168	quattro_sette_giorni	std	62.00	50.82
+733	168	oltre_sette_giorni	std	56.00	45.90
+734	169	uno_giorno	std	161.00	131.97
+735	169	due_tre_giorni	std	145.00	118.85
+736	169	quattro_sette_giorni	std	131.00	107.38
+737	169	oltre_sette_giorni	std	118.00	96.72
+738	170	uno_giorno	std	176.00	144.26
+739	170	due_tre_giorni	std	158.60	130.00
+740	170	quattro_sette_giorni	std	144.00	118.03
+741	170	oltre_sette_giorni	std	130.00	106.56
+742	171	uno_giorno	std	221.00	181.15
+743	171	due_tre_giorni	std	199.00	163.11
+744	171	quattro_sette_giorni	std	179.00	146.72
+745	171	oltre_sette_giorni	std	162.00	132.79
+750	173	mezzo_giorno	std	112.70	92.38
+751	173	uno_giorno	std	161.00	131.97
+752	173	due_tre_giorni	std	145.00	118.85
+753	173	quattro_sette_giorni	std	131.00	107.38
+754	173	oltre_sette_giorni	std	118.00	96.72
+755	174	mezzo_giorno	std	170.80	140.00
+756	174	uno_giorno	std	244.00	200.00
+757	174	due_tre_giorni	std	219.60	180.00
+758	174	quattro_sette_giorni	std	201.30	165.00
+759	174	oltre_sette_giorni	std	179.30	146.97
+760	175	mezzo_giorno	std	227.00	186.07
+761	175	uno_giorno	std	324.00	265.57
+762	175	due_tre_giorni	std	292.00	239.34
+763	175	quattro_sette_giorni	std	263.00	215.57
+764	175	oltre_sette_giorni	std	237.00	194.26
+775	178	uno_giorno	std	189.00	154.92
+776	178	due_tre_giorni	std	170.00	139.34
+777	178	quattro_sette_giorni	std	153.00	125.41
+778	178	oltre_sette_giorni	std	138.00	113.11
+810	186	mezzo_giorno	std	35.00	28.69
+811	186	uno_giorno	std	50.00	40.98
+812	186	due_tre_giorni	std	45.00	36.89
+813	186	quattro_sette_giorni	std	41.00	33.61
+814	186	oltre_sette_giorni	std	37.00	30.33
+815	187	mezzo_giorno	std	35.00	28.69
+816	187	uno_giorno	std	50.00	40.98
+817	187	due_tre_giorni	std	45.00	36.89
+818	187	quattro_sette_giorni	std	41.00	33.61
+819	187	oltre_sette_giorni	std	37.00	30.33
+834	191	uno_giorno	std	20.00	16.39
+835	191	due_tre_giorni	std	18.00	14.75
+836	191	quattro_sette_giorni	std	16.00	13.11
+837	191	oltre_sette_giorni	std	14.00	11.48
+843	193	uno_giorno	std	71.00	58.20
+844	193	due_tre_giorni	std	64.00	52.46
+845	193	quattro_sette_giorni	std	58.00	47.54
+846	193	oltre_sette_giorni	std	52.00	42.62
+847	194	mezzo_giorno	std	60.00	49.18
+848	194	uno_giorno	std	86.00	70.49
+849	194	due_tre_giorni	std	77.00	63.11
+850	194	quattro_sette_giorni	std	69.30	56.80
+851	194	oltre_sette_giorni	std	62.40	51.15
+852	195	mezzo_giorno	std	42.70	35.00
+853	195	uno_giorno	std	61.00	50.00
+854	195	due_tre_giorni	std	55.00	45.08
+855	195	quattro_sette_giorni	std	50.00	40.98
+856	195	oltre_sette_giorni	std	45.00	36.89
+857	196	uno_giorno	std	91.00	74.59
+858	196	due_tre_giorni	std	82.00	67.21
+859	196	quattro_sette_giorni	std	74.00	60.66
+860	196	oltre_sette_giorni	std	67.00	54.92
+884	202	uno_giorno	std	98.00	80.33
+885	202	due_tre_giorni	std	88.00	72.13
+886	202	quattro_sette_giorni	std	79.00	64.75
+887	202	oltre_sette_giorni	std	71.00	58.20
+893	204	uno_giorno	std	56.00	45.90
+894	204	due_tre_giorni	std	50.00	40.98
+895	204	quattro_sette_giorni	std	45.00	36.89
+896	204	oltre_sette_giorni	std	40.50	33.20
+897	205	uno_giorno	std	61.00	50.00
+898	205	due_tre_giorni	std	55.00	45.08
+899	205	quattro_sette_giorni	std	50.00	40.98
+900	205	oltre_sette_giorni	std	45.00	36.89
+913	209	uno_giorno	std	177.00	145.08
+914	209	due_tre_giorni	std	159.00	130.33
+915	209	quattro_sette_giorni	std	143.00	117.21
+916	209	oltre_sette_giorni	std	129.00	105.74
+917	210	uno_giorno	std	162.00	132.79
+918	210	due_tre_giorni	std	146.40	120.00
+919	210	quattro_sette_giorni	std	134.20	110.00
+920	210	oltre_sette_giorni	std	119.50	97.95
+937	215	uno_giorno	std	162.00	132.79
+938	215	due_tre_giorni	std	146.40	120.00
+939	215	quattro_sette_giorni	std	134.20	110.00
+940	215	oltre_sette_giorni	std	119.50	97.95
+941	216	uno_giorno	std	199.00	163.11
+942	216	due_tre_giorni	std	179.00	146.72
+943	216	quattro_sette_giorni	std	161.00	131.97
+944	216	oltre_sette_giorni	std	145.00	118.85
+945	217	mezzo_giorno	std	99.40	81.48
+946	217	uno_giorno	std	142.00	116.39
+947	217	due_tre_giorni	std	128.00	104.92
+948	217	quattro_sette_giorni	std	115.00	94.26
+949	217	oltre_sette_giorni	std	104.00	85.25
+955	219	mezzo_giorno	std	75.00	61.48
+956	219	uno_giorno	std	107.00	87.70
+957	219	due_tre_giorni	std	96.00	78.69
+958	219	quattro_sette_giorni	std	86.00	70.49
+959	219	oltre_sette_giorni	std	77.00	63.11
+968	222	uno_giorno	std	24.00	19.67
+969	222	due_tre_giorni	std	21.00	17.21
+970	222	quattro_sette_giorni	std	19.00	15.57
+971	222	oltre_sette_giorni	std	17.00	13.93
+980	225	uno_giorno	std	107.00	87.70
+981	225	due_tre_giorni	std	96.00	78.69
+982	225	quattro_sette_giorni	std	86.00	70.49
+983	225	oltre_sette_giorni	std	77.00	63.11
+984	226	mezzo_giorno	std	114.80	94.10
+989	227	mezzo_giorno	std	99.40	81.48
+1006	234	uno_giorno	std	142.00	116.39
+1007	234	due_tre_giorni	std	128.00	104.92
+1008	234	quattro_sette_giorni	std	115.00	94.26
+1009	234	oltre_sette_giorni	std	104.00	85.25
+1010	235	uno_giorno	std	71.00	58.20
+1011	235	due_tre_giorni	std	64.00	52.46
+1012	235	quattro_sette_giorni	std	58.00	47.54
+1013	235	oltre_sette_giorni	std	52.00	42.62
+1014	236	uno_giorno	std	129.00	105.74
+1015	236	due_tre_giorni	std	116.00	95.08
+1016	236	quattro_sette_giorni	std	104.00	85.25
+1017	236	oltre_sette_giorni	std	94.00	77.05
+1022	238	uno_giorno	std	142.00	116.39
+1023	238	due_tre_giorni	std	128.00	104.92
+1024	238	quattro_sette_giorni	std	115.00	94.26
+1025	238	oltre_sette_giorni	std	104.00	85.25
+1026	239	uno_giorno	std	199.00	163.11
+1027	239	due_tre_giorni	std	179.00	146.72
+1028	239	quattro_sette_giorni	std	161.00	131.97
+1029	239	oltre_sette_giorni	std	145.00	118.85
+1030	240	uno_giorno	std	199.00	163.11
+1031	240	due_tre_giorni	std	179.00	146.72
+1032	240	quattro_sette_giorni	std	161.00	131.97
+1033	240	oltre_sette_giorni	std	145.00	118.85
+1034	241	uno_giorno	std	199.00	163.11
+1035	241	due_tre_giorni	std	179.00	146.72
+1036	241	quattro_sette_giorni	std	161.00	131.97
+1037	241	oltre_sette_giorni	std	145.00	118.85
+1038	242	uno_giorno	std	498.00	408.20
+1039	242	due_tre_giorni	std	449.00	368.03
+1040	242	quattro_sette_giorni	std	405.00	331.97
+1041	242	oltre_sette_giorni	std	365.00	299.18
+1042	243	mezzo_giorno	std	114.80	94.10
+1043	243	uno_giorno	std	164.00	134.43
+1044	243	due_tre_giorni	std	147.00	120.49
+1045	243	quattro_sette_giorni	std	132.00	108.20
+1046	243	oltre_sette_giorni	std	119.00	97.54
+1051	245	uno_giorno	std	161.00	131.97
+1052	245	due_tre_giorni	std	145.00	118.85
+1053	245	quattro_sette_giorni	std	131.00	107.38
+1054	245	oltre_sette_giorni	std	118.00	96.72
+1067	249	uno_giorno	std	217.00	177.87
+1068	249	due_tre_giorni	std	195.00	159.84
+1069	249	quattro_sette_giorni	std	176.00	144.26
+1070	249	oltre_sette_giorni	std	158.00	129.51
 936	214	oltre_sette_giorni	std	162.00	132.79
-937	215	uno_giorno	std	162.00	\N
-938	215	due_tre_giorni	std	146.40	\N
-939	215	quattro_sette_giorni	std	134.20	\N
-940	215	oltre_sette_giorni	std	119.50	\N
-941	216	uno_giorno	std	199.00	\N
-942	216	due_tre_giorni	std	179.00	\N
-943	216	quattro_sette_giorni	std	161.00	\N
-944	216	oltre_sette_giorni	std	145.00	\N
-945	217	mezzo_giorno	std	99.40	\N
-946	217	uno_giorno	std	142.00	\N
-947	217	due_tre_giorni	std	128.00	\N
-948	217	quattro_sette_giorni	std	115.00	\N
-949	217	oltre_sette_giorni	std	104.00	\N
 950	218	mezzo_giorno	std	75.00	61.48
 951	218	uno_giorno	std	107.00	87.71
 952	218	due_tre_giorni	std	96.00	78.69
 953	218	quattro_sette_giorni	std	86.00	70.49
 954	218	oltre_sette_giorni	std	77.00	63.12
-955	219	mezzo_giorno	std	75.00	\N
-956	219	uno_giorno	std	107.00	\N
-957	219	due_tre_giorni	std	96.00	\N
-958	219	quattro_sette_giorni	std	86.00	\N
-959	219	oltre_sette_giorni	std	77.00	\N
 960	220	uno_giorno	std	164.00	134.43
 961	220	due_tre_giorni	std	147.00	120.50
 962	220	quattro_sette_giorni	std	132.00	108.20
@@ -6777,10 +7478,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 965	221	due_tre_giorni	std	170.00	139.35
 966	221	quattro_sette_giorni	std	153.00	125.41
 967	221	oltre_sette_giorni	std	138.00	113.11
-968	222	uno_giorno	std	24.00	\N
-969	222	due_tre_giorni	std	21.00	\N
-970	222	quattro_sette_giorni	std	19.00	\N
-971	222	oltre_sette_giorni	std	17.00	\N
 972	223	uno_giorno	std	36.00	29.51
 973	223	due_tre_giorni	std	32.00	26.23
 974	223	quattro_sette_giorni	std	29.00	23.77
@@ -6789,20 +7486,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 977	224	due_tre_giorni	std	96.00	78.69
 978	224	quattro_sette_giorni	std	86.00	70.49
 979	224	oltre_sette_giorni	std	77.00	63.12
-980	225	uno_giorno	std	107.00	\N
-981	225	due_tre_giorni	std	96.00	\N
-982	225	quattro_sette_giorni	std	86.00	\N
-983	225	oltre_sette_giorni	std	77.00	\N
-984	226	mezzo_giorno	std	114.80	\N
 985	226	uno_giorno	std	164.00	134.43
 986	226	due_tre_giorni	std	147.00	120.50
 987	226	quattro_sette_giorni	std	132.00	108.20
 988	226	oltre_sette_giorni	std	119.00	97.54
-989	227	mezzo_giorno	std	99.40	\N
-990	227	uno_giorno	std	142.00	116.40
-991	227	due_tre_giorni	std	128.00	104.92
-992	227	quattro_sette_giorni	std	115.00	94.26
-993	227	oltre_sette_giorni	std	104.00	85.25
 994	228	uno_giorno	std	24.00	19.68
 995	228	due_tre_giorni	std	21.00	17.22
 996	228	quattro_sette_giorni	std	19.00	15.57
@@ -6815,55 +7502,14 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1003	230	due_tre_giorni	std	64.00	52.46
 1004	230	quattro_sette_giorni	std	58.00	47.54
 1005	230	oltre_sette_giorni	std	52.00	42.62
-1006	234	uno_giorno	std	142.00	\N
-1007	234	due_tre_giorni	std	128.00	\N
-1008	234	quattro_sette_giorni	std	115.00	\N
-1009	234	oltre_sette_giorni	std	104.00	\N
-1010	235	uno_giorno	std	71.00	\N
-1011	235	due_tre_giorni	std	64.00	\N
-1012	235	quattro_sette_giorni	std	58.00	\N
-1013	235	oltre_sette_giorni	std	52.00	\N
-1014	236	uno_giorno	std	129.00	\N
-1015	236	due_tre_giorni	std	116.00	\N
-1016	236	quattro_sette_giorni	std	104.00	\N
-1017	236	oltre_sette_giorni	std	94.00	\N
 1018	237	uno_giorno	std	12.00	9.84
 1019	237	due_tre_giorni	std	12.00	9.84
 1020	237	quattro_sette_giorni	std	12.00	9.84
 1021	237	oltre_sette_giorni	std	10.00	8.20
-1022	238	uno_giorno	std	142.00	\N
-1023	238	due_tre_giorni	std	128.00	\N
-1024	238	quattro_sette_giorni	std	115.00	\N
-1025	238	oltre_sette_giorni	std	104.00	\N
-1026	239	uno_giorno	std	199.00	\N
-1027	239	due_tre_giorni	std	179.00	\N
-1028	239	quattro_sette_giorni	std	161.00	\N
-1029	239	oltre_sette_giorni	std	145.00	\N
-1030	240	uno_giorno	std	199.00	\N
-1031	240	due_tre_giorni	std	179.00	\N
-1032	240	quattro_sette_giorni	std	161.00	\N
-1033	240	oltre_sette_giorni	std	145.00	\N
-1034	241	uno_giorno	std	199.00	\N
-1035	241	due_tre_giorni	std	179.00	\N
-1036	241	quattro_sette_giorni	std	161.00	\N
-1037	241	oltre_sette_giorni	std	145.00	\N
-1038	242	uno_giorno	std	498.00	\N
-1039	242	due_tre_giorni	std	449.00	\N
-1040	242	quattro_sette_giorni	std	405.00	\N
-1041	242	oltre_sette_giorni	std	365.00	\N
-1042	243	mezzo_giorno	std	114.80	\N
-1043	243	uno_giorno	std	164.00	\N
-1044	243	due_tre_giorni	std	147.00	\N
-1045	243	quattro_sette_giorni	std	132.00	\N
-1046	243	oltre_sette_giorni	std	119.00	\N
 1047	244	uno_giorno	std	142.00	116.40
 1048	244	due_tre_giorni	std	128.00	104.92
 1049	244	quattro_sette_giorni	std	115.00	92.62
 1050	244	oltre_sette_giorni	std	104.00	83.61
-1051	245	uno_giorno	std	161.00	\N
-1052	245	due_tre_giorni	std	145.00	\N
-1053	245	quattro_sette_giorni	std	131.00	\N
-1054	245	oltre_sette_giorni	std	118.00	\N
 1055	246	uno_giorno	std	217.00	177.87
 1056	246	due_tre_giorni	std	195.00	159.84
 1057	246	quattro_sette_giorni	std	176.00	144.27
@@ -6876,10 +7522,138 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1064	248	due_tre_giorni	std	170.00	139.35
 1065	248	quattro_sette_giorni	std	153.00	125.41
 1066	248	oltre_sette_giorni	std	138.00	113.12
-1067	249	uno_giorno	std	217.00	\N
-1068	249	due_tre_giorni	std	195.00	\N
-1069	249	quattro_sette_giorni	std	176.00	\N
-1070	249	oltre_sette_giorni	std	158.00	\N
+1071	124	quattro_sette_giorni	b	150.82	150.82
+1072	125	quattro_sette_giorni	b	150.82	150.82
+1073	126	quattro_sette_giorni	b	310.66	310.66
+1074	127	quattro_sette_giorni	b	94.27	94.27
+1075	128	quattro_sette_giorni	b	131.97	131.97
+1076	129	quattro_sette_giorni	b	131.97	131.97
+1077	130	quattro_sette_giorni	b	309.84	309.84
+1078	131	quattro_sette_giorni	b	94.27	94.27
+1079	132	quattro_sette_giorni	b	94.27	94.27
+1080	134	quattro_sette_giorni	b	70.49	70.49
+1081	136	quattro_sette_giorni	b	47.55	47.55
+1082	139	quattro_sette_giorni	b	144.27	144.27
+1083	140	quattro_sette_giorni	b	100.00	100.00
+1084	141	quattro_sette_giorni	b	47.55	47.55
+1085	142	quattro_sette_giorni	b	94.27	94.27
+1086	144	quattro_sette_giorni	b	50.82	50.82
+1087	149	quattro_sette_giorni	b	117.21	117.21
+1088	150	quattro_sette_giorni	b	173.77	173.77
+1089	151	quattro_sette_giorni	b	173.77	173.77
+1090	152	quattro_sette_giorni	b	70.49	70.49
+1091	153	quattro_sette_giorni	b	144.26	144.26
+1092	155	quattro_sette_giorni	b	5.00	5.00
+1093	156	quattro_sette_giorni	b	8.20	8.20
+1094	161	quattro_sette_giorni	b	27.87	27.87
+1095	162	quattro_sette_giorni	b	47.54	47.54
+1096	165	quattro_sette_giorni	b	9.02	9.02
+1097	172	quattro_sette_giorni	b	173.77	173.77
+1098	176	quattro_sette_giorni	b	202.46	202.46
+1099	177	quattro_sette_giorni	b	92.62	92.62
+1100	179	quattro_sette_giorni	b	131.97	131.97
+1101	180	quattro_sette_giorni	b	146.72	146.72
+1102	181	quattro_sette_giorni	b	131.97	131.97
+1103	182	quattro_sette_giorni	b	131.97	131.97
+1104	183	quattro_sette_giorni	b	40.98	40.98
+1105	184	quattro_sette_giorni	b	40.98	40.98
+1106	185	quattro_sette_giorni	b	64.75	64.75
+1107	188	quattro_sette_giorni	b	40.98	40.98
+1108	190	quattro_sette_giorni	b	40.98	40.98
+1109	192	quattro_sette_giorni	b	47.55	47.55
+1110	197	quattro_sette_giorni	b	70.49	70.49
+1111	198	quattro_sette_giorni	b	70.49	70.49
+1112	199	quattro_sette_giorni	b	92.62	92.62
+1113	200	quattro_sette_giorni	b	47.55	47.55
+1114	201	quattro_sette_giorni	b	50.82	50.82
+1115	203	quattro_sette_giorni	b	118.04	118.04
+1116	206	quattro_sette_giorni	b	144.26	144.26
+1117	207	quattro_sette_giorni	b	174.59	174.59
+1118	208	quattro_sette_giorni	b	186.89	186.89
+1119	211	quattro_sette_giorni	b	65.57	65.57
+1120	212	quattro_sette_giorni	b	95.90	95.90
+1121	213	quattro_sette_giorni	b	108.20	108.20
+1122	214	quattro_sette_giorni	b	146.72	146.72
+1123	218	quattro_sette_giorni	b	70.49	70.49
+1124	220	quattro_sette_giorni	b	108.20	108.20
+1125	221	quattro_sette_giorni	b	125.41	125.41
+1126	223	quattro_sette_giorni	b	23.77	23.77
+1127	224	quattro_sette_giorni	b	70.49	70.49
+1128	226	quattro_sette_giorni	b	108.20	108.20
+1129	228	quattro_sette_giorni	b	15.57	15.57
+1130	229	quattro_sette_giorni	b	47.54	47.54
+1131	230	quattro_sette_giorni	b	47.54	47.54
+1132	237	quattro_sette_giorni	b	9.84	9.84
+1133	244	quattro_sette_giorni	b	92.62	92.62
+1134	246	quattro_sette_giorni	b	144.27	144.27
+1135	247	quattro_sette_giorni	b	117.22	117.22
+1136	248	quattro_sette_giorni	b	125.41	125.41
+1137	124	oltre_sette_giorni	c	136.07	136.07
+1138	125	oltre_sette_giorni	c	136.07	136.07
+1139	126	oltre_sette_giorni	c	279.51	279.51
+1140	127	oltre_sette_giorni	c	85.25	85.25
+1141	128	oltre_sette_giorni	c	118.85	118.85
+1142	129	oltre_sette_giorni	c	118.85	118.85
+1143	130	oltre_sette_giorni	c	278.69	278.69
+1144	131	oltre_sette_giorni	c	85.25	85.25
+1145	132	oltre_sette_giorni	c	85.25	85.25
+1146	134	oltre_sette_giorni	c	63.12	63.12
+1147	136	oltre_sette_giorni	c	42.63	42.63
+1148	139	oltre_sette_giorni	c	129.51	129.51
+1149	140	oltre_sette_giorni	c	90.16	90.16
+1150	141	oltre_sette_giorni	c	42.62	42.62
+1151	142	oltre_sette_giorni	c	85.25	85.25
+1152	144	oltre_sette_giorni	c	45.90	45.90
+1153	149	oltre_sette_giorni	c	105.74	105.74
+1154	150	oltre_sette_giorni	c	156.56	156.56
+1155	151	oltre_sette_giorni	c	156.56	156.56
+1156	152	oltre_sette_giorni	c	63.12	63.12
+1157	153	oltre_sette_giorni	c	129.51	129.51
+1158	155	oltre_sette_giorni	c	5.00	5.00
+1159	156	oltre_sette_giorni	c	8.20	8.20
+1160	161	oltre_sette_giorni	c	26.23	26.23
+1161	162	oltre_sette_giorni	c	42.62	42.62
+1162	165	oltre_sette_giorni	c	8.20	8.20
+1163	172	oltre_sette_giorni	c	156.56	156.56
+1164	176	oltre_sette_giorni	c	182.79	182.79
+1165	177	oltre_sette_giorni	c	83.61	83.61
+1166	179	oltre_sette_giorni	c	118.85	118.85
+1167	180	oltre_sette_giorni	c	132.79	132.79
+1168	181	oltre_sette_giorni	c	118.85	118.85
+1169	182	oltre_sette_giorni	c	118.85	118.85
+1170	183	oltre_sette_giorni	c	36.89	36.89
+1171	184	oltre_sette_giorni	c	36.89	36.89
+1172	185	oltre_sette_giorni	c	58.20	58.20
+1173	188	oltre_sette_giorni	c	36.89	36.89
+1174	190	oltre_sette_giorni	c	36.89	36.89
+1175	192	oltre_sette_giorni	c	42.63	42.63
+1176	197	oltre_sette_giorni	c	63.12	63.12
+1177	198	oltre_sette_giorni	c	63.12	63.12
+1178	199	oltre_sette_giorni	c	83.61	83.61
+1179	200	oltre_sette_giorni	c	42.63	42.63
+1180	201	oltre_sette_giorni	c	45.90	45.90
+1181	203	oltre_sette_giorni	c	106.56	106.56
+1182	206	oltre_sette_giorni	c	129.51	129.51
+1183	207	oltre_sette_giorni	c	156.56	156.56
+1184	208	oltre_sette_giorni	c	168.45	168.45
+1185	211	oltre_sette_giorni	c	59.02	59.02
+1186	212	oltre_sette_giorni	c	86.07	86.07
+1187	213	oltre_sette_giorni	c	97.96	97.96
+1188	214	oltre_sette_giorni	c	132.79	132.79
+1189	218	oltre_sette_giorni	c	63.12	63.12
+1190	220	oltre_sette_giorni	c	97.54	97.54
+1191	221	oltre_sette_giorni	c	113.11	113.11
+1192	223	oltre_sette_giorni	c	21.31	21.31
+1193	224	oltre_sette_giorni	c	63.12	63.12
+1194	226	oltre_sette_giorni	c	97.54	97.54
+1195	228	oltre_sette_giorni	c	13.93	13.93
+1196	229	oltre_sette_giorni	c	42.62	42.62
+1197	230	oltre_sette_giorni	c	42.62	42.62
+1198	237	oltre_sette_giorni	c	8.20	8.20
+1199	244	oltre_sette_giorni	c	83.61	83.61
+1200	246	oltre_sette_giorni	c	129.51	129.51
+1201	247	oltre_sette_giorni	c	105.74	105.74
+1202	248	oltre_sette_giorni	c	113.12	113.12
 \.
 
 
@@ -7058,6 +7832,21 @@ f8e7b2f2-ee90-458c-af26-2c0846e25b70	2026-03-21 10:31:13.909833+00	Del Fabbro	50
 43e90670-9bb6-44ec-89df-3a33d44290a5	2026-03-24 12:11:56.418018+00	SGORLON GIANLUCA	400	semina	ornamentale	base	albatros	normale	\N	centralizzata	giardiniere	\N	f	t	strong	Strong	202.9	{"mq": 400, "linea": "albatros", "colore": null, "livello": "base", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "strong", "sku": "Strong 10kg", "nome": "Strong"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "SGORLON GIANLUCA", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "semina", "primoConcimeIncluso": false}	\N	2026-03-18
 78fe99c2-602a-4044-956b-c7f0f7f6e5f3	2026-03-24 12:14:46.462941+00	SGORLON GIANLUCA	400	semina	ornamentale	base	albatros	normale	\N	centralizzata	giardiniere	\N	f	t	strong	Strong	202.9	{"mq": 400, "linea": "albatros", "colore": null, "livello": "base", "terreno": "normale", "estendi12": null, "miscuglio": {"id": "strong", "sku": "Strong 10kg", "nome": "Strong"}, "tipoPrato": "ornamentale", "dataInizio": "2026-03-18", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "SGORLON GIANLUCA", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "semina", "primoConcimeIncluso": false}	\N	2026-03-18
 79e36fca-a525-4815-9546-5da2c07ece97	2026-03-29 20:08:04.16703+00	\N	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-03-29", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-03-29
+5f79b3c1-091a-4228-96d2-a32a17c0f2d6	2026-03-30 06:34:31.497316+00	\N	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-03-30", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-03-30
+41245921-f791-4c74-99ea-ff296b01e3ff	2026-04-02 09:02:53.840148+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
+b004fc1b-6d57-4738-953a-142de0a80722	2026-04-02 09:06:20.127369+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
+4be5364f-6f93-4d85-9cdd-03173409b9ee	2026-04-02 09:07:03.677951+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
+15094e41-afd0-42f5-8c7f-362564c3cdd7	2026-04-02 09:07:10.655002+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
+b936d80e-d5bb-47cd-8e1b-3d16e0b2ccbf	2026-04-02 09:08:07.167312+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	278.4	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
+a15d6ade-437c-4759-b2f9-91445c24fd0f	2026-04-09 20:34:09.549505+00	Domenico	200	piano_annuo	ornamentale	base	mivena	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 200, "linea": "mivena", "colore": "intenso", "livello": "base", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-09", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Domenico", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-09
+\.
+
+
+--
+-- Data for Name: preventivi_catalogo; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.preventivi_catalogo (id, cliente, righe, totale_imponibile, totale_ic, data_preventivo, titolo, pagamento, garanzia, note, created_at) FROM stdin;
 \.
 
 
@@ -7513,12 +8302,19 @@ cd8027cb-5de9-4f9a-b786-a92ac7e42aca	PAL005	GEOGREEN	algapark	biostimolante	🩵
 
 
 --
+-- Data for Name: pv_templates; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.pv_templates (id, nome, tipo_prato, linea, livello, config, created_at) FROM stdin;
+\.
+
+
+--
 -- Data for Name: sopralluoghi; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.sopralluoghi (id, created_at, operatore, stato, cliente, luogo, data_sopralluogo, superficie, irrigazione, tessitura, compattamento, drenaggio, lavorazioni_preg, infestanti, ph, stato_vegetativo, note_tecniche, relazione_ai, piano_id, foto_urls, ce_terreno) FROM stdin;
-21984408-6338-4669-95ed-258831876658	2026-03-29 21:50:35.216108+00	Simone	completata	MArio rossi	treviso	2026-03-29	1000	centralizzata	argilloso	medio	scarso	Arieggiatura	trifoglio e plantago	6-7 (ottimale)	discreto	fare piano di mantenimento standard con prevenzione estiva e carotatura a settembre con sabbiatura e trasemina	**OMPRA Srl – Servizi Tecnici per il Verde**\n\n**RELAZIONE TECNICA DI SOPRALLUOGO**\n**Tecnico incaricato:** Simone Taffarello (Agrotecnico)\n\n---\n\n### 1. PREMESSA\nIn data 29 marzo 2026, su richiesta del Sig. Mario Rossi, ho effettuato un sopralluogo tecnico presso la proprietà sita in Treviso. L’indagine è stata finalizzata alla valutazione dello stato di salute e della struttura di un tappeto erboso ornamentale esteso su una superficie di circa 1000 m². L’area è asservita da un impianto di irrigazione centralizzato, elemento fondamentale per la corretta gestione idrica delle fasi che andremo a programmare.\n\n### 2. STATO DEL TERRENO\nDalle analisi dirette effettuate in campo, il terreno presenta una tessitura prevalentemente **argillosa**. Tale caratteristica fisica determina un compattamento di grado medio e, conseguentemente, una capacità di drenaggio attualmente scarsa. Il ristagno idrico potenziale, tipico dei suoli pesanti della zona di Treviso, rappresenta il principale limite strutturale rilevato.\nIl valore del pH stimato si attesta in un intervallo compreso tra 6 e 7, risultando ottimale per lo sviluppo delle principali essenze da tappeto erboso microterme. Non sono stati rilevati dati significativi circa la conducibilità elettrica (CE). Si prende atto che l’ultima lavorazione meccanica effettuata è stata un’arieggiatura superficiale.\n\n### 3. VALUTAZIONE FITOTECNICA\nLo stato vegetativo generale del prato è classificabile come **discreto**. La densità del cotico è soddisfacente, sebbene si riscontri una competizione attiva con specie infestanti dicotiledoni, nello specifico *Trifolium* (trifoglio) e *Plantago* (piantaggine). La presenza di queste essenze è spesso indice di un terreno compatto e con asfissia radicale latente. Nonostante il quadro generale sia stabile, è necessario intervenire per evitare che le infestanti prendano il sopravvento durante la spinta vegetativa primaverile e per preparare il prato agli stress termici estivi.\n\n### 4. PIANO D'INTERVENTO CONSIGLIATO\nSulla base delle evidenze emerse, ho predisposto un piano di mantenimento standard che integra nutrizione minerale, prevenzione biologica e correzione meccanica del suolo.\n\n**Programma di Nutrizione (AllRound 19-5-14):**\n*   **Marzo:** 40 g/m² – Prima concimazione per il risveglio vegetativo e la spinta iniziale.\n*   **Maggio:** 30 g/m² – Rinforzo primaverile per preparare la lamina fogliare al caldo.\n*   **Settembre:** 40 g/m² – Ripartenza autunnale, fondamentale in concomitanza con le rigenerazioni.\n*   **Novembre:** 30 g/m² – Nutrimento invernale per il mantenimento del colore e della riserva radicale.\n\n**Prevenzione e Correzione:**\n*   **Prevenzione Biologica:** Applicazione di protocolli standard per il controllo dei patogeni del terreno, da attuarsi prima del picco di calore estivo.\n*   **Intervento Meccanico (Settembre):** Data la natura argillosa del suolo, è tassativo eseguire una **carotatura** profonda. L'operazione dovrà essere seguita da una **sabbiatura** (top-dressing con sabbia silicea) per migliorare il drenaggio e da una **trasemina** localizzata per ripristinare la densità del cotico erboso.\n\n### 5. CONCLUSIONI\nIl tappeto erboso del Sig. Rossi possiede un buon potenziale estetico, ma la sua longevità è minacciata dalla struttura argillosa del terreno. Raccomando vivamente di seguire rigorosamente il piano di concimazione AllRound per mantenere costante il vigore delle essenze desiderate. \n\nL'intervento di carotatura e sabbiatura previsto per settembre non è da considerarsi opzionale, bensì risolutivo per correggere i difetti di drenaggio e compattamento riscontrati. Resto a disposizione per la fornitura dei formulati indicati e per il monitoraggio delle operazioni meccaniche autunnali.\n\nIn fede,\n\n*Simone Taffarello*\nAgrotecnico OMPRA Srl	31e0d274-17ae-499a-b426-1ba7aa2c34e4	\N	\N
-1550ffdd-562d-425a-b378-35be8041b616	2026-03-29 22:20:32.914997+00	Simone	completata	Mario rossi	treviso	2026-03-29	1000	centralizzata	normale	medio	scarso	arieggiatura e qualche concimazione primaverile	Trifoglio e plantago	6-7 (ottimale)	discreto	piano di concimazione annuale e piano di prevenzione estivo con liquidi e micosat. Carotatura a settembre , sabbiatura con sabbia silicea 0,5 cm a mq. trasemina con hurricane concimazione con universal top, poi humifitos e micosat F MO. Prevedere spandisabbia semovente e carotatrice e rete livellatrice. Rigeneratrice Ryan	**RELAZIONE TECNICA DI SOPRALLUOGO**\n\n**Oggetto:** Analisi agronomica e piano di manutenzione professionale per tappeto erboso ornamentale.\n**Tecnico:** Simone Taffarello – Agrotecnico OMPRA Srl\n**Data:** 29 marzo 2026\n\n---\n\n### 1. PREMESSA\nSu richiesta del Sig. Mario Rossi, in data 29 marzo 2026, ho effettuato un sopralluogo tecnico presso la proprietà sita in Treviso. L’indagine è stata finalizzata alla valutazione dello stato di salute di un tappeto erboso ornamentale esteso su una superficie di circa 1000 m². L’area è asservita da un impianto di irrigazione centralizzato. La presente relazione delinea il quadro agronomico attuale e definisce le strategie correttive e manutentive necessarie per il ripristino dell’eccellenza estetica e funzionale del prato.\n\n### 2. STATO DEL TERRENO\nDalle analisi dirette effettuate in campo, il terreno presenta una tessitura definibile come "normale", con un equilibrio tra le frazioni granulometriche. Tuttavia, ho riscontrato un compattamento di grado medio, che influisce negativamente sulla porosità del suolo. Il dato più critico riguarda il drenaggio, che risulta scarso: tale condizione favorisce i ristagni idrici e limita gli scambi gassosi a livello radicale. Il pH stimato si attesta su valori ottimali (6-7), ideali per l’assorbimento dei nutrienti. Le lavorazioni pregresse riferite (arieggiatura e concimazioni primaverili sporadiche) hanno garantito una sopravvivenza minima del cotico, ma non sono state sufficienti a contrastare i limiti strutturali del substrato.\n\n### 3. VALUTAZIONE FITOTECNICA\nLo stato vegetativo attuale è discreto, ma si evidenzia una densità del cotico non uniforme. La competizione con specie infestanti è marcata, con una presenza diffusa di *Trifolium* (trifoglio) e *Plantago* (piantaggine), indicatori di un terreno tendenzialmente asfittico e con carenze nutrizionali specifiche. La diagnosi evidenzia la necessità di un intervento strutturale per migliorare la permeabilità del suolo e di un piano nutrizionale rigoroso per rafforzare la specie desiderata rispetto alle infestanti.\n\n### 4. PIANO D'INTERVENTO CONSIGLIATO\nPer correggere le criticità rilevate, ho elaborato un protocollo annuale che combina nutrizione minerale e prevenzione biologica.\n\n**Piano di Nutrizione (AllRound 19-5-14):**\n*   **Marzo:** 40 g/m² (Prima concimazione di spinta vegetativa).\n*   **Maggio:** 30 g/m² (Rinforzo per il pre-stress estivo).\n*   **Settembre:** 40 g/m² (Ripartenza autunnale e recupero post-estivo).\n*   **Novembre:** 30 g/m² (Nutrimento invernale per la resistenza al freddo).\n\n**Prevenzione e Rigenerazione Autunnale (Settembre):**\nL’intervento cardine sarà la rigenerazione profonda programmata per settembre, che prevede:\n1.  **Carotatura:** Per decomprimere il suolo e migliorare il drenaggio.\n2.  **Sabbiatura:** Apporto di sabbia silicea (0,5 cm/m²) per modificare la struttura superficiale.\n3.  **Trasemina:** Utilizzo di miscuglio *Hurricane* per un’elevata densità e resistenza.\n4.  **Integrazione Biologica:** Applicazione di *Universal Top*, seguita da *Humifitos* e *Micosat F MO* per stimolare l'attività micorrizica e la salute del suolo.\n5.  **Prevenzione Estiva:** Trattamenti liquidi e con *Micosat* per aumentare la resilienza termica e idrica.\n\n### 5. CONCLUSIONI\nIl tappeto erboso del Sig. Rossi possiede un buon potenziale, ma richiede un cambio di passo nella gestione agronomica. Per l'esecuzione delle operazioni di settembre, è tassativo l'impiego di attrezzatura professionale specifica: carotatrice, spandisabbia semovente, rete livellatrice e rigeneratrice tipo *Ryan*. \n\nL'obiettivo è trasformare un terreno attualmente asfittico in un substrato drenante e biologicamente attivo. Seguendo scrupolosamente le tempistiche e i dosaggi indicati, si otterrà un prato sano, competitivo contro le infestanti e cromaticamente superiore.\n\nIn fede,\n\n*Simone Taffarello*\nAgrotecnico OMPRA Srl	31e0d274-17ae-499a-b426-1ba7aa2c34e4	\N	\N
+COPY public.sopralluoghi (id, created_at, operatore, stato, cliente, luogo, data_sopralluogo, superficie, irrigazione, tessitura, compattamento, drenaggio, lavorazioni_preg, infestanti, ph, stato_vegetativo, note_tecniche, relazione_ai, piano_id, foto_urls, ce_terreno, cliente_id) FROM stdin;
+157a4d1a-9b53-42f8-ab37-03a239c3b808	2026-03-30 05:10:35.140041+00	Simone	completata	ASD Albaredo Insieme	via Storte 4 Albaredo di Vedelago (TV)	2026-03-28	6500	centralizzata	normale	medio	normale	Aprile 2024: arieggiatura e scarificatura, sabbiatura con 30 mc di sabbia silicea, 240 mc di compost maturo, passaggio con aeravator per aerare il terreno ed incorporare sabbia e compost. A seguire trasemina con Renovate Sport 40 gr7mq. A settembre trasemina con 30 gr/mq. Adozione piano di concimazione con AllRound 90 gr/mq in 3 interventi e Humifitos + Micosat F MO ad Aprile. Anno 2025, AllRound 90 gr/mq in 3 interventi e Humifitos + Micosat F MO a Settembre.	diffusa poa annua e Agrostis palustri in aree limitate soprattutto angolo nord ovest	\N	discreto	C'è da gestire il problema della Poa annua con irrigazioni oculate e una trasemina a fine aprile, Da subito piano di concimazione annuo con AllRound con 4 apporti da 30-25-30-30 gr/mq e 3 Trattamenti liquidi con Humifitos (6 x 25 lt) e Micosat F MO (5 kg) ad aprile, giugno e ottobre. Il fondo, fino a 8-10 cm presenta un normale livello di compattazione, mentre oltre non si riesce ad affondare il succhiello per il prelievo del terreno. La sabbia è presente solo nel primo strato di 2-3 cm di top soil. Consiglio di effettuare una trasemina con 40 gr di Renovate Sport a fine aprile. A fine agosto, bucatura profonda con Vertidrain e apporto di almeno 30 mc di sabbia silicea. Successiva trasemina con 40 gr/mq di Renovate Sport ed eventuale ripetizione dopo 15/20 giorni con altri 40 gr/mq.	**RELAZIONE TECNICA DI SOPRALLUOGO**\n\n**Oggetto:** Analisi agronomica e piano di manutenzione del tappeto erboso – ASD Albaredo Insieme\n**Tecnico incaricato:** Simone Taffarello – Agrotecnico OMPRA Srl\n**Data:** 28 marzo 2026\n\n---\n\n### 1. PREMESSA\nSu richiesta della società ASD Albaredo Insieme, in data 28 marzo 2026 ho effettuato un sopralluogo tecnico presso l’impianto sportivo sito in via Storte 4 ad Albaredo di Vedelago (TV). L’indagine è stata finalizzata alla valutazione dello stato attuale del tappeto erboso, che si estende su una superficie complessiva di 6.500 m², e alla definizione della strategia manutentiva per la stagione in corso. L'area è servita da un impianto di irrigazione centralizzato.\n\n### 2. STATO DEL TERRENO\nDall’analisi macroscopica e dai campionamenti effettuati tramite succhiello, la tessitura del terreno risulta normale con un drenaggio complessivamente equilibrato. Tuttavia, ho riscontrato un’importante criticità strutturale: il profilo del suolo presenta un livello di compattamento medio fino a una profondità di circa 8-10 cm. Oltre tale soglia, la resistenza meccanica è tale da impedire l’affondamento dello strumento, segnalando un orizzonte profondo eccessivamente compresso che limita lo sviluppo radicale e gli scambi gassosi. \nLa sabbia silicea apportata nelle stagioni precedenti è attualmente localizzata esclusivamente nei primi 2-3 cm di top soil, non risultando quindi sufficientemente integrata nel profilo per correggere la struttura del fondo.\n\n### 3. VALUTAZIONE FITOTECNICA\nLo stato vegetativo generale del tappeto si presenta discreto, ma con evidenti segnali di competizione floristica. Si rileva una presenza diffusa di *Poa annua* su gran parte della superficie e focolai di *Agrostis palustris* localizzati prevalentemente nell’angolo nord-ovest del campo. \nLa diagnosi evidenzia come le lavorazioni pregresse (arieggiature e trasemine del 2024/2025) abbiano mantenuto una buona densità, ma la pressione delle infestanti e il compattamento del fondo richiedono un cambio di passo nella gestione agronomica per evitare il declino della specie desiderata (*Lolium perenne* contenuto nel Renovate Sport).\n\n### 4. PIANO D'INTERVENTO CONSIGLIATO\nPer correggere le anomalie strutturali e contenere la *Poa annua*, ho predisposto il seguente piano operativo suddiviso per ambiti:\n\n**Nutrizione Minerale (AllRound 19-5-14):**\n*   **Marzo:** 30 g/m² (Risveglio vegetativo)\n*   **Maggio:** 25 g/m² (Rinforzo pre-estivo)\n*   **Settembre:** 35 g/m² (Ripartenza autunnale)\n*   **Novembre:** 25 g/m² (Indurimento invernale)\n\n**Prevenzione Biologica e Biostimolazione:**\nTrattamenti liquidi mediante botte per favorire la sanità del suolo e la competizione radicale (Aprile, Giugno, Ottobre):\n*   **Humifitos:** 6 confezioni da 25 lt per intervento.\n*   **Micosat F MO:** 5 kg per intervento.\n\n**Operazioni Meccaniche e Trasemine:**\n*   **Fine Aprile:** Trasemina di rigenerazione con **Renovate Sport** (40 g/m²) per contrastare il vuoto lasciato dalla senescenza della *Poa annua*.\n*   **Fine Agosto:** Intervento strutturale mediante bucatura profonda con **Vertidrain** per rompere lo strato compatto oltre i 10 cm. A seguire, apporto di almeno **30 mc di sabbia silicea** per migliorare la porosità.\n*   **Settembre:** Trasemina con **Renovate Sport** (40 g/m²), da ripetere eventualmente dopo 15-20 giorni con ulteriori 40 g/m² nelle zone più diradate.\n\n### 5. CONCLUSIONI\nLa gestione della *Poa annua* sarà la sfida principale della stagione: raccomando un’irrigazione oculata, evitando eccessi che favorirebbero l'infestante a discapito del miscuglio tecnico. È fondamentale non derogare all'intervento di Vertidrain previsto per agosto: senza una decompressione profonda e una corretta integrazione della sabbia nel profilo, l'efficacia delle concimazioni e delle trasemine risulterà limitata nel medio periodo. \n\nResto a disposizione per il monitoraggio delle operazioni sopra descritte.\n\nIn fede,\n\n*Simone Taffarello*\nAgrotecnico – OMPRA Srl	31e0d274-17ae-499a-b426-1ba7aa2c34e4	\N	\N	\N
 \.
 
 
@@ -8109,62 +8905,78 @@ a86fc304-ffd8-490a-b5a8-9ec5b1625849	Stihl	Batteria AP 300.0 S	1	2026-03-25 15:5
 094614ee-6c7e-442c-b338-8c7e5b5e65b8	Honda	Rasaerba HRG466C1 PKEH	1	2026-03-27 16:46:17.234166+00	2026-03-27 16:46:17.234166+00
 f9a72316-6def-44c5-8a12-8d73c2d6d480	Echo	Decespugliatore SRM-301TES	1	2026-03-28 10:27:49.616366+00	2026-03-28 10:27:49.616366+00
 36ebde20-26d7-4e8b-a003-76ff9ebdd9c4	STIHL	Idropulitrice RE 130 PLUS	1	2026-03-28 10:41:56.74763+00	2026-03-28 10:41:56.74763+00
+3bc927eb-390f-4cd2-ade5-9be965278df5	Echo	Decespugliatore SRM-267	1	2026-03-30 14:20:15.055175+00	2026-03-30 14:20:15.055175+00
+59422fdc-c26d-42e9-bd16-1c0f46895e0c	Echo	Soffiatore PB-2620	1	2026-04-01 12:30:28.291534+00	2026-04-01 12:30:28.291534+00
+87fa428b-e74e-4ec3-be27-d2213ac13467	Stihl	Decespugliatore FSA 70 R	1	2026-04-03 13:23:03.404305+00	2026-04-03 13:23:03.404305+00
+26647d41-29f3-4285-b408-f59b65c3dac6	Stihl	Caricabatteria AL 101	1	2026-04-03 13:23:49.588507+00	2026-04-03 13:23:49.588507+00
+825e1522-da17-4c45-bf16-b24586c6cc2f	Stihl	Batteria AK 30.0S	1	2026-04-03 13:24:24.384862+00	2026-04-03 13:24:24.384862+00
+b245d9ed-79a8-4b03-96f1-0c251ee4f75f	Stihl	Decespugliatore FSA 30.0	1	2026-04-03 16:00:03.394029+00	2026-04-03 16:00:03.394029+00
+3e1ead5c-43b9-48b5-8675-d386a596c147	Stihl	Batteria AS 2	1	2026-04-03 16:01:02.142894+00	2026-04-03 16:01:02.142894+00
+91c6cf0d-8ad0-498d-8969-87948b8ba473	Stihl	Idropulitrice RE 130 PLUS	1	2026-04-04 07:12:27.702553+00	2026-04-04 07:12:27.702553+00
+964702da-36e7-48bb-895c-d3f6ee80715a	Echo	Soffiatore DPB-310	1	2026-04-04 07:57:26.326156+00	2026-04-04 07:57:26.326156+00
+b422093e-060e-487b-89f8-2d0f55d97dfb	Stihl	Motosega MS 151	1	2026-04-04 09:14:41.254492+00	2026-04-04 09:14:41.254492+00
+2f36a24a-f2c7-4e3a-95c4-8fd14a8d609f	Stihl	Soffiatore BG 56/C	1	2026-04-04 09:16:32.390539+00	2026-04-04 09:16:32.390539+00
+7f4abd81-4ed2-45c4-a9fa-e365195545bc	Stihl	Decespugliatore FSA 70.0 R	1	2026-04-07 07:49:45.392788+00	2026-04-07 07:49:45.392788+00
+affd0615-e33b-4174-bdfd-46355ffc12df	Stihl	Motosega MS 194 T 3/8"P Chainsaw	1	2026-04-07 08:00:37.061588+00	2026-04-07 08:00:37.061588+00
+9973f69a-d0ff-483a-ad8a-831787581e76	Volpi	Potatore KVS5100	1	2026-04-10 12:48:46.838153+00	2026-04-10 12:48:46.838153+00
+2b23246e-8eda-4007-b1b6-86cf3860cc8b	Honda	Rasaerba HRG416C1	1	2026-04-11 08:00:00.431456+00	2026-04-11 08:00:00.431456+00
+0190d2ad-a5de-4da3-8437-33f31cea4011	Echo	Motosega CS-3410	1	2026-04-11 09:28:19.092849+00	2026-04-11 09:28:19.092849+00
 \.
 
 
 --
--- Data for Name: messages_2026_03_26; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_10; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_26 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_10 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_27; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_11; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_27 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_11 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_28; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_12; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_28 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_12 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_29; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_13; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_29 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_13 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_30; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_14; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_30 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_14 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_03_31; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_15; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_03_31 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_15 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_01; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_16; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_01 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_16 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
@@ -8241,6 +9053,7 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 20251120212548	2026-02-04 12:50:11
 20251120215549	2026-02-04 12:50:11
 20260218120000	2026-02-27 12:19:38
+20260326120000	2026-04-10 04:13:53
 \.
 
 
@@ -8338,6 +9151,8 @@ COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
 54	drop-index-object-level	6289e048b1472da17c31a7eba1ded625a6457e67	2026-02-14 14:26:17.43581
 55	prevent-direct-deletes	262a4798d5e0f2e7c8970232e03ce8be695d5819	2026-02-14 14:26:17.437259
 56	fix-optimized-search-function	cb58526ebc23048049fd5bf2fd148d18b04a2073	2026-02-14 14:26:17.444531
+57	s3-multipart-uploads-metadata	f127886e00d1b374fadbc7c6b31e09336aad5287	2026-04-11 18:26:45.567833
+58	operation-ergonomics	00ca5d483b3fe0d522133d9002ccc5df98365120	2026-04-11 18:26:45.591813
 \.
 
 
@@ -8353,7 +9168,7 @@ COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_a
 -- Data for Name: s3_multipart_uploads; Type: TABLE DATA; Schema: storage; Owner: -
 --
 
-COPY storage.s3_multipart_uploads (id, in_progress_size, upload_signature, bucket_id, key, version, owner_id, created_at, user_metadata) FROM stdin;
+COPY storage.s3_multipart_uploads (id, in_progress_size, upload_signature, bucket_id, key, version, owner_id, created_at, user_metadata, metadata) FROM stdin;
 \.
 
 
@@ -8392,7 +9207,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 429, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 464, true);
 
 
 --
@@ -8406,7 +9221,7 @@ SELECT pg_catalog.setval('public.noleggio_abbonamenti_id_seq', 1, false);
 -- Name: noleggio_listini_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.noleggio_listini_id_seq', 1070, true);
+SELECT pg_catalog.setval('public.noleggio_listini_id_seq', 1202, true);
 
 
 --
@@ -8420,7 +9235,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 249, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 5144, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 6616, true);
 
 
 --
@@ -8688,11 +9503,35 @@ ALTER TABLE ONLY auth.webauthn_credentials
 
 
 --
+-- Name: agro_listino agro_listino_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_listino
+    ADD CONSTRAINT agro_listino_pkey PRIMARY KEY (sku);
+
+
+--
+-- Name: agro_mapping agro_mapping_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_mapping
+    ADD CONSTRAINT agro_mapping_pkey PRIMARY KEY (label_intervento);
+
+
+--
 -- Name: app_config app_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.app_config
     ADD CONSTRAINT app_config_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: catalogo_prodotti catalogo_prodotti_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.catalogo_prodotti
+    ADD CONSTRAINT catalogo_prodotti_pkey PRIMARY KEY (id);
 
 
 --
@@ -8813,6 +9652,14 @@ ALTER TABLE ONLY public.operatori
 
 ALTER TABLE ONLY public.pratovivo_archivio
     ADD CONSTRAINT pratovivo_archivio_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: preventivi_catalogo preventivi_catalogo_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.preventivi_catalogo
+    ADD CONSTRAINT preventivi_catalogo_pkey PRIMARY KEY (id);
 
 
 --
@@ -8944,6 +9791,14 @@ ALTER TABLE ONLY public.pv_prodotti
 
 
 --
+-- Name: pv_templates pv_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pv_templates
+    ADD CONSTRAINT pv_templates_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: sopralluoghi sopralluoghi_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9000,59 +9855,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_03_26 messages_2026_03_26_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_10 messages_2026_04_10_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_26
-    ADD CONSTRAINT messages_2026_03_26_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_03_27 messages_2026_03_27_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_03_27
-    ADD CONSTRAINT messages_2026_03_27_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_10
+    ADD CONSTRAINT messages_2026_04_10_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_03_28 messages_2026_03_28_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_11 messages_2026_04_11_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_28
-    ADD CONSTRAINT messages_2026_03_28_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_03_29 messages_2026_03_29_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_03_29
-    ADD CONSTRAINT messages_2026_03_29_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_11
+    ADD CONSTRAINT messages_2026_04_11_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_03_30 messages_2026_03_30_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_12 messages_2026_04_12_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_03_30
-    ADD CONSTRAINT messages_2026_03_30_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_03_31 messages_2026_03_31_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_03_31
-    ADD CONSTRAINT messages_2026_03_31_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_12
+    ADD CONSTRAINT messages_2026_04_12_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_04_01 messages_2026_04_01_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_13 messages_2026_04_13_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_04_01
-    ADD CONSTRAINT messages_2026_04_01_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_13
+    ADD CONSTRAINT messages_2026_04_13_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_14 messages_2026_04_14_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_14
+    ADD CONSTRAINT messages_2026_04_14_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_15 messages_2026_04_15_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_15
+    ADD CONSTRAINT messages_2026_04_15_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_16 messages_2026_04_16_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_16
+    ADD CONSTRAINT messages_2026_04_16_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -9536,6 +10391,34 @@ CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING
 
 
 --
+-- Name: idx_catalogo_attivo; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_attivo ON public.catalogo_prodotti USING btree (attivo);
+
+
+--
+-- Name: idx_catalogo_brand; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_brand ON public.catalogo_prodotti USING btree (brand);
+
+
+--
+-- Name: idx_catalogo_categoria; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_categoria ON public.catalogo_prodotti USING btree (categoria);
+
+
+--
+-- Name: idx_catalogo_modello; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_modello ON public.catalogo_prodotti USING btree (modello);
+
+
+--
 -- Name: idx_clienti_cf; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -9704,52 +10587,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_03_26_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_10_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_26_inserted_at_topic_idx ON realtime.messages_2026_03_26 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_03_27_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_03_27_inserted_at_topic_idx ON realtime.messages_2026_03_27 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_10_inserted_at_topic_idx ON realtime.messages_2026_04_10 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_03_28_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_11_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_28_inserted_at_topic_idx ON realtime.messages_2026_03_28 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_03_29_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_03_29_inserted_at_topic_idx ON realtime.messages_2026_03_29 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_11_inserted_at_topic_idx ON realtime.messages_2026_04_11 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_03_30_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_12_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_03_30_inserted_at_topic_idx ON realtime.messages_2026_03_30 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_03_31_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_03_31_inserted_at_topic_idx ON realtime.messages_2026_03_31 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_12_inserted_at_topic_idx ON realtime.messages_2026_04_12 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_04_01_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_13_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_04_01_inserted_at_topic_idx ON realtime.messages_2026_04_01 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_13_inserted_at_topic_idx ON realtime.messages_2026_04_13 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_14_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_14_inserted_at_topic_idx ON realtime.messages_2026_04_14 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_15_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_15_inserted_at_topic_idx ON realtime.messages_2026_04_15 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_16_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_16_inserted_at_topic_idx ON realtime.messages_2026_04_16 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -9816,101 +10699,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_03_26_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_10_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_26_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_26_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_26_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_10_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_27_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_10_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_27_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_27_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_27_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_10_pkey;
 
 
 --
--- Name: messages_2026_03_28_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_11_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_28_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_28_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_28_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_11_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_29_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_11_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_29_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_29_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_29_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_11_pkey;
 
 
 --
--- Name: messages_2026_03_30_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_12_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_30_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_30_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_30_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_12_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_03_31_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_12_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_03_31_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_03_31_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_03_31_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_12_pkey;
 
 
 --
--- Name: messages_2026_04_01_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_13_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_01_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_13_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_04_01_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_13_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_01_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_13_pkey;
+
+
+--
+-- Name: messages_2026_04_14_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_14_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_14_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_14_pkey;
+
+
+--
+-- Name: messages_2026_04_15_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_15_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_15_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_15_pkey;
+
+
+--
+-- Name: messages_2026_04_16_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_16_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_16_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_16_pkey;
 
 
 --
@@ -10111,6 +10994,30 @@ ALTER TABLE ONLY auth.webauthn_challenges
 
 ALTER TABLE ONLY auth.webauthn_credentials
     ADD CONSTRAINT webauthn_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: agro_mapping agro_mapping_sku_grande_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_mapping
+    ADD CONSTRAINT agro_mapping_sku_grande_fkey FOREIGN KEY (sku_grande) REFERENCES public.agro_listino(sku);
+
+
+--
+-- Name: agro_mapping agro_mapping_sku_piccolo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agro_mapping
+    ADD CONSTRAINT agro_mapping_sku_piccolo_fkey FOREIGN KEY (sku_piccolo) REFERENCES public.agro_listino(sku);
+
+
+--
+-- Name: noleggio_archivio noleggio_archivio_sopralluogo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.noleggio_archivio
+    ADD CONSTRAINT noleggio_archivio_sopralluogo_id_fkey FOREIGN KEY (sopralluogo_id) REFERENCES public.sopralluoghi(id) ON DELETE SET NULL;
 
 
 --
@@ -10573,6 +11480,13 @@ ALTER TABLE public.pratovivo_archivio ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pricing_policies ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: pv_templates public_access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY public_access ON public.pv_templates USING (true);
+
+
+--
 -- Name: stihl_prodotti public_select_stihl_prodotti; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -10597,6 +11511,12 @@ ALTER TABLE public.pv_liquidi_prodotti ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.pv_liquidi_programmati ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_templates; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_templates ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: stihl_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -10761,5 +11681,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nsQDcEwvZieN1PxuzVXmQh7E2HQfzAhuygGLLnetdqdfkAGKIDwUevPZe8vcpfV
+\unrestrict sCoYshAd8gOZuxv8jNRpCYgejPgQFI3Ko2vdSOaCVVJvSs3ncHc5lNKsyC774an
 

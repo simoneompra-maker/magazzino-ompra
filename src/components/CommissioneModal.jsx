@@ -51,7 +51,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
   // Calcola da saldare
   const getDaSaldare = () => {
-    const totale = getTotale();
+    const totale = getTotaleConIva();
     const caparra = data.caparra || 0;
     return totale - caparra;
   };
@@ -223,6 +223,13 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
 
   // Genera PDF - versione minimal bianca per risparmio inchiostro
   const generatePDF = ({ noSave = false } = {}) => {
+    // ── Blindatura: verifica coerenza IVA ─────────────────────
+    // Il totale nel PDF è SEMPRE getTotaleConIva() — mai getTotale() direttamente.
+    // Se ivaCompresa=true i due coincidono; se ivaCompresa=false getTotale() è I.E.
+    // e getTotaleConIva() aggiunge l'IVA. Qualsiasi uso di getTotale() nel box
+    // TOTALE è un bug — per questo usiamo solo getTotaleConIva() nel PDF.
+    const _totaleCorretto = getTotaleConIva(); // usare sempre questo nel PDF
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -522,7 +529,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.text(data.ivaCompresa ? 'TOTALE (I.C.)' : 'TOTALE (I.E.)', margin + 5, y + 9);
 
     doc.setFontSize(14);
-    doc.text(`€ ${getTotale().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
+    doc.text(`€ ${getTotaleConIva().toFixed(2)}`, pageWidth - margin - 5, y + 9, { align: 'right' });
 
     // Se c'è caparra, mostra dettagli
     if (data.caparra) {
@@ -681,7 +688,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     }
     
     text += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `💰 *TOTALE${data.ivaCompresa ? ' (I.C.)' : ' (I.E.)'}: €${getTotale().toFixed(2)}*`;
+    text += `💰 *TOTALE${data.ivaCompresa ? ' (I.C.)' : ' (I.C.)'}: €${getTotaleConIva().toFixed(2)}*`;
     
     // Dettaglio IVA
     const { righe: righeIva, totImponibile, totIva } = getDettaglioIva();
@@ -739,7 +746,7 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         if (getOperatore()) {
           text += `Operatore: ${getOperatore()}\n`;
         }
-        text += `Totale: € ${getTotale().toFixed(2)}`;
+        text += `Totale I.C.: € ${getTotaleConIva().toFixed(2)}`;
         
         if (data.caparra) {
           text += `\nCaparra: € ${data.caparra.toFixed(2)}`;

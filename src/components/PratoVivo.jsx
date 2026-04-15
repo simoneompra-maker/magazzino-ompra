@@ -1784,6 +1784,38 @@ export default function PratoVivo({ onNavigate }) {
                     });
                     setOverridePianoAnnuo(JSON.parse(JSON.stringify(pianoMaterializzato)));
                   }
+                  // Pre-popola prezzi dal listino corrente per tutti i prodotti visibili
+                  // L'esperto vede già il prezzo di listino e può modificarlo se necessario
+                  const prezziIniziali = {};
+                  const getPrezzoKgDaNome = (nome) => {
+                    const cfg = PRODOTTO_CONFIG[nome];
+                    if (!cfg) return null;
+                    // Prende il formato grande se disponibile, altrimenti piccolo
+                    const sku = cfg.grande || cfg.piccolo || cfg.sku;
+                    if (!sku) return null;
+                    const entry = LISTINO[sku];
+                    if (!entry) return null;
+                    const prezzoConf = getPrezzoCliente(entry, tipoCliente) || entry.prezzoA;
+                    return prezzoConf && entry.kg ? +(prezzoConf / entry.kg).toFixed(2) : null;
+                  };
+                  // Raccoglie tutti i nomi prodotto dal piano attivo
+                  const nomiProdotti = new Set();
+                  const pianoAttivo = tipoIntervento === 'piano_annuo'
+                    ? (pianoAnnuo || []).map(iv => iv.prodotto || (linea === 'mivena' ? iv.mivena?.prodotto : iv.albatros?.prodotto))
+                    : [
+                        ...(datiPianoAttivo?.granulari || []).map(g => g.prodotto),
+                        ...(datiPianoAttivo?.liquidi || []).map(l => l.prodotto),
+                      ];
+                  pianoAttivo.forEach(n => n && nomiProdotti.add(n));
+                  // Aggiunge anche prodotti comuni (sabbioso, standard, premium)
+                  ['Humifitos','Micosat F PG','Algapark','Root Speed','Wet Turf',
+                   'Green 7','Green 8','Vigor Active','AllRound','Universal Top',
+                   'Pro Slow','Pro Starter'].forEach(n => nomiProdotti.add(n));
+                  nomiProdotti.forEach(nome => {
+                    const p = getPrezzoKgDaNome(nome);
+                    if (p) prezziIniziali[nome] = p;
+                  });
+                  setOverridePrezzi(prev => ({ ...prezziIniziali, ...prev }));
                 } else {
                   setOverrideGranulari(null); setOverrideLiquidi(null);
                   setOverrideSeme(null); setOverridePianoAnnuo(null);

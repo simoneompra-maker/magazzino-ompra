@@ -192,6 +192,7 @@ let LISTINO = {
   // Linea Albatros
   'Eden 7 5kg':                 { formato: '5 kg',   kg: 5,   prezzoA: 14.90,  prezzoB: 14.20,  iva: 4  },
   'Eden 8 5kg':                 { formato: '5 kg',   kg: 5,   prezzoA: 17.30,  prezzoB: 16.50,  iva: 4  },
+  'Eden Multi 3.5kg':           { formato: '3,5 kg', kg: 3.5, prezzoA: 18.10,  prezzoB: 17.20,  iva: 4  },
   'Green 7 25kg':               { formato: '25 kg',  kg: 25,  prezzoA: 45.30,  prezzoB: 43.00,  prezzoC: 38.70, prezzoD: 34.90, iva: 4  },
   'Green 8 25kg':               { formato: '25 kg',  kg: 25,  prezzoA: 57.70,  prezzoB: 54.80,  prezzoC: 49.30, prezzoD: 44.40, iva: 4  },
   'Vigor Active 5kg':           { formato: '5 kg',   kg: 5,   prezzoA: 13.80,  prezzoB: 13.10,  iva: 4  },
@@ -201,7 +202,9 @@ let LISTINO = {
   'Universal Top 20kg':         { formato: '20 kg',  kg: 20,  prezzoA: 59.40,  prezzoB: 56.50,  prezzoC: 52.60, prezzoD: 50.00, iva: 4  },
   'Pro Starter 20kg':           { formato: '20 kg',  kg: 20,  prezzoA: 72.20,  prezzoB: 68.60,  prezzoC: 63.80, prezzoD: 60.60, iva: 4  },
   'Pro Slow 20kg':              { formato: '20 kg',  kg: 20,  prezzoA: 71.30,  prezzoB: 67.80,  prezzoC: 63.00, prezzoD: 59.90, iva: 4  },
-  // Linea Kare / liquidi
+  'Granustar 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 70.30,  prezzoB: 66.80,  prezzoC: 62.20, prezzoD: 59.00, iva: 4  },
+  'Iron Power 20kg':            { formato: '20 kg',  kg: 20,  prezzoA: 65.30,  prezzoB: 62.00,  prezzoC: 57.70, prezzoD: 54.80, iva: 4  },
+  // Linea Kare — liquidi e biostimolanti
   'Humifitos 5kg':              { formato: '5 kg',   kg: 5,   prezzoA: 34.20,  prezzoB: 30.80,  iva: 4  },
   'Humifitos 25kg':             { formato: '25 kg',  kg: 25,  prezzoA: 115.00, prezzoB: 103.00, iva: 4  },
   'Root Speed 5kg':             { formato: '5 kg',   kg: 5,   prezzoA: 49.00,  prezzoB: 44.10,  iva: 4  },
@@ -209,39 +212,44 @@ let LISTINO = {
   'Algapark 5kg':               { formato: '5 kg',   kg: 5,   prezzoA: 140.00, prezzoB: 126.00, iva: 4  },
   'Wet Turf 1lt':               { formato: '1 lt',   kg: 1,   prezzoA: 65.90,  prezzoB: 62.60,  iva: 22 },
   'Wet Turf 5lt':               { formato: '5 lt',   kg: 5,   prezzoA: 230.60, prezzoB: 219.00, iva: 22 },
-  // Micorrize
-  'Micosat F MO 5kg':           { formato: '5 kg',   kg: 5,   prezzoA: 140.40, iva: 4  },
+  'Amino K 1kg':                { formato: '1 kg',   kg: 1,   prezzoA: 15.00,  prezzoB: 13.50,  iva: 4  },
+  'Amino K 5kg':                { formato: '5 kg',   kg: 5,   prezzoA: 56.80,  prezzoB: 51.00,  iva: 4  },
+  'Amino K 25kg':               { formato: '25 kg',  kg: 25,  prezzoA: 224.00, prezzoB: 200.00, iva: 4  },
+  'Fe ULK 1kg':                 { formato: '1 kg',   kg: 1,   prezzoA: 27.40,  prezzoB: 24.70,  iva: 4  },
+  'Fe ULK 10kg':                { formato: '10 kg',  kg: 10,  prezzoA: 200.00, prezzoB: 180.00, iva: 4  },
+  'NPK Enduring 5kg':           { formato: '5 kg',   kg: 5,   prezzoA: 41.00,  prezzoB: 36.90,  iva: 4  },
+  'LeoKare 5kg':                { formato: '5 kg',   kg: 5,   prezzoA: 62.00,  prezzoB: 55.80,  iva: 4  },
+  'SevenKare 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 17.50,  prezzoB: 15.70,  iva: 4  },
+  'Decal Vyro 1kg':             { formato: '1 kg',   kg: 1,   prezzoA: 11.40,  prezzoB: 10.30,  iva: 4  },
+  'Paint Turf 500g':            { formato: '500 g',  kg: 0.5, prezzoA: 73.80,  iva: 22 },
+  // Micorrize (listino Geogreen 2026)
   'Micosat F PG 1kg':           { formato: '1 kg',   kg: 1,   prezzoA: 31.20,  iva: 4  },
+  'Micosat Tab Plus 1kg':       { formato: '1 kg',   kg: 1,   prezzoA: 49.82,  iva: 4  },
+  'Micosat Len 1kg':            { formato: '1 kg',   kg: 1,   prezzoA: 54.00,  iva: 4  },
   'Micosat F Uno 200g':         { formato: '200 g',  kg: 0.2, prezzoA: 10.00,  iva: 4  },
   'Micosat Tab Plus Mini 100g': { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  iva: 4  },
   'Micosat Len Mini 100g':      { formato: '100 g',  kg: 0.1, prezzoA: 10.00,  iva: 4  },
-  // Linea Kare — liquidi esperto
-  'LeoKare 1kg':                { formato: '1 kg',   kg: 1,   prezzoA: 28.00,  prezzoB: 25.20,  iva: 4  },
-  'LeoKare 5kg':                { formato: '5 kg',   kg: 5,   prezzoA: 110.00, prezzoB: 99.00,  iva: 4  },
-  'Amino K 1kg':                { formato: '1 kg',   kg: 1,   prezzoA: 38.00,  prezzoB: 34.20,  iva: 4  },
-  'Kalium Rush 1kg':            { formato: '1 kg',   kg: 1,   prezzoA: 32.00,  prezzoB: 28.80,  iva: 4  },
-  'SevenKare 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 35.00,  prezzoB: 31.50,  iva: 4  },
-  'Fe ULK 1kg':                 { formato: '1 kg',   kg: 1,   prezzoA: 42.00,  prezzoB: 37.80,  iva: 4  },
-  'NPK Enduring 1kg':           { formato: '1 kg',   kg: 1,   prezzoA: 30.00,  prezzoB: 27.00,  iva: 4  },
-  'Ca Kicker 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 25.00,  prezzoB: 22.50,  iva: 4  },
-  'Paint Turf 250g':            { formato: '250 g',  kg: 0.25,prezzoA: 28.00,  prezzoB: 25.20,  iva: 22 },
-  'Solar 1kg':                  { formato: '1 kg',   kg: 1,   prezzoA: 45.00,  prezzoB: 40.50,  iva: 4  },
-  // Granulari Mivena extra
-  'Pro Green 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 65.00,  prezzoB: 61.80,  iva: 4  },
-  'Pro Kappa 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 68.00,  prezzoB: 64.60,  iva: 4  },
-  'Bio Grow 20kg':              { formato: '20 kg',  kg: 20,  prezzoA: 75.00,  prezzoB: 71.30,  iva: 4  },
-  'Energy 20kg':                { formato: '20 kg',  kg: 20,  prezzoA: 60.00,  prezzoB: 57.00,  iva: 4  },
-  'Granustar 20kg':             { formato: '20 kg',  kg: 20,  prezzoA: 55.00,  prezzoB: 52.30,  iva: 4  },
-  'Iron Power 20kg':            { formato: '20 kg',  kg: 20,  prezzoA: 62.00,  prezzoB: 58.90,  iva: 4  },
-  'Green 8 Prestige 20kg':      { formato: '20 kg',  kg: 20,  prezzoA: 58.00,  prezzoB: 55.10,  iva: 4  },
+  'Micosat F MO 5kg':           { formato: '5 kg',   kg: 5,   prezzoA: 140.40, iva: 4  },
+  // Meta-Ge (nuovo 2026)
+  'Meta-Ge Granular 1kg':       { formato: '1 kg',   kg: 1,   prezzoA: 24.90,  iva: 4  },
+  'Meta-Ge 1lt':                { formato: '1 lt',   kg: 1,   prezzoA: 71.80,  iva: 4  },
+  // Linea Hobby — Sustenium Eden
+  'Sustenium Eden Integramix 250g': { formato: '250 g', kg: 0.25, prezzoA: 7.60, prezzoB: 7.20,  iva: 4  },
+  'Sustenium Eden Prevent 250g':    { formato: '250 g', kg: 0.25, prezzoA: 8.10, prezzoB: 7.70,  iva: 4  },
+  'Sustenium Eden Force 500g':      { formato: '500 g', kg: 0.5,  prezzoA: 12.30,prezzoB: 11.70, iva: 4  },
+  'Sustenium Eden Nutribio 250g':   { formato: '250 g', kg: 0.25, prezzoA: 9.50, prezzoB: 9.00,  iva: 4  },
+  'Sustenium Eden Ferro G Bio 250g':{ formato: '250 g', kg: 0.25, prezzoA: 11.40,prezzoB: 10.80, iva: 4  },
   // Semi Ares Seed (IVA 10%)
   'Hurricane 1kg':              { formato: '1 kg',   kg: 1,   prezzoA: 13.75,  iva: 10 },
   'Hurricane 5kg':              { formato: '5 kg',   kg: 5,   prezzoA: 52.00,  prezzoB: 50.00, iva: 10 },
   'Hurricane 10kg':             { formato: '10 kg',  kg: 10,  prezzoA: 104.00, prezzoB: 98.80, prezzoC: 89.00, prezzoD: 85.00, iva: 10 },
+  'Hurricane 7 10kg':           { formato: '10 kg',  kg: 10,  prezzoA: 104.00, prezzoB: 98.80, prezzoC: 89.00, prezzoD: 85.00, iva: 10 },
   'Blizzard 5kg':               { formato: '5 kg',   kg: 5,   prezzoA: 52.00,  prezzoB: 50.00, iva: 10 },
   'Blizzard 10kg':              { formato: '10 kg',  kg: 10,  prezzoA: 93.00,  prezzoB: 88.50, prezzoC: 80.00, prezzoD: 76.00, iva: 10 },
   'Strong 5kg':                 { formato: '5 kg',   kg: 5,   prezzoA: 44.50,  prezzoB: 42.30, iva: 10 },
   'Strong 10kg':                { formato: '10 kg',  kg: 10,  prezzoA: 81.50,  prezzoB: 77.50, prezzoC: 70.00, prezzoD: 66.50, iva: 10 },
+  'No-sun 5kg':                 { formato: '5 kg',   kg: 5,   prezzoA: 44.50,  prezzoB: 42.30, iva: 10 },
+  'No-sun 10kg':                { formato: '10 kg',  kg: 10,  prezzoA: 81.50,  prezzoB: 77.50, prezzoC: 69.80, prezzoD: 66.40, iva: 10 },
   'Renovate Sport 10kg':        { formato: '10 kg',  kg: 10,  prezzoA: 94.00,  prezzoB: 89.30, prezzoC: 80.40, prezzoD: 76.40, iva: 10 },
   'Twister 10kg':               { formato: '10 kg',  kg: 10,  prezzoA: 114.00, prezzoB: 108.30,prezzoC: 97.50, prezzoD: 92.70, iva: 10 },
   'Tornado 10kg':               { formato: '10 kg',  kg: 10,  prezzoA: 96.70,  prezzoB: 91.90, prezzoC: 82.80, prezzoD: 78.70, iva: 10 },
@@ -343,13 +351,10 @@ const CATALOGO_ESPERTO = {
     label: '🍄 Micorrize Micosat F',
     prodotti: [
       { nome: 'Micosat F Prati e Giardini', npk: '—', dose: 1,   doseMin: 0.5,doseMax: 1,   unita: 'g/m²', quando: 'Semina, posa zolle, o mantenimento',  note: 'Specifico tappeto erboso, rete radicale fitta' },
-      { nome: 'Micosat F Uno',   npk: '—',        dose: 1,  doseMin: 0.5,doseMax: 2,   unita: 'g/m²', quando: 'Semina o trapianto ortofloricoltura',    note: 'Polivalente, intervento primario' },
-      { nome: 'Micosat F MO',    npk: '—',        dose: 1,  doseMin: 0.5,doseMax: 2,   unita: 'g/m²', quando: 'Trapianto o rigenerazione urgente',       note: '40% micorrize, supera crisi da trapianto' },
-      { nome: 'Micosat F TAB Plus', npk: '—',     dose: 0.2,doseMin: 0.2,doseMax: 0.5, unita: 'g/m²', quando: 'Dopo inoculo primario, fertirrigazione', note: 'Priming batterici, ampliamento radicale' },
-      { nome: 'Micosat F LEN',   npk: '—',        dose: 0.2,doseMin: 0.2,doseMax: 0.2, unita: 'g/m²', quando: 'Prevenzione stress, fertirrigazione',    note: 'Anticipa risposta agli stress' },
-      { nome: 'Micosat F XS200 Liquido', npk: '—',dose: 0.3,doseMin: 0.2,doseMax: 0.4, unita: 'ml/m²',quando: 'Richiamo liquido post-granulo',         note: 'Pre-innescato, agisce in pochi giorni' },
-      { nome: 'Micosat F RadiNET',npk: '—',       dose: 0.25,doseMin:0.25,doseMax:0.25, unita: 'g/m²',quando: 'Sviluppo radicale intensivo',            note: 'Solo per radicazione, fertirrigazione' },
-      { nome: 'Micosat F FIToNESS',npk: '—',      dose: 2,  doseMin: 2,  doseMax: 2,   unita: 'ml/m²',quando: 'Post-sterilizzazione suolo',             note: 'Ripristino vita utile dopo vuoto biologico' },
+      { nome: 'Micosat F Uno',   npk: '—',        dose: 1,  doseMin: 0.5,doseMax: 2,   unita: 'g/m²', quando: 'Semina o trapianto ortofloricoltura',    note: 'Polivalente, intervento primario — conf. 200 g' },
+      { nome: 'Micosat F MO',    npk: '—',        dose: 1,  doseMin: 0.5,doseMax: 2,   unita: 'g/m²', quando: 'Trapianto o rigenerazione urgente',       note: '40% micorrize, supera crisi da trapianto — conf. 5 kg' },
+      { nome: 'Micosat F TAB Plus', npk: '—',     dose: 0.2,doseMin: 0.2,doseMax: 0.5, unita: 'g/m²', quando: 'Dopo inoculo primario, fertirrigazione', note: 'Priming batterici, ampliamento radicale — conf. 100 g / 1 kg' },
+      { nome: 'Micosat F LEN',   npk: '—',        dose: 0.2,doseMin: 0.2,doseMax: 0.2, unita: 'g/m²', quando: 'Prevenzione stress, fertirrigazione',    note: 'Anticipa risposta agli stress — conf. 100 g / 1 kg' },
     ]
   },
 };
@@ -3737,7 +3742,7 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                       )}
                       <div className="flex items-center gap-1 shrink-0">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${iv.passato?'bg-gray-200 text-gray-500':iv.inRitardo?'bg-yellow-200 text-yellow-800':'bg-green-200 text-green-800'}`}>
-                          {iv.passato ? '⚫ Passato' : iv.inRitardo ? '🟡 In ritardo' : (piano[i]?.bimestre_label ?? iv.bimestre_label)}
+                          {iv.passato ? '⚫ Passato' : iv.inRitardo ? '🟡 In ritardo' : (modalitaEsperto ? '🟢 Programmato' : (piano[i]?.bimestre_label ?? iv.bimestre_label))}
                         </span>
                         {modalitaEsperto && (
                           <button

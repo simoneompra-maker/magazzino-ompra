@@ -3144,12 +3144,6 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
                     <input type="number" step="0.1" className="w-16 border border-green-300 rounded-lg px-2 py-1 text-xs text-right font-bold" value={p.dose ?? ''} onChange={e => { const u=[...granulari]; u[i]={...u[i],dose:parseFloat(e.target.value)||0}; onChangeGranulari(u); }} />
                     <span className="text-xs text-gray-400">g/m²</span>
                   </div>
-                  {setOverridePrezzi && p.prodotto && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400">€/kg</span>
-                      <input type="number" step="0.10" className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700" value={overridePrezzi[p.prodotto] ?? ''} placeholder="prezzo" onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [p.prodotto]: isNaN(v) ? undefined : v })); }} />
-                    </div>
-                  )}
                   <button onClick={() => onChangeGranulari(granulari.filter((_,j)=>j!==i))} className="text-red-400 text-base px-1">×</button>
                 </div>
               )}
@@ -3237,12 +3231,6 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
                       }
                     </select>
                     <button onClick={() => onChangeLiquidi(liquidi.filter((_,j)=>j!==origIdx))} className="text-red-400 text-base px-1">×</button>
-                  </div>
-                )}
-                {setOverridePrezzi && p.prodotto && modalitaEsperto && origIdx !== -1 && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs text-gray-400">€/kg</span>
-                    <input type="number" step="0.10" className="w-20 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700" value={overridePrezzi[p.prodotto] ?? ''} placeholder="prezzo" onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [p.prodotto]: isNaN(v) ? undefined : v })); }} />
                   </div>
                 )}
               </div>
@@ -3631,15 +3619,6 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                               className="text-xs px-1.5 py-1 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 font-bold"
                             >≡</button>
                           </div>
-                          {/* Prezzo €/kg esperto */}
-                          {setOverridePrezzi && nomePrincipale && nomePrincipale !== '—' && (
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="text-xs text-gray-400">€/kg</span>
-                              <input type="number" step="0.10" className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700"
-                                value={overridePrezzi[nomePrincipale] ?? ''} placeholder="—"
-                                onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [nomePrincipale]: isNaN(v) ? undefined : v })); }} />
-                            </div>
-                          )}
                         </div>
                         {liquidiRiga.length > 0 && (
                           <div className="space-y-2">
@@ -3836,15 +3815,6 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                                 className="text-xs px-1.5 py-1 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 font-bold"
                               >≡</button>
                             </div>
-                            {/* Prezzo €/kg esperto */}
-                            {setOverridePrezzi && nomePrincipale && nomePrincipale !== '—' && (
-                              <div className="flex items-center gap-1 shrink-0">
-                                <span className="text-xs text-gray-400">€/kg</span>
-                                <input type="number" step="0.10" className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-right font-bold text-orange-700"
-                                  value={overridePrezzi[nomePrincipale] ?? ''} placeholder="—"
-                                  onChange={e => { const v = parseFloat(e.target.value); setOverridePrezzi(prev => ({ ...prev, [nomePrincipale]: isNaN(v) ? undefined : v })); }} />
-                              </div>
-                            )}
                           </div>
 
                           {/* Liquidi del piano — editabili con nota per prodotto */}

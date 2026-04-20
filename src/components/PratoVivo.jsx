@@ -2142,6 +2142,7 @@ export default function PratoVivo({ onNavigate }) {
             onChangePianoAnnuo={setOverridePianoAnnuo}
             overridePrezzi={overridePrezzi}
             setOverridePrezzi={setOverridePrezzi}
+            preventivoData={preventivoData}
             onPreventivo={() => setShowPreventivo(true)}
             onStampa={(includi, stampa = false) => { generaPDF({ tipo: 'piano_annuo', tipoPrato, livello, linea, terreno, colore, mq, irrigazione, spelacchiato: null, piano: null, pianoAnnuo: pianoAnnuoEffettivo, liquidiSab, estendi12, nomeCliente, includiIntestazione: includi, usaAllRound, autoStampa: stampa }); salvaInBackground(); }}
           />
@@ -3405,7 +3406,7 @@ function PianoSeminaRig({ tipo, livello, setLivello, linea, setLinea, mq, granul
 }
 
 // ─── Sotto-componente: Piano Annuo ────────────────────────────
-function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa, modalitaEsperto = false, onChangePianoAnnuo, overridePrezzi = {}, setOverridePrezzi }) {
+function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno, colore, setColore, estendi12, setEstendi12, liquidiSab, setLiquidiSab, tipoPrato, mq, nomeCliente, piano, bimOggLabel, tipoCliente, setTipoCliente, usaAllRound, setUsaAllRound, onPreventivo, onStampa, modalitaEsperto = false, onChangePianoAnnuo, overridePrezzi = {}, setOverridePrezzi, preventivoData = null }) {
   const kg = (dose) => mq && dose ? ` ≈ ${(parseFloat(mq)*dose/1000).toFixed(1)} kg` : '';
   const [includiIntestazione, setIncludiIntestazione] = useState(true);
 
@@ -4166,6 +4167,39 @@ function PianoAnnuo({ livello, setLivello, linea, setLinea, terreno, setTerreno,
                 ))}
               </div>
             </div>
+            {/* ── Box Costo a mq + Distinta acquisti (informativo) ── */}
+            {preventivoData && preventivoData.righe && preventivoData.righe.length > 0 && parseFloat(mq) > 0 && (
+              <>
+                <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-3 shadow-sm">
+                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-1.5">💰 Costo a m² (informativo)</p>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-2xl font-bold text-emerald-800">€ {(preventivoData.totale / parseFloat(mq)).toFixed(2)}<span className="text-sm font-normal text-emerald-600">/m²</span></span>
+                    <span className="text-xs text-gray-500">= € {preventivoData.totale.toFixed(2)} / {parseFloat(mq)} m²</span>
+                  </div>
+                </div>
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 shadow-sm">
+                  <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">📦 Distinta acquisti stagionali</p>
+                  <div className="space-y-1.5">
+                    {preventivoData.righe.map((r, idx) => {
+                      const entry = LISTINO[r.sku];
+                      const kgPerConf = entry?.kg || 1;
+                      const kgOrdinati = r.qtaConf * kgPerConf;
+                      const kgUsati = r.kgTot || 0;
+                      const avanzo = +(kgOrdinati - kgUsati).toFixed(2);
+                      return (
+                        <div key={idx} className="text-xs flex items-baseline gap-1.5 flex-wrap">
+                          <span className="font-bold text-amber-900 min-w-0">{r.sku}</span>
+                          <span className="text-amber-700">→ {r.qtaConf} conf.</span>
+                          <span className="text-gray-500">
+                            ({kgOrdinati} kg ordinati, {kgUsati} kg usati{avanzo > 0.01 ? `, ${avanzo} kg avanzo` : ', nessun avanzo'})
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
             {/* Intestazione PDF */}
             <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
               <label className="flex items-center gap-2 cursor-pointer select-none">

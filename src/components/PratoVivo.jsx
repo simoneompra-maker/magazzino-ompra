@@ -637,31 +637,29 @@ function calcolaPianoAnnuo(linea, terreno, livello, colore, dataInizio = null) {
         const m2 = dataEff2.getMonth() + 1;
         const g2 = dataEff2.getDate();
 
+        const annoCorrente = now.getFullYear();
         if (m === 3 && g >= 15) {
-          // Intervento 1 seconda metà marzo → intervento 2 a 20 g/m²
+          // Intervento 1 seconda metà marzo → nota per l'anno corrente, dose piano invariata
           if (iv2 && iv2.dati?.prodotto === 'Green 7') {
             interventi[interventi.indexOf(iv2)] = {
               ...iv2,
-              dose: 20,
-              noteRitardo: '⚠️ Intervento 1 in ritardo — dose ridotta a 20 g/m²',
+              noteRitardo: `⚠️ Solo per il ${annoCorrente}: avvio del piano tardivo (dopo metà marzo). Applica 20 g/m² invece di ${iv2.dose}. Dagli anni successivi usa la dose di riferimento.`,
             };
           }
         } else if (m === 4 && g <= 10) {
-          // Intervento 1 entro 10 aprile → intervento 2 a metà maggio, dose ridotta 10-15 g/m²
+          // Intervento 1 entro 10 aprile → dose ridotta solo per l'anno corrente
           if (iv2 && iv2.dati?.prodotto === 'Green 7') {
             interventi[interventi.indexOf(iv2)] = {
               ...iv2,
-              dose: 15,
-              noteRitardo: '⚠️ Intervento 1 in ritardo — dose ridotta per evitare eccesso azoto',
+              noteRitardo: `⚠️ Solo per il ${annoCorrente}: avvio del piano in aprile. Applica 15 g/m² invece di ${iv2.dose} per evitare eccesso di azoto a ridosso del pre-estate. Dagli anni successivi usa la dose di riferimento.`,
             };
           }
         } else if (m === 4 && g > 10) {
-          // Intervento 1 dopo 10 aprile → salta intervento 2
+          // Intervento 1 dopo 10 aprile → dose minima solo per l'anno corrente
           if (iv2 && iv2.dati?.prodotto === 'Green 7') {
             interventi[interventi.indexOf(iv2)] = {
               ...iv2,
-              saltato: true,
-              noteRitardo: '⚠️ Intervento 1 troppo tardivo — intervento 2 saltato per evitare eccesso azoto a ridosso del pre-estate',
+              noteRitardo: `⚠️ Solo per il ${annoCorrente}: avvio del piano dopo metà aprile. Applica 15 g/m² invece di ${iv2.dose} per non accavallare azoto con il pre-estate. Dagli anni successivi usa la dose di riferimento.`,
             };
           }
         }

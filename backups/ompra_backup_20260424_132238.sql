@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pcLKAkr02bEpxGVPx0GaKW85mgwLCAzDIRMwAUUfxsCXiREuqhPhqOngdKYtHp3
+\restrict jnxY8JW7xyOH9W11ZXfzirFqTVbwytArtR2oQl0yjaLTn0JzHEOyM8q5t7vH5Pb
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9 (Ubuntu 17.9-1.pgdg24.04+1)
@@ -29,6 +29,7 @@ DROP PUBLICATION IF EXISTS supabase_realtime_messages_publication;
 DROP PUBLICATION IF EXISTS supabase_realtime;
 DROP POLICY IF EXISTS public_select_stihl_promo ON public.stihl_promo;
 DROP POLICY IF EXISTS public_select_stihl_prodotti ON public.stihl_prodotti;
+DROP POLICY IF EXISTS public_access ON public.pv_templates;
 DROP POLICY IF EXISTS allow_all_noleggio_macchine ON public.noleggio_macchine;
 DROP POLICY IF EXISTS allow_all_noleggio_listini ON public.noleggio_listini;
 DROP POLICY IF EXISTS allow_all_noleggio_abbonamenti ON public.noleggio_abbonamenti;
@@ -129,6 +130,10 @@ DROP INDEX IF EXISTS public.idx_clienti_search_text;
 DROP INDEX IF EXISTS public.idx_clienti_piva;
 DROP INDEX IF EXISTS public.idx_clienti_deleted_at;
 DROP INDEX IF EXISTS public.idx_clienti_cf;
+DROP INDEX IF EXISTS public.idx_catalogo_modello;
+DROP INDEX IF EXISTS public.idx_catalogo_categoria;
+DROP INDEX IF EXISTS public.idx_catalogo_brand;
+DROP INDEX IF EXISTS public.idx_catalogo_attivo;
 DROP INDEX IF EXISTS auth.webauthn_credentials_user_id_idx;
 DROP INDEX IF EXISTS auth.webauthn_credentials_credential_id_key;
 DROP INDEX IF EXISTS auth.webauthn_challenges_user_id_idx;
@@ -194,13 +199,13 @@ ALTER TABLE IF EXISTS ONLY storage.buckets DROP CONSTRAINT IF EXISTS buckets_pke
 ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS buckets_analytics_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_12 DROP CONSTRAINT IF EXISTS messages_2026_04_12_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_11 DROP CONSTRAINT IF EXISTS messages_2026_04_11_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_10 DROP CONSTRAINT IF EXISTS messages_2026_04_10_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_09 DROP CONSTRAINT IF EXISTS messages_2026_04_09_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_08 DROP CONSTRAINT IF EXISTS messages_2026_04_08_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_07 DROP CONSTRAINT IF EXISTS messages_2026_04_07_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_06 DROP CONSTRAINT IF EXISTS messages_2026_04_06_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_27 DROP CONSTRAINT IF EXISTS messages_2026_04_27_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_26 DROP CONSTRAINT IF EXISTS messages_2026_04_26_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_25 DROP CONSTRAINT IF EXISTS messages_2026_04_25_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_24 DROP CONSTRAINT IF EXISTS messages_2026_04_24_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_23 DROP CONSTRAINT IF EXISTS messages_2026_04_23_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_22 DROP CONSTRAINT IF EXISTS messages_2026_04_22_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_04_21 DROP CONSTRAINT IF EXISTS messages_2026_04_21_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -208,6 +213,7 @@ ALTER TABLE IF EXISTS ONLY public.stihl_promo DROP CONSTRAINT IF EXISTS stihl_pr
 ALTER TABLE IF EXISTS ONLY public.stihl_prodotti DROP CONSTRAINT IF EXISTS stihl_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.stihl_prodotti DROP CONSTRAINT IF EXISTS stihl_prodotti_codice_key;
 ALTER TABLE IF EXISTS ONLY public.sopralluoghi DROP CONSTRAINT IF EXISTS sopralluoghi_pkey;
+ALTER TABLE IF EXISTS ONLY public.pv_templates DROP CONSTRAINT IF EXISTS pv_templates_pkey;
 ALTER TABLE IF EXISTS ONLY public.pv_prodotti DROP CONSTRAINT IF EXISTS pv_prodotti_slug_key;
 ALTER TABLE IF EXISTS ONLY public.pv_prodotti DROP CONSTRAINT IF EXISTS pv_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.pv_preventivo_righe DROP CONSTRAINT IF EXISTS pv_preventivo_righe_pkey;
@@ -224,6 +230,7 @@ ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXIS
 ALTER TABLE IF EXISTS ONLY public.pv_interventi DROP CONSTRAINT IF EXISTS pv_interventi_pkey;
 ALTER TABLE IF EXISTS ONLY public.pricing_policies DROP CONSTRAINT IF EXISTS pricing_policies_pkey;
 ALTER TABLE IF EXISTS ONLY public.pricing_policies DROP CONSTRAINT IF EXISTS pricing_policies_brand_key;
+ALTER TABLE IF EXISTS ONLY public.preventivi_catalogo DROP CONSTRAINT IF EXISTS preventivi_catalogo_pkey;
 ALTER TABLE IF EXISTS ONLY public.pratovivo_archivio DROP CONSTRAINT IF EXISTS pratovivo_archivio_pkey;
 ALTER TABLE IF EXISTS ONLY public.operatori DROP CONSTRAINT IF EXISTS operatori_pkey;
 ALTER TABLE IF EXISTS ONLY public.operatori DROP CONSTRAINT IF EXISTS operatori_nome_key;
@@ -239,6 +246,7 @@ ALTER TABLE IF EXISTS ONLY public.inventory DROP CONSTRAINT IF EXISTS inventory_
 ALTER TABLE IF EXISTS ONLY public.commissioni DROP CONSTRAINT IF EXISTS commissioni_pkey;
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_search_text_unique;
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_pkey;
+ALTER TABLE IF EXISTS ONLY public.catalogo_prodotti DROP CONSTRAINT IF EXISTS catalogo_prodotti_pkey;
 ALTER TABLE IF EXISTS ONLY public.app_config DROP CONSTRAINT IF EXISTS app_config_pkey;
 ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_pkey;
 ALTER TABLE IF EXISTS ONLY public.agro_listino DROP CONSTRAINT IF EXISTS agro_listino_pkey;
@@ -290,18 +298,19 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_04_12;
-DROP TABLE IF EXISTS realtime.messages_2026_04_11;
-DROP TABLE IF EXISTS realtime.messages_2026_04_10;
-DROP TABLE IF EXISTS realtime.messages_2026_04_09;
-DROP TABLE IF EXISTS realtime.messages_2026_04_08;
-DROP TABLE IF EXISTS realtime.messages_2026_04_07;
-DROP TABLE IF EXISTS realtime.messages_2026_04_06;
+DROP TABLE IF EXISTS realtime.messages_2026_04_27;
+DROP TABLE IF EXISTS realtime.messages_2026_04_26;
+DROP TABLE IF EXISTS realtime.messages_2026_04_25;
+DROP TABLE IF EXISTS realtime.messages_2026_04_24;
+DROP TABLE IF EXISTS realtime.messages_2026_04_23;
+DROP TABLE IF EXISTS realtime.messages_2026_04_22;
+DROP TABLE IF EXISTS realtime.messages_2026_04_21;
 DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
 DROP TABLE IF EXISTS public.stihl_prodotti;
 DROP TABLE IF EXISTS public.sopralluoghi;
+DROP TABLE IF EXISTS public.pv_templates;
 DROP TABLE IF EXISTS public.pv_prodotti;
 DROP TABLE IF EXISTS public.pv_preventivo_righe;
 DROP TABLE IF EXISTS public.pv_preventivi;
@@ -313,6 +322,7 @@ DROP TABLE IF EXISTS public.pv_kit;
 DROP TABLE IF EXISTS public.pv_intervento_prodotti;
 DROP TABLE IF EXISTS public.pv_interventi;
 DROP TABLE IF EXISTS public.pricing_policies;
+DROP TABLE IF EXISTS public.preventivi_catalogo;
 DROP TABLE IF EXISTS public.pratovivo_archivio;
 DROP TABLE IF EXISTS public.operatori;
 DROP SEQUENCE IF EXISTS public.noleggio_macchine_id_seq;
@@ -328,6 +338,7 @@ DROP SEQUENCE IF EXISTS public.inventory_id_seq;
 DROP TABLE IF EXISTS public.inventory;
 DROP TABLE IF EXISTS public.commissioni;
 DROP TABLE IF EXISTS public.clienti;
+DROP TABLE IF EXISTS public.catalogo_prodotti;
 DROP TABLE IF EXISTS public.app_config;
 DROP TABLE IF EXISTS public.agro_mapping;
 DROP TABLE IF EXISTS public.agro_listino;
@@ -375,6 +386,8 @@ DROP FUNCTION IF EXISTS storage.extension(name text);
 DROP FUNCTION IF EXISTS storage.enforce_bucket_name_length();
 DROP FUNCTION IF EXISTS storage.delete_leaf_prefixes(bucket_ids text[], names text[]);
 DROP FUNCTION IF EXISTS storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb);
+DROP FUNCTION IF EXISTS storage.allow_only_operation(expected_operation text);
+DROP FUNCTION IF EXISTS storage.allow_any_operation(expected_operations text[]);
 DROP FUNCTION IF EXISTS realtime.topic();
 DROP FUNCTION IF EXISTS realtime.to_regrole(role_name text);
 DROP FUNCTION IF EXISTS realtime.subscription_check_filters();
@@ -1658,66 +1671,75 @@ CREATE FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[
 -- Name: list_changes(name, name, integer, integer); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
-CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) RETURNS SETOF realtime.wal_rls
+CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer) RETURNS TABLE(wal jsonb, is_rls_enabled boolean, subscription_ids uuid[], errors text[], slot_changes_count bigint)
     LANGUAGE sql
     SET log_min_messages TO 'fatal'
     AS $$
-      with pub as (
-        select
-          concat_ws(
-            ',',
-            case when bool_or(pubinsert) then 'insert' else null end,
-            case when bool_or(pubupdate) then 'update' else null end,
-            case when bool_or(pubdelete) then 'delete' else null end
-          ) as w2j_actions,
-          coalesce(
-            string_agg(
-              realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
-              ','
-            ) filter (where ppt.tablename is not null and ppt.tablename not like '% %'),
-            ''
-          ) w2j_add_tables
-        from
-          pg_publication pp
-          left join pg_publication_tables ppt
-            on pp.pubname = ppt.pubname
-        where
-          pp.pubname = publication
-        group by
-          pp.pubname
-        limit 1
-      ),
-      w2j as (
-        select
-          x.*, pub.w2j_add_tables
-        from
-          pub,
-          pg_logical_slot_get_changes(
-            slot_name, null, max_changes,
-            'include-pk', 'true',
-            'include-transaction', 'false',
-            'include-timestamp', 'true',
-            'include-type-oids', 'true',
-            'format-version', '2',
-            'actions', pub.w2j_actions,
-            'add-tables', pub.w2j_add_tables
-          ) x
-      )
-      select
-        xyz.wal,
-        xyz.is_rls_enabled,
-        xyz.subscription_ids,
-        xyz.errors
-      from
-        w2j,
-        realtime.apply_rls(
-          wal := w2j.data::jsonb,
-          max_record_bytes := max_record_bytes
-        ) xyz(wal, is_rls_enabled, subscription_ids, errors)
-      where
-        w2j.w2j_add_tables <> ''
-        and xyz.subscription_ids[1] is not null
-    $$;
+  WITH pub AS (
+    SELECT
+      concat_ws(
+        ',',
+        CASE WHEN bool_or(pubinsert) THEN 'insert' ELSE NULL END,
+        CASE WHEN bool_or(pubupdate) THEN 'update' ELSE NULL END,
+        CASE WHEN bool_or(pubdelete) THEN 'delete' ELSE NULL END
+      ) AS w2j_actions,
+      coalesce(
+        string_agg(
+          realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
+          ','
+        ) filter (WHERE ppt.tablename IS NOT NULL AND ppt.tablename NOT LIKE '% %'),
+        ''
+      ) AS w2j_add_tables
+    FROM pg_publication pp
+    LEFT JOIN pg_publication_tables ppt ON pp.pubname = ppt.pubname
+    WHERE pp.pubname = publication
+    GROUP BY pp.pubname
+    LIMIT 1
+  ),
+  -- MATERIALIZED ensures pg_logical_slot_get_changes is called exactly once
+  w2j AS MATERIALIZED (
+    SELECT x.*, pub.w2j_add_tables
+    FROM pub,
+         pg_logical_slot_get_changes(
+           slot_name, null, max_changes,
+           'include-pk', 'true',
+           'include-transaction', 'false',
+           'include-timestamp', 'true',
+           'include-type-oids', 'true',
+           'format-version', '2',
+           'actions', pub.w2j_actions,
+           'add-tables', pub.w2j_add_tables
+         ) x
+  ),
+  -- Count raw slot entries before apply_rls/subscription filter
+  slot_count AS (
+    SELECT count(*)::bigint AS cnt
+    FROM w2j
+    WHERE w2j.w2j_add_tables <> ''
+  ),
+  -- Apply RLS and filter as before
+  rls_filtered AS (
+    SELECT xyz.wal, xyz.is_rls_enabled, xyz.subscription_ids, xyz.errors
+    FROM w2j,
+         realtime.apply_rls(
+           wal := w2j.data::jsonb,
+           max_record_bytes := max_record_bytes
+         ) xyz(wal, is_rls_enabled, subscription_ids, errors)
+    WHERE w2j.w2j_add_tables <> ''
+      AND xyz.subscription_ids[1] IS NOT NULL
+  )
+  -- Real rows with slot count attached
+  SELECT rf.wal, rf.is_rls_enabled, rf.subscription_ids, rf.errors, sc.cnt
+  FROM rls_filtered rf, slot_count sc
+
+  UNION ALL
+
+  -- Sentinel row: always returned when no real rows exist so Elixir can
+  -- always read slot_changes_count. Identified by wal IS NULL.
+  SELECT null, null, null, null, sc.cnt
+  FROM slot_count sc
+  WHERE NOT EXISTS (SELECT 1 FROM rls_filtered)
+$$;
 
 
 --
@@ -1886,6 +1908,67 @@ CREATE FUNCTION realtime.topic() RETURNS text
     LANGUAGE sql STABLE
     AS $$
 select nullif(current_setting('realtime.topic', true), '')::text;
+$$;
+
+
+--
+-- Name: allow_any_operation(text[]); Type: FUNCTION; Schema: storage; Owner: -
+--
+
+CREATE FUNCTION storage.allow_any_operation(expected_operations text[]) RETURNS boolean
+    LANGUAGE sql STABLE
+    AS $$
+  WITH current_operation AS (
+    SELECT storage.operation() AS raw_operation
+  ),
+  normalized AS (
+    SELECT CASE
+      WHEN raw_operation LIKE 'storage.%' THEN substr(raw_operation, 9)
+      ELSE raw_operation
+    END AS current_operation
+    FROM current_operation
+  )
+  SELECT EXISTS (
+    SELECT 1
+    FROM normalized n
+    CROSS JOIN LATERAL unnest(expected_operations) AS expected_operation
+    WHERE expected_operation IS NOT NULL
+      AND expected_operation <> ''
+      AND n.current_operation = CASE
+        WHEN expected_operation LIKE 'storage.%' THEN substr(expected_operation, 9)
+        ELSE expected_operation
+      END
+  );
+$$;
+
+
+--
+-- Name: allow_only_operation(text); Type: FUNCTION; Schema: storage; Owner: -
+--
+
+CREATE FUNCTION storage.allow_only_operation(expected_operation text) RETURNS boolean
+    LANGUAGE sql STABLE
+    AS $$
+  WITH current_operation AS (
+    SELECT storage.operation() AS raw_operation
+  ),
+  normalized AS (
+    SELECT
+      CASE
+        WHEN raw_operation LIKE 'storage.%' THEN substr(raw_operation, 9)
+        ELSE raw_operation
+      END AS current_operation,
+      CASE
+        WHEN expected_operation LIKE 'storage.%' THEN substr(expected_operation, 9)
+        ELSE expected_operation
+      END AS requested_operation
+    FROM current_operation
+  )
+  SELECT CASE
+    WHEN requested_operation IS NULL OR requested_operation = '' THEN FALSE
+    ELSE COALESCE(current_operation = requested_operation, FALSE)
+  END
+  FROM normalized;
 $$;
 
 
@@ -3614,6 +3697,28 @@ CREATE TABLE public.app_config (
 
 
 --
+-- Name: catalogo_prodotti; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.catalogo_prodotti (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    brand text DEFAULT 'STIHL'::text NOT NULL,
+    codice text,
+    modello text NOT NULL,
+    categoria text,
+    descrizione text,
+    prezzo_listino numeric,
+    prezzo_vendita numeric,
+    attivo boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT now(),
+    alimentazione text,
+    batteria_cons text,
+    battery_data jsonb,
+    note text
+);
+
+
+--
 -- Name: clienti; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3924,6 +4029,25 @@ CREATE TABLE public.pratovivo_archivio (
 
 
 --
+-- Name: preventivi_catalogo; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.preventivi_catalogo (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    cliente text,
+    righe jsonb,
+    totale_imponibile numeric,
+    totale_ic numeric,
+    data_preventivo date,
+    titolo text,
+    pagamento text,
+    garanzia text,
+    note text,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
 -- Name: pricing_policies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4125,6 +4249,21 @@ CREATE TABLE public.pv_prodotti (
 
 
 --
+-- Name: pv_templates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pv_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    nome text NOT NULL,
+    tipo_prato text,
+    linea text,
+    livello text,
+    config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
 -- Name: sopralluoghi; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4224,10 +4363,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_04_06; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_21; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_06 (
+CREATE TABLE realtime.messages_2026_04_21 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4240,10 +4379,10 @@ CREATE TABLE realtime.messages_2026_04_06 (
 
 
 --
--- Name: messages_2026_04_07; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_22; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_07 (
+CREATE TABLE realtime.messages_2026_04_22 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4256,10 +4395,10 @@ CREATE TABLE realtime.messages_2026_04_07 (
 
 
 --
--- Name: messages_2026_04_08; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_23; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_08 (
+CREATE TABLE realtime.messages_2026_04_23 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4272,10 +4411,10 @@ CREATE TABLE realtime.messages_2026_04_08 (
 
 
 --
--- Name: messages_2026_04_09; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_24; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_09 (
+CREATE TABLE realtime.messages_2026_04_24 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4288,10 +4427,10 @@ CREATE TABLE realtime.messages_2026_04_09 (
 
 
 --
--- Name: messages_2026_04_10; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_25; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_10 (
+CREATE TABLE realtime.messages_2026_04_25 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4304,10 +4443,10 @@ CREATE TABLE realtime.messages_2026_04_10 (
 
 
 --
--- Name: messages_2026_04_11; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_26; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_11 (
+CREATE TABLE realtime.messages_2026_04_26 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4320,10 +4459,10 @@ CREATE TABLE realtime.messages_2026_04_11 (
 
 
 --
--- Name: messages_2026_04_12; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_04_27; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_04_12 (
+CREATE TABLE realtime.messages_2026_04_27 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4481,7 +4620,8 @@ CREATE TABLE storage.s3_multipart_uploads (
     version text NOT NULL,
     owner_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    user_metadata jsonb
+    user_metadata jsonb,
+    metadata jsonb
 );
 
 
@@ -4521,52 +4661,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_04_06; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_21; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_06 FOR VALUES FROM ('2026-04-06 00:00:00') TO ('2026-04-07 00:00:00');
-
-
---
--- Name: messages_2026_04_07; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_07 FOR VALUES FROM ('2026-04-07 00:00:00') TO ('2026-04-08 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_21 FOR VALUES FROM ('2026-04-21 00:00:00') TO ('2026-04-22 00:00:00');
 
 
 --
--- Name: messages_2026_04_08; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_22; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_08 FOR VALUES FROM ('2026-04-08 00:00:00') TO ('2026-04-09 00:00:00');
-
-
---
--- Name: messages_2026_04_09; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_09 FOR VALUES FROM ('2026-04-09 00:00:00') TO ('2026-04-10 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_22 FOR VALUES FROM ('2026-04-22 00:00:00') TO ('2026-04-23 00:00:00');
 
 
 --
--- Name: messages_2026_04_10; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_23; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_10 FOR VALUES FROM ('2026-04-10 00:00:00') TO ('2026-04-11 00:00:00');
-
-
---
--- Name: messages_2026_04_11; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_11 FOR VALUES FROM ('2026-04-11 00:00:00') TO ('2026-04-12 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_23 FOR VALUES FROM ('2026-04-23 00:00:00') TO ('2026-04-24 00:00:00');
 
 
 --
--- Name: messages_2026_04_12; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_24; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_12 FOR VALUES FROM ('2026-04-12 00:00:00') TO ('2026-04-13 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_24 FOR VALUES FROM ('2026-04-24 00:00:00') TO ('2026-04-25 00:00:00');
+
+
+--
+-- Name: messages_2026_04_25; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_25 FOR VALUES FROM ('2026-04-25 00:00:00') TO ('2026-04-26 00:00:00');
+
+
+--
+-- Name: messages_2026_04_26; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_26 FOR VALUES FROM ('2026-04-26 00:00:00') TO ('2026-04-27 00:00:00');
+
+
+--
+-- Name: messages_2026_04_27; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_04_27 FOR VALUES FROM ('2026-04-27 00:00:00') TO ('2026-04-28 00:00:00');
 
 
 --
@@ -4891,6 +5031,22 @@ Micosat F PG 1kg	1 kg	1	31.20	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
 Micosat F Uno 200g	200 g	0.2	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
 Micosat Tab Plus Mini 100g	100 g	0.1	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
 Micosat Len Mini 100g	100 g	0.1	10.00	\N	\N	\N	4	2026-03-30 06:03:54.895192+00
+Eden Multi 3.5kg	3,5 kg	3.5	18.10	17.20	\N	\N	4	2026-04-18 05:03:56.327781+00
+Granustar 20kg	20 kg	20	70.30	66.80	\N	\N	4	2026-04-18 05:03:56.327781+00
+Iron Power 20kg	20 kg	20	65.30	62.00	\N	\N	4	2026-04-18 05:03:56.327781+00
+Amino K 5kg	5 kg	5	56.80	51.00	\N	\N	4	2026-04-18 05:03:56.327781+00
+Amino K 25kg	25 kg	25	224.00	200.00	\N	\N	4	2026-04-18 05:03:56.327781+00
+Fe ULK 10kg	10 kg	10	200.00	180.00	\N	\N	4	2026-04-18 05:03:56.327781+00
+NPK Enduring 5kg	5 kg	5	41.00	36.90	\N	\N	4	2026-04-18 05:03:56.327781+00
+Decal Vyro 1kg	1 kg	1	11.40	10.30	\N	\N	4	2026-04-18 05:03:56.327781+00
+Paint Turf 500g	500 g	0.5	73.80	\N	\N	\N	22	2026-04-18 05:03:56.327781+00
+Micosat Tab Plus 1kg	1 kg	1	49.82	\N	\N	\N	4	2026-04-18 05:03:56.327781+00
+Micosat Len 1kg	1 kg	1	54.00	\N	\N	\N	4	2026-04-18 05:03:56.327781+00
+Meta-Ge Granular 1kg	1 kg	1	24.90	\N	\N	\N	4	2026-04-18 05:03:56.327781+00
+Meta-Ge 1lt	1 lt	1	71.80	\N	\N	\N	4	2026-04-18 05:03:56.327781+00
+Hurricane 7 10kg	10 kg	10	104.00	98.80	\N	\N	10	2026-04-18 05:03:56.327781+00
+No-sun 5kg	5 kg	5	44.50	42.30	\N	\N	10	2026-04-18 05:03:56.327781+00
+No-sun 10kg	10 kg	10	81.50	77.50	\N	\N	10	2026-04-18 05:03:56.327781+00
 \.
 
 
@@ -4925,6 +5081,528 @@ Humifitos + Micosat F	Humifitos 5kg	5	Humifitos 25kg	25	3	2026-03-30 06:03:54.89
 
 COPY public.app_config (key, value) FROM stdin;
 stock_alerts_enabled	false
+\.
+
+
+--
+-- Data for Name: catalogo_prodotti; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.catalogo_prodotti (id, brand, codice, modello, categoria, descrizione, prezzo_listino, prezzo_vendita, attivo, created_at, alimentazione, batteria_cons, battery_data, note) FROM stdin;
+31c76fd4-f958-4c84-a33d-a6e6cc681463	STIHL	4140 200 0526	FS 55 R	Decespugliatori	Decespugliatore a benzina Stihl FS 55 R, cilindrata 27,2 cc, potenza 0,80 kW, motore 2-MIX, testina AutoCut, peso 4,4 kg.	299.00	235.62	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · 230mm AutoCut · impugnatura circolare
+6faad5fd-c064-4958-be13-a24f4d378102	STIHL	4140-200-0526	FS 55 R	Decespugliatori termici	Decespugliatore a benzina Stihl FS 55 R, cilindrata 27,2 cc, potenza 0,80 kW, motore 2-MIX, testina AutoCut, peso 4,4 kg.	299.0	235.62	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+e1c97d05-37e8-4f73-ac24-71e965dcd7be	STIHL	4144 200 0091	FS 70 RC-E	Decespugliatori	Decespugliatore a benzina Stihl FS 70 RC-E, cilindrata 27,2 cc, potenza 0,90 kW, motore 2-MIX, impugnatura circolare, AutoCut 27-2.	439.00	322.77	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · ErgoStart · AutoCut · impugnatura circolare
+7b3ddc2b-7edd-4022-80af-1d1370ae3636	STIHL	4180 200 0686	FS 91 R	Decespugliatori	Decespugliatore a benzina Stihl FS 91 R, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, AutoCut 27-2.	539.00	425.46	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	28.4cc · 4-MIX · impugnatura circolare · antivibrante 1 punto · Smart Connector
+c3a86aed-e742-44e4-83a1-321488f5c6f7	STIHL	4149 200 0082	FS 94 RC-E	Decespugliatori	Decespugliatore a benzina Stihl FS 94 RC-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, impugnatura circolare, AutoCut 27-2.	559.00	411.00	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	24.1cc · 4-MIX · ErgoStart · ECOSPEED · impugnatura circolare
+864e7e1f-047c-490f-acfe-09ca23e7ad4d	STIHL	4149 200 0080	FS 94 C-E	Decespugliatori	Decespugliatore a benzina Stihl FS 94 C-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, AutoCut 27-2.	599.00	504.45	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	24.1cc · 4-MIX · ErgoStart · ECOSPEED · impugnatura a manubrio
+7ec025c8-bab3-437d-bf0c-711c275a930d	STIHL	4134 200 0411	FS 120 R	Decespugliatori	Decespugliatore a benzina Stihl FS 120 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, AutoCut 27-2.	459.00	332.02	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	30.8cc · 2-MIX · impugnatura circolare
+e0c6f9c6-3c7c-4511-8059-fb1f51c264fc	STIHL	4180 200 0772	FS 131 R NOVITÀ	Decespugliatori	Decespugliatore a benzina Stihl FS 131 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2, manubrio loop, peso 5,4 kg.	679.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · impugnatura circolare · NOVITÀ
+e5c10cd5-be12-4331-8f79-6e7440e6ab61	STIHL	4180-200-0574	FS 131 R	Decespugliatori termici	Decespugliatore a benzina Stihl FS 131 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2, manubrio loop, peso 5,4 kg.	689.0	577.52	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+9591f71c-eba8-45e2-935e-878573ae83f5	STIHL	4180 200 0761	FS 131	Decespugliatori	Decespugliatore a benzina Stihl FS 131, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2.	719.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · tracolla doppia · antivibrante · Smart Connector
+ab6c3259-cb41-4836-8c3c-becdc822008a	STIHL	4180 200 0568	FS 131	Decespugliatori	Decespugliatore a benzina Stihl FS 131, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2.	729.00	611.05	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · tracolla doppia · antivibrante · Smart Connector
+c79260d3-9875-4ebb-9324-aef031d54f66	STIHL	4151 200 0017	FS 235 R	Decespugliatori	Decespugliatore a benzina Stihl FS 235 R, cilindrata 40,2 cc, potenza 1,5 kW, motore 2-MIX, impugnatura circolare.	539.00	409.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · impugnatura circolare
+44ce8f61-d563-40cd-826b-d60c2d995ee4	STIHL	4147 200 0385	FS 240 R	Decespugliatori	Decespugliatore a benzina Stihl FS 240 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX, AutoCut 27-2.	809.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · impugnatura circolare
+0b332f2d-94bd-4d8c-9c9f-2a4276332697	STIHL	4147 200 0727	FS 240 R NOVITÀ	Decespugliatori	Decespugliatore a benzina Stihl FS 240 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX, AutoCut 27-2.	804.00	654.81	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · impugnatura circolare · NOVITÀ · ADVANCE Grip
+13336f55-84e7-4533-adfe-abba0dabd70d	STIHL	4147 200 0386	FS 260 R	Decespugliatori	Decespugliatore a benzina Stihl FS 260 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX.	899.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · impugnatura circolare
+864831b8-dc1f-47e8-91e9-112d9808c860	STIHL	4147 200 0719	FS 260 R NOVITÀ	Decespugliatori	Decespugliatore a benzina Stihl FS 260 R, cilindrata 43,1 cc, potenza 1,7 kW, motore 2-MIX.	894.00	729.29	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · impugnatura circolare · NOVITÀ
+0f770c77-6f21-451f-a959-6e1167bff23a	STIHL	4147 200 0608	FS 361 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 361 C-EM, cilindrata 40,2 cc, potenza 1,8 kW, motore 4-MIX.	1079.00	941.45	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+21b4ba2c-9103-4538-b37b-2eab4eb7d32e	STIHL	4147 200 0618	FS 411 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 411 C-EM, cilindrata 40,2 cc, potenza 2,0 kW, motore 4-MIX.	1169.00	1016.89	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE
+b241496b-d4a8-4f60-9df6-f52169dbe063	STIHL	4147 200 0636	FS 461 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 461 C-EM, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX.	1239.00	1064.69	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+b9350676-9892-4f1f-8425-043a89358851	STIHL	4148 200 0194	FS 491 C-EM	Decespugliatori	Decespugliatore a benzina Stihl FS 491 C-EM, cilindrata 43,1 cc, potenza 2,2 kW, motore 4-MIX.	1299.00	1112.82	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	51.6cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+896732df-706e-426a-b87d-c323e42f2252	STIHL	FA11 011 5700	FSA 50	Decespugliatori	Decespugliatore a batteria Stihl FSA 50, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	179.00	178.53	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 50, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	AK 10 · 280mm AutoCut · NOVITÀ · senza batteria
+ee929198-f741-4112-a57e-a5d363ad21c0	STIHL	1148 200 0139	MS 212	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	489.00	440.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 35cm PM3
+073a2431-7b86-4cb7-bd79-816516768ec3	STIHL	1148 200 0179	MS 212 C-BE	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	529.00	480.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 35cm PM3
+17b85703-d4dd-432e-a2eb-d2c8141c8026	STIHL	FA11 011 5710	FSA 50 Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 50, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	299.00	298.62	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 50, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	NOVITÀ · AK 10 · 280mm AutoCut · con AK 10 e AL 101
+dcd76f0d-84a9-45c8-9c88-c64654df6a3d	STIHL	FA04 011 5700	FSA 60 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 60 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	199.00	185.38	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 30, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 38, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 350mm AutoCut · NOVITÀ · senza batteria
+28fa8118-f5c4-4a91-bbf3-f1c03dae9374	STIHL	FA04 011 5740	FSA 60 R Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 60 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	339.00	315.81	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 30, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 38, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 350mm AutoCut · con AK 20 e AL 101
+7575adb2-1931-4be6-8a55-217ff1487172	STIHL	FA12 011 5700	FSA 70 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 70 R, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	219.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 30, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 38, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 380mm AutoCut · NOVITÀ · senza batteria
+fcc82650-c4f1-4a54-8bf7-e0bdd583f1bb	STIHL	FA07 011 5710	FSA 70 R Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 70 R, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	409.00	407.93	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 15, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 25, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · 380mm AutoCut · con AK 20 e AL 101
+292c5fb6-d6ef-4775-9914-a62f401abe6b	STIHL	FA08 011 5730	FSA 80 R Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 80 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	529.00	528.33	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 380mm AutoCut · impugnatura circolare · con AK 30 S e AL 101
+043c2cc2-2de6-4f35-9f5f-16fdf3d012d3	STIHL	FA08 011 5720	FSA 80 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 80 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	359.00	358.54	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 380mm AutoCut · impugnatura circolare · senza batteria
+3585aaac-d5b8-4c5c-94a0-fa41dc5cbace	STIHL	FA08 011 5700	FSA 80 Set	Decespugliatori	Decespugliatore a batteria Stihl FSA 80, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	379.00	379.04	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 230mm AutoCut · tracolla doppia · con batteria
+42af2527-82a6-4657-96d3-686ef8b46936	STIHL	FA08 011 5710	FSA 80	Decespugliatori	Decespugliatore a batteria Stihl FSA 80, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	549.00	547.55	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 15, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 20, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 230mm AutoCut · tracolla doppia · senza batteria
+c8ee1668-56a0-499f-bc72-7093d02ed393	STIHL	FA07 011 5720	FSA 110 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 110 R, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	399.00	373.34	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 45, "nome": "AP 20", "unita": "min", "val_min": 25}, {"val": 65, "nome": "AP 30", "unita": "min", "val_min": 50}, {"val": 60, "nome": "AP 200 S", "unita": "min", "val_min": 30, "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min", "val_min": 50}, {"val": 120, "nome": "AP 500 S", "unita": "min", "val_min": 60}, {"val": 400, "nome": "AR 2000 L", "unita": "min", "val_min": 210}, {"val": 570, "nome": "AR 3000 L", "unita": "min", "val_min": 290}]}	AP 200 S · 380mm AutoCut · senza batteria · Smart Connector
+b100d8ed-3440-45e0-a6ef-934d4e6bbb21	STIHL	FA08 200 0002	FSA 120	Decespugliatori	Decespugliatore a batteria Stihl FSA 120, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	459.00	429.48	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 50, "nome": "AP 20", "unita": "min", "val_min": 30}, {"val": 75, "nome": "AP 30", "unita": "min", "val_min": 45}, {"val": 60, "nome": "AP 200 S", "unita": "min", "val_min": 40, "raccomandata": true}, {"val": 110, "nome": "AP 300 S", "unita": "min", "val_min": 60}, {"val": 130, "nome": "AP 500 S", "unita": "min", "val_min": 70}, {"val": 400, "nome": "AR 2000 L", "unita": "min", "val_min": 210}, {"val": 490, "nome": "AR 3000 L", "unita": "min", "val_min": 280}]}	AP 300 S · 230mm AutoCut · tracolla doppia · senza batteria · Smart Connector
+a5f45666-34bd-4c4e-b2ef-1ae32b4a88e7	STIHL	FA01 200 0029	FSA 135 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 135 R, vano batteria AK nel dispositivo, diametro di taglio 280 mm, testina falciante AutoCut C3-2 ricaricabile senza attrezzi, peso senza batteria 2,6 kg. Completo di Batteria Stihl AK 10, agli ioni di litio con indicatore a 4 led dello stato di carica, peso 0,8 kg e del Carica batterie Stihl AL 101 con indicatore led dello stato di funzionamento e raffreddamento della batteria	569.00	464.30	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 13}, {"val": 43, "nome": "AP 30", "unita": "min", "val_min": 24}, {"val": 28, "nome": "AP 200 S", "unita": "min", "val_min": 17, "raccomandata": true}, {"val": 45, "nome": "AP 300 S", "unita": "min", "val_min": 25}, {"val": 54, "nome": "AP 500 S", "unita": "min", "val_min": 30}, {"val": 170, "nome": "AR 2000 L", "unita": "min", "val_min": 96}, {"val": 234, "nome": "AR 3000 L", "unita": "min", "val_min": 138}]}	AP 300 S · 420mm · impugnatura circolare · SC2A · senza batteria
+4596b7b7-0e86-4041-8c10-234849b6620c	STIHL	FA03 200 0000	FSA 200	Decespugliatori	Decespugliatore a batteria Stihl FSA 200, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	799.00	749.78	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 30, "nome": "AP 30", "unita": "min", "val_min": 15}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 10}, {"val": 32, "nome": "AP 300 S", "unita": "min", "val_min": 16, "raccomandata": true}, {"val": 40, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"val": 127, "nome": "AR 2000 L", "unita": "min", "val_min": 64}, {"val": 192, "nome": "AR 3000 L", "unita": "min", "val_min": 96}]}	AP 500 S · 450mm · tracolla doppia · SC2A · senza batteria
+4ef023b8-c8ce-420d-9130-2c5eb31ea38e	STIHL	FA03 200 0040	FSA 250	Decespugliatori	Decespugliatore a batteria Stihl FSA 250, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	839.00	786.17	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 54, "nome": "AP 300 S", "unita": "min", "val_min": 27, "raccomandata": true}, {"val": 63, "nome": "AP 500 S", "unita": "min", "val_min": 32}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 480mm · ADVANCE · SC2A · senza batteria
+3fafba08-43f9-445a-95a0-a6096a7aadd4	STIHL	FA09 200 0001	FSA 400	Decespugliatori	Decespugliatore a batteria Stihl FSA 400, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	1099.00	1028.31	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 20, "nome": "AP 300 S", "unita": "min", "val_min": 12, "raccomandata": true}, {"val": 25, "nome": "AP 500 S", "unita": "min", "val_min": 15}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 520mm · ADVANCE PLUS · SC2A · NOVITÀ · senza batteria
+875fd1a8-28c2-44f2-8c20-7c09898868d2	STIHL	4151 200 0016	FR 235	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, AutoCut 27-2.	679.00	578.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · zaino
+90355bba-bb8d-4afd-986d-a1adc25fbd68	STIHL	4151 200 0047	FR 235 T	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, AutoCut 27-2.	699.00	597.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · zaino · asta divisibile
+fac7d262-4ae6-444c-b4cf-d460ac4427c2	STIHL	GA04 011 6910	GTA 40 Set	Potatori da giardino	\N	449.00	415.82	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 240, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con 2×AS 2, AL 5-2 e valigetta · spranga 15cm
+0c0d1d91-eb83-49df-bebe-043a8ee020de	STIHL	4151-200-0016	FR 235	Decespugliatori professionali	Decespugliatore a zaino a benzina Stihl FR 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, AutoCut 27-2.	679.0	578.1	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+54768e6a-c434-45c3-b728-05f664846e55	STIHL	4147 200 0364	FR 460 TC-EM NOVITÀ	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1249.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · ErgoStart · zaino · NOVITÀ
+92393893-86a7-4f46-beee-1df98e8e6cd1	STIHL	4147 200 0713	FR 460 TC-EM	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1219.00	1028.20	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · ErgoStart · zaino
+c8bc036f-16b8-45a6-b4b2-f9741c584f3d	STIHL	4147 200 0372	FR 460 TC-EFM NOVITÀ	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1349.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · Elektrostart · zaino · NOVITÀ
+b931e8f4-2617-427c-a7cd-5d8f69d5bc2c	STIHL	4147 200 0714	FR 460 TC-EFM	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1289.00	1087.25	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · M-Tronic · Elektrostart · zaino
+8ecbc709-f233-40c9-a3a7-61eb29df79c2	STIHL	4147 200 0716	FR 460 TC-E	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1189.00	1002.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · ErgoStart · zaino · asta divisibile · Smart Connector
+60ba4755-53ce-49b2-b2b0-d9fbfddda386	STIHL	4147 200 0374	FR 460 TC-E NOVITÀ	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 460 TC-E, cilindrata 43,1 cc, potenza 2,0 kW, motore 4-MIX, sistema di trasporto a zaino ergonomico.	1199.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · ErgoStart · zaino · asta divisibile · Smart Connector · NOVITÀ
+929b45cb-a137-4361-9c37-e7ee13cc3604	STIHL	4147 200 0706	FR 480 C-E	Decespugliatori	Decespugliatore a zaino a benzina Stihl FR 480 C-E, cilindrata 43,1 cc, potenza 2,1 kW, motore 4-MIX, sistema di trasporto a zaino.	1149.00	966.12	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · ErgoStart · zaino · pendenza
+46e060e5-0581-424c-b8fc-3cc5771132ce	STIHL	HA03 011 3506	HSA 26 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 26, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,1 kg, lunghezza lama 60 cm.	139.00	139.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 110, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con AS 2, AL 1 e custodia
+5e632eac-e4ce-4b4c-bafd-d142412567b4	STIHL	HA03 011 3500	HSA 26	Tosasiepi	Tosasiepe a batteria Stihl HSA 26, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,1 kg, lunghezza lama 60 cm.	99.00	99.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 110, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · ergonomico · coltello cespugli + erba
+7e5d319e-5f49-4502-9d04-52e562065419	STIHL	HA08 011 3506	HSA 30 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 30, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	159.00	159.02	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 50, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con AS 2 e AL 1
+cc43ecdc-a058-4063-b88f-e1e3cba30531	STIHL	HA08 011 3500	HSA 30	Tosasiepi	Tosasiepe a batteria Stihl HSA 30, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	119.00	119.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 50, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · lame tagliate al laser
+45a75e99-28cc-43dd-8c23-7067dac9a95c	STIHL	HA08 011 3526	HSA 40 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 40, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	209.00	209.02	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 40, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con 2×AS 2 e AL 1
+73583235-118d-4399-a45c-f3e899e9074c	STIHL	4521 011 3570	HSA 50 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 50, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	269.00	269.02	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · con AK 10 e AL 101
+d2ba12a0-9459-4e93-a93c-20f974ebd010	STIHL	4521 200 0032	HSA 50 Set 2×	Tosasiepi	Tosasiepe a batteria Stihl HSA 50, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	349.00	349.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · con 2×AK 10 e AL 101
+1bdc32aa-f4ec-44b4-8c54-d4e260ad7722	STIHL	4521 011 3560	HSA 50	Tosasiepi	Tosasiepe a batteria Stihl HSA 50, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	169.00	169.01	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · lame tagliate al laser · coltelli a goccia
+30e1b090-53fc-46ca-a93b-5fe98d307df1	STIHL	HA06 011 3540	HSA 60 Set	Tosasiepi	Tosasiepe a batteria Stihl HSA 60, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	389.00	389.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 70, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 140, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 175, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · con AK 10 e AL 101
+85e874ff-3db7-4b22-ae3d-857764e0fb75	STIHL	HA06 011 3530	HSA 60	Tosasiepi	Tosasiepe a batteria Stihl HSA 60, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	289.00	289.03	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 70, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 140, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 175, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	Sistema AK · imp. multifunzione orientabile · Smart Connector
+dee1bbe4-353f-4d5f-9ea7-082c8f5cf5ae	STIHL	4869 011 3567	HSA 130 T 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	629.00	590.25	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	AP · rifinitura T · lama 75cm
+d4b0e639-5789-432f-ac3d-0ad3c4846aa7	STIHL	4869 011 3566	HSA 130 T	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	569.00	533.95	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 83, "nome": "AP 20", "unita": "min"}, {"val": 160, "nome": "AP 30", "unita": "min"}, {"val": 108, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 167, "nome": "AP 300 S", "unita": "min"}, {"val": 200, "nome": "AP 500 S", "unita": "min"}, {"val": 735, "nome": "AR 2000 L", "unita": "min"}, {"val": 1050, "nome": "AR 3000 L", "unita": "min"}]}	AP · rifinitura T · alta velocità · SC2A
+8a8e29c9-2560-4b31-9b69-d54edc7b642c	STIHL	HA02 011 3520	HSA 150 R	Tosasiepi	Tosasiepe a batteria Stihl HSA 150 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	749.00	702.86	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 116, "nome": "AP 20", "unita": "min"}, {"val": 235, "nome": "AP 30", "unita": "min"}, {"val": 150, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 245, "nome": "AP 300 S", "unita": "min"}, {"val": 290, "nome": "AP 500 S", "unita": "min"}, {"val": 935, "nome": "AR 2000 L", "unita": "min"}, {"val": 1405, "nome": "AR 3000 L", "unita": "min"}]}	AP · sfrondatura R · batteria rimovibile · SC2A
+17d23161-a0dd-461f-baaf-d7545e3704df	STIHL	HA02 011 3530	HSA 150 T	Tosasiepi	Tosasiepe a batteria Stihl HSA 150 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 30 mm, 3900-4500-5000 colpi/minuto, peso 4,2 kg, lunghezza lama 60 cm.	744.00	698.17	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 108, "nome": "AP 20", "unita": "min"}, {"val": 226, "nome": "AP 30", "unita": "min"}, {"val": 140, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 235, "nome": "AP 300 S", "unita": "min"}, {"val": 280, "nome": "AP 500 S", "unita": "min"}, {"val": 900, "nome": "AR 2000 L", "unita": "min"}, {"val": 1355, "nome": "AR 3000 L", "unita": "min"}]}	AP · rifinitura T · batteria rimovibile · SC2A
+7a24b9c3-eaad-438c-b467-a5858b00d2d6	STIHL	4228 011 2938	HS 45 60cm	Tosasiepi	Tosasiepe a benzina Stihl HS 45 450mm, cilindrata 22,7 cc, motore 2-MIX, lunghezza lama 45 cm.	399.00	323.19	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · lama 60cm
+3aebe310-f935-4791-8537-144ef212ec7e	STIHL	4228 011 2937	HS 45	Tosasiepi	Tosasiepe a benzina Stihl HS 45 450mm, cilindrata 22,7 cc, motore 2-MIX, lunghezza lama 45 cm.	369.00	343.72	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · ElastoStart · antivibrante
+f3ab88fb-90c2-4bb0-83c9-71aaba70e149	STIHL	4237 011 2978	HS 82 R 75cm	Tosasiepi	Tosasiepe a benzina Stihl HS 82 R 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, affilatura lama su entrambi i lati.	859.00	800.16	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · sfrondatura R · lama 75cm
+4011249e-f43b-41e1-a4ee-e13bdaa158b8	STIHL	4237 011 2977	HS 82 R	Tosasiepi	Tosasiepe a benzina Stihl HS 82 R 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, affilatura lama su entrambi i lati.	819.00	762.90	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · sfrondatura R · Smart Connector
+9a683fb6-f67e-458c-a94b-507000d713a8	STIHL	4237-011-2977	HS 82 R 600mm	Tosasiepi termici	Tosasiepe a benzina Stihl HS 82 R 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, affilatura lama su entrambi i lati.	819.0	762.9	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+b5e2b42c-3851-4405-a1b9-d6ac794c94dc	STIHL	4237 011 2986	HS 82 T 75cm	Tosasiepi	Tosasiepe a benzina Stihl HS 82 T 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, lame dentate su entrambi i lati.	859.00	800.16	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · rifinitura T · lama 75cm
+b976d2d4-d1fd-4f38-a3e2-9cf44216685b	STIHL	4237 011 2985	HS 82 T	Tosasiepi	Tosasiepe a benzina Stihl HS 82 T 600mm, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 60 cm, lame dentate su entrambi i lati.	819.00	762.90	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale 2-MIX · rifinitura T · Smart Connector
+e90c9f2b-9e75-4fe6-b6c9-8afb1debcbcb	STIHL	4237 011 2991	HS 87 R	Tosasiepi	Tosasiepe a benzina Stihl HS 87 R, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 75 cm, affilatura su entrambi i lati.	919.00	856.05	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · grandi volumi · antivibrante · Smart Connector
+bb608dda-ff71-41dc-96dd-0a83c377e916	STIHL	4237-011-2991	HS 87 R 750mm	Tosasiepi termici	Tosasiepe a benzina Stihl HS 87 R, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 75 cm, affilatura su entrambi i lati.	919.0	856.05	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+74dd8bcd-8b4a-4215-afaa-7f3b6e984725	STIHL	4237 011 2995	HS 87 T	Tosasiepi	Tosasiepe a benzina Stihl HS 87 T, cilindrata 22,7 cc, potenza 0,75 kW, motore 2-MIX, lunghezza lama 75 cm, lame dentate su entrambi i lati.	919.00	856.05	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · rifinitura · alta velocità · antivibrante
+341af2ff-e1bc-4624-91c5-1a48f1c2f195	STIHL	1145 200 0264	MS 201 C-M 16cm	Motoseghe	\N	999.00	900.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale leggera · M-Tronic · 40cm PS
+b3553510-3e62-4dae-a1f4-4bd18049333c	STIHL	1146 200 0055	MS 151 C-E 30cm	Motoseghe	\N	579.00	520.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 2-MIX · 30cm PM3
+fdb05c9e-9baf-406b-a993-18e3ac0b5a59	STIHL	1146 200 0056	MS 151 TC-E 25cm	Motoseghe	\N	559.00	420.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 2-MIX · 25cm
+6404515b-dff1-4f13-8a73-c4e9fe9b7577	STIHL	1146 200 0057	MS 151 TC-E 30cm	Motoseghe	\N	569.00	430.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 2-MIX · 30cm
+fdca0d5a-dd65-4303-a25b-8493ec08808d	STIHL	4180 200 0574	FS 131 R	Decespugliatori	Decespugliatore a benzina Stihl FS 131 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, testina AutoCut 27-2, manubrio loop, peso 5,4 kg.	689.00	577.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · impugnatura circolare · antivibrante · Smart Connector
+f0f84359-7487-4e59-aa71-0f72c56c3368	STIHL	HA08 011 3520	HSA 40	Tosasiepi	Tosasiepe a batteria Stihl HSA 40, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	149.00	149.01	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 40, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · lame tagliate al laser · Smart Connector
+268e9c3a-a31e-4e0f-a33c-33e5101e53fb	STIHL	HA10 011 2900	HLA 40	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 40, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	149.00	138.81	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 40, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · Sistema AS · telescopico · angolo -45°/+70°
+b67f97dd-8921-4102-aa65-c1a248f8ea9e	STIHL	HA01 011 2910	HLA 56	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 56, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	249.00	249.03	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 120, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · angolo 135° · IPX4 · impugnatura circolare
+dd1d3beb-cfe2-4803-aae2-73fba99013ce	STIHL	HA01 200 0050	HLA 56 Set	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 56, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	389.00	389.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 120, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · con AK 20 e AL 101
+9424783d-07cb-4346-8992-efb22e4b3ff4	STIHL	HA01 200 0049	HLA 56 Set 2×	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 56, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	519.00	519.05	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 100, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 120, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · con 2×AK 20 e AL 101
+22f7fa3d-d6fc-46cf-b702-7d7cd81fc9b7	STIHL	4859 011 2930	HLA 86	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 86, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	559.00	524.57	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 111, "nome": "AP 20", "unita": "min"}, {"val": 214, "nome": "AP 30", "unita": "min"}, {"val": 144, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 223, "nome": "AP 300 S", "unita": "min"}, {"val": 268, "nome": "AP 500 S", "unita": "min"}, {"val": 760, "nome": "AR 2000 L", "unita": "min"}, {"val": 1110, "nome": "AR 3000 L", "unita": "min"}]}	AP · telescopica 260-330cm · angolo 115° · Smart Connector
+63ae94b7-83fb-4968-9d59-aa55ab853b97	STIHL	LA02 200 0013	HTA 50 Set 2×	Potatori	Potatore a batteria Stihl HTA 50, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	569.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 45, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · asta fino 2.8m · Smart Connector · con 2×AK 20 e AL 101
+f6f7b44a-7d3b-4518-bdb5-efd5d61ac4bb	STIHL	1148 200 0144	MS 212 40cm	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	499.00	450.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 40cm PM3
+a957421c-6a8c-4c4c-a426-cd253e39ec6f	STIHL	HA04 200 0016	HLA 135	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 135, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	654.00	533.67	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 50, "nome": "AP 20", "unita": "min"}, {"val": 91, "nome": "AP 30", "unita": "min"}, {"val": 64, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 95, "nome": "AP 300 S", "unita": "min"}, {"val": 114, "nome": "AP 500 S", "unita": "min"}, {"val": 370, "nome": "AR 2000 L", "unita": "min"}, {"val": 555, "nome": "AR 3000 L", "unita": "min"}]}	AP · professionale parchi · angolo 145° · SC2A
+c5ff8cb6-26d8-4f6e-92f7-dd51f621547d	STIHL	HA04 200 0040	HLA 140 K-B	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 140 K-B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	669.00	627.79	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 30	\N	NOVITÀ · AP · asta corta K · Bluetooth · SC integrato
+532db399-1284-437c-9201-3f59fa944552	STIHL	HA04 200 0045	HLA 150 B	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 150-B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	799.00	749.78	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 30	\N	NOVITÀ · AP · telescopico · Bluetooth · SC integrato
+9d7aa259-1794-477e-8b28-c2f9edd3e414	STIHL	LA05 011 6400	HTA 30	Potatori	Potatore a batteria Stihl HTA 30, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	239.00	222.65	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 28, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · asta 1.9-2.8m · senza batteria
+355e9d61-f4fd-4497-b955-b9d733d5c21f	STIHL	LA05 011 6410	HTA 30 Set	Potatori	Potatore a batteria Stihl HTA 30, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	299.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 28, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · asta 1.9-2.8m · con 2×AS 2 e ALS31
+86973f9f-2923-4786-b074-1f64968fac1e	STIHL	LA02 011 6400	HTA 50	Potatori	Potatore a batteria Stihl HTA 50, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	319.00	319.04	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 45, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 20 · asta fino 2.8m · Smart Connector · senza batteria
+1cdabdb6-56a4-4bb3-aef5-363ad6182d00	STIHL	LA02 200 0014	HTA 50 Set	Potatori	Potatore a batteria Stihl HTA 50, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	459.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 25, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 45, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 60, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	AK 20 · asta fino 2.8m · Smart Connector · con AK 20 e AL 101
+079f5180-909e-4972-a72d-07f9e2a1f0a8	STIHL	LA03 200 0002	HTA 86	Potatori	Potatore a batteria Stihl HTA 86, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	689.00	646.55	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 32, "nome": "AP 20", "unita": "min"}, {"val": 65, "nome": "AP 30", "unita": "min"}, {"val": 42, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 68, "nome": "AP 300 S", "unita": "min"}, {"val": 82, "nome": "AP 500 S", "unita": "min"}, {"val": 222, "nome": "AR 2000 L", "unita": "min"}, {"val": 318, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · asta telescopica 2.7-3.9m · antivibrante · Smart Connector
+21c3eebc-5c6d-4392-9659-7b31e2ab2180	STIHL	LA01 200 0046	HTA 135	Potatori	Potatore a batteria Stihl HTA 135, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	864.00	810.78	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 52, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 36, "nome": "AP 300 S", "unita": "min"}, {"val": 54, "nome": "AP 500 S", "unita": "min"}, {"val": 70, "nome": "AR 2000 L", "unita": "min"}, {"val": 254, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta professionale 2.85-4.05m · SC2A
+37b165c6-8e7c-447e-a10e-1caa643a4901	STIHL	LA01 200 0034	HTA 150	Potatori	Potatore a batteria Stihl HTA 150, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	729.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 40, "nome": "AP 20", "unita": "min"}, {"val": 96, "nome": "AP 30", "unita": "min"}, {"val": 52, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min"}, {"val": 113, "nome": "AP 500 S", "unita": "min"}, {"val": 396, "nome": "AR 2000 L", "unita": "min"}, {"val": 592, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta rigida · frutticoltura · SC2A
+c17f6e5d-8165-4565-86ac-c2475fa9a0cb	STIHL	1148 200 0184	MS 212 C-BE 40cm	Motoseghe	Motosega a benzina Stihl MS 212, cilindrata 35,2 cc, potenza 1,6 kW, motore 2-MIX, catena 63PM3.	539.00	490.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 40cm PM3
+a4b5ea04-11c6-4ff3-9f95-47c1cc83afbb	STIHL	1143 200 0722	MS 231 C-BE 45cm	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	634.00	550.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 45cm
+070b6a9e-a388-4d29-a307-f612da42a606	STIHL	4812 011 3564	HSE 61	Tosasiepi	\N	229.00	\N	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · imp. multifunzione orientabile
+fd1138da-b848-45a8-b82b-4f4ab6723464	STIHL	4812 011 3576	HSE 71	Tosasiepi	\N	249.00	225.22	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · imp. multifunzione orientabile
+61582c31-efbf-4dfb-be42-9d42d6ee9287	STIHL	LA01 200 0019	HTA 150	Potatori	Potatore a batteria Stihl HTA 150, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	729.00	545.29	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 40, "nome": "AP 20", "unita": "min"}, {"val": 96, "nome": "AP 30", "unita": "min"}, {"val": 52, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min"}, {"val": 113, "nome": "AP 500 S", "unita": "min"}, {"val": 396, "nome": "AR 2000 L", "unita": "min"}, {"val": 592, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta rigida · frutticoltura · SC2A · esaurimento
+ef40111d-1d14-4b69-ab86-597f0146b874	STIHL	LA01 200 0032	HTA 160	Potatori	Potatore a batteria Stihl HTA 160, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	899.00	843.63	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 27, "nome": "AP 20", "unita": "min"}, {"val": 67, "nome": "AP 30", "unita": "min"}, {"val": 36, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 70, "nome": "AP 300 S", "unita": "min"}, {"val": 80, "nome": "AP 500 S", "unita": "min"}, {"val": 277, "nome": "AR 2000 L", "unita": "min"}, {"val": 416, "nome": "AR 3000 L", "unita": "min"}]}	AP 300 S · asta telescopica prof. 2.85-4.05m · SC2A
+6d464c22-fede-474a-b2bd-d08bb5c80c77	STIHL	4182 200 0194	HT 105	Potatori	Potatore su palo a benzina Stihl HT 105 30cm, cilindrata 22,7 cc, motore 2-MIX, lunghezza spranga 30 cm, catena 71PM3.	1149.00	1023.76	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX · antivibrante · asta 2.7-3.9m · Smart Connector
+2d9d470a-b0c5-4141-802f-6258a9003f30	STIHL	4182-200-0194	HT 105 30cm	Potatori su palo termici	Potatore su palo a benzina Stihl HT 105 30cm, cilindrata 22,7 cc, motore 2-MIX, lunghezza spranga 30 cm, catena 71PM3.	1149.0	1023.76	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+b6e6999a-0151-4237-a20b-21dd5ea16e19	STIHL	4182 200 0202	HT 135	Potatori	Potatore su palo a benzina Stihl HT 135 30cm, cilindrata 36,3 cc, motore 2-MIX, lunghezza spranga 30 cm, catena 61PMM3.	1239.00	1103.94	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	AP 300 S	\N	Professionale · 4-MIX · asta fino a 3.9m · Smart Connector
+1b848855-ff39-4d70-8025-66e64c653a5a	STIHL	MA04 011 5800	MSA 60 C-B	Motoseghe	Motosega a batteria Stihl MSA 60 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	199.00	199.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 55, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · senza batteria · 30cm PM3 · Smart Connector
+8f2da920-6b06-4958-aade-1ae1517560fe	STIHL	MA04 011 5806	MSA 60 C-B Set	Motoseghe	Motosega a batteria Stihl MSA 60 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	339.00	339.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 55, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Sistema AK · con AK 20 e AL 101 · 30cm PM3 · Smart Connector
+ea33a8a8-4875-4620-b5e3-d51b486aff2b	STIHL	MA04 200 0002	MSA 60 C-B 2×Set	Motoseghe	Motosega a batteria Stihl MSA 60 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	449.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 20	\N	Sistema AK · con 2×AK 20 e AL 101 · 30cm PM3 · Smart Connector
+aa7d1eeb-458e-4291-950d-1dce429b0d71	STIHL	MA04 011 5816	MSA 70 C-B	Motoseghe	Motosega a batteria Stihl MSA 70 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	239.00	239.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 45, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · senza batteria · 30cm PM3 · Smart Connector
+f8d7364e-8405-4994-99bd-7093317f5f6a	STIHL	MA04 011 5822	MSA 70 C-B Set	Motoseghe	Motosega a batteria Stihl MSA 70 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	409.00	409.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 18, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 40, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 45, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · con AK 30 e AL 101 · 30cm PM3 · Smart Connector
+86b5c410-2ad4-4353-ac92-f46e6a19b786	STIHL	MA04 200 0011	MSA 70 C-B 2×Set	Motoseghe	Motosega a batteria Stihl MSA 70 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	569.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	\N	Sistema AK · con 2×AK 30 e AL 101 · 30cm PM3 · Smart Connector
+293b7fae-555a-4e74-9077-72e6bf02bed6	STIHL	MA04 011 5843	MSA 80 C-B	Motoseghe	Motosega a batteria Stihl MSA 80 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	389.00	389.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": null, "nome": "AK 10", "unita": "min", "incompatibile": true}, {"wh": 144, "val": null, "nome": "AK 20", "unita": "min", "incompatibile": true}, {"wh": 180, "val": 35, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · senza batteria · 30cm PM3 · Smart Connector
+2c2f56bb-25ac-4ec0-bb9e-d0c9f3343711	STIHL	MA04 011 5832	MSA 80 C-B Set	Motoseghe	Motosega a batteria Stihl MSA 80 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	559.00	559.00	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": null, "nome": "AK 10", "unita": "min", "incompatibile": true}, {"wh": 144, "val": null, "nome": "AK 20", "unita": "min", "incompatibile": true}, {"wh": 180, "val": 35, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Sistema AK · con AK 30 e AL 101 · 30cm PM3 · Smart Connector
+5b1a4d22-b19c-4245-8970-2e8c45c5a477	STIHL	1143 200 0684	MS 231	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	589.00	510.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 40cm RM Pro
+48f8fa30-5259-4b58-8f26-5efd01aeb9e2	STIHL	1143 200 0688	MS 231 C-BE	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	629.00	550.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 40cm RM Pro
+4050c6ee-7ade-46d3-b927-ccd76ae1d97e	STIHL	MA03 200 0004	MSA 160 C-B	Motoseghe	Motosega a batteria Stihl MSA 160 C-B: Motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 16 m/s, lunghezza barra 25 cm, peso 2,5 kg	369.00	350.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 60, "nome": "AP 200 S", "tagli": 300, "unita": "min", "val_min": 60, "raccomandata": true}, {"val": 42, "nome": "AP 300 S", "tagli": 210, "unita": "min", "val_min": 42}, {"val": 62, "nome": "AP 500 S", "tagli": 310, "unita": "min", "val_min": 62}, {"val": 74, "nome": "AR 2000 L", "tagli": 370, "unita": "min", "val_min": 74}, {"nome": "AR 3000 L", "incompatibile": true}]}	Sistema AP · 30cm PM3 · Smart Connector · senza batteria
+377d5555-f3ff-4a32-899e-4687af7d6d23	STIHL	MA03 200 0010	MSA 200 C-B	Motoseghe	Motosega a batteria Stihl MSA 200 C-B, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	459.00	430.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 48, "nome": "AP 200 S", "tagli": 260, "unita": "min", "val_min": 48, "raccomandata": true}, {"val": 42, "nome": "AP 300 S", "tagli": 160, "unita": "min", "val_min": 42}, {"val": 50, "nome": "AP 500 S", "tagli": 270, "unita": "min", "val_min": 50}, {"val": 60, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 60}, {"nome": "AR 3000 L", "incompatibile": true}]}	Sistema AP · 35cm PM3 · Smart Connector · senza batteria
+ad57557a-2f26-4853-927c-bd1d4a5eb5e7	STIHL	MA01 200 0021	MSA 220 T	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	749.00	560.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 28, "nome": "AP 20", "tagli": 280, "unita": "min", "val_min": 12}, {"val": 28, "nome": "AP 30", "tagli": 280, "unita": "min", "val_min": 28}, {"val": 29, "nome": "AP 200 S", "tagli": 290, "unita": "min", "val_min": 16}, {"val": 29, "nome": "AP 300 S", "tagli": 290, "unita": "min", "val_min": 29, "raccomandata": true}, {"val": 34, "nome": "AP 500 S", "tagli": 340, "unita": "min", "val_min": 34}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Display 180° · Smart Connector · 30cm PS3
+a4e8829a-2520-4d43-bd98-e408330171c9	STIHL	MA01 200 0083	MSA 220 TC-O	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	809.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 23, "nome": "AP 20", "tagli": 280, "unita": "min", "val_min": 16}, {"val": 23, "nome": "AP 30", "tagli": 280, "unita": "min", "val_min": 23}, {"val": 24, "nome": "AP 200 S", "tagli": 290, "unita": "min", "val_min": 21}, {"val": 24, "nome": "AP 300 S", "tagli": 290, "unita": "min", "val_min": 24, "raccomandata": true}, {"val": 34, "nome": "AP 500 S", "tagli": 340, "unita": "min", "val_min": 34}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Sensore olio · Display 180° · Smart Connector · 30cm PS3 Pro
+ca630bfa-12b4-4c30-b1c8-b66ef519eb66	STIHL	1148 200 0002	MS 162	Motoseghe	Motosega a benzina Stihl MS 162, cilindrata 30,1 cc, potenza 1,2 kW, catena 61PMM3.	199.00	199.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby entry · 2-MIX · 35cm PMM3
+8f541ff2-7c79-499f-b288-3b58e5e6641f	STIHL	1208 200 0304	MSE 141	Motoseghe	\N	194.00	180.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 30cm PMM3
+a2b0937d-ff56-40d8-ae5c-d3048293f9a6	STIHL	1209 200 0154	MSE 170	Motoseghe	\N	289.00	270.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 30cm PMM3
+162fb8dd-2325-4426-8d1c-626b6754a477	STIHL	1209 200 0157	MSE 190	Motoseghe	\N	339.00	320.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PM3
+0a10c801-a1d7-449a-a623-d7606e6ccedc	STIHL	1209 200 0160	MSE 210 C-B	Motoseghe	\N	404.00	380.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PM3
+7101df3a-807f-413e-9405-ea9f2c72a6b6	STIHL	4255 019 4950	SG 51	Irroratori	\N	144.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	12.0L serbatoio
+3e2d4f39-ba3e-4625-a1d0-5cd83122233e	STIHL	1146 200 0054	MS 151 C-E	Motoseghe	\N	569.00	510.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 2-MIX · 25cm PM3
+cb5fbfcf-9166-4290-a79c-f504fb0bef52	STIHL	1137 200 0340	MS 151 TC-E	Motoseghe	\N	534.00	480.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart
+335d145f-5b48-432f-b870-69cc8f8b271b	STIHL	GA01 011 6900	GTA 26	Potatori da giardino	\N	129.00	128.13	t	2026-04-11 18:29:22.623135+00	Batteria AS	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 70, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · leggero
+28e492ba-793a-4b86-bf42-f88b37cf42da	STIHL	GA01 011 6910	GTA 26 Set	Potatori da giardino	\N	169.00	168.09	t	2026-04-11 18:29:22.623135+00	Batteria AK	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 70, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · NOVITÀ · con AS 2 e AL 1
+211d3fe5-bc0c-449e-a0a0-143ce87104df	STIHL	GA05 011 6910	GTA 30	Potatori da giardino	\N	329.00	330.38	t	2026-04-11 18:29:22.623135+00	Batteria AK	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 180, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · con 2×AS 2, AL 5-2 e valigetta
+f5b71f5b-b278-4a08-b69d-89b0eb0b54a1	STIHL	4238 011 2820	TS 440	Troncatrici	\N	1949.00	1631.55	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · disco 350mm · QuickStop · ciclone
+25ced937-d1e0-466f-90f0-acbe554256b6	STIHL	4250 011 2810	TS 500i	Troncatrici	\N	1889.00	1576.48	t	2026-04-11 18:29:22.623135+00	Miscela Injection	\N	\N	Injection · disco 350mm · ciclone
+a7e83a25-ee40-4127-b9f8-f717fe345ece	STIHL	1152 200 0040	MSE 250 W	Motoseghe edilizia	\N	1299.00	\N	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · taglio muri · acqua
+c3572acd-9769-48b4-9a30-e05c44b71326	STIHL	4252 200 0047	GS 461	Motoseghe edilizia	\N	2939.00	2745.62	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Motosega edilizia · catena diamantata GBM · 40cm
+2b5401db-a3d8-49d0-962d-617f073ee4fd	STIHL	4313 011 2120	BT 131	Trivelle	\N	1319.00	1166.53	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX, 200 giri/min mandrino
+6acc5c42-b69c-4654-8392-114e9e4c350a	STIHL	GA04 011 6900	GTA 40	Potatori da giardino	\N	289.00	266.86	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 240, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · senza batteria · spranga 15cm PM3
+3e55bfa7-b9d6-4ab3-89da-29f00cd96ea2	STIHL	4812 011 3577	HSE 71 70cm	Tosasiepi	\N	279.00	252.36	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · lama 70cm
+2ca1a940-e331-458b-bca3-6fad631d35ad	STIHL	4255 019 4910	SG 11	Irroratori	\N	22.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	1.5L serbatoio
+e90f9cc5-c1ca-4dd8-bd54-1e6c300d1645	STIHL	4255 019 4921	SG 21	Irroratori	\N	36.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	3.0L serbatoio
+3f57db56-371f-459c-8d91-321f0ccd18b7	STIHL	4243 200 0016	HL 94 KC-E	Tagliasiepi allungati	\N	959.00	841.53	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 145° · asta corta K · ECOSPEED · Smart Connector
+037875c2-f559-4007-a1cb-224c12857700	STIHL	4604 011 5401	MM 56	Sistema Multi	\N	659.00	604.07	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · telaio ripiegabile · 7 attrezzi Multi disponibili
+0199a7e7-1b2d-4276-a0fd-f605b300b307	STIHL	4255 019 4930	SG 31	Irroratori	\N	48.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	5.0L serbatoio
+9880b7c0-a3e9-40d7-8869-a56a846a6c0b	STIHL	4255 019 4970	SG 71	Irroratori	\N	164.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	18.0L serbatoio
+ae5bc8c2-3c5e-4a49-af06-73ac8fd844c9	STIHL	SA09 011 9100	PKA 30	Irroratori	\N	80.00	80.22	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	\N	NOVITÀ, testa pompaggio a batteria
+9f2eddbf-bc00-4277-9102-0e1b9b35c13b	STIHL	4243 200 0019	HL 91 KC-E	Tagliasiepi allungati	\N	869.00	762.55	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 130° · asta corta K · ErgoStart · impugnatura circolare
+f08b64f2-980b-4766-8fcb-3efc92489ff8	STIHL	4259 011 0705	SP 92 TC-E	Raccoglitori speciali	\N	1399.00	1217.06	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, raccoglitore frutta
+32160ac4-6a04-49a1-b464-e416ee4d2c3b	STIHL	VB01 200 0010	SP 452 1.86m	Raccoglitori speciali	\N	2019.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 1.86m
+18b41251-98a5-443c-880e-5d49255a89bc	STIHL	VB01 200 0011	SP 452 2.26m	Raccoglitori speciali	\N	2049.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 2.26m
+e80dfd41-dcda-4521-9459-321a77f994e4	STIHL	VB01 200 0008	SP 482 1.86m	Raccoglitori speciali	\N	2129.00	1863.79	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 1.86m
+7aad1e67-7565-480b-9009-0baaa540d7a8	STIHL	VB01 200 0009	SP 482 2.26m	Raccoglitori speciali	\N	2159.00	1884.14	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 2.26m
+a8cc140d-1a69-4d89-ab12-075236f60544	STIHL	VB01 200 0013	SP 482 2.60m	Raccoglitori speciali	\N	2189.00	1907.32	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, asta 2.60m
+ce28b1b8-7fac-40f7-a5d7-4e9618b948d9	STIHL	4811 011 1544	BGE 71	Soffiatori	\N	134.00	118.51	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, con cavo
+b2b318c6-73c5-4ec2-9ac1-2624dd0cb988	STIHL	4811 011 1552	BGE 81	Soffiatori	\N	184.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, con cavo
+0b2ab11f-48aa-4934-b44e-a93909b51dd0	STIHL	SA06 011 8210	KOA 20	Compressori	\N	139.00	139.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 23, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Senza batteria, gonfiatore
+75ae7a48-ead7-49fc-8a57-1dcdbc013997	STIHL	4244 011 1600	BR 350	Soffiatori dorsali	\N	679.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+1921a7f9-a9b4-4c31-892c-1d7a3aca896e	STIHL	4282 200 0020	BR 500	Soffiatori dorsali	\N	849.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX
+4f620a4b-8af5-4c20-8fce-03e52b604af6	STIHL	SA02 011 7100	SHA 56 Set	Aspiratori-trituratori	\N	269.00	269.02	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 12, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 25, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Con AK 20 e AL 101
+71fe6764-11e4-4898-b333-8b5fe0133a00	STIHL	SA02 200 0005	SHA 56	Aspiratori-trituratori	\N	409.00	409.05	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 12, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 25, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Senza batteria, sacco 40L
+e3238da2-1f1f-458f-9ae4-f1fe4ea8c11b	STIHL	4241 011 0928	SH 56	Aspiratori-trituratori	\N	419.00	378.98	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, sacco 45L
+c3b96c3f-a616-4565-9e9c-b5c36046ddc0	STIHL	4860 019 4705	KG 550	Spazzatrici	\N	279.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	55cm larghezza lavoro, MultiClean
+58788413-6740-47af-97b0-95bd7d598470	STIHL	4860 019 4707	KG 770	Spazzatrici	\N	649.00	\N	t	2026-04-11 18:29:22.623135+00	manuale	\N	\N	77cm larghezza lavoro, MultiClean PLUS
+bc8e3a77-8d6c-4b2a-a535-502b97cdb5ac	STIHL	4788 012 4500	RE 232	Idropulitrici	\N	1259.00	1146.26	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	145 bar professionale
+7d26f331-73bd-401f-8d41-7a6a6f2771a6	STIHL	4788 012 4512	RE 272 PLUS	Idropulitrici	\N	1639.00	1492.22	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	150 bar, pistoni ceramica
+b3225c5f-4a21-431b-aa04-2523dfb2787e	STIHL	4780 012 4501	RE 462 PLUS	Idropulitrici	\N	2609.00	2382.61	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	220 bar, 400V trifase, professionale
+15c52194-3073-49e1-8e00-1bd10a4fb8d0	STIHL	4784 012 4400	SE 62	Aspiratori	\N	189.00	170.44	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, 20L
+4d9f64f4-dac4-4886-80fa-94ac7b2f91d8	STIHL	4784 012 4403	SE 62 E	Aspiratori	\N	234.00	211.65	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, accensione automatica
+32dca52a-c413-4482-b5b7-02a705bd5cb3	STIHL	SA08 011 7300	SEA 50 L	Aspiratori	\N	189.00	189.80	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 13, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 27, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 31, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	NOVITÀ, 8.5L, classe L
+202598bf-0d05-4611-b550-8a9f99a78c1b	STIHL	SA04 011 7300	SEA 60 L	Aspiratori	\N	219.00	218.72	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 8, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 26, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	12L, classe L
+5d75e2d9-fb9c-4d1d-b5ec-e92a55d8d903	STIHL	4774 012 4400	SE 122	Aspiratori	\N	509.00	459.70	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, 30L, acciaio inox
+0a946316-75a6-4e51-b0b4-0bcefabc5662	STIHL	4774 012 4405	SE 122 E	Aspiratori	\N	559.00	505.62	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, accensione automatica
+64cb9fcb-f097-4d37-a1b0-e0d2e549e8f2	STIHL	4786 012 4430	SE 133 ME	Aspiratori	\N	884.00	799.58	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, 42L, classe M
+5ecd3d14-3dc6-4587-93d3-e2a1fdc8b7d0	STIHL	SA06 011 8200	KOA 20 Set	Compressori	\N	99.00	98.74	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 23, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Con AS 2 e AL 1, gonfiatore
+2409f4cd-4b93-48a6-9f6c-5107b61e1f45	STIHL	VB03 011 2000	WP 300	Pompe	\N	344.00	320.93	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2" attacco, 37m³/h
+dff7f7b0-b023-4775-9296-d41f017d6535	STIHL	VB04 011 2000	WP 600	Pompe	\N	389.00	363.48	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	3" attacco, 63m³/h
+aa3a5871-9eb7-44ab-9076-1380e860b334	STIHL	VB05 011 2000	WP 900	Pompe	\N	599.00	559.70	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4" attacco, 94m³/h
+6a643add-bb13-4ec4-9ffe-d0952a9bd902	STIHL	4139 200 0007	HT 56 C-E	Potatori	\N	719.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX · ErgoStart · asta divisibile · fino 2.8m
+fa4a62f7-dede-48f7-adb1-bd9fa19365c7	STIHL	VA09 011 8900	SBA 140 B	Raccoglitori speciali	\N	999.00	933.26	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	\N	NOVITÀ, abbacchiatore bacche Bluetooth
+db09099a-0b54-4f3c-8b79-d016ff46e516	STIHL	VA05 011 6200	ASA 20 Set	Cesoie a batteria	\N	179.00	179.02	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 2000, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · taglio max 25mm · senza batteria
+12173db6-94b2-4fba-a667-da8cca75d1cf	STIHL	VA05 011 6210	ASA 20	Cesoie a batteria	\N	219.00	219.02	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 2000, "nome": "AS 2", "unita": "tagli", "raccomandata": true}], "consigliata": "AS 2"}	Sistema AS · taglio max 25mm · con AS 2 e AL 1
+86c6163a-1531-49fe-aa75-fa85a1d326cb	STIHL	1145 200 0263	MS 201 C-M	Motoseghe	\N	989.00	890.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale leggera · M-Tronic · 35cm PS
+101e00ad-2ec9-4bda-ab00-dd1b3dfd281a	STIHL	1141 200 0649	MS 261 C-BM	Motoseghe	\N	1189.00	1030.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · tendicatena rapido · 40cm RS Pro
+4de6cd66-08b9-491e-8e19-ffc5e26f7618	STIHL	1140 200 0721	MS 362 C-M VW	Motoseghe	\N	1529.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · riscaldamento · 45cm RS
+599432aa-e7a6-4d0c-b5f0-408a0a5b59ba	STIHL	4144 200 0028	FS 56 R	Decespugliatori	\N	389.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · SuperCut · impugnatura circolare · Smart Connector
+dcedf4c1-3af4-4388-8221-d157c5bf6761	STIHL	4180 200 0557	FS 111 R	Decespugliatori	\N	599.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	31.4cc · 4-MIX · impugnatura circolare · antivibrante · Smart Connector
+e85bbf0d-88eb-4ae4-ba21-398bf0af1745	STIHL	WB21 011 3400	RM 248	Tosaerba	\N	489.00	435.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 46cm · senza trazione
+a1dbb029-1fc8-45e7-9ca0-1e3e3ab53075	STIHL	WB21 011 3410	RM 248 T	Tosaerba	\N	599.00	536.95	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 46cm · trazione 1 marcia
+286e64ec-8879-48ab-a99b-7ff1e4d762a0	STIHL	6357 011 3416	RM 2 R	Tosaerba	\N	469.00	404.21	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 46cm · mulching
+faac9076-266b-4e8b-a158-a9b43efcda2e	STIHL	6291 011 5610	RLE 240	Arieggiatori	\N	269.00	249.77	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 34cm · 0.9kW · cesto 50L
+7db3649d-012b-48d0-bd9c-8919185208c0	STIHL	6290 011 3105	RL 540	Arieggiatori	\N	859.00	784.47	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD675 · 38cm · SmartChoke · profondo 25mm
+51d94189-854a-47b2-8e77-acc7596001d1	STIHL	6290 011 5610	RLE 540	Arieggiatori	\N	589.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 38cm · 1.6kW · silenzioso
+fd34add1-0af2-4fa5-8832-f3bee9fb6b67	STIHL	FA10 011 5710	FSA 30	Decespugliatori	\N	159.00	158.80	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 10, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	AS 2 · 230mm PolyCut · senza batteria
+37decec6-c035-41b6-b798-401b0913eeab	STIHL	4512 011 5700	FSA 45	Decespugliatori	\N	129.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	\N	\N	Batteria integrata 18V · 250mm PolyCut · NOVITÀ
+04887227-6184-4fb0-a6a8-7fb138705f8d	STIHL	4140 012 2353	FS 38	Decespugliatori	\N	214.00	182.48	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	27.2cc · 2-MIX · 380mm AutoCut · impugnatura ad archetto
+a72de625-aa7a-469d-ba80-30d7ddb4e003	STIHL	4815 011 4100	FSE 31	Decespugliatori	\N	80.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.25kW · 245mm · leggero
+fb4f216d-d6a6-4f0e-ad38-bf60889155e6	STIHL	4816 011 4100	FSE 52	Decespugliatori	\N	119.00	107.31	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.5kW · 300mm AutoCut
+00b1addc-c654-413f-b32f-5058c5de2613	STIHL	4809 011 4122	FSE 60	Decespugliatori	\N	169.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.54kW · 350mm AutoCut
+40f88f39-d7b8-4001-b396-9376f82b7a41	STIHL	4809 011 4123	FSE 71	Decespugliatori	\N	199.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 0.54kW · 350mm AutoCut · asta regolabile
+90e4ab3e-1de8-41d3-8876-c72ab05b3378	STIHL	4809 011 4124	FSE 81	Decespugliatori	\N	239.00	\N	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 1.0kW · 350mm AutoCut · potente
+8ec7e283-dd82-4acc-ac29-6afaa6e60e54	STIHL	4134 200 0422	FS 120	Decespugliatori	\N	479.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	30.8cc · 2-MIX · tracolla doppia
+90911c1a-1e16-40f6-bb3e-c0678bedb58e	STIHL	4151 200 0018	FS 235	Decespugliatori	\N	559.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · tracolla doppia
+69696309-c30b-494a-a865-98ca21391de7	STIHL	4147 200 0357	FS 240	Decespugliatori	\N	849.00	689.22	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · tracolla doppia · cambio bassa manutenzione
+7a0e4804-bfb7-4c37-9836-a1e5dcc3b78a	STIHL	4147 200 0710	FS 240 NOVITÀ	Decespugliatori	\N	844.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	37.7cc · 2-MIX · NOVITÀ · ADVANCE Grip
+c2b653f8-5d96-4262-b989-4aaf5aa976f3	STIHL	4151 200 0070	FS 255	Decespugliatori	\N	674.00	554.26	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 2-MIX · tracolla doppia
+0454a343-9831-4f5f-807e-ae62c2a87509	STIHL	4147 200 0592	FS 261 C-E	Decespugliatori	\N	999.00	842.63	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · ErgoStart · ADVANCE Grip
+6b736639-8c22-417c-9c34-1925a460c9ea	STIHL	4148 200 0216	FS 561 C-EM	Decespugliatori	\N	1679.00	1460.53	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	57.1cc · 2-MIX · M-Tronic · ErgoStart · ADVANCE Plus
+dc2e1a61-9aed-498f-97fc-bcd8ada705e1	STIHL	4147 200 0432	FS 460	Decespugliatori	\N	1169.00	1001.46	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45.6cc · 2-MIX · tracolla ADVANCE · Smart Connector
+2898c9c6-f5fc-43ae-bb91-cd8df93097fc	STIHL	FA10 011 5700	FSA 30 Set	Decespugliatori	\N	119.00	118.68	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 10, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	AS 2 · 230mm PolyCut · con AS 2 e AL 1
+cd6c5ecc-8c55-4110-b980-92a180eba4af	STIHL	4180 200 0585	FR 131 T	Decespugliatori	\N	869.00	630.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	36.3cc · 4-MIX · zaino · asta divisibile · antivibrante · Smart Connector
+94717731-8807-4056-ab99-6d7bd5c66833	STIHL	SA03 011 7300	SEA 20 Set	Aspiratori	\N	99.00	98.74	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 14, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · con AS 2 e AL 1 · 8.5L
+7edb9437-059f-4a34-80e2-56ad77b08c02	STIHL	SA03 011 7310	SEA 20	Aspiratori	\N	139.00	138.63	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 14, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · senza batteria · 8.5L
+4a84eda5-eb81-4a93-a5dd-7042de12d73d	STIHL	SE01 012 4400	SE 33	Aspiratori	\N	109.00	99.03	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 10L · leggero
+73e4c7f4-b374-436c-976f-d5228992b253	STIHL	4811 011 0819	SHE 71	Aspiratori	\N	189.00	170.95	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · aspiratore-trituratore · 45L
+bc172158-38aa-4d88-be68-9a1ef745dc99	STIHL	4811 011 0840	SHE 81	Aspiratori	\N	229.00	207.13	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · aspiratore-trituratore potente · 45L
+0c65c1aa-ae38-4a3c-a48c-e16c0630009b	STIHL	4241 011 0932	SH 86	Aspiratori	\N	539.00	487.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX · aspiratore-trituratore · sacco 45L
+8ea90db2-f86d-41da-a38a-3ebc1f04f847	STIHL	SA09 011 8510	WSA 40 Set	Irroratori	\N	209.00	209.88	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 30, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ · AS 2 · contenitore acqua a pressione 10L · con AS 2 e AL 1
+a783b699-5bd3-4ceb-9c12-3ec426259122	STIHL	1137 200 0332	MS 194 C-E 30cm	Motoseghe	\N	499.00	450.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 30cm
+07ee6ccb-7f87-4181-9b1e-9c671ef775f7	STIHL	1137 200 0334	MS 194 C-E ErgoStart	Motoseghe	\N	549.00	490.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 1/4"P · 30cm
+97fbfd01-29cc-465e-b086-def1ea2cfc86	STIHL	1141 200 0665	MS 261 C-BM 45cm	Motoseghe	\N	1199.00	1040.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · tendicatena rapido · 45cm RS
+3b3b4027-617f-4443-8ec9-371df93c9bfc	STIHL	1146 200 0071	MS 151 TC-E ErgoStart 30cm	Motoseghe	\N	619.00	560.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart avanzato · 2-MIX · 30cm
+660b8ac1-1d4f-4d18-bf3e-fc89aca6f3d9	STIHL	1208 200 0332	MSE 141 35cm	Motoseghe	\N	204.00	190.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PMM3
+2c43380b-db67-4df5-b6f1-5f683480444b	STIHL	1209 200 0155	MSE 170 35cm	Motoseghe	\N	299.00	280.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 35cm PMM3
+02bac813-4ab3-488e-a927-8617410499b0	STIHL	1209 200 0180	MSE 190 40cm	Motoseghe	\N	349.00	330.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 40cm PM3
+0e755049-76a7-4b6e-8e95-bcd363403065	STIHL	1209 200 0179	MSE 210 C-BQ 40cm	Motoseghe	\N	414.00	390.00	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · 230V · 40cm PM3
+44d5d775-9aa3-4656-b33c-6a2b7cba5ca4	STIHL	MB01 200 0008	MS 400.1 C-M 50cm	Motoseghe	\N	1519.00	1360.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 50cm RS
+76561fab-93b1-45ff-bbfa-9dc2baec26d9	STIHL	6357 200 0015	RMA 2 RPV Set	Tosaerba	\N	1069.00	995.77	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	\N	AP 300 S · 46cm · mulching · con AP 300 S e AL 301
+2f22c983-1fa0-4f8d-9ab2-75b526996004	STIHL	RA01 011 7600	REA 60 PLUS	Aspiratori	\N	259.00	259.74	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AK", "batterie": [{"wh": 72, "val": 12, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 20, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 25, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	AS 2 · senza batteria · compatto
+58906ca2-abba-4e94-8ac2-dea190cafbbc	STIHL	4137 740 5008	FSB-KM	Sistema Kombi	\N	89.00	82.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore
+f7ddb921-dfa9-4739-af4f-4e15f20321b0	STIHL	4180 200 0474	FS-KM AutoCut	Sistema Kombi	\N	179.00	163.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore AutoCut 27-2
+8e8f2d02-1953-429d-baa0-11ad15eb7804	STIHL	4180 200 0478	FS-KM GSB	Sistema Kombi	\N	179.00	163.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore GSB 230-4
+3c3a66f7-3cfd-4d83-b0ab-00d75734d9cf	STIHL	4180 740 5002	FCB-KM	Sistema Kombi	\N	219.00	200.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · tagliabordi
+84f5b955-23d3-4f2c-b30c-d02b4f9064ba	STIHL	4180 740 5006	RG-KM	Sistema Kombi	\N	459.00	418.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · testina per erbacce
+4558d95c-79f4-4d09-ba55-3cee5a06afbf	STIHL	4182 200 0212	HT-KM	Sistema Kombi	\N	429.00	390.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · sramatore lungo
+f26b43dc-7c52-4f32-86ca-ee85ddebee9d	STIHL	4249 740 5000	SP-KM	Sistema Kombi	\N	599.00	545.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · raccoglitore speciale
+a523d086-eb4a-4a01-96af-a7dfaa406b11	STIHL	4252 200 0034	GS 461 45cm	Motoseghe edilizia	\N	3369.00	3151.87	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Motosega edilizia · catena diamantata GBM · 45cm
+c4410c4e-9d7e-4b20-bcc8-37726a60b6af	STIHL	4601 740 4904	KW-KM	Sistema Kombi	\N	584.00	530.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · rullo di spazzatura
+dfd955c9-3597-4683-85f4-017350ab3b78	STIHL	4601 740 4905	KB-KM	Sistema Kombi	\N	429.00	390.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · spazzola rotante
+87b997e9-44b2-49ee-bd3b-9abcbe243be7	STIHL	4601 740 5000	BF-KM	Sistema Kombi	\N	344.00	312.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · fresa
+de79d429-23e0-4faa-80ba-715687407331	STIHL	4606 740 5000	BG-KM	Sistema Kombi	\N	229.00	210.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · soffiatore assiale
+89ee654c-760f-4278-bf4e-d443ff89c7dd	STIHL	FA03 200 0018	FSS-KM	Sistema Kombi	\N	229.00	210.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · decespugliatore AP
+c4bed4e1-1a94-4b74-9539-15be4aacdc48	STIHL	4243 200 0033	HL 92 C-E	Tagliasiepi allungati	\N	929.00	815.20	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 145° · ECOSPEED · Smart Connector
+b26ca097-bded-46c3-bf49-524d4b454214	STIHL	4243 200 0024	HL 94 C-E	Tagliasiepi allungati	\N	979.00	859.07	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · angolo 145° · ECOSPEED · Smart Connector
+f3af79fd-a565-48e7-8790-8be9251cc879	STIHL	4180 200 0554	FS 111	Decespugliatori	\N	649.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	31.4cc · 4-MIX · tracolla doppia · antivibrante · Smart Connector
+d65664bd-5e31-47f3-a988-db86b87e5c6e	STIHL	4147 200 0582	FS 261	Decespugliatori	\N	939.00	792.03	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · tracolla doppia · ADVANCE Grip · Smart Connector
+4af9b157-cf53-4fae-9fd1-ad632b117f22	STIHL	4147 200 0362	FR 410 C-E NOVITÀ	Decespugliatori	\N	1099.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · ErgoStart · zaino · Smart Connector · NOVITÀ
+b5c65a0c-47d3-4e55-9080-7146ccabde26	STIHL	4147 200 0711	FR 410 C-E	Decespugliatori	\N	1059.00	905.82	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	41.6cc · 2-MIX · ErgoStart · zaino · Smart Connector
+13c49066-c667-4abd-afb4-3a7ad11993e8	STIHL	FA05-011-5700	FSA 86 R	Decespugliatori batteria	Decespugliatore a batteria Stihl FSA 86 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	329.0	306.49	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+9a7ab512-1aec-4a28-9139-0bac561d08c6	STIHL	RA01 011 7610	REA 100 PLUS	Idropulitrici	\N	349.00	328.46	t	2026-04-11 18:29:22.623135+00	batteria	AP 30	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 43, "nome": "AP 200 S", "unita": "min", "val_min": 13, "raccomandata": true}, {"val": 30, "nome": "AP 300 S", "unita": "min", "val_min": 12}, {"val": 45, "nome": "AP 500 S", "unita": "min", "val_min": 14}, {"val": 50, "nome": "AR 2000 L", "unita": "min", "val_min": 17}, {"nome": "AR 3000 L", "incompatibile": true}]}	125 bar, 300 l/h
+cc650df4-3a83-4da6-84d7-4ac176a0e2fb	STIHL	FA01 200 0000	FSA 135	Decespugliatori	\N	619.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 39, "nome": "AP 20", "unita": "min", "val_min": 23}, {"val": 96, "nome": "AP 30", "unita": "min", "val_min": 48}, {"val": 50, "nome": "AP 200 S", "unita": "min", "val_min": 30, "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min", "val_min": 50}, {"val": 120, "nome": "AP 500 S", "unita": "min", "val_min": 60}, {"val": 330, "nome": "AR 2000 L", "unita": "min", "val_min": 170}, {"val": 458, "nome": "AR 3000 L", "unita": "min", "val_min": 256}]}	AP 300 S · 420mm · tracolla doppia · SC2A · senza batteria
+78cadbd9-5104-4b30-ae34-5ae28c165458	STIHL	FA02 200 0012	RGA 140	Decespugliatori	\N	909.00	857.95	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 13}, {"val": 96, "nome": "AP 30", "unita": "min", "val_min": 48}, {"val": 50, "nome": "AP 200 S", "unita": "min", "val_min": 30, "raccomandata": true}, {"val": 100, "nome": "AP 300 S", "unita": "min", "val_min": 50}, {"val": 120, "nome": "AP 500 S", "unita": "min", "val_min": 60}, {"val": 380, "nome": "AR 2000 L", "unita": "min", "val_min": 190}, {"val": 455, "nome": "AR 3000 L", "unita": "min", "val_min": 255}]}	AP 300 S · 230mm · reciprocatore rimozione erbacce · SC2A
+37f30a06-0bd5-4e7b-a90f-02f9e692882f	STIHL	SA04 011 7310	SEA 100 L	Aspiratori	\N	289.00	269.21	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 13}, {"val": 42, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 29, "nome": "AP 200 S", "unita": "min", "val_min": 17, "raccomandata": true}, {"val": 44, "nome": "AP 300 S", "unita": "min", "val_min": 26}, {"val": 53, "nome": "AP 500 S", "unita": "min", "val_min": 32}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	12L, classe L
+61471579-a2bf-49f0-bc05-b1ce8410b0f6	STIHL	SA07 011 7100	SHA 140	Aspiratori	\N	379.00	353.04	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 30, "nome": "AP 20", "unita": "min", "val_min": 19}, {"val": 58, "nome": "AP 30", "unita": "min", "val_min": 37}, {"val": 39, "nome": "AP 200 S", "unita": "min", "val_min": 25, "raccomandata": true}, {"val": 60, "nome": "AP 300 S", "unita": "min", "val_min": 38}, {"val": 71, "nome": "AP 500 S", "unita": "min", "val_min": 44}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 200 S · senza batteria · 45L
+8b5b9cc2-53c0-4290-8a50-04a032330c8f	STIHL	4860 011 4704	KGA 770	Spazzatrici	\N	889.00	836.66	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 129, "nome": "AP 30", "unita": "min"}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 250, "nome": "AP 300 S", "unita": "min", "raccomandata": true}, {"val": 168, "nome": "AP 500 S", "unita": "min"}, {"val": 260, "nome": "AR 2000 L", "unita": "min"}, {"val": 312, "nome": "AR 3000 L", "unita": "min"}]}	77cm larghezza lavoro, MultiClean PLUS
+ddcc06af-35d5-4a6d-92e4-c4555a7f8711	STIHL	VA02 011 0700	SPA 130	Raccoglitori speciali	\N	899.00	835.00	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 77, "nome": "AP 20", "unita": "min"}, {"val": 144, "nome": "AP 30", "unita": "min"}, {"val": 100, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 150, "nome": "AP 300 S", "unita": "min"}, {"val": 180, "nome": "AP 500 S", "unita": "min"}, {"val": 580, "nome": "AR 2000 L", "unita": "min"}, {"val": 870, "nome": "AR 3000 L", "unita": "min"}]}	Per olive/frutta, senza batteria
+9db89c32-8e1f-46ef-a41c-0a1a71f0cf4a	STIHL	VA02 011 0701	SPA 140	Raccoglitori speciali	\N	999.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 77, "nome": "AP 20", "unita": "min"}, {"val": 144, "nome": "AP 30", "unita": "min"}, {"val": 100, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 150, "nome": "AP 300 S", "unita": "min"}, {"val": 180, "nome": "AP 500 S", "unita": "min"}, {"val": 580, "nome": "AR 2000 L", "unita": "min"}, {"val": 870, "nome": "AR 3000 L", "unita": "min"}]}	Asta telescopica, senza batteria
+be23384c-aecd-4d9f-9878-cf661c9263a9	STIHL	VA07 011 6200	ASA 130	Cesoie a batteria	\N	799.00	749.78	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 10000, "nome": "AP 200 S", "unita": "tagli", "raccomandata": true}, {"val": 7500, "nome": "AP 300 S", "unita": "tagli"}, {"val": 11000, "nome": "AP 500 S", "unita": "tagli"}, {"val": 13000, "nome": "AR 2000 L", "unita": "tagli"}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · AP 200 S · taglio max 35mm · professionale · senza batteria
+bebb4c70-e0d0-4f78-ae6d-0ddc302f59a1	STIHL	VA08 011 6200	ASA 140	Cesoie a batteria	\N	999.00	937.46	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 8500, "nome": "AP 200 S", "unita": "tagli", "raccomandata": true}, {"val": 6000, "nome": "AP 300 S", "unita": "tagli"}, {"val": 9000, "nome": "AP 500 S", "unita": "tagli"}, {"val": 11000, "nome": "AR 2000 L", "unita": "tagli"}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · AP 300 S · taglio max 45mm · professionale · senza batteria
+7d275377-b7df-430b-8956-8810e593d40e	STIHL	HA07 011 3530	HSA 100	Tosasiepi	\N	399.00	374.42	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 116, "nome": "AP 20", "unita": "min"}, {"val": 216, "nome": "AP 30", "unita": "min"}, {"val": 150, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 225, "nome": "AP 300 S", "unita": "min"}, {"val": 270, "nome": "AP 500 S", "unita": "min"}, {"val": 1205, "nome": "AR 2000 L", "unita": "min"}, {"val": 1810, "nome": "AR 3000 L", "unita": "min"}]}	AP · antivibrante · coltelli doppio taglio · Smart Connector
+ab825868-0e9f-4e51-b9aa-70b3ff168645	STIHL	4511 011 3520	HSA 45	Tosasiepi	\N	129.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AI	Batteria integrata	\N	Batteria integrata 18V · cavo di ricarica
+22e93a40-c3ce-4f8e-9fb7-26b29c81760c	STIHL	FA03-200-0007	FSA 200.0 R	Decespugliatori batteria	Decespugliatore a batteria Stihl FSA 200 R, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	759.0	710.18	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e3afb9b5-286b-4e10-8a6c-4c38eed3c236	STIHL	4818 011 3520	HSE 42	Tosasiepi	\N	149.00	134.77	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · freno lama meccanico
+86595606-255e-4186-a12c-681670b01381	STIHL	4818 011 3530	HSE 52	Tosasiepi	\N	189.00	170.95	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico
+37980520-b9bf-4f02-86ed-addbe112db5b	STIHL	4812 011 3584	HSE 81	Tosasiepi	\N	369.00	333.76	t	2026-04-11 18:29:22.623135+00	Elettrico 230V	\N	\N	Elettrico · denti larghi · imp. orientabile 5 pos.
+02e8fdbe-8448-4300-8011-efc60fb79d28	STIHL	6357 011 1410	RMA 2 RV	Tosaerba	\N	694.00	645.52	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 320, "nome": "AP 20", "unita": "m²"}, {"val": 610, "nome": "AP 30", "unita": "m²"}, {"val": 405, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 630, "nome": "AP 300 S", "unita": "m²"}, {"val": 760, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	EVC 200 · AP 500 S · 46cm · mulching · trazione Vario · senza batteria
+c6daa1d9-271b-4f76-a824-e31aa57ef4c5	STIHL	6357 011 1415	RMA 2 RPV	Tosaerba	\N	749.00	696.68	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 320, "nome": "AP 20", "unita": "m²"}, {"val": 610, "nome": "AP 30", "unita": "m²"}, {"val": 405, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 630, "nome": "AP 300 S", "unita": "m²"}, {"val": 760, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 46cm · mulching · trazione Vario asse per asse · senza batteria
+b4d3dc51-bc7b-4873-8f5b-cb149f48212f	STIHL	WA72 011 1400	RMA 7 RV	Tosaerba	\N	2299.00	2141.52	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 730, "nome": "AP 30", "unita": "m²", "val_min": 730}, {"val": 490, "nome": "AP 200 S", "unita": "m²", "val_min": 490}, {"val": 760, "nome": "AP 300 S", "unita": "m²", "val_min": 760, "raccomandata": true}, {"val": 910, "nome": "AP 500 S", "unita": "m²", "val_min": 910}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 51cm · mulching · trazione Vario · professionale · senza batteria
+ae9df495-a312-49d1-863d-ffc4d1aeb142	STIHL	WB22 011 3400	RM 253	Tosaerba	\N	569.00	506.28	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 51cm · senza trazione
+493847ca-4475-4415-b0dc-4bef78ccb7d8	STIHL	WB22 011 3410	RM 253 T	Tosaerba	\N	699.00	618.23	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 205 · 51cm · trazione 1 marcia
+99a36624-7be3-405f-959c-c964227843f8	STIHL	WB40 011 3400	RM 443	Tosaerba	\N	519.00	444.53	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 41cm · senza trazione
+3b474cd7-f825-4f99-b9ae-c11b87939c85	STIHL	WB40 011 3410	RM 443 T	Tosaerba	\N	589.00	497.44	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 41cm · trazione 1 marcia
+b884e8a6-c03a-4672-996d-6cae6fccad75	STIHL	6364 011 3441	RM 650 T	Tosaerba	\N	1039.00	877.49	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 48cm · trazione 1 marcia · cesto 70L
+2178802e-d502-4f77-8d9f-103b6be9704b	STIHL	6364 011 3401	RM 650 V	Tosaerba	\N	1129.00	956.50	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 48cm · trazione Vario
+aad371a2-89be-4f96-b16d-7047cd28f794	STIHL	6364 011 3411	RM 650 VS	Tosaerba	\N	1369.00	1165.29	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 48cm · trazione Vario · freno-frizione
+a6f8311a-efda-4f6d-be3a-5d0a6e5089a4	STIHL	6374 011 3401	RM 655 V	Tosaerba	\N	1299.00	1100.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 53cm · trazione Vario
+4015f101-2977-4612-8d0d-5d0c8448718c	STIHL	6374 011 3412	RM 655 VS	Tosaerba	\N	1499.00	1271.96	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 53cm · trazione Vario · freno-frizione
+e5e34fd4-312e-4afc-b6c4-4f107f7ccc60	STIHL	6374 011 3441	RM 655 YS	Tosaerba	\N	2139.00	1815.03	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 53cm · trasmissione idrostatica
+a72176b6-f9de-400b-976b-0cf4e0f327df	STIHL	6378 011 3431	RM 756 GC	Tosaerba	\N	2399.00	1754.87	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 54cm · trazione 3 marce · cesto 80L
+ee57937a-9af5-4042-a858-0729f0d1c65d	STIHL	6378 011 3421	RM 756 YC	Tosaerba	\N	2639.00	2274.39	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 54cm · trasmissione idrostatica
+ab7da7c2-8399-47c5-a639-3e48f47ef774	STIHL	6378 011 3401	RM 756 YS	Tosaerba	\N	2639.00	2274.39	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kawasaki FJ180V · 54cm · trasmissione idrostatica · freno-frizione
+d28a02cc-ee48-477d-a88d-074d0ce2c9fe	STIHL	6357 011 3415	RM 2 RT	Tosaerba	\N	699.00	601.50	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 46cm · mulching · trazione 1 marcia
+40ee6e9f-ee8a-4137-ad8d-aa650c257304	STIHL	6361 011 3416	RM 3 RT	Tosaerba	\N	829.00	713.36	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 48cm · mulching · trazione 1 marcia
+f79e2460-d756-468c-9f3c-894cb74107fa	STIHL	6383 011 3411	RM 4 RT	Tosaerba	\N	949.00	816.63	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD675 · 53cm · mulching · trazione 1 marcia
+85b490d4-a1ef-42bd-8228-da080b19e1a7	STIHL	6383 011 3422	RM 4 RTP	Tosaerba	\N	1199.00	1031.75	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD775 · 53cm · mulching · trazione 1 marcia · professionale
+d38d702e-073d-49c6-9bf9-d7775c941e23	STIHL	6383 011 3431	RM 4 RV	Tosaerba	\N	1069.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Kohler HD675 · 53cm · mulching · trazione Vario
+62522cbd-d999-40e7-a226-c5b5b4064065	STIHL	4866 011 5900	BGA 100	Soffiatori	Soffiatore a batteria Stihl BGA 100, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	459.00	430.73	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"val": 51, "nome": "AP 20", "unita": "min", "val_min": 9}, {"val": 99, "nome": "AP 30", "unita": "min", "val_min": 19}, {"val": 66, "nome": "AP 200 S", "unita": "min", "val_min": 12, "raccomandata": true}, {"val": 103, "nome": "AP 300 S", "unita": "min", "val_min": 20}, {"val": 123, "nome": "AP 500 S", "unita": "min", "val_min": 24}, {"val": 400, "nome": "AR 2000 L", "unita": "min", "val_min": 80}, {"val": 595, "nome": "AR 3000 L", "unita": "min", "val_min": 110}]}	Senza batteria
+0be81eb0-4dca-4fa5-8ef4-5373dfa37d98	STIHL	BA06 011 5900	BGA 250	Soffiatori	Soffiatore a batteria Stihl BGA 250, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	399.00	374.42	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 38, "nome": "AP 30", "unita": "min", "val_min": 12}, {"val": 27, "nome": "AP 200 S", "unita": "min", "val_min": 13, "raccomandata": true}, {"val": 40, "nome": "AP 300 S", "unita": "min", "val_min": 12}, {"val": 48, "nome": "AP 500 S", "unita": "min", "val_min": 14}, {"val": 155, "nome": "AR 2000 L", "unita": "min", "val_min": 45}, {"val": 235, "nome": "AR 3000 L", "unita": "min", "val_min": 70}]}	Senza batteria
+7b9ee035-e157-4279-aa84-08bfa721ad43	STIHL	BA02 011 5900	BGA 86	Soffiatori	Soffiatore a batteria Stihl BGA 86, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	309.00	289.97	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 81, "nome": "AP 20", "unita": "min", "val_min": 14}, {"val": 144, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 105, "nome": "AP 200 S", "unita": "min", "val_min": 18, "raccomandata": true}, {"val": 150, "nome": "AP 300 S", "unita": "min", "val_min": 26}, {"val": 175, "nome": "AP 500 S", "unita": "min", "val_min": 31}, {"val": 580, "nome": "AR 2000 L", "unita": "min", "val_min": 95}, {"val": 910, "nome": "AR 3000 L", "unita": "min", "val_min": 148}]}	Senza batteria
+1217e990-cdd1-4af3-99bf-6e772a6500ac	STIHL	BA07 011 5910	BRA 600 B	Soffiatori dorsali	Soffiatore a batteria Stihl BRA600, tensione di utilizzo 72 V, potenza di soffiaggio 35 N, sistema di trasporto a zaino ergonomico, tubo di soffiaggio regolabile in lunghezza, peso 10,5 kg.	1149.00	1078.22	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 22, "nome": "AP 30", "unita": "min", "val_min": 11}, {"val": 18, "nome": "AP 200 S", "unita": "min", "val_min": 12}, {"val": 29, "nome": "AP 300 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"val": 34, "nome": "AP 500 S", "unita": "min", "val_min": 18}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ, Bluetooth, STIHL Noise Reduction
+1e992572-f779-4657-86b5-a75997b15dfa	STIHL	FA08 200 0005	FSA 120 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 120 R, potenza 0,8 kw vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e due livelli di potenza (Eco e Max), peso senza batteria 5,0 kg.	439.00	408.98	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 25, "nome": "AP 20", "unita": "min", "val_min": 15}, {"val": 45, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 30, "nome": "AP 200 S", "unita": "min", "val_min": 20, "raccomandata": true}, {"val": 50, "nome": "AP 300 S", "unita": "min", "val_min": 30}, {"val": 60, "nome": "AP 500 S", "unita": "min", "val_min": 35}, {"val": 210, "nome": "AR 2000 L", "unita": "min", "val_min": 130}, {"val": 320, "nome": "AR 3000 L", "unita": "min", "val_min": 190}]}	AP 300 S · 380mm AutoCut · impugnatura circolare · senza batteria · Smart Connector
+a2790723-2f84-4274-b610-2b072fe71f2e	STIHL	FA03 200 0007	FSA 200 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 200 R, vano batteria AP nel dispositivo, motore EC brushless, regolazione della velocità e tre livelli di potenza, diametro di taglio fino a 45 cm, peso senza batteria 4,8 kg.	759.00	710.18	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 30, "nome": "AP 30", "unita": "min", "val_min": 15}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 10}, {"val": 32, "nome": "AP 300 S", "unita": "min", "val_min": 16, "raccomandata": true}, {"val": 40, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"val": 127, "nome": "AR 2000 L", "unita": "min", "val_min": 64}, {"val": 192, "nome": "AR 3000 L", "unita": "min", "val_min": 96}]}	AP 500 S · 450mm · impugnatura circolare · SC2A · senza batteria
+2f0f07c0-6441-4f0c-9a8f-7cb0dbaf902e	STIHL	FA05 011 5700	FSA 86 R	Decespugliatori	Decespugliatore a batteria Stihl FSA 86 R, potenza 0,5 kw, vano batteria AP nel dispositivo, diametro di taglio 350 mm, impugnatura di comando ergonomica con regolazione regime senza livelli, peso senza batteria 3,2 kg.	329.00	306.49	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 30, "nome": "AP 20", "unita": "min"}, {"val": 55, "nome": "AP 30", "unita": "min"}, {"val": 35, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 55, "nome": "AP 300 S", "unita": "min"}, {"val": 65, "nome": "AP 500 S", "unita": "min"}, {"val": 200, "nome": "AR 2000 L", "unita": "min"}, {"val": 290, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · 350mm AutoCut · senza batteria · Smart Connector
+12b004cd-8289-41e5-b57c-50eef8843b0b	STIHL	HA04 200 0038	HLA 140 B	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 140 B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	699.00	655.94	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 30	\N	NOVITÀ · AP · Bluetooth · HMI ADVANCE PLUS · SC integrato
+583e7024-464e-426f-849f-85d6190a9ac4	STIHL	4859 011 2910	HLA 66	Tagliasiepi allungati	Tosasiepe a batteria Stihl HLA 66, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	429.00	402.57	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 111, "nome": "AP 20", "unita": "min"}, {"val": 214, "nome": "AP 30", "unita": "min"}, {"val": 144, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 223, "nome": "AP 300 S", "unita": "min"}, {"val": 268, "nome": "AP 500 S", "unita": "min"}, {"val": 760, "nome": "AR 2000 L", "unita": "min"}, {"val": 1110, "nome": "AR 3000 L", "unita": "min"}]}	AP · angolo 115° · coltelli su entrambi i lati · Smart Connector
+d58f2276-dc98-4654-be53-686726394155	STIHL	4869 011 3561	HSA 130 R 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 R, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	629.00	590.25	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	AP · sfrondatura R · lama 75cm · SC2A
+7dba4cf8-0414-42f8-b707-a6dc1c1884a0	STIHL	4869 011 3560	HSA 130 R	Tosasiepi	Tosasiepe a batteria Stihl HSA 130 R, impugnatura multifunzione orientabile con regolazione su tre livelli, affilatura lama su entrambi i lati, peso 4,6 kg, lunghezza lama 75 cm.	569.00	533.95	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 83, "nome": "AP 20", "unita": "min"}, {"val": 160, "nome": "AP 30", "unita": "min"}, {"val": 108, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 167, "nome": "AP 300 S", "unita": "min"}, {"val": 200, "nome": "AP 500 S", "unita": "min"}, {"val": 735, "nome": "AR 2000 L", "unita": "min"}, {"val": 1050, "nome": "AR 3000 L", "unita": "min"}]}	AP · sfrondatura R · SC2A
+2b5b4600-8ea4-47f3-9bfe-6e1919dc2853	STIHL	HA02 011 3505	HSA 140 R 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	709.00	665.33	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	AP · sfrondatura R · lama 75cm
+119c9a68-773c-4740-b40a-5e696eef7b4c	STIHL	HA02 011 3500	HSA 140 R	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	659.00	618.40	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 116, "nome": "AP 20", "unita": "min"}, {"val": 235, "nome": "AP 30", "unita": "min"}, {"val": 150, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 245, "nome": "AP 300 S", "unita": "min"}, {"val": 290, "nome": "AP 500 S", "unita": "min"}, {"val": 935, "nome": "AR 2000 L", "unita": "min"}, {"val": 1405, "nome": "AR 3000 L", "unita": "min"}]}	AP · sfrondatura R · antivibrante · batteria rimovibile · SC2A
+31fc6bad-da1b-4fd5-a20d-d4dc394ff1cb	STIHL	HA02 011 3515	HSA 140 T 75cm	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 30 mm, 3900-4500-5000 colpi/minuto, peso 4,2 kg, lunghezza lama 60 cm.	709.00	665.33	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	AP · rifinitura T · lama 75cm
+06908413-50e6-4b62-8773-8ac991976f9c	STIHL	HA02 011 3510	HSA 140 T	Tosasiepi	Tosasiepe a batteria Stihl HSA 140 T, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 30 mm, 3900-4500-5000 colpi/minuto, peso 4,2 kg, lunghezza lama 60 cm.	659.00	618.40	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 108, "nome": "AP 20", "unita": "min"}, {"val": 226, "nome": "AP 30", "unita": "min"}, {"val": 140, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 235, "nome": "AP 300 S", "unita": "min"}, {"val": 280, "nome": "AP 500 S", "unita": "min"}, {"val": 900, "nome": "AR 2000 L", "unita": "min"}, {"val": 1355, "nome": "AR 3000 L", "unita": "min"}]}	AP · rifinitura T · antivibrante · SC2A
+fba72cd0-3265-477a-bb7f-4aed620d1482	STIHL	LA03 200 0004	HTA 66	Potatori	Potatore a batteria Stihl HTA 66, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	564.00	529.26	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 32, "nome": "AP 20", "unita": "min"}, {"val": 65, "nome": "AP 30", "unita": "min"}, {"val": 42, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 68, "nome": "AP 300 S", "unita": "min"}, {"val": 82, "nome": "AP 500 S", "unita": "min"}, {"val": 222, "nome": "AR 2000 L", "unita": "min"}, {"val": 318, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · asta fissa 2.4m · Smart Connector · senza batteria
+92147d03-90e6-4151-9372-f963506107fd	STIHL	LA03 200 0020	HTA 66 K	Potatori	Potatore a batteria Stihl HTA 66, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	544.00	510.49	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"val": 32, "nome": "AP 20", "unita": "min"}, {"val": 65, "nome": "AP 30", "unita": "min"}, {"val": 42, "nome": "AP 200 S", "unita": "min", "raccomandata": true}, {"val": 68, "nome": "AP 300 S", "unita": "min"}, {"val": 82, "nome": "AP 500 S", "unita": "min"}, {"val": 222, "nome": "AR 2000 L", "unita": "min"}, {"val": 318, "nome": "AR 3000 L", "unita": "min"}]}	AP 200 S · asta corta telescopica · Smart Connector · senza batteria
+4659a08b-ea90-4f3b-8fb6-16a52d556588	STIHL	4243 740 5006	FH-KM 145°	Sistema Kombi	Accessorio tosasiepi HL-KM 145°, utilizzo su siepi alte e rasoterra, variatore meccanico regolabile a scatti, lunghezza di taglio 60 cm, peso 2,4 kg	519.00	472.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · tagliasterpi 145°
+d743f7ad-122b-47db-abbd-392db26cb2e4	STIHL	4243 740 5008	HL-KM 145°	Sistema Kombi	Accessorio tosasiepi HL-KM 145°, utilizzo su siepi alte e rasoterra, variatore meccanico regolabile a scatti, lunghezza di taglio 60 cm, peso 2,4 kg	519.00	472.00	t	2026-04-11 18:29:22.623135+00	—	\N	\N	Attrezzo KM · tosasiepi 145°
+d5521b7a-bba7-427f-9c62-ecd7de3f7448	STIHL	MA02 200 0092	MSA 300 C-O 45cm	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	949.00	860.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	\N	NOVITÀ · Professionale AP · sensore olio · 45cm RS Pro · SC2A
+a62a1723-5c0d-4138-8567-608fb7b9c23d	STIHL	6165 200 0013	RT 4112 SZ	Trattorini	Trattorino da giardino Stihl RT 4112 SZ, motore Stihl EVC 7000 bicilindrico 635 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm. 110 a scarico laterale, altezza di taglio regolabile 35-90 mm. Cambio idrostatico a pedale, peso kg 224	4219.00	3780.22	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 110cm · 2 cilindri · scarico laterale
+0f0fe1f8-9858-4302-bc03-99f41422f8d8	STIHL	FA08 011 6820	KMA 120 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 120 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	399.00	374.42	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 25, "nome": "AP 20", "unita": "min", "val_min": 15}, {"val": 45, "nome": "AP 30", "unita": "min", "val_min": 25}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"val": 45, "nome": "AP 300 S", "unita": "min", "val_min": 25}, {"val": 55, "nome": "AP 500 S", "unita": "min", "val_min": 30}, {"val": 190, "nome": "AR 2000 L", "unita": "min", "val_min": 110}, {"val": 290, "nome": "AR 3000 L", "unita": "min", "val_min": 170}]}	AP · 2 velocità ECO/Max · impugnatura circolare · Smart Connector
+9aac8d4b-2a56-4279-a792-c07033a25920	STIHL	FA02 011 6810	KMA 135 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 135 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a tre livelli, regolazione continua della velocità, peso 3,4 kg.	479.00	449.49	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"val": 22, "nome": "AP 20", "unita": "min", "val_min": 11}, {"val": 43, "nome": "AP 30", "unita": "min", "val_min": 21}, {"val": 28, "nome": "AP 200 S", "unita": "min", "val_min": 14, "raccomandata": true}, {"val": 45, "nome": "AP 300 S", "unita": "min", "val_min": 22}, {"val": 54, "nome": "AP 500 S", "unita": "min", "val_min": 26}, {"val": 170, "nome": "AR 2000 L", "unita": "min", "val_min": 85}, {"val": 213, "nome": "AR 3000 L", "unita": "min", "val_min": 122}]}	AP · protezione antispruzzo · SC2A · P+S
+a1c2c7f8-aa93-4d07-95c4-965c8edd0ad5	STIHL	1145 200 0267	MS 201 TC-M 14cm	Motoseghe	Motosega MS 201 TC-M, motore 2 Mix, cilindrata 35,2 cc, sistema STIHL M-Tronic, lunghezza spranga cm 30	1049.00	900.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · M-Tronic · 35cm
+57e866cb-e455-496f-a1ba-9ac9c55d2404	STIHL	1145 200 0270	MS 201 TC-M 12cm	Motoseghe	Motosega MS 201 TC-M, motore 2 Mix, cilindrata 35,2 cc, sistema STIHL M-Tronic, lunghezza spranga cm 30	1039.00	890.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · M-Tronic · 30cm
+afdf865c-c4b9-4216-801f-0253f9e74008	STIHL	1137 200 0324	MS 201 TC-M	Motoseghe	Motosega MS 201 TC-M, motore 2 Mix, cilindrata 35,2 cc, sistema STIHL M-Tronic, lunghezza spranga cm 30	509.00	460.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · M-Tronic · 2-MIX · 30cm PM3
+df60abde-4531-4e35-9d47-19213bfefd59	STIHL	1252 200 0043	MSA 161 T	Motoseghe	Motosega a batteria Stihl MSA 161 T: Motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 16 m/s, lunghezza barra 25 cm, peso 2,5 kg	439.00	400.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 60, "nome": "AP 20", "tagli": 290, "unita": "min", "val_min": 32}, {"val": 60, "nome": "AP 30", "tagli": 290, "unita": "min", "val_min": 60}, {"val": 62, "nome": "AP 200 S", "tagli": 300, "unita": "min", "val_min": 42, "raccomandata": true}, {"val": 62, "nome": "AP 300 S", "tagli": 300, "unita": "min", "val_min": 62}, {"val": 74, "nome": "AP 500 S", "tagli": 360, "unita": "min", "val_min": 74}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Arboricoltori · Smart Connector · 25cm PM3
+5d71370a-9f1d-4634-b8b2-a204a79f50eb	STIHL	1252 200 0044	MSA 161 T 30cm	Motoseghe	Motosega a batteria Stihl MSA 161 T: Motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 16 m/s, lunghezza barra 25 cm, peso 2,5 kg	449.00	410.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	Tophandle · Arboricoltori · Smart Connector · 30cm PM3
+3f816498-1104-45bb-a7c2-9a779018f3bd	STIHL	MA05 200 0000	MSA 190 T	Motoseghe	Motosega a batteria Stihl MSA 190 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 20 m/s, lunghezza barra 30 cm, peso 3,07 kg	369.00	350.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	{"serie": "AP", "batterie": [{"val": 72, "nome": "AP 20", "tagli": 245, "unita": "min", "val_min": 37}, {"val": 72, "nome": "AP 30", "tagli": 245, "unita": "min", "val_min": 72}, {"val": 75, "nome": "AP 200 S", "tagli": 225, "unita": "min", "val_min": 48, "raccomandata": true}, {"val": 75, "nome": "AP 300 S", "tagli": 225, "unita": "min", "val_min": 75}, {"val": 90, "nome": "AP 500 S", "tagli": 306, "unita": "min", "val_min": 90}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Tophandle · Arboricoltori · Smart Connector · 30cm PM3
+e4e956d5-65fb-479c-bbf7-adf382fbfcf6	STIHL	MA05 200 0002	MSA 190 T 30cm v2	Motoseghe	Motosega a batteria Stihl MSA 190 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 20 m/s, lunghezza barra 30 cm, peso 3,07 kg	369.00	350.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 200 S	\N	Tophandle · Arboricoltori · Smart Connector · 30cm · variante
+2da673c5-3903-4430-892f-9059de501191	STIHL	MA03 200 0021	MSA 220 C-B 40cm	Motoseghe	Motosega a batteria Stihl MSA 220 C, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	499.00	470.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Sistema AP · 40cm PS3 Pro · Smart Connector · senza batteria
+47ae0e82-3d09-43ef-90d7-fa7c6f0e4938	STIHL	MA03 200 0027	MSA 220 C-B Duro 35cm	Motoseghe	Motosega a batteria Stihl MSA 220 C, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	529.00	490.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Sistema AP · catena DURO 3 · 35cm · Smart Connector · senza batteria
+112e170a-686f-414b-89aa-6d6680f4fd91	STIHL	MA03 200 0020	MSA 220 C-B	Motoseghe	Motosega a batteria Stihl MSA 220 C, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	489.00	460.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 36, "nome": "AP 200 S", "tagli": 290, "unita": "min", "val_min": 36, "raccomandata": true}, {"val": 32, "nome": "AP 300 S", "tagli": 150, "unita": "min", "val_min": 32}, {"val": 37, "nome": "AP 500 S", "tagli": 300, "unita": "min", "val_min": 37}, {"val": 44, "nome": "AR 2000 L", "tagli": 350, "unita": "min", "val_min": 44}, {"nome": "AR 3000 L", "incompatibile": true}]}	Sistema AP · 35cm PS3 Pro · Smart Connector · senza batteria
+03b72cb7-7e20-4d3b-9d68-3a32ea376bff	STIHL	MA02 200 0007	MSA 300 45cm	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	809.00	770.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	\N	Professionale AP · 45cm RS Pro · SC2A · senza batteria
+02e9bf83-95e4-472a-9384-3bede2228809	STIHL	MA02 200 0004	MSA 300	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	799.00	760.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"nome": "AP 300 S", "incompatibile": true}, {"nome": "AP 500 S", "incompatibile": true}, {"val": 44, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 20, "raccomandata": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Professionale AP · 40cm RS Pro · SC2A · senza batteria
+d767acdc-482e-44e9-b027-c82cf8fdda33	STIHL	MA02 200 0082	MSA 300 C-O	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	939.00	850.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"nome": "AP 300 S", "incompatibile": true}, {"nome": "AP 500 S", "incompatibile": true}, {"val": 44, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 20, "raccomandata": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · Professionale AP · sensore olio · 40cm RS Pro · SC2A
+3a8eee14-987f-4303-9236-474b0b450c68	STIHL	MA02 200 0113	MSA 300 C-O R	Motoseghe	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	1329.00	\N	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"nome": "AP 200 S", "incompatibile": true}, {"nome": "AP 300 S", "incompatibile": true}, {"nome": "AP 500 S", "incompatibile": true}, {"val": 44, "nome": "AR 2000 L", "tagli": 320, "unita": "min", "val_min": 20, "raccomandata": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Professionale · Sensore olio · NOVITÀ
+1ed8fb89-9480-471b-9bc5-2ec8787acfdb	STIHL	4950 011 4560	RE 130 PLUS	Idropulitrici	Idropulitrice Stihl RE 130 Plus, motore brushless 220-240 V, pressione max. 170 bar, portata acqua max. 500 l/h. Dotata di un tamburo per tubo flessibile con guida, che consente di riporre il tubo facilmente. Include un tubo flessibile ad alta pressione di 9 metri, rinforzato con armatura in acciaio. Pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 21,2 kg.	539.00	469.00	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	135 bar, tubo acciaio 9m
+133327b0-3743-4a08-bdad-a39281df2e51	STIHL	RE01 011 4541	RE 170 PLUS	Idropulitrici	Idropulitrice Stihl RE 170 Plus, modello professionale con pompa in ottone che eroga 180 bar e 648 l/h. Dotata di tubo ad alta pressione armato in acciaio da 12 metri con avvolgitubo, peso totale 31 kg.	874.00	799.37	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	150 bar, tamburo integrato
+aedee996-701c-40d0-b265-9f90f5d185cd	STIHL	RE02 011 4505	RE 80 X	Idropulitrici	Idropulitrice Stihl RE 80, motore brushless 220-240 V, pressione max. 120 bar, portata acqua max. 430 l/h, lunghezza tubo in dotazione 5 m, pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 7,5 kg.	144.00	131.70	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	90 bar, 430 l/h, versione portatile
+f114bdbf-c0d2-47ab-8286-0e8e2528bd54	STIHL	RE02 011 4502	RE 80	Idropulitrici	Idropulitrice Stihl RE 80, motore brushless 220-240 V, pressione max. 120 bar, portata acqua max. 430 l/h, lunghezza tubo in dotazione 5 m, pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 7,5 kg.	159.00	145.21	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	90 bar, 430 l/h
+a156be06-bde0-4d48-849e-6e5b82993598	STIHL	WA41 200 0002	RMA 448 PV Set	Tosaerba	Tosaerba a batteria Stihl RMA 448 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	1239.00	1145.76	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	\N	AP 500 S · 46cm · trazione Vario · con AP 500 S e AL 301
+2a9f3c73-a7c6-4627-987b-1e4c36c82cb7	STIHL	WA41 011 1420	RMA 448 PV	Tosaerba	Tosaerba a batteria Stihl RMA 448 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	869.00	807.13	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 260, "nome": "AP 20", "unita": "m²"}, {"val": 480, "nome": "AP 30", "unita": "m²"}, {"val": 340, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 510, "nome": "AP 300 S", "unita": "m²"}, {"val": 610, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 46cm · trazione Vario · senza batteria
+ae8c2828-b481-4992-9575-9bc4d39350d3	STIHL	WA71 011 1400	RMA 756 V	Tosaerba	Tosaerba a batteria Stihl RMA 756 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2669.00	2482.56	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 610, "nome": "AP 30", "unita": "m²", "val_min": 610}, {"val": 410, "nome": "AP 200 S", "unita": "m²", "val_min": 410}, {"val": 640, "nome": "AP 300 S", "unita": "m²", "val_min": 640, "raccomandata": true}, {"val": 765, "nome": "AP 500 S", "unita": "m²", "val_min": 765}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 54cm · trazione Vario · professionale · senza batteria
+de3bde2c-a977-4aaa-a2b3-ae6f52c559fe	STIHL	6165 200 0012	RT 4097 SX	Trattorini	Trattorino da giardino Stihl RT 4097 SX, motore Stihl 452 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm 95 a scarico laterale, altezza di taglio regolabile 35-90 mm, cambio idrostatico a pedale, peso kg 202	3379.00	2854.58	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 4000 · 95cm · scarico laterale
+de0eb143-ee60-4ed7-ab68-0475039b1ad1	STIHL	4147-200-0716	FR 460.0 TC-E	Decespugliatori professionali	\N	1189.0	1002.9	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+6a2b5009-43ce-4d59-a6c0-0a90a07db751	STIHL	HA07-011-3530	HSA 100.1	Tosasiepi batteria	Tosasiepe a batteria Stihl HSA 100 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati, peso 3,7 kg, lunghezza lama 60 cm.	399.0	374.42	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+d4bb4252-b2a0-4f33-9d3d-20c0db0857a5	STIHL	HA02-011-3510	HSA 140.0 T 600mm	Tosasiepi batteria	Tosasiepe a batteria Stihl HSA 140 R, impugnatura multifunzione orientabile a 90°, affilatura lama su entrambi i lati,distanza tra i denti 38 mm, 2600-3000-3400 colpi/minuto, peso 4,4 kg, lunghezza lama 60 cm.	659.0	618.4	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+f1dee710-3536-43e5-89d2-c1606070b618	STIHL	4859-011-2910	HLA 66	Tosasiepi su palo batteria	Tosasiepe a batteria Stihl HLA 66, vano batteria AP nel dispositivo, coltello regolabile di 115° con lame affilate su entrambi i lati, lunghezza di taglio cm 50, peso senza batteria 3,6 kg, regolazione continua della velocità, lunghezza totale cm 205, lunghezza con lama ripiegata cm 125.	429.0	402.57	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+4d74575e-9c26-4e02-849c-9c717e2fbd8f	STIHL	HA04-200-0038	HLA 140.0-B	Tosasiepi su palo batteria	Tosasiepe a batteria Stihl HLA 140 B, vano batteria AP nel dispositivo, display a led per controllo della velocità su 3 livelli, apparato lame regolabile di 145°,  lunghezza di taglio cm 60 e distanza tra i denti di 34 mm, fino a 3200 colpi al minuto, STIHL Smart Connector integrato, peso 5,6 kg	699.0	655.94	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+892dbf9a-90d3-405d-9ff9-e27c71e4e9d7	STIHL	LA03-200-0004	HTA 66 25cm	Potatori su palo batteria	Potatore a batteria Stihl HTA 66, vano batteria AP nel dispositivo, catena 1/4" PM3, peso senza batteria 3,6 kg, lunghezza totale cm 240.	564.01	529.26	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e55ea5a1-7e26-416f-b19f-1fb2ee42c3bb	STIHL	LA01-200-0056	HTA 140.0-B	Potatori su palo batteria	\N	899.01	843.63	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+cb762403-bef8-4651-9622-8eb3f6a7956a	STIHL	MA05-200-0000	MSA 190.0 T 30cm	Motoseghe batteria	Motosega a batteria Stihl MSA 190 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, velocità della catena di 20 m/s, lunghezza barra 30 cm, peso 3,07 kg	369.0	350.0	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+8199f9f7-18aa-4604-9226-b370c684b397	STIHL	MA02-200-0007	MSA 300.0 45cm	Motoseghe batteria	Motosega a batteria Stihl MSA 300: Motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 45 cm, peso 4,5 kg.	808.99	770.0	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+0802175c-d062-4bae-9f8c-e7678ed96e93	STIHL	WA41-011-1420	RMA 448.3 PV	Tosaerba batteria	Tosaerba a batteria Stihl RMA 448 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	869.01	807.13	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+b031f028-5ef1-406f-9ddc-53460e3c0f9e	STIHL	WA71-011-1400	RMA 756.0 V	Tosaerba batteria	Tosaerba a batteria Stihl RMA 756 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2668.99	2482.56	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+297b66f4-18a1-4dbf-ac3d-56dd9d237f8a	STIHL	WB40-011-3420	RM 443.3 V	Tosaerba termici	\N	639.0	546.47	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+d2cefc7b-2a4e-4cb3-acaf-380c757d8ed6	STIHL	6374-011-3401	RM 655.0 V	Tosaerba termici	\N	1299.0	1100.52	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+70fc4c73-8edf-44a0-9e15-42692cd4bbcc	STIHL	6165-200-0012	RT 4097.1 SX	Trattorini	Trattorino da giardino Stihl RT 4097 SX, motore Stihl 452 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm 95 a scarico laterale, altezza di taglio regolabile 35-90 mm, cambio idrostatico a pedale, peso kg 202	3379.0	2854.58	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+13419547-738e-43c0-9d77-38e5d92e2f3f	STIHL	6165-200-0013	RT 4112.1 SZ	Trattorini	Trattorino da giardino Stihl RT 4112 SZ, motore Stihl EVC 7000 bicilindrico 635 cc 4 tempi, piatto di taglio ventrale a 2 lame da cm. 110 a scarico laterale, altezza di taglio regolabile 35-90 mm. Cambio idrostatico a pedale, peso kg 224	4219.0	3780.22	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+5caa7118-8442-45b6-802c-060ac80a73af	STIHL	BA02-011-5900	BGA 86	Soffiatori batteria	Soffiatore a batteria Stihl BGA 86, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	309.0	289.97	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+7e39a917-9770-4edf-8fd8-6adb7e03180a	STIHL	BA07-011-5910	BRA 600.0-B	Soffiatori a zaino batteria	Soffiatore a batteria Stihl BRA600, tensione di utilizzo 72 V, potenza di soffiaggio 35 N, sistema di trasporto a zaino ergonomico, tubo di soffiaggio regolabile in lunghezza, peso 10,5 kg.	1149.0	1078.22	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+09522adf-a400-48bc-ae2a-c173ad812c65	STIHL	FA08-011-6820	KMA 120.0 R	Motori Kombi batteria	Motore Kombi a batteria Stihl KMA 120 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	399.0	374.42	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+dd54c0d6-83db-4b67-a0b7-334c12122b1e	STIHL	FA03-011-6800	KMA 200.0 R	Motori Kombi batteria	\N	599.0	562.1	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+a98eb25f-c106-497f-9143-f3f80bd491be	STIHL	4180-200-0474	FS-KM Decespugliatore	Accessori Kombi	\N	179.0	163.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+1caaa556-6f63-494b-879b-a48b73a7d249	STIHL	4243-740-5008	HL-KM 145 Tosasiepi	Accessori Kombi	Accessorio tosasiepi HL-KM 145°, utilizzo su siepi alte e rasoterra, variatore meccanico regolabile a scatti, lunghezza di taglio 60 cm, peso 2,4 kg	519.0	472.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+82165dcb-7ca3-4cda-a2ab-795b2abd601a	STIHL	4182-200-0212	HT-KM Sramatore lungo	Accessori Kombi	\N	429.0	390.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+8686363e-9589-431c-8e8c-c59c08a5d568	STIHL	4950-011-4560	RE 130 PLUS	Idropulitrici	Idropulitrice Stihl RE 130 Plus, motore brushless 220-240 V, pressione max. 170 bar, portata acqua max. 500 l/h. Dotata di un tamburo per tubo flessibile con guida, che consente di riporre il tubo facilmente. Include un tubo flessibile ad alta pressione di 9 metri, rinforzato con armatura in acciaio. Pompa ad alta pressione in alluminio, ugello rotore, ugello piatto regolabile e set per spruzzatura detergente. Peso 21,2 kg.	539.0	469.0	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+e0628e5c-9f93-4e68-a963-7ddcdf71e555	STIHL	TB01-011-2800	TS 710.0i 350mm	Troncatrici termiche	\N	2169.0	1799.06	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+630deb7e-3543-4122-b9f6-93b1bb925aba	STIHL	TA01-011-6600	TSA 500.0-B	Troncatrici batteria	\N	1499.0	1402.39	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+f198c163-4e43-434f-8f65-278929d0b2c9	STIHL	MA01 200 0003	MSA 220 TC-O 14cm v2	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	819.00	780.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Tophandle · Sensore olio · Display 180° · 35cm PS3 Pro
+82876e14-17dc-453d-b6c4-7ecfa30316eb	STIHL	MA01 200 0002	MSA 220 TC-O 14cm	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	809.00	770.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Tophandle · Sensore olio · Display 180° · Smart Connector · 35cm PS3 Pro
+34e7092e-4eb1-4444-8d2f-3c6a6329e702	STIHL	MA01 200 0022	MSA 220 T 14cm	Motoseghe	Motosega a batteria Stihl MSA 220 T, motosega a batteria professionale da 36 V con motore EC senza spazzole, lunghezza barra 35 cm, tendicatena rapido, peso 3,1 kg.	759.00	570.00	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	\N	Tophandle · Display 180° · Smart Connector · 35cm PS3
+a64683e4-69b7-4e67-9686-dc0009403bea	STIHL	1148 200 0003	MS 162 C-BE	Motoseghe	Motosega a benzina Stihl MS 162, cilindrata 30,1 cc, potenza 1,2 kW, catena 61PMM3.	239.00	240.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · tendicatena rapido · 35cm PMM3
+fde132ef-25e3-4565-9235-bf8f0a0801d8	STIHL	1148 200 0011	MS 172	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	299.00	270.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 35cm PM3
+8276f12b-241c-4dd6-9604-e7af5472c200	STIHL	1148 200 0033	MS 172 C-BE	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	339.00	320.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 35cm PM3
+f69cc83a-3774-4d87-b773-bb72cfc68e4c	STIHL	1148 200 0014	MS 172 40cm	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	309.00	280.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 40cm PM3
+4ecd0cc0-2d2e-443a-8f7f-81523dfdc03c	STIHL	1148 200 0035	MS 172 C-BE 40cm	Motoseghe	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	349.00	330.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 40cm PM3
+910591fb-3dd8-440e-9e71-3f11b2bea560	STIHL	1148-200-0011	MS 172 35cm	Motoseghe termiche	Motosega a benzina Stihl MS 172 35cm, cilindrata 31,8 cc, potenza 1,4 kW, motore 2-MIX, lunghezza spranga 35 cm.	299.0	270.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+be978227-ebbb-433f-b120-f69d20efa89e	STIHL	1148 200 0059	MS 182	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	399.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 35cm PM3
+e4ea36a2-71b7-4955-a46e-beb5ceebc5bc	STIHL	1148 200 0099	MS 182 C-BE	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	439.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · pompa carburante · 35cm PM3
+89d9e8ff-64fd-4de2-8053-c74e09de439f	STIHL	1148 200 0064	MS 182 40cm	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	409.00	370.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · 2-MIX · 40cm PM3
+25976aa6-40e4-4fce-8a26-2dd4fa63892b	STIHL	1148 200 0104	MS 182 C-BE 40cm	Motoseghe	Motosega a benzina Stihl MS 182, cilindrata 35,8 cc, potenza 1,6 kW, motore 2-MIX.	449.00	420.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Hobby · ErgoStart · 40cm PM3
+812ce56d-ea0c-4324-bd56-f5eb57d8d251	STIHL	1137 200 0312	MS 194 T 35cm	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	489.00	370.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · 2-MIX · 35cm
+8ffbaaf2-6eeb-46ec-8b62-006e0aac803d	STIHL	1137 200 0323	MS 194 T 35cm	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	489.00	370.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · 3/8"P · 35cm
+a3e54f7a-c2e2-4e74-a424-d601d2b969b9	STIHL	1137 200 0370	MS 194 TC-E 35cm	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	519.00	470.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle · ErgoStart · 35cm
+a407e68b-3f07-4ee2-af61-af1a8c226866	STIHL	1137 200 0314	MS 194 T	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	479.00	360.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · 2-MIX · 30cm PM3
+e33142aa-bc88-462e-a0bb-2cbfa20fbf68	STIHL	1137 200 0322	MS 194 TC-E	Motoseghe	Motosega a benzina Stihl MS 194 T, cilindrata 35,2 cc, potenza 1,4 kW, motore 2-MIX, asta corta per uso arboristico.	479.00	360.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Tophandle arboristico · ErgoStart · 2-MIX · 30cm PM3
+ef2031f9-6a86-42ab-868d-8f02ad1dff05	STIHL	1143 200 0721	MS 231 45cm	Motoseghe	Motosega a benzina Stihl MS 231, cilindrata 42,6 cc, potenza 2,0 kW, catena 23RMS.	599.00	520.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 45cm
+8ae7edc1-b6ff-457b-872e-4bf552ee5247	STIHL	1143 200 0683	MS 251	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	659.00	570.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 40cm RM Pro
+473a4460-1552-4756-90fe-9a2d1ec12f4e	STIHL	1143 200 0686	MS 251 C-BE	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	729.00	630.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 40cm RM Pro
+a87e0d72-d568-4391-9298-79abe86b8989	STIHL	1143 200 0719	MS 251 45cm	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	669.00	580.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · antivibrante · 45cm RM Pro
+20254a13-b36b-40b6-9c7c-b098f4ad2e66	STIHL	1143 200 0720	MS 251 C-BE 45cm	Motoseghe	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	739.00	640.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · ErgoStart · 45cm RM Pro
+dc6a3be3-b733-4654-bbcc-973679b8a18e	STIHL	1143-200-0683	MS 251 40cm	Motoseghe termiche	Motosega a benzina Stihl MS 251 40cm, cilindrata 45,6 cc, potenza 2,2 kW, lunghezza spranga 40 cm.	659.0	570.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+dbfdaa82-1ec1-4f6a-8ded-6db93bb53620	STIHL	1141 200 0647	MS 261 C-M	Motoseghe	Motosega a benzina Stihl MS 261 C-M, cilindrata 50,2 cc, potenza 3,0 kW, sistema STIHL M-Tronic, tendicatena rapido.	1159.00	1000.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 40cm RS Pro
+7232aff8-18f2-4653-9258-49db7741bfac	STIHL	1141 200 0651	MS 261 C-M VW	Motoseghe	Motosega a benzina Stihl MS 261 C-M, cilindrata 50,2 cc, potenza 3,0 kW, sistema STIHL M-Tronic, tendicatena rapido.	1279.00	1100.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · riscaldamento · 40cm RS Pro
+0f8fa1ec-4802-47ef-bc07-d9cf980e3816	STIHL	1141 200 0652	MS 261 C-M 45cm	Motoseghe	Motosega a benzina Stihl MS 261 C-M, cilindrata 50,2 cc, potenza 3,0 kW, sistema STIHL M-Tronic, tendicatena rapido.	1169.00	990.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 45cm RS
+b3062b94-3879-4c61-9b65-f1d04a6544aa	STIHL	1141 200 0645	MS 271	Motoseghe	Motosega a benzina Stihl MS 271, cilindrata 50,2 cc, potenza 3,0 kW.	799.00	690.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 40cm RM3 Pro
+8d2eae0f-8cfc-4f1c-98f4-b5e17cac1fa6	STIHL	1141 200 0660	MS 271 45cm	Motoseghe	Motosega a benzina Stihl MS 271, cilindrata 50,2 cc, potenza 3,0 kW.	809.00	700.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 45cm RM3 Pro
+21e4c014-c02f-4c00-850b-4879ad8f995d	STIHL	1140 200 0730	MS 291	Motoseghe	Motosega a benzina Stihl MS 291, cilindrata 55,5 cc, potenza 3,2 kW, catena 36RM.	939.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 45cm RM
+7c801b5b-26c7-4ab9-9df8-ac70905b2f67	STIHL	1141 200 0690	MS 291 45cm	Motoseghe	Motosega a benzina Stihl MS 291, cilindrata 55,5 cc, potenza 3,2 kW, catena 36RM.	859.00	750.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Semiprofessionale · 2-MIX · 45cm RM
+c3b43316-28aa-4137-8758-7d95194f138b	STIHL	1140 200 0731	MS 311	Motoseghe	Motosega a benzina Stihl MS 311, cilindrata 59,0 cc, potenza 3,5 kW, catena 36RM.	1009.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	Professionale · 2-MIX · 45cm RM
+537428ca-4afa-41b1-8f08-94becd6cafca	STIHL	1140 200 0777	MS 311 50cm	Motoseghe	Motosega a benzina Stihl MS 311, cilindrata 59,0 cc, potenza 3,5 kW, catena 36RM.	949.00	850.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · 2-MIX · 50cm RM
+4b281177-c057-4c42-be83-a8e168a0c348	STIHL	1141 200 0687	MS 391	Motoseghe	Motosega a benzina Stihl MS 391, cilindrata 64,1 cc, potenza 4,0 kW, catena 36RM.	849.00	740.00	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	Professionale · 2-MIX · 40cm RM3
+9652e03f-fc35-4414-bfce-faa50f27724b	STIHL	1140 200 0741	MS 391 50cm	Motoseghe	Motosega a benzina Stihl MS 391, cilindrata 64,1 cc, potenza 4,0 kW, catena 36RM.	1019.00	910.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · 2-MIX · 50cm RM3
+34214dcd-d505-49d5-8df0-ef7c3e6deca0	STIHL	MB01 200 0007	MS 400 C-M	Motoseghe	Motosega a benzina Stihl MS 400 C-M, cilindrata 66,8 cc, potenza 4,0 kW, sistema STIHL M-Tronic, catena 36RS.	1509.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 2-MIX · 45cm RS
+195bfe7b-1a35-40db-b652-105505c80594	STIHL	1142 200 0032	MS 462 C-M 50cm	Motoseghe	Motosega a benzina Stihl MS 462 C-M, cilindrata 72,2 cc, potenza 4,4 kW, sistema STIHL M-Tronic, catena 36RS3.	1659.00	1400.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 50cm RS3
+dd75124f-7df0-4dc6-a463-a745c063b514	STIHL	1142 200 0033	MS 462 C-M 63cm	Motoseghe	Motosega a benzina Stihl MS 462 C-M, cilindrata 72,2 cc, potenza 4,4 kW, sistema STIHL M-Tronic, catena 36RS3.	1679.00	1430.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale · M-Tronic · 63cm RS3
+f0b2c9ac-1fc0-4a11-93e2-944f5388dce2	STIHL	1142 200 0025	MS 462 C-M R	Motoseghe	Motosega a benzina Stihl MS 462 C-M, cilindrata 72,2 cc, potenza 4,4 kW, sistema STIHL M-Tronic, catena 36RS3.	2139.00	\N	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale soccorso · M-Tronic · 50cm RDR
+3ee5935e-bb73-4b31-9330-9adad4c9219d	STIHL	1147 200 0000	MS 500 i	Motoseghe	Motosega a benzina Stihl MS 500i, cilindrata 79,2 cc, potenza 5,0 kW, iniezione elettronica carburante, catena 36RS.	1199.00	1700.00	t	2026-04-11 18:29:22.623135+00	Miscela Injection	\N	\N	Injection · top gamma · 50cm RS
+0baf2141-407d-4d02-8b4f-8e32e0b0418b	STIHL	1147 200 0001	MS 500i 63cm	Motoseghe	Motosega a benzina Stihl MS 500i, cilindrata 79,2 cc, potenza 5,0 kW, iniezione elettronica carburante, catena 36RS.	2019.00	1720.00	t	2026-04-11 18:29:22.623135+00	Miscela Injection	\N	\N	Injection · top gamma · 63cm RS
+e22763ff-ef36-422f-b16a-06f4a97fa4b3	STIHL	1147-200-0000	MS 500i 50cm	Motoseghe termiche	Motosega a benzina Stihl MS 500i, cilindrata 79,2 cc, potenza 5,0 kW, iniezione elettronica carburante, catena 36RS.	1998.99	1700.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+5b6aa500-44b1-4bc9-8bc2-b8b0322b2169	STIHL	1144 200 0319	MS 661 C-M 71cm	Motoseghe	Motosega a benzina Stihl MS 661 C-M, cilindrata 91,6 cc, potenza 5,4 kW, sistema STIHL M-Tronic, catena 36RS.	1899.00	1630.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale potente · M-Tronic · 71cm RS
+d578c9ec-3a62-4e94-91bc-d314c1d739c3	STIHL	1144 200 0322	MS 661 C-M	Motoseghe	Motosega a benzina Stihl MS 661 C-M, cilindrata 91,6 cc, potenza 5,4 kW, sistema STIHL M-Tronic, catena 36RS.	1879.00	1600.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	Professionale potente · M-Tronic · 63cm RS
+c9d2090a-8a9a-4957-8b5a-ecb4f05bdb05	STIHL	1124 200 0204	MS 881	Motoseghe	Motosega a benzina Stihl MS 881, cilindrata 121,6 cc, potenza 6,4 kW, catena 46RS.	2329.00	1990.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	TIMBERSPORTS · top gamma · 90cm .404"
+22d23555-bfab-4a6e-a7bb-763e5dac2b8f	STIHL	1124 200 0206	MS 881 105cm	Motoseghe	Motosega a benzina Stihl MS 881, cilindrata 121,6 cc, potenza 6,4 kW, catena 46RS.	2369.00	2020.00	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	TIMBERSPORTS · top gamma · 105cm .404"
+91023c0b-b7d2-42b4-8192-d5cc275de1cb	STIHL	4144 200 0016	KM 56 RC-E	Sistema Kombi	Motore Kombi a benzina Stihl KM 56 RC-E, cilindrata 27,2 cc, potenza 0,90 kW, motore 2-MIX, STIHL ErgoStart.	409.00	347.86	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · ErgoStart · impugnatura circolare · Smart Connector
+aeec84dd-6432-4dd3-bc66-cf7013f3fb60	STIHL	4149 200 0089	KM 94 RC-E	Sistema Kombi	Motore Kombi a benzina Stihl KM 94 RC-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, STIHL ErgoStart.	539.00	458.42	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	4-MIX · ErgoStart · ECOSPEED · Smart Connector
+b18fd045-99f6-4cf4-a189-339b9e2aed98	STIHL	4149-200-0089	KM 94 RC-E	Motori Kombi termici	Motore Kombi a benzina Stihl KM 94 RC-E, cilindrata 28,4 cc, potenza 1,0 kW, motore 2-MIX, STIHL ErgoStart.	539.0	458.42	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+4851638d-11d8-40b3-a335-7eb0d24af92c	STIHL	4180 200 0562	KM 111 R	Sistema Kombi	Motore Kombi a benzina Stihl KM 111 R, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	579.00	492.44	t	2026-04-11 18:29:22.623135+00	Miscela 4-MIX	\N	\N	4-MIX · potente · Smart Connector
+6edbb7b6-9737-45e3-a0c9-b92b4e1db82e	STIHL	4151 011 5303	KM 235 R	Sistema Kombi	Motore Kombi a benzina Stihl KM 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	469.00	398.89	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · impugnatura circolare · decompressione automatica
+53214eff-5dea-4a46-bb67-69ae2b453b4b	STIHL	4151 011 5302	KM 235	Sistema Kombi	Motore Kombi a benzina Stihl KM 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	489.00	415.89	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · massima potenza · decompressione automatica
+08092689-bcc7-4ac6-9b6b-bfe033d88090	STIHL	4151-011-5302	KM 235	Motori Kombi termici	Motore Kombi a benzina Stihl KM 235, cilindrata 36,3 cc, potenza 1,4 kW, motore 4-MIX.	489.0	415.89	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+abb78822-cd64-491a-a99e-1c6f2e8065fd	STIHL	FA08 011 6800	KMA 80 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 80 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	319.00	319.04	t	2026-04-11 18:29:22.623135+00	Batteria AK	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 10, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 20, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 30, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	AK · 2 velocità ECO/Max · impugnatura circolare regolabile · Smart Connector
+331ab29a-19ca-48ad-bb40-4956a7ba6804	STIHL	FA03 011 6800	KMA 200 R	Sistema Kombi	Motore Kombi a batteria Stihl KMA 200 R, vano batteria AP nel dispositivo, leva di comando ergonomica con selezione della velocità a due livelli, regolazione continua della velocità, peso 3,5 kg.	599.00	562.10	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 28, "nome": "AP 30", "unita": "min", "val_min": 14}, {"val": 20, "nome": "AP 200 S", "unita": "min", "val_min": 10, "raccomandata": true}, {"val": 30, "nome": "AP 300 S", "unita": "min", "val_min": 15}, {"val": 36, "nome": "AP 500 S", "unita": "min", "val_min": 18}, {"val": 115, "nome": "AR 2000 L", "unita": "min", "val_min": 57}, {"val": 172, "nome": "AR 3000 L", "unita": "min", "val_min": 86}]}	AP · potente · protezione antispruzzo · SC2A · P+S
+cedb582e-919c-4a86-90c0-1bc585a95ccd	STIHL	6311 011 1415	RMA 235	Tosaerba	Tosaerba a batteria Stihl RMA 235, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	199.00	199.56	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 150, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 300, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 400, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 33cm · senza batteria
+fcc5f266-95eb-428b-985e-2e5424085ba3	STIHL	6311 011 2410	RME 235	Tosaerba	Tosaerba elettrico Stihl RME 235, motore elettrico 230 V, larghezza taglio 33 cm, altezza taglio regolabile.	194.00	169.57	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 33cm · 1.2kW
+49ca6288-f0ce-4d60-8333-1f4c67c84866	STIHL	6311-011-2410	RME 235.0	Tosaerba elettrici	Tosaerba elettrico Stihl RME 235, motore elettrico 230 V, larghezza taglio 33 cm, altezza taglio regolabile.	194.0	169.57	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+7a74ea32-8378-4976-a418-9b4370ef3853	STIHL	6320 011 1430	RMA 239	Tosaerba	Tosaerba a batteria Stihl RMA 239, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	309.00	308.19	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 120, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 250, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 330, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 37cm · senza batteria
+9e75be32-44f1-428d-9a50-2aa18535b69f	STIHL	6320 011 1435	RMA 239 C	Tosaerba	Tosaerba a batteria Stihl RMA 239, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	359.00	358.54	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 120, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 250, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 330, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 37cm · mono-stegola comfort · senza batteria
+6021dede-27b0-42be-ba8a-317749783346	STIHL	6320 011 2415	RME 339 C	Tosaerba	Tosaerba elettrico Stihl RME 339, motore elettrico 230 V, larghezza taglio 37 cm, altezza taglio regolabile.	374.00	326.90	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 37cm · mono-stegola comfort · 1.2kW
+85cc00cd-0055-4876-9888-0e5dd302acc6	STIHL	6320 011 2405	RME 339	Tosaerba	Tosaerba elettrico Stihl RME 339, motore elettrico 230 V, larghezza taglio 37 cm, altezza taglio regolabile.	314.00	274.46	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V · 37cm · 1.2kW
+f5bb2d6e-2718-4b8e-9caf-07ece587bc92	STIHL	6320-011-2415	RME 339.0 C	Tosaerba elettrici	Tosaerba elettrico Stihl RME 339, motore elettrico 230 V, larghezza taglio 37 cm, altezza taglio regolabile.	374.0	326.9	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+a101ec34-8bf1-4bf1-bced-602ca8a057c1	STIHL	6291 011 6610	RLA 240	Arieggiatori	Robot tosaerba a batteria Stihl RLA 240, sistema 40 V AK, superficie fino a 400 m², altezza taglio 20-60 mm.	259.00	258.32	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 96, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 190, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 250, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 34cm · senza batteria · cesto 50L
+de6f76d1-644f-497c-94ed-227a6e9acbe9	STIHL	WA20 011 1400	RMA 243	Tosaerba	Tosaerba a batteria Stihl RMA 243, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	549.00	518.22	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 115, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 230, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 300, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 41cm · senza batteria · Smart Connector
+171559c9-bb32-4dbb-b0c7-86c781910d4f	STIHL	WA21 011 1400	RMA 248	Tosaerba	Tosaerba a batteria Stihl RMA 248, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	599.00	566.23	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 110, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 220, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 285, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 20 · 46cm · senza batteria · Smart Connector
+bb762bfb-6888-43c5-b0df-8899fe3446bd	STIHL	WA21 011 1410	RMA 248 T	Tosaerba	Tosaerba a batteria Stihl RMA 248, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	679.00	642.79	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 130, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 260, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 340, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 46cm · trazione 1 marcia · senza batteria
+f6437b29-9861-4683-b0c6-34c843261623	STIHL	WA22 011 1410	RMA 253 T	Tosaerba	Tosaerba a batteria Stihl RMA 253, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	759.00	720.60	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 125, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 250, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 325, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 51cm · trazione 1 marcia · senza batteria
+b4a86e61-aee1-4a4c-88f0-c2510710b146	STIHL	WA22 011 1400	RMA 253	Tosaerba	Tosaerba a batteria Stihl RMA 253, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	679.00	648.37	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 105, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 210, "nome": "AK 20", "unita": "m²", "raccomandata": true}, {"wh": 180, "val": 275, "nome": "AK 30 S", "unita": "m²"}], "consigliata": "AK 20"}	AK 30 S · 51cm · senza batteria · Smart Connector
+afd62487-b16a-4c58-9c99-b4c117682843	STIHL	WA40 200 0000	RMA 443 PV Set	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	1169.00	1081.04	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	\N	AP 500 S · 41cm · trazione Vario · con AP 500 S e AL 301
+7f174c4b-4829-4811-9abe-d0f286cceb39	STIHL	WA40 011 1400	RMA 443	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	729.00	687.13	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 115, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 230, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 300, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 41cm · senza batteria · Smart Connector
+7a9cc7a5-eebb-42d3-b4bf-2cffa3a1ee92	STIHL	WA40 011 1420	RMA 443 V	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	749.00	709.05	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 135, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 270, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 350, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 41cm · trazione Vario · senza batteria
+2ef9dc2c-ec7b-4816-980f-b1786d496c3c	STIHL	BA01-011-5900	BGA 200	Soffiatori batteria	Soffiatore a batteria Stihl BGA 200, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	569.0	533.95	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+f21eed17-25c2-4ca2-bd7b-ba9e14fb148f	STIHL	6241 011 3932	MH 685	Motozappe	Motozappa a benzina Stihl MH 685, cilindrata 212 cc, potenza 3,7 kW, larghezza lavoro 50-95 cm.	1099.00	1020.75	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	85cm larghezza lavoro, Kohler HD775
+2d3190bb-5dfd-4806-8be1-740bf02f9511	STIHL	WA40 011 1410	RMA 443 PV	Tosaerba	Tosaerba a batteria Stihl RMA 443, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	799.00	743.19	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 270, "nome": "AP 20", "unita": "m²"}, {"val": 510, "nome": "AP 30", "unita": "m²"}, {"val": 360, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 530, "nome": "AP 300 S", "unita": "m²"}, {"val": 640, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 41cm · trazione Vario · senza batteria
+ab9011af-f140-470e-bf47-254ad8b777e4	STIHL	WA41 011 1400	RMA 448 V	Tosaerba	Tosaerba a batteria Stihl RMA 448 V, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 46 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 6 posizioni da 25 a 75 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 24 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	819.00	770.83	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 130, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 260, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 340, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 46cm · trazione Vario · senza batteria
+944f533d-174f-453c-ae4b-d75c5d25b610	STIHL	WA42 200 0002	RMA 453 PV Set	Tosaerba	Tosaerba a batteria Stihl RMA 453 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	1319.00	1185.92	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	\N	AP 500 S · 51cm · trazione Vario · con AP 300 S e AL 301
+52c78927-00d5-41e8-bfbb-bf5a31d54522	STIHL	WA42 011 1400	RMA 453 PV	Tosaerba	Tosaerba a batteria Stihl RMA 453 PV, motore elettrico a batteria brushless, trazione con variatore di velocità continua da 0 a 4,6 km/h, larghezza di taglio 51 cm con funzione 4 in 1 (raccolta, scarico laterale/posteriore, mulching), altezza di taglio regolabile in 7 posizioni da 20 a 100 mm con un’unica leva, capacità cesto raccoglierba 55 litri, peso 29 kg (senza batteria), modalità Eco, doppio vano batteria, manubrio monostegola regolabile e ripiegabile.	949.00	855.81	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"val": 230, "nome": "AP 20", "unita": "m²"}, {"val": 430, "nome": "AP 30", "unita": "m²"}, {"val": 300, "nome": "AP 200 S", "unita": "m²", "raccomandata": true}, {"val": 450, "nome": "AP 300 S", "unita": "m²"}, {"val": 540, "nome": "AP 500 S", "unita": "m²"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 51cm · trazione Vario · senza batteria
+c1340622-4801-4328-8fb3-87b58dff060b	STIHL	WB40 011 3420	RM 443 V	Tosaerba	Tosaerba a benzina Stihl RM 443 V, larghezza taglio 43 cm, trazione variatore.	639.00	546.47	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 200C · 41cm · trazione Vario
+845d4df1-dc81-475e-a09e-07920f14c555	STIHL	WB41 011 3400	RM 448 T	Tosaerba	Tosaerba a benzina Stihl RM 448 T, larghezza taglio 48 cm, trazione.	699.00	584.76	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 46cm · trazione 1 marcia
+e602c05b-c56f-4234-96b8-3e8e6caa7221	STIHL	WB41 011 3410	RM 448 V	Tosaerba	Tosaerba a benzina Stihl RM 448 V, larghezza taglio 48 cm, trazione variatore.	769.00	643.32	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 46cm · trazione Vario
+51a0147d-b8df-427c-a11c-e6a3e056c466	STIHL	WB42 011 3400	RM 453 T	Tosaerba	Tosaerba a benzina Stihl RM 453 T, larghezza taglio 53 cm, trazione.	799.00	676.92	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 51cm · trazione 1 marcia
+ad286b28-3ca2-41e0-8508-978b38a10c42	STIHL	WB42 011 3410	RM 453 V	Tosaerba	Tosaerba a benzina Stihl RM 453 V, larghezza taglio 53 cm, trazione variatore.	869.00	730.45	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 300 · 51cm · trazione Vario
+03c291b0-0094-4b4c-835a-ece4b31face8	STIHL	6392 011 1400	RMA 765 V	Tosaerba	Tosaerba a batteria Stihl RMA 765 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2389.00	2235.03	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 600, "nome": "AP 30", "unita": "m²", "val_min": 600}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 630, "nome": "AP 300 S", "unita": "m²", "val_min": 630, "raccomandata": true}, {"val": 750, "nome": "AP 500 S", "unita": "m²", "val_min": 750}, {"val": 2100, "nome": "AR 2000 L", "unita": "m²", "val_min": 2100}, {"val": 3130, "nome": "AR 3000 L", "unita": "m²", "val_min": 3130}]}	AR 3000 L · 63cm · trazione Vario · professionale · senza batteria
+ef8a6645-2acf-42fc-88b6-efbcdec52c12	STIHL	WA70 011 1400	RMA 750 V	Tosaerba	Tosaerba a batteria Stihl RMA 750 V, motore elettrico brushless per uso professionale ad alte prestazioni, trazione Vario con variatore di velocità continua da 0 a 5,5 km/h, larghezza di taglio 54 cm con lama a bassa rumorosità (raccolta e scarico posteriore, mulching opzionale), altezza di taglio regolabile su ogni ruota in 6 posizioni da 25 a 90 mm, capacità cesto raccoglierba in tessuto 80 litri, peso 42 kg (senza batteria), modalità Eco, scocca ibrida con telaio in alluminio e controtelaio in polimero, manubrio monostegola comfort regolabile e ripiegabile.	2459.00	2287.23	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 610, "nome": "AP 30", "unita": "m²", "val_min": 610}, {"val": 420, "nome": "AP 200 S", "unita": "m²", "val_min": 420}, {"val": 630, "nome": "AP 300 S", "unita": "m²", "val_min": 630, "raccomandata": true}, {"val": 760, "nome": "AP 500 S", "unita": "m²", "val_min": 760}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	AP 500 S · 48cm · trazione Vario · professionale · senza batteria
+f78c81cc-7d60-4c4f-a247-c6f5f7fd4b4d	STIHL	6250 011 3915	MH 600	Motozappe	Motozappa a benzina Stihl MH 600, cilindrata 163 cc, potenza 3,0 kW, larghezza lavoro 45-90 cm, ruote pneumatiche.	939.00	744.11	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	79cm larghezza lavoro, EHC 600
+94a17fb2-c7fa-4c74-92d7-1ac8d43b9828	STIHL	6291 200 0015	RLA 240 Set	Arieggiatori	Robot tosaerba a batteria Stihl RLA 240, sistema 40 V AK, superficie fino a 400 m², altezza taglio 20-60 mm.	429.00	427.28	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 96, "nome": "AK 10", "unita": "m²"}, {"wh": 144, "val": 190, "nome": "AK 20", "unita": "m²"}, {"wh": 180, "val": 250, "nome": "AK 30 S", "unita": "m²", "raccomandata": true}], "consigliata": "AK 30 S"}	AK 30 S · 34cm · con AK 30 e AL 101 · cesto 50L
+dc13e21a-edb3-4647-909e-fcd69b102a28	STIHL	6291-011-6610	RLA 240.0	Robot tosaerba	Robot tosaerba a batteria Stihl RLA 240, sistema 40 V AK, superficie fino a 400 m², altezza taglio 20-60 mm.	259.01	258.32	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+d153001a-5071-4136-848f-81395242f92b	STIHL	BA08 011 5900	BGA 30 Set	Soffiatori	Soffiatore a batteria Stihl BGA 30, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	109.00	109.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 25, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Con 2×AS 2 e AL 1
+c584b1cd-b963-4c82-b4b6-a1fdd08f5e9c	STIHL	BA08 011 5910	BGA 30	Soffiatori	Soffiatore a batteria Stihl BGA 30, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	169.00	169.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 25, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	Senza batteria
+ef8044d3-d473-4e1c-93f4-ae5c9bd8ca75	STIHL	BA03 011 5910	BGA 300	Soffiatori	Soffiatore a batteria Stihl BGA 30, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	869.00	815.48	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 24, "nome": "AP 30", "unita": "min", "val_min": 9}, {"val": 16, "nome": "AP 200 S", "unita": "min", "val_min": 13, "raccomandata": true}, {"val": 25, "nome": "AP 300 S", "unita": "min", "val_min": 10}, {"val": 29, "nome": "AP 500 S", "unita": "min", "val_min": 12}, {"val": 105, "nome": "AR 2000 L", "unita": "min", "val_min": 50}, {"val": 150, "nome": "AR 3000 L", "unita": "min", "val_min": 65}]}	Senza batteria
+6f94ac44-036c-4cd7-bdfa-7df559aa3c88	STIHL	BA05 011 5930	BGA 50 Set	Soffiatori	Soffiatore a batteria Stihl BGA 50, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	159.00	\N	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 55, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 115, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 140, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Con AK 20 e AL 101
+8ebbdfe4-c556-40aa-b1de-db652a9d3e44	STIHL	BA05 011 5910	BGA 50	Soffiatori	Soffiatore a batteria Stihl BGA 50, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	299.00	299.03	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 55, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 115, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 140, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Senza batteria
+933244fa-c2c4-43cf-8c47-9e904c9ea8df	STIHL	BA05 011 5900	BGA 50	Soffiatori	Soffiatore a batteria Stihl BGA 50, bocchetta tonda, impugnatura morbida, desing angolato per maggiore comfort dell'operatore, regolazione continua della potenza con possibilità di bloccarla, peso 2,7 kg	159.00	159.02	t	2026-04-11 18:29:22.623135+00	batteria	AK 20	{"serie": "AK", "batterie": [{"wh": 72, "val": 55, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 115, "nome": "AK 20", "unita": "min", "raccomandata": true}, {"wh": 180, "val": 140, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 20"}	Senza batteria
+eb5c8832-affa-4687-b29e-f024c47ceb0c	STIHL	BA04 011 5900	BGA 60 Set	Soffiatori	Soffiatore a batteria Stihl BGA 60, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	199.00	199.01	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 105, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Con AK 30 S e AL 101
+0fd46a7a-8fc0-4018-bcb5-2f124a69f51e	STIHL	BA04 011 5940	BGA 60	Soffiatori	Soffiatore a batteria Stihl BGA 60, bocchetta tonda, impugnatura morbida, tubo di soffiaggio regolabile su tre lunghezze	369.00	369.04	t	2026-04-11 18:29:22.623135+00	batteria	AK 30 S	{"serie": "AK", "batterie": [{"wh": 72, "val": 50, "nome": "AK 10", "unita": "min"}, {"wh": 144, "val": 105, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 130, "nome": "AK 30 S", "unita": "min", "raccomandata": true}], "consigliata": "AK 30 S"}	Senza batteria
+b3182c28-290f-4ff3-9b0a-edbd182871e7	STIHL	BA09 011 5900	BGA 160	Soffiatori	Soffiatore a batteria Stihl BGA 160, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	359.00	336.88	t	2026-04-11 18:29:22.623135+00	batteria	AP 300 S	{"serie": "AP", "batterie": [{"val": 58, "nome": "AP 20", "unita": "min", "val_min": 8}, {"val": 106, "nome": "AP 30", "unita": "min", "val_min": 14}, {"val": 75, "nome": "AP 200 S", "unita": "min", "val_min": 10, "raccomandata": true}, {"val": 110, "nome": "AP 300 S", "unita": "min", "val_min": 15}, {"val": 130, "nome": "AP 500 S", "unita": "min", "val_min": 17}, {"val": 430, "nome": "AR 2000 L", "unita": "min", "val_min": 56}, {"val": 670, "nome": "AR 3000 L", "unita": "min", "val_min": 85}]}	Senza batteria
+3dcb2a3d-3b95-4dbd-b982-f16197aa71a4	STIHL	BA01 011 5900	BGA 200	Soffiatori	Soffiatore a batteria Stihl BGA 200, bocchetta tonda, impugnatura morbida, tre livelli di potenza con funzione "Boost" aggiuntiva, tubo di soffiaggio regolabile su tre lunghezze	569.00	533.95	t	2026-04-11 18:29:22.623135+00	batteria	AR 3000 L	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 91, "nome": "AP 30", "unita": "min", "val_min": 13}, {"val": 49, "nome": "AP 200 S", "unita": "min", "val_min": 7}, {"val": 95, "nome": "AP 300 S", "unita": "min", "val_min": 14, "raccomandata": true}, {"val": 114, "nome": "AP 500 S", "unita": "min", "val_min": 17}, {"val": 335, "nome": "AR 2000 L", "unita": "min", "val_min": 55}, {"val": 535, "nome": "AR 3000 L", "unita": "min", "val_min": 90}]}	Senza batteria
+5cfe8cb5-ae1f-4138-ab4b-d7d45e598df0	STIHL	BA07 011 5900	BRA 500 B	Soffiatori dorsali	Soffiatore a batteria Stihl BRA 500-B, tensione di utilizzo 72 V, potenza di soffiaggio 35 N, sistema di trasporto a zaino ergonomico, tubo di soffiaggio regolabile in lunghezza, peso 10,5 kg.	1099.00	1031.30	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 30, "nome": "AP 30", "unita": "min", "val_min": 15}, {"val": 22, "nome": "AP 200 S", "unita": "min", "val_min": 13}, {"val": 32, "nome": "AP 300 S", "unita": "min", "val_min": 16, "raccomandata": true}, {"val": 39, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ, Bluetooth, Smart Connector integrato
+55d62fc1-9ca6-4752-87fb-e82511bf07a8	STIHL	4241 011 1750	BG 56	Soffiatori	Soffiatore a benzina Stihl BG 56, cilindrata 27,2 cc, potenza 0,75 kW, motore 2-MIX, portata aria 770 m³/h, peso 4,5 kg.	349.00	290.23	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+a84a4f7d-d166-4c16-8643-6a3d1607d4a6	STIHL	4241-011-1750	BG 56	Soffiatori termici	Soffiatore a benzina Stihl BG 56, cilindrata 27,2 cc, potenza 0,75 kW, motore 2-MIX, portata aria 770 m³/h, peso 4,5 kg.	349.01	290.23	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+26189ce0-a3a1-4788-b3d0-b0bf608ad8a9	STIHL	4241 011 1753	BG 86	Soffiatori	Soffiatore a benzina Stihl BG 86, cilindrata 27,2 cc, potenza 0,85 kW, motore 2-MIX, portata aria 900 m³/h.	489.00	406.65	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+ab8a805f-d54c-455a-99ff-800d573be158	STIHL	4241 011 1605	BR 200	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 200, cilindrata 27,2 cc, potenza 0,75 kW, motore 2-MIX, sistema di trasporto a zaino.	549.00	478.29	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+0b93ee10-0faf-42f0-b954-b22032534691	STIHL	4244 011 1620	BR 430	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 430, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, regolazione continua.	749.00	642.64	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, ElastoStart
+56ad54dc-4bb2-439c-81dc-e63ecdc98e9d	STIHL	4244-011-1620	BR 430	Soffiatori a zaino termici	Soffiatore a zaino a benzina Stihl BR 430, cilindrata 36,3 cc, potenza 1,4 kW, motore 2-MIX, sistema di trasporto a zaino, regolazione continua.	748.99	642.64	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+3b55d740-3b10-40ca-8ec0-ce0b0dedc251	STIHL	4244 011 1635	BR 450	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 450, cilindrata 42,7 cc, potenza 1,6 kW, sistema di trasporto a zaino.	799.00	685.54	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX
+664f858c-4562-47c4-a986-a47a990193bc	STIHL	4244 011 1632	BR 450 C-EF	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 450, cilindrata 42,7 cc, potenza 1,6 kW, sistema di trasporto a zaino.	879.00	\N	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	2-MIX, avviamento elettrico
+dc97729a-55a8-4cc2-8f40-82eb0b9a6b9e	STIHL	4282 200 0022	BR 600	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 600, cilindrata 64,8 cc, potenza 2,3 kW, sistema di trasporto a zaino professionale.	899.00	783.21	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX
+17c2fd14-5e9b-46c8-a50e-d7c1ee58b16b	STIHL	4282 200 0021	BR 700	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 700, cilindrata 64,8 cc, potenza 2,6 kW, sistema di trasporto a zaino professionale.	969.00	844.19	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX
+48fe3445-9880-40b5-8a23-8f82e3bfd4fd	STIHL	4283 011 1606	BR 800 C-E	Soffiatori dorsali	Soffiatore a zaino a benzina Stihl BR 800 C-E, cilindrata 79,9 cc, potenza 3,0 kW, sistema di trasporto a zaino, STIHL ErgoStart.	1019.00	887.76	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	4-MIX, avviamento laterale
+16a51183-e494-4036-a77d-55aeead229cc	STIHL	RE02 011 4540	RE 90	Idropulitrici	Idropulitrice elettrica Stihl RE 90, pressione max 125 bar, portata max 420 l/h, pompa in alluminio.	199.00	173.98	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	100 bar, 440 l/h
+a321f357-4e44-4a8a-aa99-afb533f97628	STIHL	RE02 011 4529	RE 100 PLUS CONTROL	Idropulitrici	Idropulitrice elettrica Stihl RE 100, pressione max 130 bar, portata max 420 l/h, pompa in alluminio.	269.00	234.81	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	110 bar, regolazione pressione sulla pistola
+ecbfeff6-e753-41b7-8603-4fdb57fd91e6	STIHL	4950 011 4520	RE 110	Idropulitrici	Idropulitrice elettrica Stihl RE 110, pressione max 130 bar, portata max 420 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	309.00	281.33	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	110 bar, brushless, manico telescopico
+f321021c-3936-49a1-9d7d-b605caa3dce4	STIHL	4950 011 4533	RE 110 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 110, pressione max 130 bar, portata max 420 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	349.00	317.75	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	110 bar, brushless, tamburo integrato
+63c063f4-9203-4427-834c-bb2108a251eb	STIHL	4950-011-4520	RE 110	Idropulitrici	Idropulitrice elettrica Stihl RE 110, pressione max 130 bar, portata max 420 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	309.0	281.33	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+24e5d4e2-b5c9-4844-b49c-0fc71a3a796a	STIHL	4950 011 4540	RE 120	Idropulitrici	Idropulitrice elettrica Stihl RE 120, pressione max 150 bar, portata max 450 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	399.00	363.27	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	125 bar, brushless
+82e0438b-9ba2-4525-bb0e-31e0535e869d	STIHL	4950 011 4550	RE 120 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 120, pressione max 150 bar, portata max 450 l/h, pompa in alluminio, ugello rotore e piatto regolabile.	439.00	399.69	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	125 bar, tamburo integrato
+91443bcf-0035-4d56-9de9-c571470ac20d	STIHL	4950 011 4580	RE 140 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 140 PLUS, pressione max 170 bar, portata max 500 l/h, avvolgitubo integrato.	589.00	536.26	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	145 bar, tubo acciaio 10m
+7e0a2ca3-a2e9-4c66-8174-5e46faac87ca	STIHL	RE01 011 4510	RE 150	Idropulitrici	Idropulitrice elettrica Stihl RE 150, pressione max 170 bar, portata max 500 l/h, pompa in ottone.	749.00	686.09	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	140 bar, testa ottone
+d5e3fa80-151e-41b9-8bc9-889b30bbc631	STIHL	RE01 011 4512	RE 150 PLUS	Idropulitrici	Idropulitrice elettrica Stihl RE 150, pressione max 170 bar, portata max 500 l/h, pompa in ottone.	789.00	721.63	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	140 bar, tamburo integrato
+ff6bd84b-7263-4670-8508-1d4947f5b7d1	STIHL	RE01 011 4540	RE 170	Idropulitrici	Idropulitrice elettrica Stihl RE 170, pressione max 180 bar, portata max 648 l/h, pompa in ottone, tubo armato 12 m con avvolgitubo, peso 31 kg.	834.00	765.12	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	150 bar, testa ottone
+a13db3f6-f322-4ec7-99b9-02dde1e14cbf	STIHL	RE01-011-4540	RE 170.0	Idropulitrici	Idropulitrice elettrica Stihl RE 170, pressione max 180 bar, portata max 648 l/h, pompa in ottone, tubo armato 12 m con avvolgitubo, peso 31 kg.	834.0	765.12	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+eb503cca-9aea-4be3-9424-974120397277	STIHL	6241 011 3905	MH 445	Motozappe	Motozappa a benzina Stihl MH 445, cilindrata 139 cc, potenza 2,5 kW, larghezza lavoro 40-85 cm, frese reversibili.	849.00	796.57	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45cm larghezza lavoro, EVC 200 C
+4574373f-4420-4aa8-970e-8f98f52610b4	STIHL	6241 011 3914	MH 445 R	Motozappe	Motozappa a benzina Stihl MH 445, cilindrata 139 cc, potenza 2,5 kW, larghezza lavoro 40-85 cm, frese reversibili.	899.00	835.00	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	45cm con retromarcia, EVC 200 C
+b7190088-a5b4-430f-b3b1-2c7d6f0d414e	STIHL	6241-011-3905	MH 445.1	Motozappe	Motozappa a benzina Stihl MH 445, cilindrata 139 cc, potenza 2,5 kW, larghezza lavoro 40-85 cm, frese reversibili.	849.0	796.57	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+1c2e9a58-e022-46ec-82f2-772813396130	STIHL	6251 011 3910	MH 700	Motozappe	Motozappa a benzina Stihl MH 700, cilindrata 212 cc, potenza 3,7 kW, larghezza lavoro 50-100 cm, frese robuste.	1399.00	1110.52	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	121cm larghezza lavoro, EHC 700
+bae2765b-5d68-4d5d-a099-0514e6c3bc0d	STIHL	6251-011-3910	MH 700.1	Motozappe	Motozappa a benzina Stihl MH 700, cilindrata 212 cc, potenza 3,7 kW, larghezza lavoro 50-100 cm, frese robuste.	1399.0	1110.52	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+728f095d-a573-48ab-8386-86d99ea7f951	STIHL	6001 200 0010	GH 370 S	Biotrituratori	Biotrituratore a benzina Stihl GH 370, cilindrata 173 cc, diametro rami fino a 55 mm.	1529.00	1430.46	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 1000, ramo max 45mm
+bbdee5aa-e9f8-4432-861b-6f71ec32cae1	STIHL	6012 200 0011	GH 460	Biotrituratori	Biotrituratore a benzina Stihl GH 460, cilindrata 173 cc, potenza 3,7 kW, diametro rami fino a 60 mm.	2279.00	2107.50	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	B&S, ramo max 60mm
+ea44006f-f7a5-427f-927f-72923eda4e59	STIHL	6012 200 0016	GH 460 C	Biotrituratori	Biotrituratore a benzina Stihl GH 460, cilindrata 173 cc, potenza 3,7 kW, diametro rami fino a 60 mm.	2739.00	2555.07	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 2000, ramo max 75mm
+beef0f2e-093f-4d42-9aca-4d26cdca3c9e	STIHL	6012-200-0011	GH 460.0	Biotrituratori termici	Biotrituratore a benzina Stihl GH 460, cilindrata 173 cc, potenza 3,7 kW, diametro rami fino a 60 mm.	2279.0	2107.5	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+dcc9b2c3-5c65-43b4-9421-48cbd9a19a22	STIHL	6007 011 1150	GHE 105	Biotrituratori	Biotrituratore elettrico Stihl GHE 105, potenza 0,5 kW, diametro rami fino a 35 mm, compatto.	499.00	443.93	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm
+e34b0a7a-d8f2-4676-a01f-6c4405c683df	STIHL	6013 011 1140	GHE 135 L	Biotrituratori	Biotrituratore elettrico Stihl GHE 135, potenza 0,6 kW, diametro rami fino a 40 mm.	444.00	393.80	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm, silenzioso
+35106826-9e26-47ba-a13d-492b03b885c8	STIHL	6013 011 1150	GHE 140 L	Biotrituratori	Biotrituratore elettrico Stihl GHE 140, potenza 0,7 kW, diametro rami fino a 40 mm.	519.00	461.02	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 40mm, silenzioso
+322d52e5-3585-434f-8abd-2c875745a6ae	STIHL	6008 011 1160	GHE 150	Biotrituratori	Biotrituratore elettrico Stihl GHE 150, potenza 0,85 kW, diametro rami fino a 45 mm.	579.00	514.33	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm
+94493a1e-09f7-4222-9b6d-564b8d85c8ae	STIHL	6008 011 1040	GHE 250	Biotrituratori	Biotrituratore elettrico Stihl GHE 250, potenza 2,5 kW, diametro rami fino a 55 mm, tramoggia di carica ampia.	679.00	605.90	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 30mm
+93b15055-7ef3-4319-83c0-8fca48643e85	STIHL	6008 011 1170	GHE 250 S	Biotrituratori	Biotrituratore elettrico Stihl GHE 250, potenza 2,5 kW, diametro rami fino a 55 mm, tramoggia di carica ampia.	679.00	603.15	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 35mm, cippare
+2e32d376-3ec5-4895-9b49-b387ca3675ff	STIHL	6008-011-1040	GHE 250.0	Biotrituratori elettrici	Biotrituratore elettrico Stihl GHE 250, potenza 2,5 kW, diametro rami fino a 55 mm, tramoggia di carica ampia.	678.99	605.9	t	2026-04-11 19:49:53.226172+00	elettrico	\N	\N	\N
+3cc45bd7-61f5-4f9d-a7f4-bd6415074d7b	STIHL	6012 200 0020	GHE 420	Biotrituratori	Biotrituratore elettrico Stihl GHE 420, potenza 3,0 kW, diametro rami fino a 60 mm, tramoggia di carica ampia, uso professionale.	1569.00	1395.85	t	2026-04-11 18:29:22.623135+00	elettrico	\N	\N	230V, ramo max 50mm
+df0682b0-49ab-4860-9cab-a7716c08fa92	STIHL	4864 011 6620	TSA 230	Troncatrici	Troncatrice a batteria Stihl TSA 230, sistema 36 V AP, disco 230 mm, motore EC brushless.	599.00	559.58	t	2026-04-11 18:29:22.623135+00	Batteria AP	AP 300 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 14, "nome": "AP 200 S", "unita": "min", "val_min": 9}, {"val": 24, "nome": "AP 300 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"nome": "AP 500 S", "incompatibile": true}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	Batteria AP · disco 230mm · con batteria e caricatore
+22b62cd4-7a85-41af-a193-bf848a35380c	STIHL	TA02 011 6600	TSA 300	Troncatrici	Troncatrice a batteria Stihl TSA 300, sistema 36 V AP, potenza 0,9 kW, disco 230 mm, profondità taglio max 76 mm, motore EC brushless.	999.00	934.61	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 9, "nome": "AP 200 S", "unita": "min", "val_min": 5}, {"val": 16, "nome": "AP 300 S", "unita": "min", "val_min": 9, "raccomandata": true}, {"val": 22, "nome": "AP 500 S", "unita": "min", "val_min": 12}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	NOVITÀ · disco 300mm · Magnetic Filter · SC2A · senza batteria
+48961ceb-6611-46bf-9835-9b7fc80f35c1	STIHL	TA02-011-6600	TSA 300.0	Troncatrici batteria	Troncatrice a batteria Stihl TSA 300, sistema 36 V AP, potenza 0,9 kW, disco 230 mm, profondità taglio max 76 mm, motore EC brushless.	999.0	934.61	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e3ef394b-c928-4827-9da4-d288d3eadca2	STIHL	TA01 011 6600	TSA 500 B	Troncatrici	Troncatrice a batteria Stihl TSA 500-B, sistema doppio 36 V AP, disco 350 mm, motore EC brushless, uso professionale.	1499.00	1402.39	t	2026-04-11 18:29:22.623135+00	batteria	AP 500 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"nome": "AP 30", "incompatibile": true}, {"val": 16, "nome": "AP 200 S", "unita": "min", "val_min": 8}, {"val": 30, "nome": "AP 300 S", "unita": "min", "val_min": 15, "raccomandata": true}, {"val": 30, "nome": "AP 500 S", "unita": "min", "val_min": 20}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	disco 350mm · la più potente a batteria · Magnetic Filter · senza batteria
+14c05920-b155-4458-ba60-0f83132b0d55	STIHL	4238 011 2800	TS 410	Troncatrici	Troncatrice a benzina Stihl TS 410, cilindrata 70,7 cc, disco 300 mm, per calcestruzzo e laterizio.	1579.00	1315.75	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · disco 300mm · ciclone
+56abb174-119c-4855-b861-56ecaa1fa06f	STIHL	4238 011 2810	TS 420	Troncatrici	Troncatrice a benzina Stihl TS 420, cilindrata 70,7 cc, disco 350 mm, per calcestruzzo e laterizio.	1669.00	1283.93	t	2026-04-11 18:29:22.623135+00	Miscela 2-MIX	\N	\N	2-MIX · disco 350mm · ciclone
+52ed47a6-7af3-41bb-b520-c774c922d27d	STIHL	4250-011-2810	TS 500i-A 350mm	Troncatrici termiche	Troncatrice a benzina Stihl TS 500i-A, cilindrata 79,9 cc, disco 350 mm, iniezione elettronica carburante.	1889.0	1576.48	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+0d9b4d39-dd2c-4495-9c03-d4ccff07a7dd	STIHL	TB01 011 2800	TS 710i	Troncatrici	Troncatrice a benzina Stihl TS 710i, cilindrata 97,6 cc, disco 350 mm, iniezione elettronica, uso professionale.	2169.00	1799.06	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Injection · disco 350mm · ElastoStart
+8e926af3-7f86-4a8d-adc8-2cf85f822360	STIHL	TB01 011 2820	TS 910i	Troncatrici	Troncatrice a benzina Stihl TS 910i, cilindrata 97,6 cc, disco 400 mm, iniezione elettronica, uso professionale.	2439.00	2026.13	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	Injection · disco 400mm · ElastoStart · la più potente
+a279b8da-7d73-4555-af57-a29bd62f3888	STIHL	SA09 011 7000	SGA 30	Irroratori	Irroratore a batteria Stihl SGA 30, sistema AK, serbatoio 5 litri, portata 0,6 l/min.	119.00	119.01	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 30, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ, 5L, senza batteria
+a80d89bd-cad0-4060-8fe1-a6c32f922477	STIHL	SA09 011 7010	SGA 30 Set	Irroratori	Irroratore a batteria Stihl SGA 30, sistema AK, serbatoio 5 litri, portata 0,6 l/min.	159.00	159.02	t	2026-04-11 18:29:22.623135+00	batteria	AS 2	{"serie": "AS", "batterie": [{"wh": 28, "val": 30, "nome": "AS 2", "unita": "min", "raccomandata": true}], "consigliata": "AS 2"}	NOVITÀ, con AS 2 e AL 1
+7cf4249a-c75c-46cc-9f4b-f3b626ca7e1d	STIHL	SA10 011 7010	SGA 60 Set	Irroratori	Irroratore a batteria Stihl SGA 60, sistema AK, serbatoio 10 litri, portata 1,2 l/min.	289.00	288.64	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 270, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 520, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 630, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	NOVITÀ, con AK 10 e AL 101
+45004a21-9fa5-4e3d-be65-99071d456f67	STIHL	SA10 011 7000	SGA 60	Irroratori	Irroratore a batteria Stihl SGA 60, sistema AK, serbatoio 10 litri, portata 1,2 l/min.	189.00	189.28	t	2026-04-11 18:29:22.623135+00	batteria	AK 10	{"serie": "AK", "batterie": [{"wh": 72, "val": 270, "nome": "AK 10", "unita": "min", "raccomandata": true}, {"wh": 144, "val": 520, "nome": "AK 20", "unita": "min"}, {"wh": 180, "val": 630, "nome": "AK 30 S", "unita": "min"}], "consigliata": "AK 10"}	NOVITÀ, 15L, senza batteria
+5864154c-3503-4f0a-9d00-a7906958ec1e	STIHL	4854 011 7005	SGA 85	Irroratori	Irroratore a batteria Stihl SGA 85, lancia in ottone, serbatoio 17 litri, pressione esercizio 1-6 bar, portata max 3,6 l/min, peso 6,2 kg.	651.00	605.53	t	2026-04-11 18:29:22.623135+00	batteria	AP 200 S	{"serie": "AP", "batterie": [{"nome": "AP 20", "incompatibile": true}, {"val": 770, "nome": "AP 30", "unita": "min"}, {"nome": "AP 200 S", "incompatibile": true}, {"val": 1440, "nome": "AP 300 S", "unita": "min", "raccomandata": true}, {"val": 1000, "nome": "AP 500 S", "unita": "min"}, {"nome": "AR 2000 L", "incompatibile": true}, {"nome": "AR 3000 L", "incompatibile": true}]}	17L, Smart Connector
+96144ef3-dad7-4e73-8a0c-88cbd205ff2f	STIHL	4854-011-7005	SGA 85.0	Irroratori batteria	Irroratore a batteria Stihl SGA 85, lancia in ottone, serbatoio 17 litri, pressione esercizio 1-6 bar, portata max 3,6 l/min, peso 6,2 kg.	651.0	605.53	t	2026-04-11 19:49:53.226172+00	batteria	\N	\N	\N
+e616ecee-b2c8-4e7f-adbc-0e50d1bf1a7c	STIHL	4241-011-2601	SR 200	Irroratori termici a zaino	Irroratore a benzina Stihl SR 200, cilindrata 27,2 cc, serbatoio 13,5 litri, portata max 3,0 l/min.	629.0	590.0	t	2026-04-11 19:49:53.226172+00	termico	\N	\N	\N
+6306b344-ce5f-4ac7-83c4-9b3f42aee00b	STIHL	6140 200 0005	RT 4082	Trattorini	Trattorino da giardino Stihl RT 4082, motore Stihl 452 cc 4 tempi, piatto di taglio ventrale da 82 cm, altezza taglio regolabile 35-90 mm, cambio idrostatico a pedale.	3769.00	3280.54	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 4000 · 80cm · cesto 250L · idrostatico
+f1093c3f-8f8d-4600-98bf-c121608c871b	STIHL	6160 200 0023	RT 5097	Trattorini	Trattorino da giardino Stihl RT 5097, motore Stihl bicilindrico 477 cc 4 tempi, piatto di taglio ventrale da 97 cm, cambio idrostatico.	4039.00	3618.94	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 4000 · 95cm · cesto 250L · idrostatico
+bee15738-62e3-45d9-97a1-c354c95eace8	STIHL	6160 200 0024	RT 5097 Z	Trattorini	Trattorino da giardino Stihl RT 5097, motore Stihl bicilindrico 477 cc 4 tempi, piatto di taglio ventrale da 97 cm, cambio idrostatico.	4719.00	4228.22	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 95cm · 2 cilindri · cesto 250L
+c3d1037c-5236-4707-8338-0ce573236885	STIHL	6160 200 0025	RT 5112 Z	Trattorini	Trattorino da giardino Stihl RT 5112 Z, motore Stihl bicilindrico 540 cc 4 tempi, piatto di taglio da 112 cm con scarico zeroturn, cambio idrostatico.	5369.00	4810.62	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 110cm · 2 cilindri · cesto 350L
+b9a44d94-303c-4368-9b78-dc0c6b8dc4ec	STIHL	6170 200 0029	RT 6112 ZL	Trattorini	Trattorino da giardino Stihl RT 6112 ZL, motore Stihl bicilindrico 618 cc 4 tempi, piatto di taglio da 112 cm con scarico laterale zeroturn, cambio idrostatico.	6249.00	5599.10	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 7000 · 110cm · 2 cilindri · cruise control · cesto 350L
+38e6f4a9-ec5d-4ff1-a732-c2acdbabbc33	STIHL	6170 200 0030	RT 6127 ZL	Trattorini	Trattorino da giardino Stihl RT 6127 ZL, motore Stihl bicilindrico 618 cc 4 tempi, piatto di taglio da 127 cm con scarico laterale zeroturn, cambio idrostatico.	6549.00	5867.90	t	2026-04-11 18:29:22.623135+00	benzina	\N	\N	EVC 8000 · 125cm · 2 cilindri · cruise control · display LCD
 \.
 
 
@@ -5136,6 +5814,8 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1774601809741	2026-03-27 08:56:49.74+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1774601790529, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-27 08:56:49.74+00	t	user_1774595787870	vendita	f	f	f	in_attesa	\N
 1774608201588	2026-03-27 10:43:21.588+00	Moro Monica 3482993659	\N	\N	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 6112 ZL", "prezzo": 5600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Rasaerba RMA 453 PV", "prezzo": 1149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Decespugliatore FSA135", "prezzo": 465, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria Al301-4", "prezzo": 360, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AP300 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	8890	\N	\N	\N	scontrino	pending	\N	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774947376114	2026-03-31 08:56:16.114+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1774947361909, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1774947370877, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	141.8	\N	\N	\N	scontrino	completed	2026-03-31 08:56:16.114+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776067680889	2026-04-13 10:00:00+00	Morellato Ugo REALIZ. Giardini	{"id": "202390", "cap": "31040", "nome": "Morellato Ugo REALIZ. Giardini", "email": "ugomorellato@tiscali.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVIGNANO", "telefono": "3471368331", "indirizzo": "VIA ALTA 41/A", "provincia": "TV", "searchText": "morellato ugo realiz. giardini trevignano ", "telefonoOriginale": "3471368331"}	3471368331	Admin	[]	[{"id": 1776067676091, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	208	\N	\N	\N	fattura	completed	2026-04-13 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776071912652	2026-04-13 09:18:32.651+00	AZ.AGR. Il Filo Verde Di Trentin Francesco	{"id": "203286", "cap": "31050", "nome": "AZ.AGR. Il Filo Verde Di Trentin Francesco", "email": "info@ilfiloverde.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VILLORBA", "telefono": "3492316204", "indirizzo": "VIA A. MANZONI, 10/B - FONTANE", "provincia": "TV", "searchText": "az.agr. il filo verde di trentin francesco villorba ", "telefonoOriginale": "3492316204"}	3492316204	Simone	[]	[{"id": 1776071892168, "nome": "Hurricane 7 10 kg", "prezzo": 89, "quantita": 8, "matricola": null, "aliquotaIva": 10}]	712	\N	\N	\N	scontrino	completed	2026-04-13 09:18:32.651+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1774607711937	2026-03-27 11:00:00+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[{"brand": "Echo", "model": "Motosega DCS2500T", "prezzo": 736, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535019972"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935010924"}, {"brand": "Echo", "model": "Batteria LBP-5V126", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935009404"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435022949"}, {"brand": "Bluebird", "model": "Trivella NEA560 T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BBLP1002585001"}]	[{"nome": "Rasaerba Stihl RM 655 V matr. 447005979", "prezzo": 901.6, "quantita": 1, "aliquotaIva": 22}, {"nome": "Trivella mm 100", "prezzo": 81, "quantita": 1, "aliquotaIva": 22}]	2177.6	\N	\N	\N	fattura	completed	2026-03-27 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1774629897606	2026-03-27 16:44:57.606+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774629894903, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-03-27 16:44:57.606+00	t	user_1774595787870	vendita	f	f	f	in_attesa	\N
 1774630000147	2026-03-27 16:46:39.785+00	Maggiolo Roberto	{"id": "501465", "cap": "31030", "nome": "Maggiolo Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3923770865", "indirizzo": "VIA CAL DEL BROLO", "provincia": "TV", "searchText": "maggiolo roberto breda di piave ", "telefonoOriginale": "3923770865"}	3923770865	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466C1 PKEH", "prezzo": 489, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1227945"}]	[]	489	\N	\N	\N	scontrino	completed	2026-03-27 16:46:39.785+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -5167,10 +5847,49 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1775573105389	2026-04-07 14:45:05.389+00	Cariato Mario	\N	\N	Simone	[]	[{"id": 1775573051135, "nome": "Leokare 5 kg 5 kg", "prezzo": 62, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573065891, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573078019, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573086478, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	184.1	\N	\N	\N	scontrino	completed	2026-04-07 14:45:05.389+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775578363836	2026-04-07 16:12:43.835+00	Romanello Giulio Cesare	{"id": "210036", "cap": "31048", "nome": "Romanello Giulio Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3406175521", "indirizzo": "VIA MARIO DEL MONACO 4 - CAVRIE", "provincia": "TV", "searchText": "romanello giulio cesare san biagio di callalta ", "telefonoOriginale": "3406175521"}	3406175521	Simone	[]	[{"id": 1775578307588, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775578313362, "nome": "Hurricane 1 kg", "prezzo": 13.75, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	61.45	\N	\N	\N	scontrino	completed	2026-04-07 16:12:43.835+00	t	user_1775577353749	vendita	f	f	f	in_attesa	\N
 1775578568959	2026-04-07 16:16:08.959+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1775578563982, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-07 16:16:08.959+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
-1775643436602	2026-04-08 10:17:16.602+00	De Bortoli Emilio	{"id": "511975", "cap": "30013", "nome": "De Bortoli Emilio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3420471047", "indirizzo": "VIA FAUSTA 167", "provincia": "VE", "searchText": "de bortoli emilio cavallino-treporti ", "telefonoOriginale": "3420471047"}	3420471047	Simone	[{"brand": "GGP", "model": "Trattorino rasaerba XDC 150 HD", "prezzo": 2600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[{"id": 1775643339417, "nome": "Kit traino GGP", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2650	300	pos	Chiamare cliente appena pronto e ritirare trattorino vecchio da rottamare	scontrino	pending	\N	f	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776072128511	2026-04-13 10:00:00+00	Cavezzan Ermes	\N	\N	Simone	[]	[{"id": 1776072106535, "nome": "Tornado 10 kg", "prezzo": 71, "quantita": 9, "matricola": null, "aliquotaIva": 10}, {"id": 1776072118551, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 50.4, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	739.8	\N	\N	\N	scontrino	completed	2026-04-13 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1775656456162	2026-04-08 13:54:16.162+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775656430952, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-04-08 13:54:16.162+00	t	user_1775655848781	vendita	f	f	f	in_attesa	\N
 1775726124789	2026-04-09 09:15:24.788+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775726117028, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-09 09:15:24.788+00	t	user_1775721113292	vendita	f	f	f	in_attesa	\N
 1775738232391	2026-04-09 12:37:12.39+00	Giardino Verde Di Maiorano Devid	{"id": "514216", "cap": "31040", "nome": "Giardino Verde Di Maiorano Devid", "email": "lion.leonardo2004@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VOLPAGO DEL MONTELLO", "telefono": "3457613676", "indirizzo": "VIA SAN PIO X, 101", "provincia": "TV", "searchText": "giardino verde di maiorano devid volpago del montello ", "telefonoOriginale": "3457613676"}	3457613676	Admin	[]	[{"id": 1775738191872, "nome": "hurrica", "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775738228460, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	108.9	\N	\N	\N	scontrino	completed	2026-04-09 12:37:12.39+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1775811024050	2026-04-10 08:50:24.049+00	veronese andrea	\N	\N	Simone	[]	[{"id": 1775810899963, "nome": "AllRound 20 kg", "prezzo": 64.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775810990828, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	79	\N	\N	\N	scontrino	completed	2026-04-10 08:50:24.049+00	t	user_1775805459637	vendita	f	f	f	in_attesa	\N
+1775825346524	2026-04-10 12:49:05.86+00	Palmas Michele Francesco	{"id": "509006", "cap": "31022", "nome": "Palmas Michele Francesco", "email": "fscopalmas@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PREGANZIOL", "telefono": "0422330486", "indirizzo": "VIA MARCELLO DEL MAJNO,9", "provincia": "TV", "searchText": "palmas michele francesco preganziol ", "telefonoOriginale": "0422330486"}	0422330486	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0699NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-04-10 12:49:05.86+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775894412956	2026-04-11 08:00:12.301+00	Nena Massimo	{"id": "507430", "cap": "31057", "nome": "Nena Massimo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3382269912", "indirizzo": "VICOLO OSOPO, 7", "provincia": "TV", "searchText": "nena massimo silea ", "telefonoOriginale": "3382269912"}	3382269912	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416C1", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCBF1127032"}]	[]	339	\N	\N	\N	scontrino	completed	2026-04-11 08:00:12.301+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775899862697	2026-04-11 09:31:01.06+00	Moro Ivano	{"id": "511510", "cap": "30024", "nome": "Moro Ivano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3358408807", "indirizzo": "VIA ROSSETTA, 2", "provincia": "VE", "searchText": "moro ivano musile di piave ", "telefonoOriginale": "3358408807"}	3358408807	Simone	[{"brand": "Echo", "model": "Motosega CS-3410", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "F09238006191"}]	[{"id": 1775899797985, "nome": "Olik catena Pro Up 5 litri ", "prezzo": 23.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775899822809, "nome": "Marline 2T 5 litri", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	359.9	\N	\N	\N	scontrino	completed	2026-04-11 09:31:01.06+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1775902203338	2026-04-11 10:10:03.338+00	Rodighiero Manuele	{"id": "505254", "cap": "31057", "nome": "Rodighiero Manuele", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3471830676", "indirizzo": "VIA BASSA TREVIGIANA, 4", "provincia": "TV", "searchText": "rodighiero manuele silea ", "telefonoOriginale": "3471830676"}	3471830676	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMA 448.3 V", "prezzo": 770, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	959	\N	\N	Avvisare il cliente appena arriva per il ritiro	scontrino	pending	\N	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776070246862	2026-04-13 08:50:45.815+00	Burato Pierluigi	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416C1", "prezzo": 499, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCBF1107292"}]	[]	499	\N	\N	\N	scontrino	completed	2026-04-13 08:50:45.815+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776344554382	2026-04-16 13:02:34.382+00	Marini Arturo	{"id": "203214", "cap": "31100", "nome": "Marini Arturo", "email": "az.agr.mariniarturo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494344074", "indirizzo": "VIA DELL'ISOLA 12", "provincia": "TV", "searchText": "marini arturo treviso ", "telefonoOriginale": "3494344074"}	3494344074	Simone	[]	[{"id": 1776344545216, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	466.4	\N	\N	\N	fattura	completed	2026-04-16 13:02:34.382+00	t	user_1776324198863	vendita	f	f	f	in_attesa	\N
+1776087669751	2026-04-13 13:41:09.751+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1776087665124, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-13 13:41:09.751+00	t	user_1776067412336	vendita	f	f	f	in_attesa	\N
+1775643436602	2026-04-08 10:00:00+00	De Bortoli Emilio	{"id": "511975", "cap": "30013", "nome": "De Bortoli Emilio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3420471047", "indirizzo": "VIA FAUSTA 167", "provincia": "VE", "searchText": "de bortoli emilio cavallino-treporti ", "telefonoOriginale": "3420471047"}	3420471047	Simone	[{"brand": "GGP", "model": "Trattorino rasaerba XDC 150 HD", "prezzo": 2600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "26BA3RON003900"}]	[{"id": 1775643339417, "nome": "Kit traino GGP", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2650	300	pos	Chiamare cliente appena pronto e ritirare trattorino vecchio da rottamare	scontrino	completed	2026-04-13 14:40:06.242+00	f	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776170406257	2026-04-14 12:40:05.805+00	Terradice S.R.L.	{"id": "506854", "cap": "31037", "nome": "Terradice S.R.L.", "email": "info@terradice.com", "nomeP": "", "cognome": "", "contatto": "Guidolin Mauro", "localita": "LORIA", "telefono": "3409433264", "indirizzo": "VIA COLOMBARA, 63/A", "provincia": "TV", "searchText": "terradice s.r.l. loria guidolin mauro", "telefonoOriginale": "3409433264"}	3409433264	Simone	[{"brand": "Grillo", "model": "Climber 10 AWD", "prezzo": 11800, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "767775"}]	[]	11800	\N	\N	\N	scontrino	completed	2026-04-14 12:40:05.805+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776245110087	2026-04-15 09:25:09.062+00	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	{"id": "510978", "cap": "31020", "nome": "AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.", "email": "giuliano.possamai@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "", "indirizzo": "VIA SAN MACARIO DEI PALU 33", "provincia": "TV", "searchText": "az. agr. possamai di possamai giuliano & c. s.s. san fior ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "Echo", "model": "Tosasiepi a batteria DHC2800R", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E80845002239"}, {"brand": "Echo", "model": "Batteria 2,5 Ah 126 Wh", "prezzo": 279, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935015188"}, {"brand": "Echo", "model": "Caricabatterie Rapid LCJ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435023812"}]	[]	828	\N	\N	\N	fattura	completed	2026-04-15 09:25:09.062+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776256210861	2026-04-15 12:30:10.861+00	RCL HOLDING SRL Piazza Rinaldi,4  31100 Treviso (TV) P.Iva 04777260268 Cod. fatturazione elettronica - W7YVJK9 mail: nicola@robinior.com 393 337 1144	\N	\N	Simone	[]	[{"id": 1776256129562, "nome": "Centralina ZA10 matr. ZA2610010152 matricola ZA2610010153", "prezzo": 2008.2, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	4016.4	\N	\N	\N	fattura	completed	2026-04-15 12:30:10.861+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776264594181	2026-04-15 14:49:53.164+00	Monti Paolo	{"id": "510896", "cap": "31052", "nome": "Monti Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3356356503", "indirizzo": "VIA TREVISANA, 7", "provincia": "TV", "searchText": "monti paolo maserada sul piave ", "telefonoOriginale": "3356356503"}	3356356503	Simone	[{"brand": "Stihl", "model": "Biotrituratore GHE 250.0", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451561082"}]	[]	599	\N	\N	\N	scontrino	completed	2026-04-15 14:49:53.164+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776266299178	2026-04-15 15:18:18.284+00	AZ. AGR. De Martin Bruna	{"id": "511341", "cap": "30020", "nome": "AZ. AGR. De Martin Bruna", "email": "o.minetto@dataservices.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3488123052", "indirizzo": "VIA DELLA FAVORITA, 45", "provincia": "VE", "searchText": "az. agr. de martin bruna fossalta di piave ", "telefonoOriginale": "3488123052"}	3488123052	Simone	[{"brand": "ECHO", "model": "Motosega CS-501SX", "prezzo": 779, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C76038034938"}]	[{"id": 1776266135160, "nome": "Olio pro up 5 litri", "prezzo": 23, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	802	\N	\N	\N	fattura	completed	2026-04-15 15:18:18.284+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776270072394	2026-04-15 16:21:12.393+00	Evarelli Andrea	{"id": "511116", "cap": "31038", "nome": "Evarelli Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3494948819", "indirizzo": "VIA PIAVE, 66", "provincia": "TV", "searchText": "evarelli andrea paese ", "telefonoOriginale": "3494948819"}	3494948819	Simone	[]	[{"id": 1776270037908, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1776270047023, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1776270059560, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	190.7	\N	\N	\N	scontrino	completed	2026-04-15 16:21:12.393+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776331418532	2026-04-16 09:23:38.027+00	Elisa Luzzi via San Giorgio 1801 Talamona (SO) 3357005520	\N	\N	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMI 422.2 (EU1)", "prezzo": 360, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "447242267"}]	[]	360	\N	\N	\N	scontrino	completed	2026-04-16 09:23:38.027+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776331519438	2026-04-16 09:25:19.438+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1776331515202, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-04-16 09:25:19.438+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776410081539	2026-04-17 07:14:40.603+00	Fabio Pasqual via Ex Internati 10 Carbonera 3292618553	\N	\N	Simone	[{"brand": "freezanz", "model": " Zhalt Portable Connect", "prezzo": 420, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "ZC016602024"}]	[{"id": 1776410050272, "nome": "Freezanz Natural Green - Lt. 1 Lt. 1", "prezzo": 25.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1776410068950, "nome": "Tetrapiù PMC (Reg. Min. Salute N. 11826) - Lt. 5 Lt. 5", "prezzo": 23.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	469.8	\N	\N	\N	scontrino	completed	2026-04-17 07:14:40.603+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776416748409	2026-04-17 09:05:47.765+00	Criveller Renato	{"id": "504445", "cap": "31100", "nome": "Criveller Renato", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "0422400644", "indirizzo": "", "provincia": "TV", "searchText": "criveller renato treviso ", "telefonoOriginale": "0422400644"}	0422400644	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3021TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U47338203412"}]	[]	599	\N	\N	\N	scontrino	completed	2026-04-17 09:05:47.765+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776421055441	2026-04-17 10:17:35.441+00	Zanette Adelino	{"id": "505394", "cap": "31030", "nome": "Zanette Adelino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3472949319", "indirizzo": "VIA GRANDE, 82 - SAN GIACOMO", "provincia": "TV", "searchText": "zanette adelino carbonera ", "telefonoOriginale": "3472949319"}	3472949319	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA80 R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Potatore GTA26 kit AS2 e AL1", "prezzo": 169, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Forbice elettronica ASA20", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	1066	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776431550867	2026-04-17 13:12:30.33+00	Comunello Marco	{"id": "513541", "cap": "31100", "nome": "Comunello Marco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3896551680", "indirizzo": "STRADA COMUNALE DI SAN VITALE 29/D", "provincia": "TV", "searchText": "comunello marco treviso ", "telefonoOriginale": "3896551680"}	3896551680	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600044355"}]	[]	159	\N	\N	\N	scontrino	completed	2026-04-17 13:12:30.33+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776432662014	2026-04-17 13:31:01.144+00	Bergamo Guglielmo	{"id": "506642", "cap": "31047", "nome": "Bergamo Guglielmo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PONTE DI PIAVE", "telefono": "3358325625", "indirizzo": "VIA MASARI, 36", "provincia": "TV", "searchText": "bergamo guglielmo ponte di piave ", "telefonoOriginale": "3358325625"}	3358325625	Simone	[{"brand": "Stihl", "model": "Irroratore SG51", "prezzo": 119, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "998234688"}]	[{"id": 1776432655365, "nome": "Olio motore HP Ultra 1L miscela 2T 1L", "prezzo": 13.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	132.5	\N	\N	\N	scontrino	completed	2026-04-17 13:31:01.144+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776437011471	2026-04-17 14:43:30.226+00	Possamai Manuel via Pantiera 58 G Roncade 3478940411	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943696310"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "936314966"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707687469"}]	[]	139	\N	\N	\N	scontrino	completed	2026-04-17 14:43:30.226+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776438579416	2026-04-17 10:00:00+00	2S Service di Scala Simone 3495113803 2sservicescala@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "HRM 1500", "prezzo": 799, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCLF-1004003"}]	[]	799	\N	\N	Aggiungere bobina filo 200 metri da conteggiare a parte	fattura	completed	2026-04-17 15:20:06.094+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776442349178	2026-04-17 16:12:27.294+00	Rosolen Mattia	{"id": "511101", "cap": "31015", "nome": "Rosolen Mattia", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CONEGLIANO", "telefono": "", "indirizzo": "VIA STRADA DELLE BRUSCOLE, 14", "provincia": "TV", "searchText": "rosolen mattia conegliano ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "Stihl", "model": "Motosega MSA 220.0T", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "445691105"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "917325889"}]	[]	878	\N	\N	\N	fattura	completed	2026-04-17 16:12:27.294+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776444271498	2026-04-17 16:44:30.871+00	Pietrobon Davide	{"id": "507888", "cap": "31033", "nome": "Pietrobon Davide", "email": "davidepietrobon28@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3349426642", "indirizzo": "VIA BORGO PADOVA, 129", "provincia": "TV", "searchText": "pietrobon davide castelfranco veneto ", "telefonoOriginale": "3349426642"}	3349426642	Simone	[{"brand": "Segway", "model": "Robot tosaerba Navimow i108", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "S4THA2519K2349"}]	[]	999	\N	\N	\N	scontrino	completed	2026-04-17 16:44:30.871+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776445053514	2026-04-17 16:57:32.706+00	AZ.AGR Fregonese Di Brocchetto Maria	{"id": "506009", "cap": "30020", "nome": "AZ.AGR Fregonese Di Brocchetto Maria", "email": "gorghimarco@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3403398354", "indirizzo": "VIA A. DE GASPERI, 19", "provincia": "VE", "searchText": "az.agr fregonese di brocchetto maria fossalta di piave ", "telefonoOriginale": "3403398354"}	3403398354	Simone	[{"brand": "Echo", "model": "Motosega CS-251", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C74638145275"}]	[{"id": 1776444905998, "nome": "Zaino Vita 12 Volpi", "prezzo": 100, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1776444968651, "nome": "Olio catena Pro Up 2 litri", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1776445006867, "nome": "Olio pro up mix 1 litro", "prezzo": 13.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	583.5	\N	\N	\N	fattura	completed	2026-04-17 16:57:32.706+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776497179891	2026-04-18 07:26:19.891+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1776497171945, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 5, "matricola": null, "aliquotaIva": 10}]	494	\N	\N	\N	fattura	completed	2026-04-18 07:26:19.891+00	t	user_1776494377078	vendita	f	f	f	in_attesa	\N
+1776697099519	2026-04-20 14:58:19.519+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1776697097023, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-04-20 14:58:19.519+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1776759386981	2026-04-21 08:16:26.155+00	Rosina Roberto	{"id": "512083", "cap": "31021", "nome": "Rosina Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MOGLIANO VENETO", "telefono": "3487623827", "indirizzo": "VIA TORNI, 84/B", "provincia": "TV", "searchText": "rosina roberto mogliano veneto ", "telefonoOriginale": "3487623827"}	3487623827	Simone	[{"brand": "WORTEX", "model": "Irroratore T 25-T4", "prezzo": 390, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "140H768"}]	[]	390	\N	\N	\N	scontrino	completed	2026-04-21 08:16:26.155+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776761414638	2026-04-21 08:50:14.015+00	Scarpi Francesco	{"id": "203360", "cap": "30013", "nome": "Scarpi Francesco", "email": "giardiniscarpi@gmail.com", "nomeP": "", "cognome": "", "contatto": "CEL1 Francesco - CEL2 Claudio", "localita": "CAVALLINO-TREPORTI", "telefono": "3388209572", "indirizzo": "VIA FAUSTA, 149/B", "provincia": "VE", "searchText": "scarpi francesco cavallino-treporti cel1 francesco - cel2 claudio", "telefonoOriginale": "3388209572"}	3388209572	Simone	[{"brand": "Stihl", "model": "FSA120R", "prezzo": 409, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545073114"}, {"brand": "Stihl", "model": "AP500S", "prezzo": 420, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}]	[]	829	\N	\N	\N	fattura	completed	2026-04-21 08:50:14.015+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1776785902851	2026-04-21 15:38:22.85+00	Vivai Piante Toffolon Gabriele & Figli	{"id": "508022", "cap": "31039", "nome": "Vivai Piante Toffolon Gabriele & Figli", "email": "info@toffolongabrieleefigli.191.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "RIESE PIO X", "telefono": "3299539498", "indirizzo": "VIA KENNEDY, 93 - VALLA'", "provincia": "TV", "searchText": "vivai piante toffolon gabriele & figli riese pio x ", "telefonoOriginale": "3299539498"}	3299539498	Simone	[]	[{"id": 1776785893630, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	398.56	\N	\N	\N	fattura	completed	2026-04-21 15:38:22.85+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776862382252	2026-04-22 12:53:02.252+00	Verdesole Snc Di Montagner & Binotto	{"id": "203400", "cap": "31049", "nome": "Verdesole Snc Di Montagner & Binotto", "email": "verdesolevaldo@libero.it", "nomeP": "", "cognome": "", "contatto": "3479082228 Paolo", "localita": "VALDOBBIADENE", "telefono": "3479082228", "indirizzo": "VIA PRA FONTANA 57", "provincia": "TV", "searchText": "verdesole snc di montagner & binotto valdobbiadene 3479082228 paolo", "telefonoOriginale": "3479082228"}	3479082228	Simone	[]	[{"id": 1776862339201, "nome": "Green 7 25 kg", "prezzo": 45.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}, {"id": 1776862355174, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 2, "matricola": null, "aliquotaIva": 10}, {"id": 1776862371540, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 94, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	622.5	\N	\N	\N	fattura	completed	2026-04-22 12:53:02.252+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1776875692877	2026-04-22 16:34:52.877+00	AZ. AGR. La Quercia Di Dal Ben Igor	{"id": "502663", "cap": "30024", "nome": "AZ. AGR. La Quercia Di Dal Ben Igor", "email": "igor@dalbengiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MUSILE DI PIAVE", "telefono": "3482508521", "indirizzo": "VIA STANGA 11/A", "provincia": "VE", "searchText": "az. agr. la quercia di dal ben igor musile di piave ", "telefonoOriginale": "3482508521"}	3482508521	Simone	[]	[{"id": 1776875660524, "nome": "Punta trivella Blue Bird mm 150", "prezzo": 110, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	110	\N	\N	Passa domani o dopodomani a ritirarla	fattura	completed	2026-04-22 16:34:52.877+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1777010951167	2026-04-24 06:09:11.166+00	Cherchi Valeria Dosson 335 596 5860	\N	\N	Simone	[{"brand": "Segway", "model": "Navimow i108 E", "prezzo": 1500, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	1500	\N	\N	Compreso installazione. Emettere un buono da 100€ per Girotto Loris	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1777012416399	2026-04-24 06:33:36.399+00	Cenedese Andrea	{"cf": "", "id": "244f09c0-9929-48c0-bad3-89de8885fc48", "cap": "31048", "sdi": "", "nome": "Cenedese Andrea", "piva": "", "email": "andrea.cenedese@alice.it", "nomeP": "Cenedese Andrea", "_fonte": "db", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta "}	3318200684	Simone	[]	[{"id": 1777012276732, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 94, "quantita": 3, "matricola": null, "aliquotaIva": 10}, {"id": 1777012360041, "nome": "Root Speed 5 Kg 5 kg", "prezzo": 44.1, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1777012396537, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	466.5	\N	\N	\N	fattura	completed	2026-04-24 06:33:36.399+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1777018889853	2026-04-24 08:21:29.082+00	Novello Alberto	{"id": "504566", "cap": "30020", "nome": "Novello Alberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "QUARTO D'ALTINO", "telefono": "3396229453", "indirizzo": "VIA UGO FOSCOLO,5/D", "provincia": "VE", "searchText": "novello alberto quarto d'altino ", "telefonoOriginale": "3396229453"}	3396229453	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 100.1", "prezzo": 370, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451936877"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 220, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256592"}]	[]	590	\N	\N	\N	scontrino	completed	2026-04-24 08:21:29.082+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1777020198874	2026-04-24 08:43:18.874+00	Ragonesi Paolo via Madonna della Salute, 1 Oderzo 345 2951398 paolo.ragonesi@icloud.com	\N	\N	Simone	[{"brand": "Grillo", "model": "Climber 7.18", "prezzo": 7000, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	7000	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1777023598898	2026-04-24 09:39:57.7+00	Amenta Enrico	{"id": "504113", "cap": "31052", "nome": "Amenta Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3807707724", "indirizzo": "VICOLO CACCIANIGA, 24", "provincia": "TV", "searchText": "amenta enrico maserada sul piave ", "telefonoOriginale": "3807707724"}	3807707724	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMA 248 T", "prezzo": 679, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452754472"}, {"brand": "Stihl", "model": "Batteria AK 30.0 S", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "913799159"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703487143"}]	[{"id": 1777023582099, "nome": "Ritiro vs rasaerba usato", "prezzo": -120, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	748	\N	\N	\N	scontrino	completed	2026-04-24 09:39:57.7+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 \.
 
 
@@ -5467,7 +6186,6 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 438	2026-04-03 13:24:38.331+00	SCARICO	Stihl	Caricabatteria AL 101	702673116	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
 439	2026-04-03 13:24:38.844+00	SCARICO	Stihl	Batteria AK 30.0S	919937881	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
 440	2026-04-03 16:00:03.051+00	CARICO	Stihl	Decespugliatore FSA 30.0	840710134	\N	\N	\N	available	user_1775131564325	main	t
-441	2026-04-03 16:01:01.865+00	CARICO	Stihl	Batteria AS 2	937538955	\N	\N	\N	available	user_1775131564325	main	t
 442	2026-04-03 16:01:28.632+00	CARICO	Stihl	Caricabatteria AL 1	707554389	\N	\N	\N	available	user_1775131564325	main	t
 443	2026-04-03 16:01:39.398+00	SCARICO	Stihl	Decespugliatore FSA 30.0	840710134	Cracco Ortensia	0	0	sold	user_1775131564325	main	f
 444	2026-04-03 16:01:39.879+00	SCARICO	Stihl	Caricabatteria AL 1	707554389	Cracco Ortensia	0	0	sold	user_1775131564325	main	f
@@ -5483,6 +6201,68 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 454	2026-04-07 07:50:01.638+00	SCARICO	Stihl	Decespugliatore FSA 70.0 R	452785538	Basso Mario via Aldo Moro 24/B Frescada	0	0	sold	user_1775131564325	main	f
 455	2026-04-07 08:00:36.799+00	CARICO	Stihl	Motosega MS 194 T 3/8"P Chainsaw	545377758	\N	\N	\N	available	user_1775131564325	main	t
 456	2026-04-07 08:03:27.351+00	SCARICO	Stihl	Motosega MS 194 T 3/8"P Chainsaw	545377758	Santagà Elena via Grande 2 Rovaré di San Biagio di Callalta	0	0	sold	user_1775131564325	main	f
+457	2026-04-10 12:48:45.884+00	CARICO	Volpi	Potatore KVS5100	SC2624.0699NB	\N	\N	\N	available	user_1775131564325	main	t
+458	2026-04-10 12:49:05.86+00	SCARICO	Volpi	Potatore KVS5100	SC2624.0699NB	Palmas Michele Francesco	0	0	sold	user_1775131564325	main	f
+459	2026-04-11 07:59:59.923+00	CARICO	Honda	Rasaerba HRG416C1	MCBF1127032	\N	\N	\N	available	user_1775131564325	main	t
+460	2026-04-11 08:00:12.302+00	SCARICO	Honda	Rasaerba HRG416C1	MCBF1127032	Nena Massimo	0	0	sold	user_1775131564325	main	f
+461	2026-04-11 09:28:18.417+00	CARICO	Echo	Motosega CS-3410	F09238006191	\N	\N	\N	available	user_1775131564325	main	t
+462	2026-04-11 09:31:01.061+00	SCARICO	Echo	Motosega CS-3410	F09238006191	Moro Ivano	0	0	sold	user_1775131564325	main	f
+463	2026-04-13 08:49:54.411+00	CARICO	Honda	Rasaerba HRG416C1	MCBF1107292	\N	\N	\N	available	user_1775131564325	main	t
+464	2026-04-13 08:50:45.815+00	SCARICO	Honda	Rasaerba HRG416C1	MCBF1107292	Burato Pierluigi	0	0	sold	user_1775131564325	main	f
+465	2026-04-14 06:38:20.547+00	CARICO	Grillo	Trattorino rasaerba Climber 10 AWD 27	767775	\N	\N	\N	available	user_1775131564325	main	t
+466	2026-04-14 06:38:43.896+00	SCARICO	Grillo	Trattorino rasaerba Climber 10 AWD 27	767775	Terradice S.R.L.	0	0	sold	user_1775131564325	main	f
+467	2026-04-14 12:39:35.903+00	CARICO	Grillo	Climber 10 AWD	767775	\N	\N	\N	available	user_1770584612559	main	t
+468	2026-04-14 12:40:05.805+00	SCARICO	Grillo	Climber 10 AWD	767775	Terradice S.R.L.	0	0	sold	user_1770584612559	main	f
+469	2026-04-15 09:23:04.794+00	CARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	\N	\N	\N	available	user_1770584612559	main	t
+470	2026-04-15 09:23:55.293+00	CARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	\N	\N	\N	available	user_1770584612559	main	t
+471	2026-04-15 09:24:45.846+00	CARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	\N	\N	\N	available	user_1770584612559	main	t
+472	2026-04-15 09:25:09.062+00	SCARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
+473	2026-04-15 09:25:09.378+00	SCARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
+474	2026-04-15 09:25:09.62+00	SCARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
+475	2026-04-15 14:49:17.099+00	CARICO	Stihl	Biotrituratore GHE 250.0	451561082	\N	\N	\N	available	user_1775131564325	main	t
+476	2026-04-15 14:49:53.164+00	SCARICO	Stihl	Biotrituratore GHE 250.0	451561082	Monti Paolo	0	0	sold	user_1775131564325	main	f
+477	2026-04-15 15:14:08.955+00	CARICO	ECHO	Motosega CS-501SX	C76038034938	\N	\N	\N	available	user_1775131564325	main	t
+478	2026-04-15 15:18:18.285+00	SCARICO	ECHO	Motosega CS-501SX	C76038034938	AZ. AGR. De Martin Bruna	0	0	sold	user_1775131564325	main	f
+479	2026-04-16 09:23:21.585+00	CARICO	Stihl	Robot tosaerba RMI 422.2 (EU1)	447242267	\N	\N	\N	available	user_1775131564325	main	t
+480	2026-04-16 09:23:38.027+00	SCARICO	Stihl	Robot tosaerba RMI 422.2 (EU1)	447242267	Elisa Luzzi via San Giorgio 1801 Talamona (SO) 3357005520	0	0	sold	user_1775131564325	main	f
+481	2026-04-17 07:13:41.619+00	CARICO	freezanz	 Zhalt Portable Connect	ZC016602024	\N	\N	\N	available	user_1775131564325	main	t
+482	2026-04-17 07:14:40.603+00	SCARICO	freezanz	 Zhalt Portable Connect	ZC016602024	Fabio Pasqual via Ex Internati 10 Carbonera 3292618553	0	0	sold	user_1775131564325	main	f
+483	2026-04-17 09:05:17.761+00	CARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	\N	\N	\N	available	user_1775131564325	main	t
+484	2026-04-17 09:05:47.765+00	SCARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	Criveller Renato	0	0	sold	user_1775131564325	main	f
+485	2026-04-17 13:12:17.637+00	CARICO	Stihl	Soffiatore BGA 50.0	600044355	\N	\N	\N	available	user_1775131564325	main	t
+486	2026-04-17 13:12:30.33+00	SCARICO	Stihl	Soffiatore BGA 50.0	600044355	Comunello Marco	0	0	sold	user_1775131564325	main	f
+487	2026-04-17 13:28:39.128+00	CARICO	Stihl	Irroratore SG51	998234688	\N	\N	\N	available	user_1775131564325	main	t
+488	2026-04-17 13:31:01.144+00	SCARICO	Stihl	Irroratore SG51	998234688	Bergamo Guglielmo	0	0	sold	user_1775131564325	main	f
+489	2026-04-17 14:42:08.003+00	CARICO	Stihl	Tagliasiepi HSA 26	943696310	\N	\N	\N	available	user_1775131564325	main	t
+490	2026-04-17 14:42:43.707+00	CARICO	Stihl	Batteria AS 2	936314966	\N	\N	\N	available	user_1775131564325	main	t
+491	2026-04-17 14:43:22.516+00	CARICO	Stihl	Caricabatteria AL 1	707687469	\N	\N	\N	available	user_1775131564325	main	t
+492	2026-04-17 14:43:30.226+00	SCARICO	Stihl	Tagliasiepi HSA 26	943696310	Possamai Manuel via Pantiera 58 G Roncade 3478940411	0	0	sold	user_1775131564325	main	f
+493	2026-04-17 14:43:30.587+00	SCARICO	Stihl	Batteria AS 2	936314966	Possamai Manuel via Pantiera 58 G Roncade 3478940411	0	0	sold	user_1775131564325	main	f
+494	2026-04-17 14:43:30.89+00	SCARICO	Stihl	Caricabatteria AL 1	707687469	Possamai Manuel via Pantiera 58 G Roncade 3478940411	0	0	sold	user_1775131564325	main	f
+495	2026-04-17 16:10:30.373+00	CARICO	Stihl	Motosega MSA 220.0T	445691105	\N	\N	\N	available	user_1775131564325	main	t
+496	2026-04-17 16:11:44.023+00	CARICO	Stihl	Batteria AP 300.0 S	917325889	\N	\N	\N	available	user_1775131564325	main	t
+497	2026-04-17 16:12:27.294+00	SCARICO	Stihl	Motosega MSA 220.0T	445691105	Rosolen Mattia	0	0	sold	user_1775131564325	main	f
+498	2026-04-17 16:12:28.619+00	SCARICO	Stihl	Batteria AP 300.0 S	917325889	Rosolen Mattia	0	0	sold	user_1775131564325	main	f
+499	2026-04-17 16:43:18.353+00	CARICO	Segway	Robot tosaerba Navimow i108	S4THA2519K2349	\N	\N	\N	available	user_1770584612559	main	t
+500	2026-04-17 16:44:30.871+00	SCARICO	Segway	Robot tosaerba Navimow i108	S4THA2519K2349	Pietrobon Davide	0	0	sold	user_1770584612559	main	f
+501	2026-04-17 16:53:48.356+00	CARICO	Echo	Motosega CS-251	C74638145275	\N	\N	\N	available	user_1775131564325	main	t
+502	2026-04-17 16:57:32.706+00	SCARICO	Echo	Motosega CS-251	C74638145275	AZ.AGR Fregonese Di Brocchetto Maria	0	0	sold	user_1775131564325	main	f
+503	2026-04-21 08:15:38.166+00	CARICO	WORTEX	Irroratore T 25-T4	140H768	\N	\N	\N	available	user_1775131564325	main	t
+504	2026-04-21 08:16:26.155+00	SCARICO	WORTEX	Irroratore T 25-T4	140H768	Rosina Roberto	0	0	sold	user_1775131564325	main	f
+505	2026-04-21 08:48:25.069+00	CARICO	Stihl	FSA120R	545073114	\N	\N	\N	available	user_1770584612559	main	t
+506	2026-04-21 08:50:01.773+00	CARICO	Stihl	AP500S	548989613	\N	\N	\N	available	user_1770584612559	main	t
+507	2026-04-21 08:50:14.015+00	SCARICO	Stihl	FSA120R	545073114	Scarpi Francesco	0	0	sold	user_1770584612559	main	f
+508	2026-04-21 08:50:14.36+00	SCARICO	Stihl	AP500S	548989613	Scarpi Francesco	0	0	sold	user_1770584612559	main	f
+509	2026-04-24 08:20:27.59+00	CARICO	Stihl	Tagliasiepi HSA 100.1	451936877	\N	\N	\N	available	user_1775131564325	main	t
+510	2026-04-24 08:21:13.162+00	CARICO	Stihl	Batteria AP 200S	953256592	\N	\N	\N	available	user_1775131564325	main	t
+511	2026-04-24 08:21:29.082+00	SCARICO	Stihl	Tagliasiepi HSA 100.1	451936877	Novello Alberto	0	0	sold	user_1775131564325	main	f
+512	2026-04-24 08:21:29.423+00	SCARICO	Stihl	Batteria AP 200S	953256592	Novello Alberto	0	0	sold	user_1775131564325	main	f
+513	2026-04-24 09:27:03.214+00	CARICO	Stihl	Robot tosaerba RMA 248 T	452754472	\N	\N	\N	available	user_1770584612559	main	t
+514	2026-04-24 09:38:14.506+00	CARICO	Stihl	Batteria AK 30.0 S	913799159	\N	\N	\N	available	user_1770584612559	main	t
+515	2026-04-24 09:38:57.173+00	CARICO	Stihl	Caricabatteria AL 101	703487143	\N	\N	\N	available	user_1770584612559	main	t
+516	2026-04-24 09:39:57.701+00	SCARICO	Stihl	Robot tosaerba RMA 248 T	452754472	Amenta Enrico	0	0	sold	user_1770584612559	main	f
+517	2026-04-24 09:39:58.132+00	SCARICO	Stihl	Batteria AK 30.0 S	913799159	Amenta Enrico	0	0	sold	user_1770584612559	main	f
+518	2026-04-24 09:39:58.409+00	SCARICO	Stihl	Caricabatteria AL 101	703487143	Amenta Enrico	0	0	sold	user_1770584612559	main	f
 \.
 
 
@@ -7159,9 +7939,19 @@ b004fc1b-6d57-4738-953a-142de0a80722	2026-04-02 09:06:20.127369+00	Evarelli Andr
 4be5364f-6f93-4d85-9cdd-03173409b9ee	2026-04-02 09:07:03.677951+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
 15094e41-afd0-42f5-8c7f-362564c3cdd7	2026-04-02 09:07:10.655002+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	\N	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
 b936d80e-d5bb-47cd-8e1b-3d16e0b2ccbf	2026-04-02 09:08:07.167312+00	Evarelli Andrea	400	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	giardiniere	\N	t	t	\N	\N	278.4	{"mq": 400, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-02", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Evarelli Andrea", "tipoCliente": "giardiniere", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-02
-cd2d7dac-745f-450f-819d-4a3856d1c5d6	2026-04-07 16:48:25.258241+00	Domenico 	200	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 200, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-07", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Domenico ", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-07
-81be23e4-1ec1-40b9-aaa9-667df4f23070	2026-04-07 16:49:05.715342+00	Domenico 	200	piano_annuo	ornamentale	standard	mivena	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 200, "linea": "mivena", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-07", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Domenico ", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-07
-a4ef31cf-ef03-4898-a62a-2e227c1c6c36	2026-04-09 04:46:21.406708+00	Domenico	200	piano_annuo	ornamentale	base	mivena	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 200, "linea": "mivena", "colore": "intenso", "livello": "base", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-09", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Domenico", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-09
+a15d6ade-437c-4759-b2f9-91445c24fd0f	2026-04-09 20:34:09.549505+00	Domenico	200	piano_annuo	ornamentale	base	mivena	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 200, "linea": "mivena", "colore": "intenso", "livello": "base", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-09", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Domenico", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-09
+4392b502-2e65-428e-946b-fdcde86c0ae8	2026-04-15 12:07:32.800479+00	Albergo all'Orso	1500	rigenerazione	ornamentale	standard	albatros	\N	\N	centralizzata	privato	grave	f	t	hurricane	Hurricane	\N	{"mq": 1500, "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-04-15", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Albergo all'Orso", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-04-15
+bc1ab463-9058-441e-b551-8579a5d015df	2026-04-15 12:08:21.580331+00	Albergo all'Orso	1500	rigenerazione	ornamentale	standard	albatros	\N	\N	centralizzata	privato	grave	f	t	hurricane	Hurricane	937.6	{"mq": 1500, "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "miscuglio": {"id": "hurricane", "sku": "Hurricane 10kg", "nome": "Hurricane"}, "tipoPrato": "ornamentale", "dataInizio": "2026-04-15", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Albergo all'Orso", "tipoCliente": "privato", "degradazione": "grave", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-04-15
+feaa7a9d-e8e1-4636-a4a9-1553388360c4	2026-04-15 12:10:40.605524+00	Albergo all'Orso	1500	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 1500, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-15", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Albergo all'Orso", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-04-15
+40321471-641b-4c9d-9588-44f1b8e10504	2026-04-24 06:24:01.417135+00	Cenedese Andrea cantiere De Rosa	550	rigenerazione	ornamentale	premium	albatros	normale	\N	centralizzata	privato	custom	f	t	\N	\N	\N	{"mq": 550, "linea": "albatros", "colore": null, "livello": "premium", "terreno": "normale", "estendi12": null, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-04-24", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Cenedese Andrea cantiere De Rosa", "tipoCliente": "privato", "degradazione": "custom", "tipoIntervento": "rigenerazione", "primoConcimeIncluso": false}	\N	2026-04-24
+\.
+
+
+--
+-- Data for Name: preventivi_catalogo; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.preventivi_catalogo (id, cliente, righe, totale_imponibile, totale_ic, data_preventivo, titolo, pagamento, garanzia, note, created_at) FROM stdin;
 \.
 
 
@@ -7613,6 +8403,15 @@ b1928501-0303-481f-9126-76c543bd7b6b	MGP080	GEOGREEN	allround	granulare	🔵	f	2
 6c77a7d7-357c-441c-8e62-5a5cb68da019	PLK005	GEOGREEN	leokare	biologico	🟤	t	15	1.2	Acidi umici leonardite. Più raffinato di Humifitos, efficace anche fogliare a temp. medie.	t	2026-03-04 08:27:15.563749+00	kare	f
 cd8027cb-5de9-4f9a-b786-a92ac7e42aca	PAL005	GEOGREEN	algapark	biostimolante	🩵	t	0.3	1.2	Ecklonia maxima + lievito. Stimola accestimento, inibisce dominanza apicale.	t	2026-03-04 08:27:15.563749+00	kare	f
 50638bb4-185c-443a-a67a-efe0f05b788f	PSK001	GEOGREEN	sevenkare	fogliare	🔴	t	\N	1.2	NPK 12-5-6 liquido. Integra Green 7 in fertirrigazione.	t	2026-03-04 08:27:15.563749+00	kare	f
+\.
+
+
+--
+-- Data for Name: pv_templates; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.pv_templates (id, nome, tipo_prato, linea, livello, config, created_at) FROM stdin;
+c5edd71f-b955-40e8-90db-88418d7f6302	Orso	ornamentale	albatros	standard	{"mq": "1500", "linea": "albatros", "colore": null, "livello": "standard", "terreno": null, "estendi12": null, "tipoPrato": "ornamentale", "liquidiSab": true, "tipoCliente": "privato", "usaAllRound": false, "overrideSeme": null, "overridePrezzi": {}, "tipoIntervento": "rigenerazione", "overrideLiquidi": null, "overrideGranulari": null, "overridePianoAnnuo": null}	2026-04-15 12:09:09.448609+00
 \.
 
 
@@ -8225,62 +9024,87 @@ b422093e-060e-487b-89f8-2d0f55d97dfb	Stihl	Motosega MS 151	1	2026-04-04 09:14:41
 2f36a24a-f2c7-4e3a-95c4-8fd14a8d609f	Stihl	Soffiatore BG 56/C	1	2026-04-04 09:16:32.390539+00	2026-04-04 09:16:32.390539+00
 7f4abd81-4ed2-45c4-a9fa-e365195545bc	Stihl	Decespugliatore FSA 70.0 R	1	2026-04-07 07:49:45.392788+00	2026-04-07 07:49:45.392788+00
 affd0615-e33b-4174-bdfd-46355ffc12df	Stihl	Motosega MS 194 T 3/8"P Chainsaw	1	2026-04-07 08:00:37.061588+00	2026-04-07 08:00:37.061588+00
+9973f69a-d0ff-483a-ad8a-831787581e76	Volpi	Potatore KVS5100	1	2026-04-10 12:48:46.838153+00	2026-04-10 12:48:46.838153+00
+2b23246e-8eda-4007-b1b6-86cf3860cc8b	Honda	Rasaerba HRG416C1	1	2026-04-11 08:00:00.431456+00	2026-04-11 08:00:00.431456+00
+0190d2ad-a5de-4da3-8437-33f31cea4011	Echo	Motosega CS-3410	1	2026-04-11 09:28:19.092849+00	2026-04-11 09:28:19.092849+00
+311f58e6-7aba-4280-bb3b-14352ae255c4	Grillo	Trattorino rasaerba Climber 10 AWD 27	1	2026-04-14 06:38:20.980831+00	2026-04-14 06:38:20.980831+00
+07edf4a5-1a0c-42e1-a09a-c85fa121c81b	Grillo	Climber 10 AWD	1	2026-04-14 12:39:36.25655+00	2026-04-14 12:39:36.25655+00
+548e6504-008c-4aba-9eb9-a6f71c4cca74	Echo	Tosasiepi a batteria DHC2800R	1	2026-04-15 09:23:05.150262+00	2026-04-15 09:23:05.150262+00
+e559dc35-f2fc-440d-bfba-4a04ac6193a4	Echo	Batteria 2,5 Ah 126 Wh	1	2026-04-15 09:23:55.582095+00	2026-04-15 09:23:55.582095+00
+2a7a3ffd-422f-4865-b99f-8a32eb9fca43	Echo	Caricabatterie Rapid LCJ-560	1	2026-04-15 09:24:46.322305+00	2026-04-15 09:24:46.322305+00
+f7454125-e740-4bea-ab18-46c8a2a40437	Stihl	Biotrituratore GHE 250.0	1	2026-04-15 14:49:17.304673+00	2026-04-15 14:49:17.304673+00
+3409ddd7-7747-4013-92de-6d53192d9b5d	ECHO	Motosega CS-501SX	1	2026-04-15 15:14:09.14112+00	2026-04-15 15:14:09.14112+00
+16f778d5-8bdd-4237-9591-d4200b4f850c	Stihl	Robot tosaerba RMI 422.2 (EU1)	1	2026-04-16 09:23:22.329601+00	2026-04-16 09:23:22.329601+00
+32a66927-db43-40df-808d-7c071eed3388	freezanz	 Zhalt Portable Connect	1	2026-04-17 07:13:41.958629+00	2026-04-17 07:13:41.958629+00
+e881a021-4b21-478e-aa51-a69c562772d7	Echo	Decespugliatore SRM-3021TES	1	2026-04-17 09:05:18.000756+00	2026-04-17 09:05:18.000756+00
+18026171-4648-46ce-91f6-6d239823238e	Stihl	Soffiatore BGA 50.0	1	2026-04-17 13:12:18.036253+00	2026-04-17 13:12:18.036253+00
+6401f8ff-9795-4e79-bb5f-42cd4e0655f0	Stihl	Irroratore SG51	1	2026-04-17 13:28:39.322906+00	2026-04-17 13:28:39.322906+00
+0044f378-a425-4218-9269-4227eedbf810	Stihl	Tagliasiepi HSA 26	1	2026-04-17 14:42:08.196532+00	2026-04-17 14:42:08.196532+00
+3b5fd7f7-07ac-4148-a47a-19eee486f801	Stihl	Motosega MSA 220.0T	1	2026-04-17 16:10:30.728218+00	2026-04-17 16:10:30.728218+00
+32990bf7-d365-4a2d-b747-b8f8140b4ec3	Segway	Robot tosaerba Navimow i108	1	2026-04-17 16:43:18.755636+00	2026-04-17 16:43:18.755636+00
+1701ca2c-c139-4a52-9cbc-ccb988104d5a	Echo	Motosega CS-251	1	2026-04-17 16:53:48.796162+00	2026-04-17 16:53:48.796162+00
+58a8df7a-7c53-460c-b8b7-0f08522fcf88	WORTEX	Irroratore T 25-T4	1	2026-04-21 08:15:38.56944+00	2026-04-21 08:15:38.56944+00
+b83815d2-c401-43be-96cd-a7da7b129c50	Stihl	FSA120R	1	2026-04-21 08:48:25.474428+00	2026-04-21 08:48:25.474428+00
+7d546cd3-d3b3-493c-992a-b750fa8e8cf4	Stihl	AP500S	1	2026-04-21 08:50:02.109863+00	2026-04-21 08:50:02.109863+00
+b65dc3ce-f024-4e38-857b-70bee1737372	Stihl	Tagliasiepi HSA 100.1	1	2026-04-24 08:20:27.892195+00	2026-04-24 08:20:27.892195+00
+6bd2a1e0-cf53-416c-87dc-0c214f6fbd37	Stihl	Robot tosaerba RMA 248 T	1	2026-04-24 09:27:03.441228+00	2026-04-24 09:27:03.441228+00
+3cc6b8ba-2c97-4dc8-9947-3dc28d0942bf	Stihl	Batteria AK 30.0 S	1	2026-04-24 09:38:14.737014+00	2026-04-24 09:38:14.737014+00
 \.
 
 
 --
--- Data for Name: messages_2026_04_06; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_21; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_06 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_21 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_07; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_22; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_07 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_22 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_08; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_23; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_08 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_23 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_09; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_24; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_09 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_24 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_10; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_25; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_10 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_25 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_11; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_26; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_11 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_26 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_04_12; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_04_27; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_04_12 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_04_27 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
 \.
 
 
@@ -8357,6 +9181,7 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 20251120212548	2026-02-04 12:50:11
 20251120215549	2026-02-04 12:50:11
 20260218120000	2026-02-27 12:19:38
+20260326120000	2026-04-10 04:13:53
 \.
 
 
@@ -8365,8 +9190,8 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 --
 
 COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter) FROM stdin;
-6195	b84cfa9e-3417-11f1-9b8d-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-04-09 13:26:30.642541	*
-6196	b84cef36-3417-11f1-b435-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-04-09 13:26:30.642541	*
+7263	f8c87582-3fdc-11f1-b1c4-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-04-24 12:56:12.44605	*
+7264	f8c870aa-3fdc-11f1-b8a0-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-04-24 12:56:12.44605	*
 \.
 
 
@@ -8456,6 +9281,8 @@ COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
 54	drop-index-object-level	6289e048b1472da17c31a7eba1ded625a6457e67	2026-02-14 14:26:17.43581
 55	prevent-direct-deletes	262a4798d5e0f2e7c8970232e03ce8be695d5819	2026-02-14 14:26:17.437259
 56	fix-optimized-search-function	cb58526ebc23048049fd5bf2fd148d18b04a2073	2026-02-14 14:26:17.444531
+57	s3-multipart-uploads-metadata	f127886e00d1b374fadbc7c6b31e09336aad5287	2026-04-11 18:26:45.567833
+58	operation-ergonomics	00ca5d483b3fe0d522133d9002ccc5df98365120	2026-04-11 18:26:45.591813
 \.
 
 
@@ -8471,7 +9298,7 @@ COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_a
 -- Data for Name: s3_multipart_uploads; Type: TABLE DATA; Schema: storage; Owner: -
 --
 
-COPY storage.s3_multipart_uploads (id, in_progress_size, upload_signature, bucket_id, key, version, owner_id, created_at, user_metadata) FROM stdin;
+COPY storage.s3_multipart_uploads (id, in_progress_size, upload_signature, bucket_id, key, version, owner_id, created_at, user_metadata, metadata) FROM stdin;
 \.
 
 
@@ -8510,7 +9337,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 456, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 518, true);
 
 
 --
@@ -8538,7 +9365,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 249, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 6196, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 7264, true);
 
 
 --
@@ -8830,6 +9657,14 @@ ALTER TABLE ONLY public.app_config
 
 
 --
+-- Name: catalogo_prodotti catalogo_prodotti_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.catalogo_prodotti
+    ADD CONSTRAINT catalogo_prodotti_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: clienti clienti_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -8947,6 +9782,14 @@ ALTER TABLE ONLY public.operatori
 
 ALTER TABLE ONLY public.pratovivo_archivio
     ADD CONSTRAINT pratovivo_archivio_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: preventivi_catalogo preventivi_catalogo_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.preventivi_catalogo
+    ADD CONSTRAINT preventivi_catalogo_pkey PRIMARY KEY (id);
 
 
 --
@@ -9078,6 +9921,14 @@ ALTER TABLE ONLY public.pv_prodotti
 
 
 --
+-- Name: pv_templates pv_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pv_templates
+    ADD CONSTRAINT pv_templates_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: sopralluoghi sopralluoghi_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9134,59 +9985,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_04_06 messages_2026_04_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_21 messages_2026_04_21_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_04_06
-    ADD CONSTRAINT messages_2026_04_06_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_04_07 messages_2026_04_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_04_07
-    ADD CONSTRAINT messages_2026_04_07_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_21
+    ADD CONSTRAINT messages_2026_04_21_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_04_08 messages_2026_04_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_22 messages_2026_04_22_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_04_08
-    ADD CONSTRAINT messages_2026_04_08_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_04_09 messages_2026_04_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_04_09
-    ADD CONSTRAINT messages_2026_04_09_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_22
+    ADD CONSTRAINT messages_2026_04_22_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_04_10 messages_2026_04_10_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_23 messages_2026_04_23_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_04_10
-    ADD CONSTRAINT messages_2026_04_10_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_04_11 messages_2026_04_11_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_04_11
-    ADD CONSTRAINT messages_2026_04_11_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_23
+    ADD CONSTRAINT messages_2026_04_23_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_04_12 messages_2026_04_12_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_04_24 messages_2026_04_24_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_04_12
-    ADD CONSTRAINT messages_2026_04_12_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_04_24
+    ADD CONSTRAINT messages_2026_04_24_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_25 messages_2026_04_25_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_25
+    ADD CONSTRAINT messages_2026_04_25_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_26 messages_2026_04_26_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_26
+    ADD CONSTRAINT messages_2026_04_26_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_04_27 messages_2026_04_27_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_04_27
+    ADD CONSTRAINT messages_2026_04_27_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -9670,6 +10521,34 @@ CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING
 
 
 --
+-- Name: idx_catalogo_attivo; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_attivo ON public.catalogo_prodotti USING btree (attivo);
+
+
+--
+-- Name: idx_catalogo_brand; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_brand ON public.catalogo_prodotti USING btree (brand);
+
+
+--
+-- Name: idx_catalogo_categoria; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_categoria ON public.catalogo_prodotti USING btree (categoria);
+
+
+--
+-- Name: idx_catalogo_modello; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_catalogo_modello ON public.catalogo_prodotti USING btree (modello);
+
+
+--
 -- Name: idx_clienti_cf; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -9838,52 +10717,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_04_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_21_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_04_06_inserted_at_topic_idx ON realtime.messages_2026_04_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_04_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_04_07_inserted_at_topic_idx ON realtime.messages_2026_04_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_21_inserted_at_topic_idx ON realtime.messages_2026_04_21 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_04_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_22_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_04_08_inserted_at_topic_idx ON realtime.messages_2026_04_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_04_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_04_09_inserted_at_topic_idx ON realtime.messages_2026_04_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_22_inserted_at_topic_idx ON realtime.messages_2026_04_22 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_04_10_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_23_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_04_10_inserted_at_topic_idx ON realtime.messages_2026_04_10 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_04_11_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_04_11_inserted_at_topic_idx ON realtime.messages_2026_04_11 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_23_inserted_at_topic_idx ON realtime.messages_2026_04_23 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_04_12_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_04_24_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_04_12_inserted_at_topic_idx ON realtime.messages_2026_04_12 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_04_24_inserted_at_topic_idx ON realtime.messages_2026_04_24 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_25_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_25_inserted_at_topic_idx ON realtime.messages_2026_04_25 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_26_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_26_inserted_at_topic_idx ON realtime.messages_2026_04_26 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_04_27_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_04_27_inserted_at_topic_idx ON realtime.messages_2026_04_27 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -9950,101 +10829,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_04_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_21_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_06_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_04_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_06_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_21_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_04_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_21_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_07_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_04_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_07_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_21_pkey;
 
 
 --
--- Name: messages_2026_04_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_22_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_08_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_04_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_08_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_22_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_04_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_22_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_09_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_04_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_09_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_22_pkey;
 
 
 --
--- Name: messages_2026_04_10_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_23_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_10_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_04_10_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_10_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_23_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_04_11_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_23_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_11_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_04_11_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_11_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_23_pkey;
 
 
 --
--- Name: messages_2026_04_12_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_24_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_12_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_24_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_04_12_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_04_24_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_12_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_24_pkey;
+
+
+--
+-- Name: messages_2026_04_25_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_25_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_25_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_25_pkey;
+
+
+--
+-- Name: messages_2026_04_26_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_26_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_26_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_26_pkey;
+
+
+--
+-- Name: messages_2026_04_27_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_04_27_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_04_27_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_04_27_pkey;
 
 
 --
@@ -10731,6 +11610,13 @@ ALTER TABLE public.pratovivo_archivio ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pricing_policies ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: pv_templates public_access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY public_access ON public.pv_templates USING (true);
+
+
+--
 -- Name: stihl_prodotti public_select_stihl_prodotti; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -10755,6 +11641,12 @@ ALTER TABLE public.pv_liquidi_prodotti ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.pv_liquidi_programmati ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_templates; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_templates ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: stihl_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -10919,5 +11811,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pcLKAkr02bEpxGVPx0GaKW85mgwLCAzDIRMwAUUfxsCXiREuqhPhqOngdKYtHp3
+\unrestrict jnxY8JW7xyOH9W11ZXfzirFqTVbwytArtR2oQl0yjaLTn0JzHEOyM8q5t7vH5Pb
 

@@ -326,6 +326,14 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             <FilePlus2 className="w-6 h-6" />
             <div className="text-xs font-bold">PREVENTIVO</div>
           </button>
+          <button
+            onClick={() => onNavigate('listini')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#2563eb', backgroundColor: '#eff6ff', color: '#1d4ed8' }}
+          >
+            <ClipboardList className="w-6 h-6" />
+            <div className="text-xs font-bold">LISTINI</div>
+          </button>
         </div>
       </div>
 
@@ -361,14 +369,7 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
       {/* ── CONFIGURAZIONE ── */}
       <div className="mb-2">
         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-1.5">Configurazione</p>
-        <div className={`grid gap-2 ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <button
-            onClick={() => onNavigate('listini')}
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-semibold shadow-sm active:scale-95 transition-transform"
-          >
-            <ClipboardList className="w-5 h-5 text-gray-400" />
-            <div className="text-xs font-bold">LISTINI</div>
-          </button>
+        <div className={`grid gap-2 ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <button
             onClick={() => onNavigate('politiche-commerciali')}
             className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-semibold shadow-sm active:scale-95 transition-transform"

@@ -421,8 +421,9 @@ const formatDateIT = (iso) => {
 // ========== COMPONENTE PRINCIPALE ==========
 export default function Listini({ onNavigate }) {
   // Detect admin (consente di accedere a tab Upload / Promo PDF / Cronologia)
+  // Match case-insensitive, coerente con Dashboard.jsx
   const isAdmin = (() => {
-    try { return localStorage.getItem('ompra_ultimo_operatore') === 'admin' } catch { return false }
+    try { return (localStorage.getItem('ompra_ultimo_operatore') || '').toLowerCase() === 'admin' } catch { return false }
   })()
 
   const [tab, setTab] = useState('cerca')

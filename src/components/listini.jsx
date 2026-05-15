@@ -316,8 +316,12 @@ function parseHondaExcel(workbook) {
 }
 
 // ========== GEMINI VISION — ANALISI VOLANTINI PROMO ==========
-const GEMINI_API_KEY = 'AIzaSyCH50W2RislPjEvdYtD72mtCQJng29nta8'
 const GEMINI_MODEL = 'gemini-3-flash-preview'
+
+function getGeminiApiKey() {
+  const k = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || ''
+  return k.trim()
+}
 
 const PROMO_PROMPT = `Analizza questo volantino promozionale e estrai SOLO i prodotti principali (macchine intere come motoseghe, decespugliatori, tosaerba, trattorini, biotrituratori, idropulitrici, batterie, motori kombi, set kit-energia, ecc.). NON estrarre accessori secondari (oli, detergenti, guanti, occhiali, fili, catene, spranghe singole) a meno che non siano riportati come prodotto principale autonomo con il proprio prezzo evidenziato.
 
@@ -339,7 +343,11 @@ Esempio output:
 [{"modello":"MS 194 T","codice_articolo":null,"prezzo_catalogo":479,"prezzo_promo":339,"note_promo":"IN OMAGGIO: 1x Catena. Tasso zero 12 rate"},{"modello":"MS 162","codice_articolo":null,"prezzo_catalogo":199,"prezzo_promo":169,"note_promo":""}]`
 
 async function analizzaPromoPDFconGemini(pdfBase64) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
+  const apiKey = getGeminiApiKey()
+  if (!apiKey) {
+    throw new Error('Chiave Gemini non configurata. Imposta VITE_GEMINI_API_KEY su Vercel (Environment Variables) e rifai il deploy.')
+  }
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

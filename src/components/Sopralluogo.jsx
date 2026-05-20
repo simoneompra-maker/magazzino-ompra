@@ -7,10 +7,9 @@ import {
 } from '../services/sopralluoghiService';
 import useAgroListino, { FASCE_CLIENTE, suggerisciNoleggio } from '../hooks/useAgroListino';
 import WidgetConsegna from './WidgetConsegna';
+import { supabase } from '../store';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
 
 const OMPRA = {
   nome: 'OMPRA Srl',
@@ -23,28 +22,28 @@ const OMPRA = {
 // ── Gemini helper con retry e backoff ────────────────────────
 async function geminiText(prompt, retries = 3) {
   for (let attempt = 0; attempt < retries; attempt++) {
-    const res = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
-      }),
+    const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+      body: {
+        model: 'gemini-2.0-flash',
+        endpoint: 'generateContent',
+        payload: {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+        }
+      }
     });
-    if (res.ok) {
-      const d = await res.json();
-      return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!error && data) {
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
-    if (res.status === 429) {
+    if (error?.message?.includes('429')) {
       if (attempt < retries - 1) {
-        // Backoff: 5s, 15s, 30s
         const wait = [5000, 15000, 30000][attempt];
         await new Promise(r => setTimeout(r, wait));
         continue;
       }
-      throw new Error('Quota Gemini esaurita (429). Riprova tra qualche minuto o scrivi la relazione manualmente.');
+      throw new Error('Quota Gemini esaurita. Riprova tra qualche minuto o scrivi la relazione manualmente.');
     }
-    throw new Error(`Gemini error ${res.status}`);
+    throw new Error(`Errore AI: ${error?.message || 'sconosciuto'}`);
   }
 }
 

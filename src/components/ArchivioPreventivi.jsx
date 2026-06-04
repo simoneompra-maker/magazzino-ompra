@@ -16,7 +16,7 @@ function getOperatoreLoggato() {
 // Calcola stato effettivo del preventivo
 function getStatoEffettivo(prev) {
   if (prev.stato_preventivo === 'confermato') return 'confermato';
-  const creato = new Date(prev.data_vendita || prev.created_at);
+  const creato = new Date(prev.created_at);
   const oggi = new Date();
   const giorniPassati = Math.floor((oggi - creato) / (1000 * 60 * 60 * 24));
   if (giorniPassati >= 30) return 'scaduto';
@@ -24,7 +24,7 @@ function getStatoEffettivo(prev) {
 }
 
 function getGiorniRimanenti(prev) {
-  const creato = new Date(prev.data_vendita || prev.created_at);
+  const creato = new Date(prev.created_at);
   const oggi = new Date();
   const giorniPassati = Math.floor((oggi - creato) / (1000 * 60 * 60 * 24));
   return Math.max(0, 30 - giorniPassati);
@@ -64,7 +64,7 @@ function dbToModalData(prev) {
       note: prev.note || null,
       tipoDocumento: prev.tipo_documento || 'fattura',
       ivaCompresa: prev.iva_compresa !== false,
-      dataVendita: prev.data_vendita,
+      dataVendita: prev.created_at,
     };
   }
 
@@ -93,7 +93,7 @@ function dbToModalData(prev) {
     note: prev.note || null,
     tipoDocumento: prev.tipo_documento || 'fattura',
     ivaCompresa: prev.iva_compresa !== false,
-    dataVendita: prev.data_vendita,
+    dataVendita: prev.created_at,
   };
 }
 
@@ -143,7 +143,7 @@ export default function ArchivioPreventivi({ onNavigate }) {
         .from('commissioni')
         .select('*')
         .eq('is_preventivo', true)
-        .order('data_vendita', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (!isAdmin) {
         q = q.eq('operatore', operatoreLoggato);
@@ -172,11 +172,11 @@ export default function ArchivioPreventivi({ onNavigate }) {
     if (filtroOperatore && p.operatore !== filtroOperatore) return false;
     if (cercaCliente && !p.cliente?.toLowerCase().includes(cercaCliente.toLowerCase())) return false;
     if (dataDal) {
-      const data = new Date(p.data_vendita || p.created_at);
+      const data = new Date(p.created_at);
       if (data < new Date(dataDal)) return false;
     }
     if (dataAl) {
-      const data = new Date(p.data_vendita || p.created_at);
+      const data = new Date(p.created_at);
       if (data > new Date(dataAl + 'T23:59:59')) return false;
     }
     return true;
@@ -199,7 +199,7 @@ export default function ArchivioPreventivi({ onNavigate }) {
         .update({
           is_preventivo: false,
           stato_preventivo: 'confermato',
-          data_vendita: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
           status: 'completed',
         })
         .eq('id', convertendo.id);
@@ -461,7 +461,7 @@ export default function ArchivioPreventivi({ onNavigate }) {
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {formatData(prev.data_vendita)}
+                      {formatData(prev.created_at)}
                     </span>
                     {isAdmin && (
                       <span className="flex items-center gap-1">
@@ -593,7 +593,7 @@ export default function ArchivioPreventivi({ onNavigate }) {
           <div className="bg-white rounded-2xl w-full max-w-md mx-auto p-5 flex flex-col gap-4">
             <h2 className="text-lg font-bold text-gray-900">Elimina preventivo?</h2>
             <p className="text-sm text-gray-600">
-              Stai per eliminare il preventivo per <strong>{eliminando.cliente}</strong> del {formatData(eliminando.data_vendita)}. L'operazione non è reversibile.
+              Stai per eliminare il preventivo per <strong>{eliminando.cliente}</strong> del {formatData(eliminando.created_at)}. L'operazione non è reversibile.
             </p>
             <div className="flex gap-3">
               <button

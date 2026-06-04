@@ -31,7 +31,13 @@ const commToDb = (c) => ({
   status: c.status || 'pending',
   completed_at: c.completedAt || null,
   iva_compresa: c.ivaCompresa !== false,
-  user_id: c.user || null
+  user_id: c.user || null,
+  // Campi preventivo / privacy (additive) — prima venivano omessi e mai salvati
+  is_preventivo: c.isPreventivo === true,
+  stato_preventivo: c.isPreventivo === true ? (c.statoPreventivo || 'in_attesa') : null,
+  privacy_required: c.privacyRequired === true,
+  privacy_acknowledged: c.privacyAcknowledged === true,
+  data_consegna: c.dataConsegna || null
 });
 
 const commFromDb = (row) => ({
@@ -52,7 +58,13 @@ const commFromDb = (row) => ({
   status: row.status || 'pending',
   completedAt: row.completed_at,
   ivaCompresa: row.iva_compresa !== false,
-  user: row.user_id
+  user: row.user_id,
+  // Campi preventivo / privacy (additive)
+  isPreventivo: row.is_preventivo === true,
+  statoPreventivo: row.stato_preventivo || null,
+  privacyRequired: row.privacy_required === true,
+  privacyAcknowledged: row.privacy_acknowledged === true,
+  dataConsegna: row.data_consegna || null
 });
 
 const useStore = create((set, get) => ({
@@ -484,7 +496,9 @@ const useStore = create((set, get) => ({
   // Crea nuova commissione (può essere senza matricola = in attesa)
   createCommissione: async (data) => {
     const createdAt = data.dataVendita || new Date().toISOString();
-    const isCompleted = data.prodotti?.every(p => p.serialNumber);
+    const isPreventivo = data.is_preventivo === true || data.isPreventivo === true;
+    // Un preventivo non è mai "completato" (non scarica magazzino, non è vendita)
+    const isCompleted = !isPreventivo && data.prodotti?.every(p => p.serialNumber);
     const commissione = {
       id: Date.now().toString(),
       createdAt,
@@ -502,7 +516,13 @@ const useStore = create((set, get) => ({
       ivaCompresa: data.ivaCompresa === true,
       status: isCompleted ? 'completed' : 'pending',
       completedAt: isCompleted ? createdAt : null,
-      user: get().user
+      user: get().user,
+      // Campi preventivo / privacy (additive) — prima venivano ignorati e mai salvati
+      isPreventivo,
+      statoPreventivo: data.stato_preventivo || (isPreventivo ? 'in_attesa' : null),
+      privacyRequired: data.privacy_required === true,
+      privacyAcknowledged: data.privacy_acknowledged === true,
+      dataConsegna: data.dataConsegna || data.data_consegna || null
     };
     
     try {
@@ -512,15 +532,15 @@ const useStore = create((set, get) => ({
       
       if (error) throw error;
       
-      // Aggiorna stato locale
+      // Aggiorna stato locale SOLO dopo conferma del DB
       set({ commissioni: [commissione, ...get().commissioni] });
+      return commissione;
     } catch (error) {
       console.error('❌ Errore creazione commissione:', error);
-      // Fallback: salva comunque localmente
-      set({ commissioni: [commissione, ...get().commissioni] });
+      // BLINDATURA ANTI-PERDITA: NON salviamo in locale un dato che il DB ha rifiutato.
+      // Propaghiamo l'errore così il chiamante (Vendita) avvisa l'utente: niente perdite silenziose.
+      throw error;
     }
-    
-    return commissione;
   },
 
   // Aggiorna commissione (es. aggiungi matricola)

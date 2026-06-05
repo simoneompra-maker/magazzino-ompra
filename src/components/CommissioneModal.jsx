@@ -415,6 +415,10 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     doc.text('TOTALE', colTot, y + 5);
     y += 9;
 
+    // Larghezza max descrizione (fino a prima della colonna prezzo) e interlinea
+    const descMaxWidth = colUnit - colDesc - 4;
+    const lineH = 4.2;
+
     // Prodotti
     const prodotti = isKit && data.prodotti ? data.prodotti : [{
       brand: data.brand,
@@ -424,7 +428,17 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     }];
 
     prodotti.forEach((prod) => {
-      const rowH = prod.serialNumber ? 13 : 8;
+      // Descrizione pulita: niente "undefined" se marca/modello mancano
+      const descrProd = [prod.brand, prod.model].filter(Boolean).join(' ').trim();
+      // Salta la riga se completamente vuota (nessuna descrizione e nessuna matricola)
+      if (!descrProd && !prod.serialNumber) return;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      const descLines = descrProd ? doc.splitTextToSize(descrProd, descMaxWidth) : [];
+      const nLines = Math.max(descLines.length, 1) + (prod.serialNumber ? 1 : 0);
+      const rowH = Math.max(8, 3 + nLines * lineH);
+
       checkPageBreak(rowH + 4);
       doc.setDrawColor(230, 230, 230);
       doc.setLineWidth(0.15);
@@ -436,15 +450,16 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
       doc.setFont('helvetica', 'normal');
       doc.text('1', colQta + 4, y + 5, { align: 'center' });
 
-      // DESCRIZIONE
+      // DESCRIZIONE (a capo automatico)
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'bold');
-      doc.text(`${prod.brand} ${prod.model}`, colDesc, y + 5);
+      doc.setFontSize(9);
+      descLines.forEach((line, i) => doc.text(line, colDesc, y + 5 + i * lineH));
       if (prod.serialNumber) {
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(120, 120, 120);
-        doc.text(`SN: ${prod.serialNumber}`, colDesc, y + 10);
+        doc.text(`SN: ${prod.serialNumber}`, colDesc, y + 5 + descLines.length * lineH);
       }
 
       // PREZZO UNIT. e TOTALE
@@ -480,7 +495,12 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         const qta = acc.quantita || 1;
         const unitPrezzo = parseFloat(acc.prezzo) || 0;
         const totPrezzo = unitPrezzo * qta;
-        const rowH = acc.matricola ? 13 : 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const descLines = doc.splitTextToSize(acc.nome || '', descMaxWidth);
+        const nLines = Math.max(descLines.length, 1) + (acc.matricola ? 1 : 0);
+        const rowH = Math.max(8, 3 + nLines * lineH);
 
         checkPageBreak(rowH + 4);
         doc.setDrawColor(230, 230, 230);
@@ -493,13 +513,14 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
         doc.setFont('helvetica', 'normal');
         doc.text(String(qta), colQta + 4, y + 5, { align: 'center' });
 
-        // DESCRIZIONE
+        // DESCRIZIONE (a capo automatico)
         doc.setTextColor(60, 60, 60);
-        doc.text(acc.nome, colDesc, y + 5);
+        doc.setFontSize(9);
+        descLines.forEach((line, i) => doc.text(line, colDesc, y + 5 + i * lineH));
         if (acc.matricola) {
           doc.setFontSize(7);
           doc.setTextColor(120, 120, 120);
-          doc.text(`SN: ${acc.matricola}`, colDesc, y + 10);
+          doc.text(`SN: ${acc.matricola}`, colDesc, y + 5 + descLines.length * lineH);
         }
 
         // PREZZO UNIT. e TOTALE
@@ -663,16 +684,20 @@ export default function CommissioneModal({ data, isKit = false, onBack, onConfir
     text += `📦 *PRODOTTI:*\n`;
     
     if (isKit && data.prodotti) {
-      data.prodotti.forEach((p, idx) => {
-        text += `${idx + 1}. ${p.brand} ${p.model}\n`;
-        if (p.serialNumber) {
-          text += `   SN: ${p.serialNumber}\n`;
-        }
-        text += `   Prezzo: ${formatPrezzoText(p)}\n`;
-      });
+      data.prodotti
+        .filter(p => [p.brand, p.model].filter(Boolean).join(' ').trim() || p.serialNumber)
+        .forEach((p, idx) => {
+          const nome = [p.brand, p.model].filter(Boolean).join(' ').trim();
+          text += `${idx + 1}. ${nome || 'Articolo'}\n`;
+          if (p.serialNumber) {
+            text += `   SN: ${p.serialNumber}\n`;
+          }
+          text += `   Prezzo: ${formatPrezzoText(p)}\n`;
+        });
     } else {
-      text += `• ${data.brand} ${data.model}\n`;
-      text += `  SN: ${data.serialNumber}\n`;
+      const nome = [data.brand, data.model].filter(Boolean).join(' ').trim();
+      if (nome) text += `• ${nome}\n`;
+      if (data.serialNumber) text += `  SN: ${data.serialNumber}\n`;
       text += `  € ${getTotaleProdotti().toFixed(2)}\n`;
     }
     

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PZwK73BWJbctBUdQTP8jyTjIYbRj7RTZN3ODsn6sq9mtaBHA3yYpRnC8I4rrj1U
+\restrict e9cxY7z6fDIraVBUs7GG8MIxa5bYuVibzWVD2FLhnZqhJ8ViPkdH0G0chHENBfZ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
@@ -27,6 +27,34 @@ DROP EVENT TRIGGER IF EXISTS issue_pg_cron_access;
 DROP EVENT TRIGGER IF EXISTS issue_graphql_placeholder;
 DROP PUBLICATION IF EXISTS supabase_realtime_messages_publication;
 DROP PUBLICATION IF EXISTS supabase_realtime;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.sopralluoghi;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_preventivo_righe;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_preventivi;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_piani;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_kit_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_kit;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_intervento_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_interventi;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.preventivi_catalogo;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.note_clienti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.catalogo_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.agro_mapping;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.agro_listino;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.sopralluoghi;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_preventivo_righe;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_preventivi;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_piani;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_kit_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_kit;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_intervento_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_interventi;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.preventivi_catalogo;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.note_clienti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.catalogo_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.agro_mapping;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.agro_listino;
 DROP POLICY IF EXISTS public_select_stihl_promo ON public.stihl_promo;
 DROP POLICY IF EXISTS public_select_stihl_prodotti ON public.stihl_prodotti;
 DROP POLICY IF EXISTS public_access ON public.pv_templates;
@@ -105,7 +133,7 @@ DROP INDEX IF EXISTS storage.idx_multipart_uploads_list;
 DROP INDEX IF EXISTS storage.buckets_analytics_unique_name_idx;
 DROP INDEX IF EXISTS storage.bucketid_objname;
 DROP INDEX IF EXISTS storage.bname;
-DROP INDEX IF EXISTS realtime.subscription_subscription_id_entity_filters_action_filter_key;
+DROP INDEX IF EXISTS realtime.subscription_subscription_id_entity_filters_action_filter_selec;
 DROP INDEX IF EXISTS realtime.messages_inserted_at_topic_index;
 DROP INDEX IF EXISTS realtime.ix_realtime_subscription_entity;
 DROP INDEX IF EXISTS public.pratovivo_archivio_created_at_idx;
@@ -202,13 +230,14 @@ ALTER TABLE IF EXISTS ONLY storage.buckets DROP CONSTRAINT IF EXISTS buckets_pke
 ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS buckets_analytics_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_25 DROP CONSTRAINT IF EXISTS messages_2026_05_25_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_24 DROP CONSTRAINT IF EXISTS messages_2026_05_24_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_23 DROP CONSTRAINT IF EXISTS messages_2026_05_23_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_22 DROP CONSTRAINT IF EXISTS messages_2026_05_22_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_21 DROP CONSTRAINT IF EXISTS messages_2026_05_21_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_20 DROP CONSTRAINT IF EXISTS messages_2026_05_20_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_19 DROP CONSTRAINT IF EXISTS messages_2026_05_19_pkey;
+ALTER TABLE IF EXISTS realtime.messages DROP CONSTRAINT IF EXISTS messages_payload_exclusive;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_09 DROP CONSTRAINT IF EXISTS messages_2026_06_09_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_08 DROP CONSTRAINT IF EXISTS messages_2026_06_08_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_07 DROP CONSTRAINT IF EXISTS messages_2026_06_07_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_06 DROP CONSTRAINT IF EXISTS messages_2026_06_06_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_05 DROP CONSTRAINT IF EXISTS messages_2026_06_05_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_04 DROP CONSTRAINT IF EXISTS messages_2026_06_04_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_03 DROP CONSTRAINT IF EXISTS messages_2026_06_03_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -304,13 +333,13 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_05_25;
-DROP TABLE IF EXISTS realtime.messages_2026_05_24;
-DROP TABLE IF EXISTS realtime.messages_2026_05_23;
-DROP TABLE IF EXISTS realtime.messages_2026_05_22;
-DROP TABLE IF EXISTS realtime.messages_2026_05_21;
-DROP TABLE IF EXISTS realtime.messages_2026_05_20;
-DROP TABLE IF EXISTS realtime.messages_2026_05_19;
+DROP TABLE IF EXISTS realtime.messages_2026_06_09;
+DROP TABLE IF EXISTS realtime.messages_2026_06_08;
+DROP TABLE IF EXISTS realtime.messages_2026_06_07;
+DROP TABLE IF EXISTS realtime.messages_2026_06_06;
+DROP TABLE IF EXISTS realtime.messages_2026_06_05;
+DROP TABLE IF EXISTS realtime.messages_2026_06_04;
+DROP TABLE IF EXISTS realtime.messages_2026_06_03;
 DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
@@ -391,9 +420,11 @@ DROP FUNCTION IF EXISTS storage.enforce_bucket_name_length();
 DROP FUNCTION IF EXISTS storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb);
 DROP FUNCTION IF EXISTS storage.allow_only_operation(expected_operation text);
 DROP FUNCTION IF EXISTS storage.allow_any_operation(expected_operations text[]);
+DROP FUNCTION IF EXISTS realtime.wal2json_escape_identifier(name text);
 DROP FUNCTION IF EXISTS realtime.topic();
 DROP FUNCTION IF EXISTS realtime.to_regrole(role_name text);
 DROP FUNCTION IF EXISTS realtime.subscription_check_filters();
+DROP FUNCTION IF EXISTS realtime.send_binary(payload bytea, event text, topic text, private boolean);
 DROP FUNCTION IF EXISTS realtime.send(payload jsonb, event text, topic text, private boolean);
 DROP FUNCTION IF EXISTS realtime.quote_wal2json(entity regclass);
 DROP FUNCTION IF EXISTS realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer);
@@ -1233,119 +1264,114 @@ CREATE FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer DEFAULT (
     LANGUAGE plpgsql
     AS $$
 declare
--- Regclass of the table e.g. public.notes
-entity_ regclass = (quote_ident(wal ->> 'schema') || '.' || quote_ident(wal ->> 'table'))::regclass;
+    -- Regclass of the table e.g. public.notes
+    entity_ regclass = (quote_ident(wal ->> 'schema') || '.' || quote_ident(wal ->> 'table'))::regclass;
 
--- I, U, D, T: insert, update ...
-action realtime.action = (
-    case wal ->> 'action'
-        when 'I' then 'INSERT'
-        when 'U' then 'UPDATE'
-        when 'D' then 'DELETE'
-        else 'ERROR'
-    end
-);
+    -- I, U, D, T: insert, update ...
+    action realtime.action = (
+        case wal ->> 'action'
+            when 'I' then 'INSERT'
+            when 'U' then 'UPDATE'
+            when 'D' then 'DELETE'
+            else 'ERROR'
+        end
+    );
 
--- Is row level security enabled for the table
-is_rls_enabled bool = relrowsecurity from pg_class where oid = entity_;
+    -- Is row level security enabled for the table
+    is_rls_enabled bool = relrowsecurity from pg_class where oid = entity_;
 
-subscriptions realtime.subscription[] = array_agg(subs)
-    from
-        realtime.subscription subs
-    where
-        subs.entity = entity_
-        -- Filter by action early - only get subscriptions interested in this action
-        -- action_filter column can be: '*' (all), 'INSERT', 'UPDATE', or 'DELETE'
-        and (subs.action_filter = '*' or subs.action_filter = action::text);
+    subscriptions realtime.subscription[] = array_agg(subs)
+        from
+            realtime.subscription subs
+        where
+            subs.entity = entity_
+            -- Filter by action early - only get subscriptions interested in this action
+            -- action_filter column can be: '*' (all), 'INSERT', 'UPDATE', or 'DELETE'
+            and (subs.action_filter = '*' or subs.action_filter = action::text);
 
--- Subscription vars
-roles regrole[] = array_agg(distinct us.claims_role::text)
-    from
-        unnest(subscriptions) us;
+    -- Subscription vars
+    working_role regrole;
+    working_selected_columns text[];
+    claimed_role regrole;
+    claims jsonb;
 
-working_role regrole;
-claimed_role regrole;
-claims jsonb;
+    subscription_id uuid;
+    subscription_has_access bool;
+    visible_to_subscription_ids uuid[] = '{}';
 
-subscription_id uuid;
-subscription_has_access bool;
-visible_to_subscription_ids uuid[] = '{}';
+    -- structured info for wal's columns
+    columns realtime.wal_column[];
+    -- previous identity values for update/delete
+    old_columns realtime.wal_column[];
 
--- structured info for wal's columns
-columns realtime.wal_column[];
--- previous identity values for update/delete
-old_columns realtime.wal_column[];
+    error_record_exceeds_max_size boolean = octet_length(wal::text) > max_record_bytes;
 
-error_record_exceeds_max_size boolean = octet_length(wal::text) > max_record_bytes;
+    -- Primary jsonb output for record
+    output jsonb;
 
--- Primary jsonb output for record
-output jsonb;
+    -- Loop record for iterating unique roles (outer loop)
+    role_record record;
+    -- Loop record for iterating unique selected_columns within a role (inner loop)
+    cols_record record;
+    -- Subscription ids visible at the role level (before fanning out by selected_columns)
+    visible_role_sub_ids uuid[] = '{}';
 
 begin
-perform set_config('role', null, true);
+    perform set_config('role', null, true);
 
-columns =
-    array_agg(
-        (
-            x->>'name',
-            x->>'type',
-            x->>'typeoid',
-            realtime.cast(
-                (x->'value') #>> '{}',
-                coalesce(
-                    (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
-                    (x->>'type')::regtype
-                )
-            ),
-            (pks ->> 'name') is not null,
-            true
-        )::realtime.wal_column
-    )
-    from
-        jsonb_array_elements(wal -> 'columns') x
-        left join jsonb_array_elements(wal -> 'pk') pks
-            on (x ->> 'name') = (pks ->> 'name');
-
-old_columns =
-    array_agg(
-        (
-            x->>'name',
-            x->>'type',
-            x->>'typeoid',
-            realtime.cast(
-                (x->'value') #>> '{}',
-                coalesce(
-                    (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
-                    (x->>'type')::regtype
-                )
-            ),
-            (pks ->> 'name') is not null,
-            true
-        )::realtime.wal_column
-    )
-    from
-        jsonb_array_elements(wal -> 'identity') x
-        left join jsonb_array_elements(wal -> 'pk') pks
-            on (x ->> 'name') = (pks ->> 'name');
-
-for working_role in select * from unnest(roles) loop
-
-    -- Update `is_selectable` for columns and old_columns
     columns =
         array_agg(
             (
-                c.name,
-                c.type_name,
-                c.type_oid,
-                c.value,
-                c.is_pkey,
-                pg_catalog.has_column_privilege(working_role, entity_, c.name, 'SELECT')
+                x->>'name',
+                x->>'type',
+                x->>'typeoid',
+                realtime.cast(
+                    (x->'value') #>> '{}',
+                    coalesce(
+                        (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
+                        (x->>'type')::regtype
+                    )
+                ),
+                (pks ->> 'name') is not null,
+                true
             )::realtime.wal_column
         )
         from
-            unnest(columns) c;
+            jsonb_array_elements(wal -> 'columns') x
+            left join jsonb_array_elements(wal -> 'pk') pks
+                on (x ->> 'name') = (pks ->> 'name');
 
     old_columns =
+        array_agg(
+            (
+                x->>'name',
+                x->>'type',
+                x->>'typeoid',
+                realtime.cast(
+                    (x->'value') #>> '{}',
+                    coalesce(
+                        (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
+                        (x->>'type')::regtype
+                    )
+                ),
+                (pks ->> 'name') is not null,
+                true
+            )::realtime.wal_column
+        )
+        from
+            jsonb_array_elements(wal -> 'identity') x
+            left join jsonb_array_elements(wal -> 'pk') pks
+                on (x ->> 'name') = (pks ->> 'name');
+
+    for role_record in
+        select claims_role
+        from (select distinct claims_role from unnest(subscriptions)) t
+        order by claims_role::text
+    loop
+        working_role := role_record.claims_role;
+
+        -- Update `is_selectable` for columns and old_columns (once per role)
+        columns =
             array_agg(
                 (
                     c.name,
@@ -1357,178 +1383,238 @@ for working_role in select * from unnest(roles) loop
                 )::realtime.wal_column
             )
             from
-                unnest(old_columns) c;
+                unnest(columns) c;
 
-    if action <> 'DELETE' and count(1) = 0 from unnest(columns) c where c.is_pkey then
-        return next (
-            jsonb_build_object(
-                'schema', wal ->> 'schema',
-                'table', wal ->> 'table',
-                'type', action
-            ),
-            is_rls_enabled,
-            -- subscriptions is already filtered by entity
-            (select array_agg(s.subscription_id) from unnest(subscriptions) as s where claims_role = working_role),
-            array['Error 400: Bad Request, no primary key']
-        )::realtime.wal_rls;
-
-    -- The claims role does not have SELECT permission to the primary key of entity
-    elsif action <> 'DELETE' and sum(c.is_selectable::int) <> count(1) from unnest(columns) c where c.is_pkey then
-        return next (
-            jsonb_build_object(
-                'schema', wal ->> 'schema',
-                'table', wal ->> 'table',
-                'type', action
-            ),
-            is_rls_enabled,
-            (select array_agg(s.subscription_id) from unnest(subscriptions) as s where claims_role = working_role),
-            array['Error 401: Unauthorized']
-        )::realtime.wal_rls;
-
-    else
-        output = jsonb_build_object(
-            'schema', wal ->> 'schema',
-            'table', wal ->> 'table',
-            'type', action,
-            'commit_timestamp', to_char(
-                ((wal ->> 'timestamp')::timestamptz at time zone 'utc'),
-                'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
-            ),
-            'columns', (
-                select
-                    jsonb_agg(
-                        jsonb_build_object(
-                            'name', pa.attname,
-                            'type', pt.typname
-                        )
-                        order by pa.attnum asc
-                    )
-                from
-                    pg_attribute pa
-                    join pg_type pt
-                        on pa.atttypid = pt.oid
-                where
-                    attrelid = entity_
-                    and attnum > 0
-                    and pg_catalog.has_column_privilege(working_role, entity_, pa.attname, 'SELECT')
-            )
-        )
-        -- Add "record" key for insert and update
-        || case
-            when action in ('INSERT', 'UPDATE') then
-                jsonb_build_object(
-                    'record',
+        old_columns =
+                array_agg(
                     (
+                        c.name,
+                        c.type_name,
+                        c.type_oid,
+                        c.value,
+                        c.is_pkey,
+                        pg_catalog.has_column_privilege(working_role, entity_, c.name, 'SELECT')
+                    )::realtime.wal_column
+                )
+                from
+                    unnest(old_columns) c;
+
+        if action <> 'DELETE' and count(1) = 0 from unnest(columns) c where c.is_pkey then
+            -- Fan out 400 error per distinct selected_columns for this role
+            for cols_record in
+                select selected_columns
+                from (select distinct selected_columns from unnest(subscriptions) s where s.claims_role = working_role) t
+                order by coalesce(array_to_string(selected_columns, ','), '')
+            loop
+                working_selected_columns := cols_record.selected_columns;
+                return next (
+                    jsonb_build_object(
+                        'schema', wal ->> 'schema',
+                        'table', wal ->> 'table',
+                        'type', action
+                    ),
+                    is_rls_enabled,
+                    (select array_agg(s.subscription_id) from unnest(subscriptions) as s where s.claims_role = working_role and (s.selected_columns is not distinct from working_selected_columns)),
+                    array['Error 400: Bad Request, no primary key']
+                )::realtime.wal_rls;
+            end loop;
+
+        -- The claims role does not have SELECT permission to the primary key of entity
+        elsif action <> 'DELETE' and sum(c.is_selectable::int) <> count(1) from unnest(columns) c where c.is_pkey then
+            -- Fan out 401 error per distinct selected_columns for this role
+            for cols_record in
+                select selected_columns
+                from (select distinct selected_columns from unnest(subscriptions) s where s.claims_role = working_role) t
+                order by coalesce(array_to_string(selected_columns, ','), '')
+            loop
+                working_selected_columns := cols_record.selected_columns;
+                return next (
+                    jsonb_build_object(
+                        'schema', wal ->> 'schema',
+                        'table', wal ->> 'table',
+                        'type', action
+                    ),
+                    is_rls_enabled,
+                    (select array_agg(s.subscription_id) from unnest(subscriptions) as s where s.claims_role = working_role and (s.selected_columns is not distinct from working_selected_columns)),
+                    array['Error 401: Unauthorized']
+                )::realtime.wal_rls;
+            end loop;
+
+        else
+            -- Create the prepared statement (once per role)
+            if is_rls_enabled and action <> 'DELETE' then
+                if (select 1 from pg_prepared_statements where name = 'walrus_rls_stmt' limit 1) > 0 then
+                    deallocate walrus_rls_stmt;
+                end if;
+                execute realtime.build_prepared_statement_sql('walrus_rls_stmt', entity_, columns);
+            end if;
+
+            -- Collect all visible subscription IDs for this role (filter check + RLS check)
+            visible_role_sub_ids = '{}';
+
+            for subscription_id, claims in (
+                    select
+                        subs.subscription_id,
+                        subs.claims
+                    from
+                        unnest(subscriptions) subs
+                    where
+                        subs.entity = entity_
+                        and subs.claims_role = working_role
+                        and (
+                            realtime.is_visible_through_filters(columns, subs.filters)
+                            or (
+                              action = 'DELETE'
+                              and realtime.is_visible_through_filters(old_columns, subs.filters)
+                            )
+                        )
+            ) loop
+
+                if not is_rls_enabled or action = 'DELETE' then
+                    visible_role_sub_ids = visible_role_sub_ids || subscription_id;
+                else
+                    -- Check if RLS allows the role to see the record
+                    perform
+                        -- Trim leading and trailing quotes from working_role because set_config
+                        -- doesn't recognize the role as valid if they are included
+                        set_config('role', trim(both '"' from working_role::text), true),
+                        set_config('request.jwt.claims', claims::text, true);
+
+                    execute 'execute walrus_rls_stmt' into subscription_has_access;
+
+                    if subscription_has_access then
+                        visible_role_sub_ids = visible_role_sub_ids || subscription_id;
+                    end if;
+                end if;
+            end loop;
+
+            perform set_config('role', null, true);
+
+            -- Inner loop: per distinct selected_columns for this role
+            for cols_record in
+                select selected_columns
+                from (select distinct selected_columns from unnest(subscriptions) s where s.claims_role = working_role) t
+                order by coalesce(array_to_string(selected_columns, ','), '')
+            loop
+                working_selected_columns := cols_record.selected_columns;
+
+                output = jsonb_build_object(
+                    'schema', wal ->> 'schema',
+                    'table', wal ->> 'table',
+                    'type', action,
+                    'commit_timestamp', to_char(
+                        ((wal ->> 'timestamp')::timestamptz at time zone 'utc'),
+                        'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+                    ),
+                    'columns', (
                         select
-                            jsonb_object_agg(
-                                -- if unchanged toast, get column name and value from old record
-                                coalesce((c).name, (oc).name),
-                                case
-                                    when (c).name is null then (oc).value
-                                    else (c).value
-                                end
+                            jsonb_agg(
+                                jsonb_build_object(
+                                    'name', pa.attname,
+                                    'type', pt.typname
+                                )
+                                order by pa.attnum asc
                             )
                         from
-                            unnest(columns) c
-                            full outer join unnest(old_columns) oc
-                                on (c).name = (oc).name
+                            pg_attribute pa
+                            join pg_type pt
+                                on pa.atttypid = pt.oid
+                            left join (
+                                select unnest(conkey) as pkey_attnum
+                                from pg_constraint
+                                where conrelid = entity_ and contype = 'p'
+                            ) pk on pk.pkey_attnum = pa.attnum
                         where
-                            coalesce((c).is_selectable, (oc).is_selectable)
-                            and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                            attrelid = entity_
+                            and attnum > 0
+                            and pg_catalog.has_column_privilege(working_role, entity_, pa.attname, 'SELECT')
+                            and (working_selected_columns is null or pa.attname = any(working_selected_columns) or pk.pkey_attnum is not null)
                     )
                 )
-            else '{}'::jsonb
-        end
-        -- Add "old_record" key for update and delete
-        || case
-            when action = 'UPDATE' then
-                jsonb_build_object(
-                        'old_record',
-                        (
-                            select jsonb_object_agg((c).name, (c).value)
-                            from unnest(old_columns) c
-                            where
-                                (c).is_selectable
-                                and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                -- Add "record" key for insert and update
+                || case
+                    when action in ('INSERT', 'UPDATE') then
+                        jsonb_build_object(
+                            'record',
+                            (
+                                select
+                                    jsonb_object_agg(
+                                        -- if unchanged toast, get column name and value from old record
+                                        coalesce((c).name, (oc).name),
+                                        case
+                                            when (c).name is null then (oc).value
+                                            else (c).value
+                                        end
+                                    )
+                                from
+                                    unnest(columns) c
+                                    full outer join unnest(old_columns) oc
+                                        on (c).name = (oc).name
+                                where
+                                    coalesce((c).is_selectable, (oc).is_selectable)
+                                    and (working_selected_columns is null or coalesce((c).name, (oc).name) = any(working_selected_columns) or coalesce((c).is_pkey, (oc).is_pkey))
+                                    and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                            )
                         )
-                    )
-            when action = 'DELETE' then
-                jsonb_build_object(
-                    'old_record',
+                    else '{}'::jsonb
+                end
+                -- Add "old_record" key for update and delete
+                || case
+                    when action = 'UPDATE' then
+                        jsonb_build_object(
+                                'old_record',
+                                (
+                                    select jsonb_object_agg((c).name, (c).value)
+                                    from unnest(old_columns) c
+                                    where
+                                        (c).is_selectable
+                                        and (working_selected_columns is null or (c).name = any(working_selected_columns) or (c).is_pkey)
+                                        and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                                )
+                            )
+                    when action = 'DELETE' then
+                        jsonb_build_object(
+                            'old_record',
+                            (
+                                select jsonb_object_agg((c).name, (c).value)
+                                from unnest(old_columns) c
+                                where
+                                    (c).is_selectable
+                                    and (working_selected_columns is null or (c).name = any(working_selected_columns) or (c).is_pkey)
+                                    and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                                    and ( not is_rls_enabled or (c).is_pkey ) -- if RLS enabled, we can't secure deletes so filter to pkey
+                            )
+                        )
+                    else '{}'::jsonb
+                end;
+
+                -- Filter visible_role_sub_ids to those matching the current selected_columns group
+                visible_to_subscription_ids = coalesce(
                     (
-                        select jsonb_object_agg((c).name, (c).value)
-                        from unnest(old_columns) c
-                        where
-                            (c).is_selectable
-                            and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
-                            and ( not is_rls_enabled or (c).is_pkey ) -- if RLS enabled, we can't secure deletes so filter to pkey
-                    )
-                )
-            else '{}'::jsonb
-        end;
+                        select array_agg(s.subscription_id)
+                        from unnest(subscriptions) s
+                        where s.claims_role = working_role
+                          and (s.selected_columns is not distinct from working_selected_columns)
+                          and s.subscription_id = any(visible_role_sub_ids)
+                    ),
+                    '{}'::uuid[]
+                );
 
-        -- Create the prepared statement
-        if is_rls_enabled and action <> 'DELETE' then
-            if (select 1 from pg_prepared_statements where name = 'walrus_rls_stmt' limit 1) > 0 then
-                deallocate walrus_rls_stmt;
-            end if;
-            execute realtime.build_prepared_statement_sql('walrus_rls_stmt', entity_, columns);
+                return next (
+                    output,
+                    is_rls_enabled,
+                    visible_to_subscription_ids,
+                    case
+                        when error_record_exceeds_max_size then array['Error 413: Payload Too Large']
+                        else '{}'
+                    end
+                )::realtime.wal_rls;
+            end loop;
+
         end if;
+    end loop;
 
-        visible_to_subscription_ids = '{}';
-
-        for subscription_id, claims in (
-                select
-                    subs.subscription_id,
-                    subs.claims
-                from
-                    unnest(subscriptions) subs
-                where
-                    subs.entity = entity_
-                    and subs.claims_role = working_role
-                    and (
-                        realtime.is_visible_through_filters(columns, subs.filters)
-                        or (
-                          action = 'DELETE'
-                          and realtime.is_visible_through_filters(old_columns, subs.filters)
-                        )
-                    )
-        ) loop
-
-            if not is_rls_enabled or action = 'DELETE' then
-                visible_to_subscription_ids = visible_to_subscription_ids || subscription_id;
-            else
-                -- Check if RLS allows the role to see the record
-                perform
-                    -- Trim leading and trailing quotes from working_role because set_config
-                    -- doesn't recognize the role as valid if they are included
-                    set_config('role', trim(both '"' from working_role::text), true),
-                    set_config('request.jwt.claims', claims::text, true);
-
-                execute 'execute walrus_rls_stmt' into subscription_has_access;
-
-                if subscription_has_access then
-                    visible_to_subscription_ids = visible_to_subscription_ids || subscription_id;
-                end if;
-            end if;
-        end loop;
-
-        perform set_config('role', null, true);
-
-        return next (
-            output,
-            is_rls_enabled,
-            visible_to_subscription_ids,
-            case
-                when error_record_exceeds_max_size then array['Error 413: Payload Too Large']
-                else '{}'
-            end
-        )::realtime.wal_rls;
-
-    end if;
-end loop;
-
-perform set_config('role', null, true);
+    perform set_config('role', null, true);
 end;
 $$;
 
@@ -1709,7 +1795,7 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
         string_agg(
           realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
           ','
-        ) filter (WHERE ppt.tablename IS NOT NULL AND ppt.tablename NOT LIKE '% %'),
+        ) filter (WHERE ppt.tablename IS NOT NULL),
         ''
       ) AS w2j_add_tables
     FROM pg_publication pp
@@ -1733,13 +1819,11 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
            'add-tables', pub.w2j_add_tables
          ) x
   ),
-  -- Count raw slot entries before apply_rls/subscription filter
   slot_count AS (
     SELECT count(*)::bigint AS cnt
     FROM w2j
     WHERE w2j.w2j_add_tables <> ''
   ),
-  -- Apply RLS and filter as before
   rls_filtered AS (
     SELECT xyz.wal, xyz.is_rls_enabled, xyz.subscription_ids, xyz.errors
     FROM w2j,
@@ -1750,14 +1834,11 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
     WHERE w2j.w2j_add_tables <> ''
       AND xyz.subscription_ids[1] IS NOT NULL
   )
-  -- Real rows with slot count attached
   SELECT rf.wal, rf.is_rls_enabled, rf.subscription_ids, rf.errors, sc.cnt
   FROM rls_filtered rf, slot_count sc
 
   UNION ALL
 
-  -- Sentinel row: always returned when no real rows exist so Elixir can
-  -- always read slot_changes_count. Identified by wal IS NULL.
   SELECT null, null, null, null, sc.cnt
   FROM slot_count sc
   WHERE NOT EXISTS (SELECT 1 FROM rls_filtered)
@@ -1771,35 +1852,14 @@ $$;
 CREATE FUNCTION realtime.quote_wal2json(entity regclass) RETURNS text
     LANGUAGE sql IMMUTABLE STRICT
     AS $$
-      select
-        (
-          select string_agg('' || ch,'')
-          from unnest(string_to_array(nsp.nspname::text, null)) with ordinality x(ch, idx)
-          where
-            not (x.idx = 1 and x.ch = '"')
-            and not (
-              x.idx = array_length(string_to_array(nsp.nspname::text, null), 1)
-              and x.ch = '"'
-            )
-        )
-        || '.'
-        || (
-          select string_agg('' || ch,'')
-          from unnest(string_to_array(pc.relname::text, null)) with ordinality x(ch, idx)
-          where
-            not (x.idx = 1 and x.ch = '"')
-            and not (
-              x.idx = array_length(string_to_array(nsp.nspname::text, null), 1)
-              and x.ch = '"'
-            )
-          )
-      from
-        pg_class pc
-        join pg_namespace nsp
-          on pc.relnamespace = nsp.oid
-      where
-        pc.oid = entity
-    $$;
+  SELECT
+    realtime.wal2json_escape_identifier(nsp.nspname::text)
+    || '.'
+    || realtime.wal2json_escape_identifier(pc.relname::text)
+  FROM pg_class pc
+  JOIN pg_namespace nsp ON pc.relnamespace = nsp.oid
+  WHERE pc.oid = entity
+$$;
 
 
 --
@@ -1840,77 +1900,119 @@ $$;
 
 
 --
+-- Name: send_binary(bytea, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
+--
+
+CREATE FUNCTION realtime.send_binary(payload bytea, event text, topic text, private boolean DEFAULT true) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  generated_id uuid;
+BEGIN
+  BEGIN
+    generated_id := gen_random_uuid();
+
+    EXECUTE format('SET LOCAL realtime.topic TO %L', topic);
+
+    INSERT INTO realtime.messages (id, binary_payload, event, topic, private, extension)
+    VALUES (generated_id, payload, event, topic, private, 'broadcast');
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+  END;
+END;
+$$;
+
+
+--
 -- Name: subscription_check_filters(); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-    /*
-    Validates that the user defined filters for a subscription:
-    - refer to valid columns that the claimed role may access
-    - values are coercable to the correct column type
-    */
-    declare
-        col_names text[] = coalesce(
-                array_agg(c.column_name order by c.ordinal_position),
-                '{}'::text[]
-            )
-            from
-                information_schema.columns c
-            where
-                format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
-                and pg_catalog.has_column_privilege(
-                    (new.claims ->> 'role'),
-                    format('%I.%I', c.table_schema, c.table_name)::regclass,
-                    c.column_name,
-                    'SELECT'
-                );
-        filter realtime.user_defined_filter;
-        col_type regtype;
-
-        in_val jsonb;
-    begin
-        for filter in select * from unnest(new.filters) loop
-            -- Filtered column is valid
-            if not filter.column_name = any(col_names) then
-                raise exception 'invalid column for filter %', filter.column_name;
-            end if;
-
-            -- Type is sanitized and safe for string interpolation
-            col_type = (
-                select atttypid::regtype
-                from pg_catalog.pg_attribute
-                where attrelid = new.entity
-                      and attname = filter.column_name
+declare
+    col_names text[] = coalesce(
+            array_agg(c.column_name order by c.ordinal_position),
+            '{}'::text[]
+        )
+        from
+            information_schema.columns c
+        where
+            format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
+            and pg_catalog.has_column_privilege(
+                (new.claims ->> 'role'),
+                format('%I.%I', c.table_schema, c.table_name)::regclass,
+                c.column_name,
+                'SELECT'
             );
-            if col_type is null then
-                raise exception 'failed to lookup type for column %', filter.column_name;
-            end if;
+    table_col_names text[] = coalesce(
+            array_agg(pa.attname),
+            '{}'::text[]
+        )
+        from
+            pg_attribute pa
+        where
+            pa.attrelid = new.entity
+            and pa.attnum > 0;
+    filter realtime.user_defined_filter;
+    col_type regtype;
+    in_val jsonb;
+    selected_col text;
+begin
+    for filter in select * from unnest(new.filters) loop
+        -- Filtered column is valid
+        if not filter.column_name = any(col_names) then
+            raise exception 'invalid column for filter %', filter.column_name;
+        end if;
 
-            -- Set maximum number of entries for in filter
-            if filter.op = 'in'::realtime.equality_op then
-                in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
-                if coalesce(jsonb_array_length(in_val), 0) > 100 then
-                    raise exception 'too many values for `in` filter. Maximum 100';
-                end if;
-            else
-                -- raises an exception if value is not coercable to type
-                perform realtime.cast(filter.value, col_type);
+        -- Type is sanitized and safe for string interpolation
+        col_type = (
+            select atttypid::regtype
+            from pg_catalog.pg_attribute
+            where attrelid = new.entity
+                  and attname = filter.column_name
+        );
+        if col_type is null then
+            raise exception 'failed to lookup type for column %', filter.column_name;
+        end if;
+        if filter.op = 'in'::realtime.equality_op then
+            in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
+            if coalesce(jsonb_array_length(in_val), 0) > 100 then
+                raise exception 'too many values for `in` filter. Maximum 100';
             end if;
+        else
+            -- raises an exception if value is not coercable to type
+            perform realtime.cast(filter.value, col_type);
+        end if;
+    end loop;
 
+    -- Validate that selected_columns reference columns the role can SELECT
+    if new.selected_columns is not null then
+        for selected_col in select * from unnest(new.selected_columns) loop
+            if not selected_col = any(col_names) then
+                raise exception 'invalid column for select %', selected_col;
+            end if;
         end loop;
+    end if;
 
-        -- Apply consistent order to filters so the unique constraint on
-        -- (subscription_id, entity, filters) can't be tricked by a different filter order
-        new.filters = coalesce(
-            array_agg(f order by f.column_name, f.op, f.value),
-            '{}'
-        ) from unnest(new.filters) f;
+    -- Apply consistent order to filters so the unique constraint on
+    -- (subscription_id, entity, filters) can't be tricked by a different filter order
+    new.filters = coalesce(
+        array_agg(f order by f.column_name, f.op, f.value),
+        '{}'
+    ) from unnest(new.filters) f;
 
-        return new;
-    end;
-    $$;
+    -- Normalize selected_columns order so ARRAY['a','b'] and ARRAY['b','a'] are
+    -- treated as the same subscription group in apply_rls
+    new.selected_columns = (
+        select array_agg(c order by c)
+        from unnest(new.selected_columns) c
+    );
+
+    return new;
+end;
+$$;
 
 
 --
@@ -1930,6 +2032,18 @@ CREATE FUNCTION realtime.topic() RETURNS text
     LANGUAGE sql STABLE
     AS $$
 select nullif(current_setting('realtime.topic', true), '')::text;
+$$;
+
+
+--
+-- Name: wal2json_escape_identifier(text); Type: FUNCTION; Schema: realtime; Owner: -
+--
+
+CREATE FUNCTION realtime.wal2json_escape_identifier(name text) RETURNS text
+    LANGUAGE sql IMMUTABLE STRICT
+    AS $$
+  -- Prefix `\`, `,`, `.`, and any whitespace with `\`
+  SELECT regexp_replace(name, '([\\,.[:space:]])', '\\\1', 'g')
 $$;
 
 
@@ -4234,16 +4348,17 @@ CREATE TABLE realtime.messages (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea
 )
 PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_05_19; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_03; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_19 (
+CREATE TABLE realtime.messages_2026_06_03 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4251,15 +4366,16 @@ CREATE TABLE realtime.messages_2026_05_19 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea
 );
 
 
 --
--- Name: messages_2026_05_20; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_04; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_20 (
+CREATE TABLE realtime.messages_2026_06_04 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4267,15 +4383,16 @@ CREATE TABLE realtime.messages_2026_05_20 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea
 );
 
 
 --
--- Name: messages_2026_05_21; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_21 (
+CREATE TABLE realtime.messages_2026_06_05 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4283,15 +4400,16 @@ CREATE TABLE realtime.messages_2026_05_21 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea
 );
 
 
 --
--- Name: messages_2026_05_22; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_22 (
+CREATE TABLE realtime.messages_2026_06_06 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4299,15 +4417,17 @@ CREATE TABLE realtime.messages_2026_05_22 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_23; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_23 (
+CREATE TABLE realtime.messages_2026_06_07 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4315,15 +4435,17 @@ CREATE TABLE realtime.messages_2026_05_23 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_24; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_24 (
+CREATE TABLE realtime.messages_2026_06_08 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4331,15 +4453,17 @@ CREATE TABLE realtime.messages_2026_05_24 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_25; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_09; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_25 (
+CREATE TABLE realtime.messages_2026_06_09 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4347,7 +4471,9 @@ CREATE TABLE realtime.messages_2026_05_25 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
@@ -4374,6 +4500,7 @@ CREATE TABLE realtime.subscription (
     claims_role regrole GENERATED ALWAYS AS (realtime.to_regrole((claims ->> 'role'::text))) STORED NOT NULL,
     created_at timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     action_filter text DEFAULT '*'::text,
+    selected_columns text[],
     CONSTRAINT subscription_action_filter_check CHECK ((action_filter = ANY (ARRAY['*'::text, 'INSERT'::text, 'UPDATE'::text, 'DELETE'::text])))
 );
 
@@ -4538,52 +4665,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_05_19; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_03; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_19 FOR VALUES FROM ('2026-05-19 00:00:00') TO ('2026-05-20 00:00:00');
-
-
---
--- Name: messages_2026_05_20; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_20 FOR VALUES FROM ('2026-05-20 00:00:00') TO ('2026-05-21 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_03 FOR VALUES FROM ('2026-06-03 00:00:00') TO ('2026-06-04 00:00:00');
 
 
 --
--- Name: messages_2026_05_21; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_04; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_21 FOR VALUES FROM ('2026-05-21 00:00:00') TO ('2026-05-22 00:00:00');
-
-
---
--- Name: messages_2026_05_22; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_22 FOR VALUES FROM ('2026-05-22 00:00:00') TO ('2026-05-23 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_04 FOR VALUES FROM ('2026-06-04 00:00:00') TO ('2026-06-05 00:00:00');
 
 
 --
--- Name: messages_2026_05_23; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_23 FOR VALUES FROM ('2026-05-23 00:00:00') TO ('2026-05-24 00:00:00');
-
-
---
--- Name: messages_2026_05_24; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_24 FOR VALUES FROM ('2026-05-24 00:00:00') TO ('2026-05-25 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_05 FOR VALUES FROM ('2026-06-05 00:00:00') TO ('2026-06-06 00:00:00');
 
 
 --
--- Name: messages_2026_05_25; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_25 FOR VALUES FROM ('2026-05-25 00:00:00') TO ('2026-05-26 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_06 FOR VALUES FROM ('2026-06-06 00:00:00') TO ('2026-06-07 00:00:00');
+
+
+--
+-- Name: messages_2026_06_07; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_07 FOR VALUES FROM ('2026-06-07 00:00:00') TO ('2026-06-08 00:00:00');
+
+
+--
+-- Name: messages_2026_06_08; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_08 FOR VALUES FROM ('2026-06-08 00:00:00') TO ('2026-06-09 00:00:00');
+
+
+--
+-- Name: messages_2026_06_09; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_09 FOR VALUES FROM ('2026-06-09 00:00:00') TO ('2026-06-10 00:00:00');
 
 
 --
@@ -5737,6 +5864,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1776344554382	2026-04-16 13:02:34.382+00	Marini Arturo	{"id": "203214", "cap": "31100", "nome": "Marini Arturo", "email": "az.agr.mariniarturo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494344074", "indirizzo": "VIA DELL'ISOLA 12", "provincia": "TV", "searchText": "marini arturo treviso ", "telefonoOriginale": "3494344074"}	3494344074	Simone	[]	[{"id": 1776344545216, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	466.4	\N	\N	\N	fattura	completed	2026-04-16 13:02:34.382+00	t	user_1776324198863	vendita	f	f	f	in_attesa	\N
 1775738232391	2026-04-09 10:00:00+00	Giardino Verde Di Maiorano Devid	{"id": "514216", "cap": "31040", "nome": "Giardino Verde Di Maiorano Devid", "email": "lion.leonardo2004@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VOLPAGO DEL MONTELLO", "telefono": "3457613676", "indirizzo": "VIA SAN PIO X, 101", "provincia": "TV", "searchText": "giardino verde di maiorano devid volpago del montello ", "telefonoOriginale": "3457613676"}	3457613676	Simone	[]	[{"id": 1775738191872, "nome": "hurrica", "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775738228460, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	108.9	\N	\N	\N	scontrino	completed	2026-04-09 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1778665123064	2026-05-13 10:00:00+00	LOVO C. P. I. SRL Pi 04880910262. M5UXCR1 via Buel del LOVO 2 Casier	\N	\N	Simone	[{"brand": "Toro", "model": "MR4275T MY RIDE", "prezzo": 7200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "420211459 mod. 74692"}, {"brand": "Worx", "model": "Potatore ad asta WG349 E", "prezzo": 190, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "30232502000"}]	[]	7390	\N	\N	Da ritirare trattorino Viking da vedere e valutare a parte	fattura	completed	2026-05-14 10:11:30.322+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779526175204	2026-05-23 10:00:00+00	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLA 56", "prezzo": 249, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "944036782"}, {"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600034499"}]	[]	548	\N	\N	\N	scontrino	completed	2026-05-23 10:00:00+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776087669751	2026-04-13 13:41:09.751+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1776087665124, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-13 13:41:09.751+00	t	user_1776067412336	vendita	f	f	f	in_attesa	\N
 1775643436602	2026-04-08 10:00:00+00	De Bortoli Emilio	{"id": "511975", "cap": "30013", "nome": "De Bortoli Emilio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3420471047", "indirizzo": "VIA FAUSTA 167", "provincia": "VE", "searchText": "de bortoli emilio cavallino-treporti ", "telefonoOriginale": "3420471047"}	3420471047	Simone	[{"brand": "GGP", "model": "Trattorino rasaerba XDC 150 HD", "prezzo": 2600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "26BA3RON003900"}]	[{"id": 1775643339417, "nome": "Kit traino GGP", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2650	300	pos	Chiamare cliente appena pronto e ritirare trattorino vecchio da rottamare	scontrino	completed	2026-04-13 14:40:06.242+00	f	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776170406257	2026-04-14 12:40:05.805+00	Terradice S.R.L.	{"id": "506854", "cap": "31037", "nome": "Terradice S.R.L.", "email": "info@terradice.com", "nomeP": "", "cognome": "", "contatto": "Guidolin Mauro", "localita": "LORIA", "telefono": "3409433264", "indirizzo": "VIA COLOMBARA, 63/A", "provincia": "TV", "searchText": "terradice s.r.l. loria guidolin mauro", "telefonoOriginale": "3409433264"}	3409433264	Simone	[{"brand": "Grillo", "model": "Climber 10 AWD", "prezzo": 11800, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "767775"}]	[]	11800	\N	\N	\N	scontrino	completed	2026-04-14 12:40:05.805+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
@@ -5811,11 +5939,43 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1778685954948	2026-05-13 10:00:00+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1778685950565, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 30.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	30.8	\N	\N	\N	scontrino	completed	2026-05-13 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1778912688111	2026-05-16 06:24:48.111+00	Pillon Giovanni	{"id": "500791", "cap": "31032", "nome": "Pillon Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "0422785031", "indirizzo": "VIA PESCHIERE 108 - CONSCIO", "provincia": "TV", "searchText": "pillon giovanni casale sul sile ", "telefonoOriginale": "0422785031"}	0422785031	Simone	[]	[{"id": 1778912672746, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-05-16 06:24:48.111+00	t	user_1778911488203	vendita	f	f	f	in_attesa	\N
 1778923420712	2026-05-16 09:23:40.712+00	GUMIERO DAMIANO	\N	\N	Simone	[]	[{"id": 1778923379140, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1778923386396, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-05-16 09:23:40.712+00	t	user_1778911488203	vendita	f	f	f	in_attesa	\N
-1779282664880	2026-05-20 13:11:04.88+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1779282017655, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-20 13:11:04.88+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1779461468072	2026-05-22 14:51:08.072+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Simone	[]	[{"id": 1779461458629, "nome": "Palo iniettore con contalitri", "prezzo": 325, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	scontrino	completed	2026-05-22 14:51:08.072+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
-1779465179944	2026-05-22 15:52:59.944+00	Res H Project Srl	{"id": "513792", "cap": "32100", "nome": "Res H Project Srl", "email": "s.depra@rch.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BELLUNO", "telefono": "3487110130", "indirizzo": "VIA GHARIBALDI, 3", "provincia": "BL", "searchText": "res h project srl belluno ", "telefonoOriginale": "3487110130"}	3487110130	Admin	[]	[{"id": 1779465158651, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1779465173259, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	fattura	completed	2026-05-22 15:52:59.944+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1779466805441	2026-05-22 16:20:05.021+00	Barison Michele	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2", "prezzo": 839, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1077924"}]	[]	839	\N	\N	\N	scontrino	completed	2026-05-22 16:20:05.021+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1779466950557	2026-05-22 16:22:30.556+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1779466927509, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 89.3, "quantita": 3, "matricola": null, "aliquotaIva": 10}]	267.9	\N	\N	\N	fattura	completed	2026-05-22 16:22:30.556+00	t	user_1779453953714	vendita	f	f	f	in_attesa	\N
+1779517968789	2026-05-22 10:00:00+00	.	\N	\N	Simone	[]	[{"id": 1779517953338, "nome": "Zaino Volpi Vita 12", "prezzo": 126.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	126.9	\N	\N	\N	scontrino	completed	2026-05-22 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779518952352	2026-05-23 10:00:00+00	Benotto Andreina via Bragato 15 Sambughé Preganziol 340 8336931	\N	\N	Simone	[]	[{"id": 1779518945226, "nome": "Robot Segway Navimow i108, completo di installazione ", "prezzo": 1400, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1400	\N	\N	\N	scontrino	completed	2026-05-23 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779526654314	2026-05-23 08:57:32.125+00	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	\N	\N	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600034499"}, {"brand": "Stihl", "model": "Tagliasiepi HLA 56", "prezzo": 249, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "944036782"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912863193"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703104544"}]	[]	548	\N	\N	\N	scontrino	completed	2026-05-23 08:57:32.125+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779465179944	2026-05-22 10:00:00+00	Res H Project Srl	{"id": "513792", "cap": "32100", "nome": "Res H Project Srl", "email": "s.depra@rch.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BELLUNO", "telefono": "3487110130", "indirizzo": "VIA GHARIBALDI, 3", "provincia": "BL", "searchText": "res h project srl belluno ", "telefonoOriginale": "3487110130"}	3487110130	Simone	[]	[{"id": 1779465158651, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1779465173259, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	fattura	completed	2026-05-22 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779714968467	2026-05-25 13:16:08.466+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1779714944688, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	31.2	\N	\N	\N	scontrino	completed	2026-05-25 13:16:08.466+00	t	user_1779693791262	vendita	f	f	f	in_attesa	\N
+1779774602625	2026-05-26 10:00:00+00	Camerin Federica via Ottavio Ottavi 10/D Treviso	\N	\N	Simone	[]	[{"id": 1779774463050, "nome": "Centralina ZA 150 Premium, sistema antizanzare a due prodotti e doppia linea di uscita, compresa installazione impianto", "prezzo": 4700, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	4700	\N	\N	Bonifico caparra all'ordine del 30% pari a 1.410 €\n+34 648 87 71 65   federica.camerin87@gmail.com    CMRFRC87H46L407J	scontrino	completed	2026-05-26 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779805809416	2026-05-26 14:30:08.112+00	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	{"id": "401099", "cap": "31056", "nome": "RIST.ALL'ORSO SAS-EREDI Tonet Angelo", "email": "hotelorso@hotelorso.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "0422849173", "indirizzo": "VIA G. D'ANNUNZIO, 138 - BIANCADE", "provincia": "TV", "searchText": "rist.all'orso sas-eredi tonet angelo roncade ", "telefonoOriginale": "0422849173"}	0422849173	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 100.1", "prezzo": 390, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451949950"}, {"brand": "Stihl", "model": "Batteria AP 30 (270 Wh)", "prezzo": 260, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546061414"}, {"brand": "Stihl", "model": "Caricabatteria AL 301", "prezzo": 125, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "718634349"}]	[]	775	\N	\N	\N	fattura	completed	2026-05-26 14:30:08.112+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779806608366	2026-05-26 14:43:27.978+00	Nardin Marco 3493118388	\N	\N	Simone	[{"brand": "Stihl", "model": "FS55R", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838434200"}]	[{"id": 1779806597030, "nome": "Filo 2,4", "prezzo": 8, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	247	\N	\N	\N	scontrino	completed	2026-05-26 14:43:27.978+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779811068981	2026-05-26 15:57:48.98+00	Carpenedo Thomas via Foscarini 23 Treviso	\N	\N	Simone	[]	[{"id": 1779811005220, "nome": "Zhalt Evolution Connect, compreso installazione impianto", "prezzo": 2300, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2300	\N	\N	Caparra 700,00 € i.c. Saldo al collaudo dell'impianto	scontrino	completed	2026-05-26 15:57:48.98+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779951604725	2026-05-28 07:00:04.725+00	.	\N	\N	Simone	[]	[{"id": 1779951549067, "nome": "AllRound 20 kg", "prezzo": 64.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	64.5	\N	\N	\N	scontrino	completed	2026-05-28 07:00:04.725+00	t	user_1779950675461	vendita	f	f	f	in_attesa	\N
+1779714812301	2026-05-25 10:00:00+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1779714810201, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	24.7	\N	\N	\N	scontrino	completed	2026-05-25 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779811600881	2026-05-26 10:00:00+00	Gianni Giardini Di Tudora Bogdan Ion	{"id": "510681", "cap": "31055", "nome": "Gianni Giardini Di Tudora Bogdan Ion", "email": "tudoragianni@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "QUINTO DI TREVISO", "telefono": "3405574144", "indirizzo": "VIA BOIAGO, 15B", "provincia": "TV", "searchText": "gianni giardini di tudora bogdan ion quinto di treviso ", "telefonoOriginale": "3405574144"}	3405574144	Simone	[]	[{"id": 1779811595093, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 57.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	57.7	\N	\N	\N	scontrino	completed	2026-05-26 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779961045486	2026-05-28 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779961041486, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-28 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779983622938	2026-05-28 10:00:00+00	Barbon Ivan	{"id": "511048", "cap": "31056", "nome": "Barbon Ivan", "email": "", "nomeP": "", "cognome": "", "contatto": "Cel Salvian Stefano", "localita": "RONCADE", "telefono": "3493865038", "indirizzo": "VIA GALLI, 85/D - BIANCADE", "provincia": "TV", "searchText": "barbon ivan roncade cel salvian stefano", "telefonoOriginale": "3493865038"}	3493865038	Simone	[]	[{"id": 1779983612966, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 57.7, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	461.6	\N	\N	\N	scontrino	completed	2026-05-28 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780041076269	2026-05-29 10:00:00+00	Schiavinato Amorino	{"id": "504602", "cap": "31032", "nome": "Schiavinato Amorino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "0422788482", "indirizzo": "LUGHIGNANO", "provincia": "TV", "searchText": "schiavinato amorino casale sul sile ", "telefonoOriginale": "0422788482"}	0422788482	Simone	[{"brand": "Stihl", "model": "Motosega MSA 60.0 C", "prezzo": 369, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452325283"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703210773"}]	[{"nome": "Olio catena bioplus ", "prezzo": 6.5, "quantita": 1, "aliquotaIva": 22}]	375.5	\N	\N	\N	scontrino	completed	2026-05-29 10:00:00+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780064422262	2026-05-29 14:20:22.251+00	Carniato Mario	{"id": "504640", "cap": "31100", "nome": "Carniato Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3454395117", "indirizzo": "VIA ROTA, 9", "provincia": "TV", "searchText": "carniato mario treviso ", "telefonoOriginale": "3454395117"}	3454395117	Simone	[]	[{"id": 1780064385028, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1780064412463, "nome": "NPK Enduring 5 kg 5 kg", "prezzo": 41, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	95.8	\N	\N	\N	scontrino	completed	2026-05-29 14:20:22.251+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1780067654781	2026-05-29 15:14:14.781+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1780067648804, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 57.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	57.7	\N	\N	\N	scontrino	completed	2026-05-29 15:14:14.781+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1780120954032	2026-05-30 06:02:32.677+00	Fantinello Alex 3467577542	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 94 RC-E Brushcutter", "prezzo": 419, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "549141064"}]	[{"id": 1780120891524, "nome": "Filo 2,4", "prezzo": 8, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780120906756, "nome": "Visiera", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780120935605, "nome": "Olio HP Ultra ", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	458.5	\N	\N	\N	scontrino	completed	2026-05-30 06:02:32.677+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780125541248	2026-05-30 07:19:01.248+00	Pontello Alessandro	\N	\N	Simone	[]	[{"id": 1780125532671, "nome": "Zaino Volpi Vita16", "prezzo": 147.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	147.9	\N	\N	\N	scontrino	completed	2026-05-30 07:19:01.248+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780302314006	2026-06-01 08:25:12.366+00	Marcolin Anna 3407234756 (Fabrizio)	\N	\N	Simone	[{"brand": "Stihl", "model": "Forbice elettronica ASA 20.0", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955859434"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BH051H019"}, {"brand": "Stihl", "model": "Caricabatteria AL 1.0.A", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707635787"}]	[]	219	\N	\N	\N	scontrino	completed	2026-06-01 08:25:12.366+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780305316572	2026-06-01 09:15:16.09+00	Santolin Enrico	{"id": "506585", "cap": "31052", "nome": "Santolin Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3487005813", "indirizzo": "VICOLO PIAVESELLA, 14 - CANDELU'", "provincia": "TV", "searchText": "santolin enrico maserada sul piave ", "telefonoOriginale": "3487005813"}	3487005813	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 50.1", "prezzo": 169, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452196718"}]	[]	169	\N	\N	\N	scontrino	completed	2026-06-01 09:15:16.09+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780321773022	2026-06-01 13:49:31.813+00	Schiavinato Guglielmo 3405665534	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS-2511TES", "prezzo": 509, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C74638145237"}]	[]	509	\N	\N	\N	scontrino	completed	2026-06-01 13:49:31.813+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780487909670	2026-06-03 11:58:29.67+00	Cooperativa Meolese - SOCIETA' Cooperativa	{"id": "504332", "cap": "30020", "nome": "Cooperativa Meolese - SOCIETA' Cooperativa", "email": "amministrazione@cooperativameolese.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3371060305", "indirizzo": "VIA DELLE INDUSTRIE II, 90", "provincia": "VE", "searchText": "cooperativa meolese - societa' cooperativa meolo ", "telefonoOriginale": "3371060305"}	3371060305	Simone	[]	[{"id": 1780487876826, "nome": "Olio 10w 30 Honda", "prezzo": 8.3, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780487899896, "nome": "Tuta 3M XL", "prezzo": 10, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	28.3	\N	\N	\N	fattura	completed	2026-06-03 11:58:29.67+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780132463564	2026-05-30 10:00:00+00	Perissinotto Marco	{"id": "512033", "cap": "31057", "nome": "Perissinotto Marco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "", "indirizzo": "VIA FRATELLI BANDIERA, 15", "provincia": "TV", "searchText": "perissinotto marco silea ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1780132461168, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.9	\N	\N	\N	scontrino	completed	2026-05-30 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780549906170	2026-06-04 05:11:46.17+00	De Demo Daniele	{"id": "500278", "cap": "31030", "nome": "De Demo Daniele", "email": "polo.chiara@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3480880270", "indirizzo": "VIA VALDEMONEGHE, 18/A", "provincia": "TV", "searchText": "de demo daniele carbonera ", "telefonoOriginale": "3480880270"}	3480880270	Simone	[]	[{"id": 1780549871774, "nome": "Granustar 20 kg", "prezzo": 70.3, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	562.4	\N	\N	\N	fattura	completed	2026-06-04 05:11:46.17+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1780588204979	2026-06-04 10:00:00+00	Tubia Matteo	{"id": "509612", "cap": "31056", "nome": "Tubia Matteo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3493557213", "indirizzo": "VIA SANT'ANTONIO, 11 - BIANCADE", "provincia": "TV", "searchText": "tubia matteo roncade ", "telefonoOriginale": "3493557213"}	3493557213	Simone	[]	[{"id": 1780588199884, "nome": "Freezanz Professional PMC (New) - Lt. 1 Lt. 1", "prezzo": 45, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	45	\N	\N	\N	scontrino	completed	2026-06-04 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780299680792	2026-06-01 10:00:00+00	Michielon Sergio	{"id": "202558", "cap": "31032", "nome": "Michielon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "3394273510", "indirizzo": "VIA DELLE GRAZIE 35 - LUGHIGNANO", "provincia": "TV", "searchText": "michielon sergio casale sul sile ", "telefonoOriginale": "3394273510"}	3394273510	Simone	[{"brand": "Stihl", "model": "Soffiatore SR 430 Atomizzatore", "prezzo": 750, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370196554"}]	[]	750	\N	\N	\N	scontrino	completed	2026-06-01 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779282664880	2026-05-20 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779282017655, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-20 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779721753728	2026-05-25 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779721736191, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1779721746796, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	165.4	\N	\N	\N	scontrino	completed	2026-05-25 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780642860247	2026-06-05 07:01:00.247+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Admin	[]	[{"id": 1780642855209, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	246.5	\N	\N	\N	scontrino	completed	2026-06-05 07:01:00.247+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1780649587125	2026-06-05 08:53:06.437+00	Officine Carraretto Loris Srl	{"id": "202387", "cap": "31032", "nome": "Officine Carraretto Loris Srl", "email": "alessandra.carraretto@carrarettosrl.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "3283082840", "indirizzo": "VIA C. GARDAN 2", "provincia": "TV", "searchText": "officine carraretto loris srl casale sul sile ", "telefonoOriginale": "3283082840"}	3283082840	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 60.1", "prezzo": 280, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452957720"}]	[]	280	\N	\N	\N	fattura	completed	2026-06-05 08:53:06.437+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1780662346023	2026-06-05 12:25:46.023+00	Buosi Mosè 389 6312244	\N	\N	Simone	[]	[{"id": 1780662273932, "nome": "MOTOCULTIVATORE GRILLO G85, MOTORE HONDA GX 270, RUOTE 942412 4.00-10, FRESA 984511 CM 58", "prezzo": 3600, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780662297721, "nome": "RUOTE 900412 5.00-10 PER DIFFERENZA", "prezzo": 100, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780662307358, "nome": "FRESA CONTROROTANTE 58 CM, COMPRESO ZAVORRA 11 KG 9G3211, PER DIFFERENZA", "prezzo": 150, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3850	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
+1780677285718	2026-06-05 16:34:45.169+00	Salvalaio Lorenzo 3491428794	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore KM 94 RC-E", "prezzo": 455, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545319888"}]	[{"id": 1780677267182, "nome": "Testina autocut 26-2", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	480	\N	\N	\N	scontrino	completed	2026-06-05 16:34:45.169+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1780679006531	2026-06-05 10:00:00+00	Cenedese Andrea	{"cf": "", "id": "244f09c0-9929-48c0-bad3-89de8885fc48", "cap": "31048", "sdi": "", "nome": "Cenedese Andrea", "piva": "", "email": "andrea.cenedese@alice.it", "nomeP": "Cenedese Andrea", "_fonte": "db", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta "}	3318200684	Simone	[{"brand": "Echo", "model": "Motosega DCS-2500T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535022520"}, {"brand": "Echo", "model": "Batteria LBP-56V125", "prezzo": 469, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935022196"}, {"brand": "Echo", "model": "Batteria LBP-56V125 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935022265"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435038235"}]	[{"nome": "Catena", "prezzo": 15, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 15, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena", "prezzo": 12.5, "quantita": 1, "aliquotaIva": 22}]	970.5	\N	\N	\N	scontrino	completed	2026-06-05 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 \.
 
 
@@ -5827,10 +5987,13 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 577	2026-05-22 16:19:42.104+00	CARICO	Honda	Rasaerba HRN536C2	MCSF1077924	\N	\N	\N	available	user_1775131564325	main	t
 578	2026-05-22 16:20:05.021+00	SCARICO	Honda	Rasaerba HRN536C2	MCSF1077924	Barison Michele	0	0	sold	user_1775131564325	main	f
 178	2026-02-16 08:50:59.119+00	SCARICO	STIHL	Batteria AK 30.0S	912736933	Bisetto Mario	0	0	sold	user_1769961017929	main	f
+595	2026-05-26 14:28:19.422+00	CARICO	Stihl	Tagliasiepi HSA 100.1	451949950	\N	\N	\N	available	user_1775131564325	main	t
 177	2026-02-16 08:50:58.969+00	SCARICO	STIHL	Caricabatterie AL 101	702817744	Bisetto Mario	0	0	sold	user_1769961017929	main	f
 183	2026-02-19 09:12:21.296+00	CARICO	STIHL	Motosega MSA 190.0 T	452310977	\N	\N	\N	available	user_1769961017929	main	f
+609	2026-05-30 06:00:38.598+00	CARICO	Stihl	Decespugliatore FS 94 RC-E Brushcutter	549141064	\N	\N	\N	available	user_1775131564325	main	t
 188	2026-02-19 09:34:06.327+00	SCARICO	STIHL	Tagliabordi FSA 30.0	838110682	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
 193	2026-02-19 10:53:27.211+00	SCARICO	STIHL	Motosega MSA 190.0 T	452310979	AZ. AGR. Vivai Piante Di Dragancea Andrei	0	0	sold	user_1769961017929	main	f
+622	2026-06-01 13:49:31.813+00	SCARICO	Echo	Motosega CS-2511TES	C74638145237	Schiavinato Guglielmo 3405665534	0	0	sold	user_1775131564325	main	f
 200	2026-02-21 10:36:10.272+00	CARICO	STIHL	Motosega MS 194 T 1/4 P Chainsaw	540455888	\N	\N	\N	available	user_1769961017929	main	f
 215	2026-02-28 08:35:43.824+00	SCARICO	NEGRI	Biotrituratore R95BRAHP65	27489101	Bergamo Nello - Impresa Edile	0	0	sold	user_1769961017929	main	f
 222	2026-03-02 16:56:25.432+00	CARICO	STIHL	Troncatrice TS 910.0i, 400mm/16"	196978666	\N	\N	\N	available	user_1769961017929	main	t
@@ -5860,6 +6023,7 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 120	2026-01-17 11:00:00+00	VENDITA	STIHL	MOTOSGA MS 182 (SN: 837 262 267)	NOMAT-1770626309484	WALTER RIZZATO	379	379	sold	Simone	main	f
 135	2026-01-30 11:00:00+00	VENDITA	ACCESSORI	Motosega MS 231 (SN: 194053039) + TANICA MOTOMIX 5 L	NOMAT-1770628981076	Piovesan Andrea	566.5	566.5	sold	Simone	main	f
 140	2026-02-06 11:00:00+00	VENDITA	STIHL	STIHL BIOTRITURATORE GHE 105 (SN: 451998874) + Stihl POTATORE GTA 26 942966195 + BATTERIA AS 2 937201708 + CARICABATT. AL 1 718061245	NOMAT-1770629736627	COMMISSATI FRANCESCA	609	609	sold	Simone	main	f
+579	2026-05-23 08:47:12.426+00	CARICO	Stihl	Tagliasiepi HLA 56	944036782	\N	\N	\N	available	user_1775131564325	main	t
 173	2026-02-16 08:43:04.075+00	CARICO	STIHL	Decespugliatore FSA 80 R	546519977	\N	\N	\N	available	user_1769961017929	main	f
 174	2026-02-16 08:43:04.075+00	CARICO	STIHL	Batteria AK 30.0S	912736933	\N	\N	\N	available	user_1769961017929	main	f
 175	2026-02-16 08:43:04.075+00	CARICO	STIHL	Caricabatterie AL 101	702817744	\N	\N	\N	available	user_1769961017929	main	f
@@ -5868,9 +6032,13 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 184	2026-02-19 09:14:24.352+00	SCARICO	STIHL	Motosega MSA 190.0 T	452310977	Sartori Luca	0	0	sold	user_1769961017929	main	f
 189	2026-02-19 09:34:06.583+00	SCARICO	STIHL	Caricabatterie AL 1	935280185	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
 190	2026-02-19 09:34:06.74+00	SCARICO	STIHL	Batteria AS 2	937056842	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
+596	2026-05-26 14:29:06.03+00	CARICO	Stihl	Batteria AP 30 (270 Wh)	546061414	\N	\N	\N	available	user_1775131564325	main	t
+610	2026-05-30 06:02:32.677+00	SCARICO	Stihl	Decespugliatore FS 94 RC-E Brushcutter	549141064	Fantinello Alex 3467577542	0	0	sold	user_1775131564325	main	f
 198	2026-02-20 14:08:39.828+00	CARICO	VOLPI	Potatore KVS8000	SL3325.372NB	\N	\N	\N	available	user_1769961017929	main	f
 201	2026-02-21 10:40:26.358+00	SCARICO	STIHL	Motosega MS 194 T 1/4 P Chainsaw	540455888	Chiericati Massimo	0	0	sold	user_1769961017929	main	f
+623	2026-06-05 08:52:46.759+00	CARICO	Stihl	Tagliasiepi HSA 60.1	452957720	\N	\N	\N	available	user_1775131564325	main	t
 207	2026-02-22 21:29:42.07+00	SCARICO	STIHL	RM 248.3 T	451394256	Habitat Natura Di Simone Taffarello	0	0	sold	user_1770584612559	main	f
+624	2026-06-05 08:53:06.438+00	SCARICO	Stihl	Tagliasiepi HSA 60.1	452957720	Officine Carraretto Loris Srl	0	0	sold	user_1775131564325	main	f
 223	2026-03-02 16:59:14.322+00	SCARICO	STIHL	Troncatrice TS 910.0i, 400mm/16"	196978666	Edil Demi Di Covassin Demido	0	0	sold	user_1769961017929	main	f
 226	2026-03-03 09:07:49.161+00	CARICO	STIHL	Tosaerba RMA 239.1	451990095	\N	\N	\N	available	user_1769961017929	main	t
 229	2026-03-03 09:10:52.138+00	CARICO	STIHL	AL 101	986413411	\N	\N	\N	available	user_1769961017929	main	t
@@ -5895,7 +6063,9 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 295	2026-03-13 09:12:09.253+00	CARICO	VOLPI	Potatore KVS5100	SC2624.0633NB	\N	\N	\N	available	user_1769961017929	main	t
 296	2026-03-13 09:12:47.063+00	SCARICO	VOLPI	Potatore KVS5100	SC2624.0633NB	Massolin Franco	0	0	sold	user_1769961017929	main	f
 297	2026-03-13 16:24:23.115+00	CARICO	Echo	Decespugliatore SRM 3021 TES	U65040105586	\N	\N	\N	available	user_1769961017929	main	t
+580	2026-05-23 08:48:14.248+00	CARICO	Stihl	Soffiatore BGA 50.0	600034499	\N	\N	\N	available	user_1775131564325	main	t
 144	2026-02-07 11:00:00+00	VENDITA	ACCESSORI	POTATORE KVS 8000 (SN: SL3325 371 NB) + FORBICE KV 390 (SN: PZ 2925 390NB) + 1 CATENA	NOMAT-1770630351510	XHELAJ REMZI	840	840	sold	Simone	main	f
+581	2026-05-23 08:48:48.135+00	CARICO	Stihl	Batteria AK 20	BK181G029	\N	\N	\N	available	user_1775131564325	main	t
 176	2026-02-16 08:50:58.236+00	SCARICO	STIHL	Decespugliatore FSA 80 R	546519977	Bisetto Mario	0	0	sold	user_1769961017929	main	f
 181	2026-02-16 16:20:32.201+00	SCARICO	VOLPI	Forbice elettronica KV390	PZ2925.389NB	Balanza Marino	0	0	sold	user_1769961017929	main	f
 182	2026-02-16 16:20:32.984+00	SCARICO	VOLPI	Potatore KVS6000	SM4222498LS	Balanza Marino	0	0	sold	user_1769961017929	main	f
@@ -5903,12 +6073,18 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 186	2026-02-19 09:30:48.458+00	CARICO	STIHL	Batteria AS 2	937056842	\N	\N	\N	available	user_1769961017929	main	f
 187	2026-02-19 09:30:48.458+00	CARICO	STIHL	Caricabatterie AL 1	935280185	\N	\N	\N	available	user_1769961017929	main	f
 191	2026-02-19 10:50:01.694+00	CARICO	STIHL	Motosega MSA 190.0 T	452310979	\N	\N	\N	available	user_1769961017929	main	f
+586	2026-05-23 08:49:34.858+00	SCARICO	Stihl	Caricabatteria AL 101	68160761	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
 105	2026-01-09 11:00:00+00	VENDITA	ACCESSORI	TRONCARAMI RS 750 x2	NOMAT-1770546596554	MICHELE GOLFETTO	134	134	sold	Simone	main	f
 110	2026-01-12 11:00:00+00	VENDITA	Echo	Echo Motosega ECHO DCS 2500T (SN: C 81535021918) + BATTERIA LBP 56V 125  E83935013630 + CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA	NOMAT-1770571853303	MORO ENRICO	708	708	sold	Simone	main	f
 192	2026-02-19 10:50:02.949+00	CARICO	STIHL	Motosega MSA 190.0 T	452310979	\N	\N	\N	available	user_1769961017929	main	f
+597	2026-05-26 14:29:46.381+00	CARICO	Stihl	Caricabatteria AL 301	718634349	\N	\N	\N	available	user_1775131564325	main	t
+600	2026-05-26 14:30:09.017+00	SCARICO	Stihl	Caricabatteria AL 301	718634349	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
 199	2026-02-20 14:09:50.604+00	SCARICO	VOLPI	Potatore KVS8000	SL3325.372NB	Bonetto Franco	0	0	sold	user_1769961017929	main	f
+611	2026-06-01 07:41:02.447+00	CARICO	Stihl	Soffiatore SR 430 Atomizzatore	370196554	\N	\N	\N	available	user_1770584612559	main	t
 205	2026-02-22 20:46:02.271+00	CARICO	STIHL	RM 248.3 T	451394256	\N	\N	\N	available	user_1770584612559	main	t
 257	2026-03-07 08:35:14.711+00	CARICO	STIHL	 AL 101	702287103	\N	\N	\N	available	user_1772723709793	main	t
+612	2026-06-01 07:41:19.953+00	SCARICO	Stihl	Soffiatore SR 430 Atomizzatore	370196554	Michielon Sergio	0	0	sold	user_1770584612559	main	f
+625	2026-06-05 16:33:21.821+00	CARICO	Stihl	Decespugliatore KM 94 RC-E	545319888	\N	\N	\N	available	user_1775131564325	main	t
 162	2026-02-02 11:00:00+00	VENDITA	ACCESSORI	61 PMM3 Piccolo Micro Mini Catena x3 + catena m47-91 + CATENA 91 - 53M x3 + CATENA 1/4 1,1 52M x3	NOMAT-1771001013437	Bimetal	132.55	132.55	sold	Simone	main	f
 214	2026-02-28 08:35:04.363+00	CARICO	NEGRI	Biotrituratore R95BRAHP65	27489101	\N	\N	\N	available	user_1769961017929	main	t
 220	2026-02-28 11:02:45.037+00	CARICO	STIHL	Decespugliatore FSA 60 R	450921356	\N	\N	\N	available	user_1769961017929	main	t
@@ -5944,12 +6120,20 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 312	2026-03-16 08:26:22.69+00	CARICO	STIHL	Batteria AP 300.0 S	953245642	\N	\N	\N	available	user_1769961017929	main	t
 313	2026-03-16 08:26:45.108+00	SCARICO	STIHL	Soffiatore BGA 250.0	452134555	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1769961017929	main	f
 314	2026-03-16 08:26:45.285+00	SCARICO	STIHL	Batteria AP 300.0 S	953245642	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1769961017929	main	f
+582	2026-05-23 08:49:18.095+00	CARICO	Stihl	Caricabatteria AL 101	68160761	\N	\N	\N	available	user_1775131564325	main	t
 316	2026-03-18 10:18:15.455+00	CARICO	STIHL	Batteria AS 2	951511941	\N	\N	\N	available	user_1769961017929	main	t
 317	2026-03-18 10:18:37.245+00	CARICO	STIHL	Batteria AS 2	951511944	\N	\N	\N	available	user_1769961017929	main	t
 318	2026-03-18 10:19:36.691+00	CARICO	STIHL	Caricabatteria AL 5-2	709055579	\N	\N	\N	available	user_1769961017929	main	t
+583	2026-05-23 08:49:33.497+00	SCARICO	Stihl	Tagliasiepi HLA 56	944036782	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
 320	2026-03-18 10:19:50.063+00	SCARICO	STIHL	Batteria AS 2	951511941	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
 321	2026-03-18 10:19:50.165+00	SCARICO	STIHL	Batteria AS 2	951511944	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
 322	2026-03-18 10:19:50.325+00	SCARICO	STIHL	Caricabatteria AL 5-2	709055579	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
+584	2026-05-23 08:49:33.985+00	SCARICO	Stihl	Soffiatore BGA 50.0	600034499	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+585	2026-05-23 08:49:34.249+00	SCARICO	Stihl	Batteria AK 20	BK181G029	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+598	2026-05-26 14:30:08.112+00	SCARICO	Stihl	Tagliasiepi HSA 100.1	451949950	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
+599	2026-05-26 14:30:08.518+00	SCARICO	Stihl	Batteria AP 30 (270 Wh)	546061414	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
+613	2026-06-01 08:23:31.148+00	CARICO	Stihl	Forbice elettronica ASA 20.0	955859434	\N	\N	\N	available	user_1775131564325	main	t
+626	2026-06-05 16:34:45.17+00	SCARICO	Stihl	Decespugliatore KM 94 RC-E	545319888	Salvalaio Lorenzo 3491428794	0	0	sold	user_1775131564325	main	f
 340	2026-03-18 16:30:51.209+00	CARICO	STIHL	Forbice elettronica ASA 20.0	955836076	\N	\N	\N	available	user_1769961017929	main	t
 341	2026-03-18 16:31:02.759+00	SCARICO	STIHL	Forbice elettronica ASA 20.0	955836076	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	0	0	sold	user_1769961017929	main	f
 342	2026-03-19 16:12:30.106+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540013827	\N	\N	\N	available	user_1769961017929	main	t
@@ -5965,12 +6149,16 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 304	2026-03-14 09:35:57.29+00	CARICO	STIHL	Caricabatteria AL101	701192870	\N	\N	\N	available	user_1769961017929	main	t
 307	2026-03-14 09:42:42.784+00	SCARICO	STIHL	Caricabatteria AL101	701192870	Bortolato Franco	0	0	sold	user_1769961017929	main	f
 353	2026-03-20 13:49:50.136+00	CARICO	STIHL	Caricabatteria AL 301-4	711612931	\N	\N	\N	available	user_1769961017929	main	t
+587	2026-05-23 08:53:20.815+00	CARICO	Stihl	Tagliasiepi HLA 56	944036782	\N	\N	\N	available	user_1775131564325	main	t
+601	2026-05-26 14:40:07.219+00	CARICO	Stihl	Decespugliatore FS 55 R	414001223	\N	\N	\N	available	user_1775131564325	main	t
+614	2026-06-01 08:24:16.893+00	CARICO	Stihl	Batteria AS 2	BH051H019	\N	\N	\N	available	user_1775131564325	main	t
 357	2026-03-20 14:37:57.28+00	CARICO	STIHL	Motosega MSA 70.0 C	452200582	\N	\N	\N	available	user_1769961017929	main	t
 358	2026-03-20 14:38:14.301+00	SCARICO	STIHL	Motosega MSA 70.0 C	452200582	Dossini Annalisa	0	0	sold	user_1769961017929	main	f
 359	2026-03-21 07:23:55.587+00	CARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	\N	\N	\N	available	user_1769961017929	main	t
 360	2026-03-21 07:24:15.813+00	SCARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	Dametto Giulio	0	0	sold	user_1769961017929	main	f
 361	2026-03-21 09:17:21.899+00	CARICO	Echo	Decespugliatore SRM-3611T	U65140005458	\N	\N	\N	available	user_1769961017929	main	t
 362	2026-03-21 09:17:36.946+00	SCARICO	Echo	Decespugliatore SRM-3611T	U65140005458	Bonotto Franco	0	0	sold	user_1769961017929	main	f
+627	2026-06-05 16:58:51.798+00	CARICO	Echo	Motosega DCS-2500T	C81535022520	\N	\N	\N	available	user_1775131564325	main	t
 365	2026-03-21 10:15:57.677+00	CARICO	STIHL	Rasaerba RM 453.3 V	451098503	\N	\N	\N	available	user_1769961017929	main	t
 366	2026-03-21 10:16:09.752+00	SCARICO	STIHL	Rasaerba RM 453.3 V	451098503	Bergamo Nello	0	0	sold	user_1769961017929	main	f
 374	2026-03-24 14:55:07.299+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	548997510	\N	\N	\N	available	user_1769961017929	main	t
@@ -6004,12 +6192,21 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 420	2026-03-26 10:55:18.405+00	SCARICO	STIHL	Batteria AP 200S	953256593	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 414	2026-03-26 10:55:17.744+00	SCARICO	STIHL	Batteria AP 300.0 S	921008379	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 418	2026-03-26 10:55:18.207+00	SCARICO	STIHL	Batteria AP 200S	953255781	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+588	2026-05-23 08:53:55.42+00	CARICO	Stihl	Soffiatore BGA 50.0	600034499	\N	\N	\N	available	user_1775131564325	main	t
+602	2026-05-26 14:42:51.111+00	CARICO	Stihl	FS55R	838434200	\N	\N	\N	available	user_1775131564325	main	t
+615	2026-06-01 08:25:00.92+00	CARICO	Stihl	Caricabatteria AL 1.0.A	707635787	\N	\N	\N	available	user_1775131564325	main	t
+616	2026-06-01 08:25:12.367+00	SCARICO	Stihl	Forbice elettronica ASA 20.0	955859434	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
+628	2026-06-05 17:00:52.279+00	CARICO	Echo	Batteria LBP-56V125	E83935022196	\N	\N	\N	available	user_1775131564325	main	t
 408	2026-03-26 10:55:17.086+00	SCARICO	STIHL	Caricabatteria AL 301-4	711612935	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 410	2026-03-26 10:55:17.282+00	SCARICO	STIHL	Batteria AP 300.0 S (281Wh)	920001602	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 411	2026-03-26 10:55:17.402+00	SCARICO	STIHL	Batteria AP 300.0 S	920001605	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+589	2026-05-23 08:56:44.772+00	CARICO	Stihl	Batteria AK 20	912863193	\N	\N	\N	available	user_1775131564325	main	t
 416	2026-03-26 10:55:17.971+00	SCARICO	STIHL	Batteria AP 200S	953255776	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 417	2026-03-26 10:55:18.076+00	SCARICO	STIHL	Batteria AP 200S	953255780	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+603	2026-05-26 14:43:27.978+00	SCARICO	Stihl	FS55R	838434200	Nardin Marco 3493118388	0	0	sold	user_1775131564325	main	f
 421	2026-03-26 10:55:18.532+00	SCARICO	STIHL	Batteria AP 200S (187 Wh)	953256596	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+617	2026-06-01 08:25:13.078+00	SCARICO	Stihl	Batteria AS 2	BH051H019	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
+629	2026-06-05 17:01:31.907+00	CARICO	Echo	Batteria LBP-56V125 EU35	E83935022265	\N	\N	\N	available	user_1775131564325	main	t
 424	2026-03-28 09:23:25.86+00	CARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	\N	\N	\N	available	user_1769961017929	main	t
 425	2026-03-28 09:24:03.287+00	SCARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	0	0	sold	user_1769961017929	main	f
 426	2026-03-28 10:27:49.366+00	CARICO	Echo	Decespugliatore SRM-301TES	U48738203070	\N	\N	\N	available	user_1769961017929	main	t
@@ -6024,18 +6221,31 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 448	2026-04-04 07:58:01.203+00	SCARICO	Echo	Soffiatore DPB-310	U60535100095	Dario Manuel	0	0	sold	user_1775131564325	main	f
 461	2026-04-11 09:28:18.417+00	CARICO	Echo	Motosega CS-3410	F09238006191	\N	\N	\N	available	user_1775131564325	main	t
 462	2026-04-11 09:31:01.061+00	SCARICO	Echo	Motosega CS-3410	F09238006191	Moro Ivano	0	0	sold	user_1775131564325	main	f
+590	2026-05-23 08:57:21.147+00	CARICO	Stihl	Caricabatteria AL 101	703104544	\N	\N	\N	available	user_1775131564325	main	t
+604	2026-05-29 07:48:28.804+00	CARICO	Stihl	Motosega MSA 60.0 C	452325283	\N	\N	\N	available	user_1775131564325	main	t
+618	2026-06-01 08:25:13.575+00	SCARICO	Stihl	Caricabatteria AL 1.0.A	707635787	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
 469	2026-04-15 09:23:04.794+00	CARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	\N	\N	\N	available	user_1770584612559	main	t
 470	2026-04-15 09:23:55.293+00	CARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	\N	\N	\N	available	user_1770584612559	main	t
 471	2026-04-15 09:24:45.846+00	CARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	\N	\N	\N	available	user_1770584612559	main	t
 472	2026-04-15 09:25:09.062+00	SCARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
 473	2026-04-15 09:25:09.378+00	SCARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
 474	2026-04-15 09:25:09.62+00	SCARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
+630	2026-06-05 17:02:57.965+00	CARICO	Echo	Caricabatteria LCJQ-560	T91435038235	\N	\N	\N	available	user_1775131564325	main	t
+634	2026-06-05 17:03:26.109+00	SCARICO	Echo	Caricabatteria LCJQ-560	T91435038235	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
 483	2026-04-17 09:05:17.761+00	CARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	\N	\N	\N	available	user_1775131564325	main	t
 484	2026-04-17 09:05:47.765+00	SCARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	Criveller Renato	0	0	sold	user_1775131564325	main	f
 501	2026-04-17 16:53:48.356+00	CARICO	Echo	Motosega CS-251	C74638145275	\N	\N	\N	available	user_1775131564325	main	t
 502	2026-04-17 16:57:32.706+00	SCARICO	Echo	Motosega CS-251	C74638145275	AZ.AGR Fregonese Di Brocchetto Maria	0	0	sold	user_1775131564325	main	f
 503	2026-04-21 08:15:38.166+00	CARICO	WORTEX	Irroratore T 25-T4	140H768	\N	\N	\N	available	user_1775131564325	main	t
 504	2026-04-21 08:16:26.155+00	SCARICO	WORTEX	Irroratore T 25-T4	140H768	Rosina Roberto	0	0	sold	user_1775131564325	main	f
+591	2026-05-23 08:57:32.126+00	SCARICO	Stihl	Soffiatore BGA 50.0	600034499	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+592	2026-05-23 08:57:32.578+00	SCARICO	Stihl	Tagliasiepi HLA 56	944036782	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+605	2026-05-29 07:50:18.824+00	CARICO	Stihl	Batteria AK 30.0 S	912818443	\N	\N	\N	available	user_1775131564325	main	t
+619	2026-06-01 09:15:01.639+00	CARICO	Stihl	Tagliasiepi HSA 50.1	452196718	\N	\N	\N	available	user_1775131564325	main	t
+620	2026-06-01 09:15:16.09+00	SCARICO	Stihl	Tagliasiepi HSA 50.1	452196718	Santolin Enrico	0	0	sold	user_1775131564325	main	f
+631	2026-06-05 17:03:24.387+00	SCARICO	Echo	Motosega DCS-2500T	C81535022520	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
+632	2026-06-05 17:03:24.897+00	SCARICO	Echo	Batteria LBP-56V125	E83935022196	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
+633	2026-06-05 17:03:25.43+00	SCARICO	Echo	Batteria LBP-56V125 EU35	E83935022265	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
 541	2026-05-08 09:51:15.218+00	CARICO	Echo	Motosega CS-3410	F09238005907	\N	\N	\N	available	user_1775131564325	main	t
 542	2026-05-08 09:54:10.939+00	SCARICO	Echo	Motosega CS-3410	F09238005907	Dma Srl	0	0	sold	user_1775131564325	main	f
 543	2026-05-08 12:01:15.606+00	CARICO	Weibang	Rasaerba WBBC537SCV	WBC537SCVS021B250201131	\N	\N	\N	available	user_1770584612559	main	t
@@ -6063,6 +6273,7 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 572	2026-05-09 10:07:32.072+00	SCARICO	Weibang	Rasaerba WB537SC V-M	W537SC/LV/M021M&250109002	Gli Ulivi Del Sole Di Feletto Stefano	0	0	sold	user_1775131564325	main	f
 573	2026-05-11 08:07:57.144+00	CARICO	Echo	Tagliasiepi S27-25A	U18938102501	\N	\N	\N	available	user_1775131564325	main	t
 574	2026-05-11 08:08:47.72+00	SCARICO	Echo	Tagliasiepi S27-25A	U18938102501	Bassetto Tiziano	0	0	sold	user_1775131564325	main	f
+593	2026-05-23 08:57:33.153+00	SCARICO	Stihl	Batteria AK 20	912863193	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
 138	2026-02-02 11:00:00+00	VENDITA	STIHL	Stihl TOSASIEPI HS82 R cm 75 (SN: 197814730) + Stihl TOSASIEPI HSA140R cm 75 (SN: 451286601) + PALETTA MANUALE x4 + MANICO ZM-V4 x3	NOMAT-1770629456775	MA.DI. GREEN di Diego Mardegan	1677.1399999999999	1677.14	sold	Simone	main	f
 141	2026-02-06 11:00:00+00	VENDITA	STIHL	Stihl Motosega MS 231 (SN: 194 053 082)	NOMAT-1770629840641	CARRARO PAOLO	539	539	sold	Simone	main	f
 124	2026-01-20 11:00:00+00	VENDITA	STIHL	POTATORE HTA 50 + CARICA BATTERIA AL 101 + BATTERIA AK2O	NOMAT-1770626999774	CORTESE MIRCO	459	459	sold	Simone	main	f
@@ -6249,6 +6460,11 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 271	2026-03-09 13:18:26.157+00	CARICO	GGP	Trattorino XD 150 HD	25LA3RON016463	\N	\N	\N	available	user_1772723709793	main	f
 273	2026-03-09 13:20:39.101+00	CARICO	GGP	Trattorino XD 150 HD	25KA3RON005636	\N	\N	\N	available	user_1772723709793	main	f
 275	2026-03-09 13:21:52.518+00	CARICO	GGP	Trattorino XDC 150 HD	25LA3RON017986	\N	\N	\N	available	user_1772723709793	main	f
+594	2026-05-23 08:57:33.56+00	SCARICO	Stihl	Caricabatteria AL 101	703104544	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+606	2026-05-29 07:51:02.877+00	CARICO	Stihl	Caricabatteria AL 101	703210773	\N	\N	\N	available	user_1775131564325	main	t
+607	2026-05-29 07:51:14.799+00	SCARICO	Stihl	Motosega MSA 60.0 C	452325283	Schiavinato Amorino	0	0	sold	user_1775131564325	main	f
+608	2026-05-29 07:51:15.502+00	SCARICO	Stihl	Caricabatteria AL 101	703210773	Schiavinato Amorino	0	0	sold	user_1775131564325	main	f
+621	2026-06-01 13:48:48.022+00	CARICO	Echo	Motosega CS-2511TES	C74638145237	\N	\N	\N	available	user_1775131564325	main	t
 \.
 
 
@@ -7064,8 +7280,6 @@ COPY public.noleggio_abbonamenti (id, cliente_nome, cliente_tel, tipo, credito_r
 --
 
 COPY public.noleggio_archivio (id, created_at, nome_cliente, data_da, data_a, n_giorni, totale_preventivo, note, carrello, pdf_url, sopralluogo_id, cliente_id) FROM stdin;
-86a311dc-d272-405d-9483-1d7ed5f4a6ed	2026-03-20 17:47:57.923036+00	\N	\N	\N	1	402	\N	[{"id": 1774028731966, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 142, "nome": "Carotatrice/Bucatrice PL 2501", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "B", "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 128, "prezzo_netto": 104.92, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 99.4, "prezzo_netto": 81.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 104, "prezzo_netto": 85.25, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 115, "prezzo_netto": 94.27, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 142, "prezzo_netto": 116.4, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 142, "fasciaScelta": "uno_giorno"}, {"id": 1774028758327, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 191, "nome": "Rete livella.76x10kg 122x30kg - 183x56kg", "attiva": true, "famiglia": null, "categoria": "tagliaerba", "carburante": null, "is_accessorio": false, "note_tecniche": null, "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 18, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 14, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 16, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 20, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 20, "fasciaScelta": "uno_giorno"}, {"id": 1774028830675, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 179, "nome": "Seminatrice SEMBDNER RS-60N", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "LA NR. 2 FA DA RIGENERA SE SI AGGIUNGE IL RULLO", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 179, "prezzo_netto": 146.72, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 145, "prezzo_netto": 118.85, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 161, "prezzo_netto": 131.97, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 199, "prezzo_netto": 163.12, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 199, "fasciaScelta": "uno_giorno"}, {"id": 1774028849807, "listino": "std_iva", "nGiorni": 1, "macchina": {"id": 167, "nome": "Rullo SEMBDNER da cm.60 bucatura", "attiva": true, "famiglia": null, "categoria": "attrezzi", "carburante": "B", "is_accessorio": false, "note_tecniche": "si può applicare a SEMIN. RS 60", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 36.6, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 32, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 34, "prezzo_netto": null, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 41, "prezzo_netto": null, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 41, "fasciaScelta": "uno_giorno"}]	\N	\N	\N
-66d12267-655e-4860-bc8f-3d3ef2d72a2f	2026-03-31 07:03:40.55495+00	Habitat Natura	2026-04-02	2026-04-03	1	182.75	\N	[{"id": 1774940550604, "listino": "std_netto", "nGiorni": 1, "macchina": {"id": 134, "nome": "Motocoltivatore con fresa 12 HP", "attiva": true, "famiglia": null, "categoria": "tappeto_erboso", "carburante": "G", "is_accessorio": false, "note_tecniche": "FRESA NORMALE LARGH. CM 90", "noleggio_listini": [{"fascia": "due_tre_giorni", "prezzo_iva": 96, "prezzo_netto": 78.69, "tipo_listino": "std"}, {"fascia": "mezzo_giorno", "prezzo_iva": 75, "prezzo_netto": 61.48, "tipo_listino": "std"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 63.12, "prezzo_netto": 63.12, "tipo_listino": "c"}, {"fascia": "oltre_sette_giorni", "prezzo_iva": 77, "prezzo_netto": 63.12, "tipo_listino": "std"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 70.49, "prezzo_netto": 70.49, "tipo_listino": "b"}, {"fascia": "quattro_sette_giorni", "prezzo_iva": 86, "prezzo_netto": 70.49, "tipo_listino": "std"}, {"fascia": "uno_giorno", "prezzo_iva": 107, "prezzo_netto": 87.71, "tipo_listino": "std"}], "deposito_cauzionale": null}, "accessori": [], "subtotale": 87.71, "fasciaScelta": "uno_giorno"}]	\N	\N	\N
 \.
 
 
@@ -7078,70 +7292,29 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 537	124	due_tre_giorni	std	204.00	167.22
 538	124	quattro_sette_giorni	std	184.00	150.82
 539	124	oltre_sette_giorni	std	166.00	136.07
-1203	250	uno_giorno	std	227.00	186.07
-1204	250	due_tre_giorni	std	204.00	167.22
-1205	250	quattro_sette_giorni	std	184.00	150.82
-1206	250	oltre_sette_giorni	std	166.00	136.07
-540	125	uno_giorno	std	227.00	186.07
-559	129	oltre_sette_giorni	std	145.00	118.85
-560	130	uno_giorno	std	466.00	381.97
-561	130	due_tre_giorni	std	420.00	344.27
-562	130	quattro_sette_giorni	std	378.00	309.84
-541	125	due_tre_giorni	std	204.00	167.22
-542	125	quattro_sette_giorni	std	184.00	150.82
-543	125	oltre_sette_giorni	std	166.00	136.07
-544	126	uno_giorno	std	466.00	381.97
-545	126	due_tre_giorni	std	420.00	344.27
-546	126	quattro_sette_giorni	std	379.00	310.66
-547	126	oltre_sette_giorni	std	341.00	279.51
-548	127	uno_giorno	std	142.00	116.40
-549	127	due_tre_giorni	std	128.00	104.92
 550	127	quattro_sette_giorni	std	115.00	94.27
-563	130	oltre_sette_giorni	std	340.00	278.69
-564	131	uno_giorno	std	142.00	116.40
-565	131	due_tre_giorni	std	128.00	104.92
+551	127	oltre_sette_giorni	std	104.00	85.25
+552	128	uno_giorno	std	199.00	163.12
+553	128	due_tre_giorni	std	179.00	146.72
+554	128	quattro_sette_giorni	std	161.00	131.97
 566	131	quattro_sette_giorni	std	115.00	94.27
 567	131	oltre_sette_giorni	std	104.00	85.25
+1258	253	mezzo_giorno	std	49.70	40.74
+1259	253	uno_giorno	std	71.00	58.20
+555	128	oltre_sette_giorni	std	145.00	118.85
 568	132	uno_giorno	std	142.00	116.40
 569	132	due_tre_giorni	std	128.00	104.92
 570	132	quattro_sette_giorni	std	115.00	94.27
 571	132	oltre_sette_giorni	std	104.00	85.25
 1239	251	uno_giorno	std	107.00	87.71
-1240	251	due_tre_giorni	std	96.00	78.69
-1241	251	quattro_sette_giorni	std	86.00	70.49
-1242	251	oltre_sette_giorni	std	77.00	63.12
-576	134	mezzo_giorno	std	75.00	61.48
-577	134	uno_giorno	std	107.00	87.71
-1252	252	oltre_sette_giorni	std	35.00	28.69
-1258	253	mezzo_giorno	std	49.70	40.74
-1259	253	uno_giorno	std	71.00	58.20
 1260	253	due_tre_giorni	std	64.00	52.46
-551	127	oltre_sette_giorni	std	104.00	85.25
-552	128	uno_giorno	std	199.00	163.12
-553	128	due_tre_giorni	std	179.00	146.72
-554	128	quattro_sette_giorni	std	161.00	131.97
 1261	253	quattro_sette_giorni	std	58.00	47.55
 1262	253	oltre_sette_giorni	std	52.00	42.63
 1263	254	mezzo_giorno	std	152.00	124.60
 1264	254	uno_giorno	std	217.00	177.87
 1265	254	due_tre_giorni	std	195.00	159.84
-555	128	oltre_sette_giorni	std	145.00	118.85
-556	129	uno_giorno	std	199.00	163.12
-557	129	due_tre_giorni	std	179.00	146.72
-558	129	quattro_sette_giorni	std	161.00	131.97
-1248	252	mezzo_giorno	std	33.60	27.55
-1249	252	uno_giorno	std	48.00	39.35
-1250	252	due_tre_giorni	std	43.00	35.25
-1251	252	quattro_sette_giorni	std	39.00	31.97
 1266	254	quattro_sette_giorni	std	176.00	144.27
 1267	254	oltre_sette_giorni	std	158.00	129.51
-1287	255	uno_giorno	std	176.00	144.27
-1288	255	due_tre_giorni	std	158.60	130.00
-1289	255	quattro_sette_giorni	std	143.96	118.00
-1290	255	oltre_sette_giorni	std	129.32	106.00
-1296	256	mezzo_giorno	std	35.00	28.69
-1297	256	uno_giorno	std	50.00	40.99
-1298	256	due_tre_giorni	std	45.00	36.89
 1299	256	quattro_sette_giorni	std	41.00	33.61
 1300	256	oltre_sette_giorni	std	37.00	30.33
 1301	257	mezzo_giorno	std	75.00	61.48
@@ -7156,8 +7329,78 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1310	258	oltre_sette_giorni	std	37.00	30.33
 1311	259	mezzo_giorno	std	42.70	35.00
 1312	259	uno_giorno	std	61.00	50.00
-699	161	due_tre_giorni	std	36.60	30.00
-700	161	quattro_sette_giorni	std	34.00	27.87
+5206	176	mezzo_giorno	c	182.79	\N
+1287	255	uno_giorno	std	176.00	144.27
+1288	255	due_tre_giorni	std	158.60	130.00
+1289	255	quattro_sette_giorni	std	143.96	118.00
+1290	255	oltre_sette_giorni	std	129.32	106.00
+5211	177	mezzo_giorno	c	83.61	\N
+5216	274	mezzo_giorno	c	113.12	\N
+2973	274	quattro_sette_giorni	c	113.12	\N
+5221	179	mezzo_giorno	c	118.85	\N
+5226	180	mezzo_giorno	c	132.79	\N
+1296	256	mezzo_giorno	std	35.00	28.69
+1297	256	uno_giorno	std	50.00	40.99
+1298	256	due_tre_giorni	std	45.00	36.89
+5231	181	mezzo_giorno	c	118.85	\N
+5236	182	mezzo_giorno	c	118.85	\N
+5241	183	mezzo_giorno	c	36.89	\N
+5246	184	mezzo_giorno	c	36.89	\N
+2997	184	quattro_sette_giorni	c	36.89	\N
+5251	185	mezzo_giorno	c	58.20	\N
+5256	326	mezzo_giorno	c	30.33	\N
+5257	326	uno_giorno	c	30.33	\N
+5258	326	due_tre_giorni	c	30.33	\N
+5259	326	quattro_sette_giorni	c	30.33	\N
+5260	326	oltre_sette_giorni	c	30.33	\N
+1203	250	uno_giorno	std	227.00	186.07
+1204	250	due_tre_giorni	std	204.00	167.22
+1205	250	quattro_sette_giorni	std	184.00	150.82
+1206	250	oltre_sette_giorni	std	166.00	136.07
+540	125	uno_giorno	std	227.00	186.07
+541	125	due_tre_giorni	std	204.00	167.22
+542	125	quattro_sette_giorni	std	184.00	150.82
+543	125	oltre_sette_giorni	std	166.00	136.07
+544	126	uno_giorno	std	466.00	381.97
+545	126	due_tre_giorni	std	420.00	344.27
+546	126	quattro_sette_giorni	std	379.00	310.66
+547	126	oltre_sette_giorni	std	341.00	279.51
+548	127	uno_giorno	std	142.00	116.40
+549	127	due_tre_giorni	std	128.00	104.92
+556	129	uno_giorno	std	199.00	163.12
+557	129	due_tre_giorni	std	179.00	146.72
+558	129	quattro_sette_giorni	std	161.00	131.97
+559	129	oltre_sette_giorni	std	145.00	118.85
+560	130	uno_giorno	std	466.00	381.97
+561	130	due_tre_giorni	std	420.00	344.27
+562	130	quattro_sette_giorni	std	378.00	309.84
+563	130	oltre_sette_giorni	std	340.00	278.69
+564	131	uno_giorno	std	142.00	116.40
+565	131	due_tre_giorni	std	128.00	104.92
+1240	251	due_tre_giorni	std	96.00	78.69
+1241	251	quattro_sette_giorni	std	86.00	70.49
+1242	251	oltre_sette_giorni	std	77.00	63.12
+576	134	mezzo_giorno	std	75.00	61.48
+577	134	uno_giorno	std	107.00	87.71
+1248	252	mezzo_giorno	std	33.60	27.55
+1249	252	uno_giorno	std	48.00	39.35
+1250	252	due_tre_giorni	std	43.00	35.25
+1251	252	quattro_sette_giorni	std	39.00	31.97
+1252	252	oltre_sette_giorni	std	35.00	28.69
+5261	327	mezzo_giorno	c	30.33	\N
+5262	327	uno_giorno	c	30.33	\N
+5263	327	due_tre_giorni	c	30.33	\N
+5264	327	quattro_sette_giorni	c	30.33	\N
+5265	327	oltre_sette_giorni	c	30.33	\N
+5266	277	mezzo_giorno	c	36.89	\N
+5271	278	mezzo_giorno	c	36.89	\N
+5276	190	mezzo_giorno	c	36.89	\N
+5281	279	mezzo_giorno	c	11.48	\N
+3025	279	quattro_sette_giorni	c	11.48	\N
+5286	192	mezzo_giorno	c	42.63	\N
+5291	280	mezzo_giorno	c	42.63	\N
+5296	281	mezzo_giorno	c	51.15	\N
+3037	281	quattro_sette_giorni	c	51.15	\N
 701	161	oltre_sette_giorni	std	32.00	26.23
 702	162	mezzo_giorno	std	49.70	40.74
 703	162	uno_giorno	std	71.00	58.20
@@ -7165,13 +7408,15 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 705	162	quattro_sette_giorni	std	58.00	47.54
 706	162	oltre_sette_giorni	std	52.00	42.62
 1370	264	mezzo_giorno	std	28.70	23.53
-718	165	due_tre_giorni	std	12.00	9.84
-719	165	quattro_sette_giorni	std	11.00	9.02
+1371	264	uno_giorno	std	41.00	33.61
+1372	264	due_tre_giorni	std	36.60	30.00
 720	165	oltre_sette_giorni	std	10.00	8.20
 1379	265	mezzo_giorno	std	75.00	61.48
-747	172	due_tre_giorni	std	236.00	193.45
-748	172	quattro_sette_giorni	std	212.00	173.77
+1380	265	uno_giorno	std	107.00	87.71
+1381	265	due_tre_giorni	std	96.00	78.69
+5301	282	mezzo_giorno	c	36.89	\N
 749	172	oltre_sette_giorni	std	191.00	156.56
+5306	283	mezzo_giorno	c	54.92	\N
 578	134	due_tre_giorni	std	96.00	78.69
 579	134	quattro_sette_giorni	std	86.00	70.49
 580	134	oltre_sette_giorni	std	77.00	63.12
@@ -7245,13 +7490,13 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1359	263	quattro_sette_giorni	std	30.50	25.00
 1360	263	oltre_sette_giorni	std	30.50	25.00
 698	161	uno_giorno	std	41.00	33.61
-1371	264	uno_giorno	std	41.00	33.61
-1372	264	due_tre_giorni	std	36.60	30.00
+699	161	due_tre_giorni	std	36.60	30.00
+700	161	quattro_sette_giorni	std	34.00	27.87
 1373	264	quattro_sette_giorni	std	34.00	27.87
 1374	264	oltre_sette_giorni	std	32.00	26.23
 717	165	uno_giorno	std	12.00	9.84
-1380	265	uno_giorno	std	107.00	87.71
-1381	265	due_tre_giorni	std	96.00	78.69
+718	165	due_tre_giorni	std	12.00	9.84
+719	165	quattro_sette_giorni	std	11.00	9.02
 1383	265	oltre_sette_giorni	std	77.00	63.12
 1384	266	uno_giorno	std	41.00	33.61
 1385	266	due_tre_giorni	std	36.60	30.00
@@ -7262,15 +7507,19 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1391	267	oltre_sette_giorni	std	56.00	45.90
 1392	268	uno_giorno	std	161.00	131.97
 1393	268	due_tre_giorni	std	145.00	118.85
-1478	277	mezzo_giorno	std	42.70	35.00
+747	172	due_tre_giorni	std	236.00	193.45
+748	172	quattro_sette_giorni	std	212.00	173.77
+1481	277	quattro_sette_giorni	std	50.00	40.98
 1468	275	mezzo_giorno	std	35.00	\N
 1469	275	uno_giorno	std	50.00	\N
 1470	275	due_tre_giorni	std	45.00	\N
+5311	197	mezzo_giorno	c	63.12	\N
 825	189	mezzo_giorno	std	42.70	35.00
 826	189	uno_giorno	std	61.00	50.00
 827	189	due_tre_giorni	std	55.00	45.09
 828	189	quattro_sette_giorni	std	50.00	40.98
 829	189	oltre_sette_giorni	std	45.00	36.89
+5316	198	mezzo_giorno	c	63.12	\N
 1471	275	quattro_sette_giorni	std	41.00	\N
 1472	275	oltre_sette_giorni	std	37.00	\N
 1473	276	mezzo_giorno	std	35.00	\N
@@ -7278,9 +7527,7 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1475	276	due_tre_giorni	std	45.00	\N
 1476	276	quattro_sette_giorni	std	41.00	\N
 1477	276	oltre_sette_giorni	std	37.00	\N
-1394	268	quattro_sette_giorni	std	131.00	107.38
-766	176	uno_giorno	std	306.00	250.83
-767	176	due_tre_giorni	std	275.00	225.41
+1396	269	uno_giorno	std	176.00	144.27
 768	176	quattro_sette_giorni	std	247.00	202.46
 769	176	oltre_sette_giorni	std	223.00	182.79
 770	177	mezzo_giorno	std	99.40	81.48
@@ -7289,8 +7536,8 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 773	177	quattro_sette_giorni	std	115.00	92.62
 774	177	oltre_sette_giorni	std	104.00	83.61
 1433	274	uno_giorno	std	189.00	154.92
-780	179	due_tre_giorni	std	179.00	146.72
-781	179	quattro_sette_giorni	std	161.00	131.97
+1434	274	due_tre_giorni	std	170.00	139.35
+1435	274	quattro_sette_giorni	std	153.00	125.41
 782	179	oltre_sette_giorni	std	145.00	118.85
 783	180	uno_giorno	std	221.00	181.15
 784	180	due_tre_giorni	std	199.00	163.12
@@ -7314,8 +7561,8 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 802	184	due_tre_giorni	std	55.00	45.09
 803	184	quattro_sette_giorni	std	50.00	40.98
 805	185	mezzo_giorno	std	68.60	56.23
-1395	268	oltre_sette_giorni	std	118.00	96.72
-1396	269	uno_giorno	std	176.00	144.27
+1478	277	mezzo_giorno	std	42.70	35.00
+1479	277	uno_giorno	std	61.00	50.00
 1397	269	due_tre_giorni	std	158.60	130.00
 1398	269	quattro_sette_giorni	std	144.00	118.04
 1400	270	uno_giorno	std	221.00	181.15
@@ -7335,12 +7582,12 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1420	273	due_tre_giorni	std	292.00	239.35
 1421	273	quattro_sette_giorni	std	263.00	215.58
 765	176	mezzo_giorno	std	214.20	175.58
-1434	274	due_tre_giorni	std	170.00	139.35
-1435	274	quattro_sette_giorni	std	153.00	125.41
+766	176	uno_giorno	std	306.00	250.83
+767	176	due_tre_giorni	std	275.00	225.41
 1436	274	oltre_sette_giorni	std	138.00	113.12
 779	179	uno_giorno	std	199.00	163.12
-1479	277	uno_giorno	std	61.00	50.00
-1481	277	quattro_sette_giorni	std	50.00	40.98
+780	179	due_tre_giorni	std	179.00	146.72
+781	179	quattro_sette_giorni	std	161.00	131.97
 1482	277	oltre_sette_giorni	std	45.00	36.89
 1483	278	mezzo_giorno	std	42.70	35.00
 1484	278	uno_giorno	std	61.00	50.00
@@ -7370,20 +7617,20 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1545	284	oltre_sette_giorni	std	71.00	58.20
 1551	285	uno_giorno	std	56.00	45.91
 1552	285	due_tre_giorni	std	50.00	40.98
+1394	268	quattro_sette_giorni	std	131.00	107.38
+1395	268	oltre_sette_giorni	std	118.00	96.72
 820	188	mezzo_giorno	std	42.70	35.00
 821	188	uno_giorno	std	61.00	50.00
 822	188	due_tre_giorni	std	55.00	45.09
-862	197	uno_giorno	std	107.00	87.71
-863	197	due_tre_giorni	std	96.00	78.69
 864	197	quattro_sette_giorni	std	86.00	70.49
 865	197	oltre_sette_giorni	std	77.00	63.12
 866	198	mezzo_giorno	std	75.00	61.48
 867	198	uno_giorno	std	107.00	87.71
 868	198	due_tre_giorni	std	96.00	78.69
-823	188	quattro_sette_giorni	std	50.00	40.98
-824	188	oltre_sette_giorni	std	45.00	36.89
 869	198	quattro_sette_giorni	std	86.00	70.49
 870	198	oltre_sette_giorni	std	77.00	63.12
+823	188	quattro_sette_giorni	std	50.00	40.98
+824	188	oltre_sette_giorni	std	45.00	36.89
 871	199	uno_giorno	std	142.00	116.40
 872	199	due_tre_giorni	std	128.00	104.92
 873	199	quattro_sette_giorni	std	115.00	92.62
@@ -7404,7 +7651,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 892	203	oltre_sette_giorni	std	129.32	106.56
 1553	285	quattro_sette_giorni	std	45.00	36.88
 1554	285	oltre_sette_giorni	std	40.50	33.19
-1555	286	uno_giorno	std	61.00	50.00
 1556	286	due_tre_giorni	std	55.00	45.09
 1557	286	quattro_sette_giorni	std	50.00	40.98
 1558	286	oltre_sette_giorni	std	45.00	36.89
@@ -7417,23 +7663,18 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1576	288	due_tre_giorni	std	159.00	130.33
 1577	288	quattro_sette_giorni	std	143.00	117.21
 1578	288	oltre_sette_giorni	std	129.00	105.74
-1382	265	quattro_sette_giorni	std	86.00	70.49
+1627	294	due_tre_giorni	std	170.00	139.35
+1628	294	quattro_sette_giorni	std	153.00	125.41
+3053	198	quattro_sette_giorni	c	63.12	\N
 990	227	uno_giorno	std	142.00	116.40
 991	227	due_tre_giorni	std	128.00	104.92
 992	227	quattro_sette_giorni	std	115.00	94.26
 993	227	oltre_sette_giorni	std	104.00	85.25
-2272	250	due_tre_giorni	b	150.82	\N
-1389	267	due_tre_giorni	std	69.00	56.56
-1399	269	oltre_sette_giorni	std	130.00	106.56
-746	172	uno_giorno	std	262.00	214.76
-1410	271	due_tre_giorni	std	145.00	118.85
-1416	272	quattro_sette_giorni	std	201.30	165.00
-1422	273	oltre_sette_giorni	std	237.00	194.27
-804	184	oltre_sette_giorni	std	45.00	36.89
-806	185	uno_giorno	std	98.00	80.33
 807	185	due_tre_giorni	std	88.00	72.13
 808	185	quattro_sette_giorni	std	79.00	64.75
 809	185	oltre_sette_giorni	std	71.00	58.20
+1480	277	due_tre_giorni	std	55.00	45.09
+1486	278	quattro_sette_giorni	std	50.00	40.98
 2002	307	mezzo_giorno	std	\N	28.69
 2003	307	uno_giorno	std	\N	40.99
 2004	307	due_tre_giorni	std	\N	36.89
@@ -7444,10 +7685,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2009	308	due_tre_giorni	std	\N	36.89
 2010	308	quattro_sette_giorni	std	\N	33.61
 2011	308	oltre_sette_giorni	std	\N	30.33
-1480	277	due_tre_giorni	std	55.00	45.09
-1486	278	quattro_sette_giorni	std	50.00	40.98
-830	190	uno_giorno	std	61.00	50.00
-831	190	due_tre_giorni	std	55.00	45.09
 832	190	quattro_sette_giorni	std	50.00	40.98
 833	190	oltre_sette_giorni	std	45.00	36.89
 838	192	mezzo_giorno	std	49.70	40.74
@@ -7457,14 +7694,25 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 842	192	oltre_sette_giorni	std	52.00	42.63
 1501	280	uno_giorno	std	71.00	58.20
 1507	281	due_tre_giorni	std	77.00	63.12
+863	197	due_tre_giorni	std	96.00	78.69
+746	172	uno_giorno	std	262.00	214.76
+1410	271	due_tre_giorni	std	145.00	118.85
+1416	272	quattro_sette_giorni	std	201.30	165.00
+1422	273	oltre_sette_giorni	std	237.00	194.27
+804	184	oltre_sette_giorni	std	45.00	36.89
+806	185	uno_giorno	std	98.00	80.33
+830	190	uno_giorno	std	61.00	50.00
+831	190	due_tre_giorni	std	55.00	45.09
 1513	282	quattro_sette_giorni	std	50.00	40.98
 1518	283	oltre_sette_giorni	std	67.00	54.92
 861	197	mezzo_giorno	std	75.00	61.48
-1627	294	due_tre_giorni	std	170.00	139.35
-1628	294	quattro_sette_giorni	std	153.00	125.41
+862	197	uno_giorno	std	107.00	87.71
+1555	286	uno_giorno	std	61.00	50.00
 1701	303	due_tre_giorni	std	179.00	146.72
 1706	304	quattro_sette_giorni	std	405.00	331.97
+2272	250	due_tre_giorni	b	150.82	\N
 2273	250	quattro_sette_giorni	b	150.82	\N
+1389	267	due_tre_giorni	std	69.00	56.56
 2274	250	oltre_sette_giorni	b	150.82	\N
 2275	125	uno_giorno	b	150.82	\N
 2276	125	due_tre_giorni	b	150.82	\N
@@ -7483,16 +7731,14 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2294	129	oltre_sette_giorni	b	131.97	\N
 2295	130	uno_giorno	b	309.84	\N
 2296	130	due_tre_giorni	b	309.84	\N
-912	208	oltre_sette_giorni	std	205.50	168.45
-1579	289	uno_giorno	std	162.00	132.79
-675	155	due_tre_giorni	std	6.10	5.00
-676	155	quattro_sette_giorni	std	6.10	5.00
+1580	289	due_tre_giorni	std	146.40	120.00
+1581	289	quattro_sette_giorni	std	134.20	110.00
 677	155	oltre_sette_giorni	std	6.10	5.00
 678	156	uno_giorno	std	10.00	8.20
-922	211	due_tre_giorni	std	89.00	72.96
-923	211	quattro_sette_giorni	std	80.00	65.57
 679	156	due_tre_giorni	std	10.00	8.20
 680	156	quattro_sette_giorni	std	10.00	8.20
+924	211	oltre_sette_giorni	std	72.00	59.02
+925	212	uno_giorno	std	144.00	118.04
 681	156	oltre_sette_giorni	std	10.00	8.20
 902	206	due_tre_giorni	std	195.00	159.84
 903	206	quattro_sette_giorni	std	176.00	144.26
@@ -7504,14 +7750,16 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 909	208	uno_giorno	std	282.00	231.15
 910	208	due_tre_giorni	std	253.00	207.38
 911	208	quattro_sette_giorni	std	228.00	186.89
-924	211	oltre_sette_giorni	std	72.00	59.02
-925	212	uno_giorno	std	144.00	118.04
+912	208	oltre_sette_giorni	std	205.50	168.45
+1579	289	uno_giorno	std	162.00	132.79
 926	212	due_tre_giorni	std	130.00	106.56
 927	212	quattro_sette_giorni	std	117.00	95.90
 928	212	oltre_sette_giorni	std	105.00	86.07
 929	213	uno_giorno	std	164.00	134.43
 930	213	due_tre_giorni	std	147.00	120.50
 931	213	quattro_sette_giorni	std	132.00	108.20
+932	213	oltre_sette_giorni	std	119.00	97.96
+933	214	uno_giorno	std	221.00	181.15
 572	133	uno_giorno	std	107.00	87.70
 573	133	due_tre_giorni	std	96.00	78.69
 574	133	quattro_sette_giorni	std	86.00	70.49
@@ -7563,18 +7811,17 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 683	157	due_tre_giorni	std	12.20	10.00
 684	157	quattro_sette_giorni	std	12.20	10.00
 685	157	oltre_sette_giorni	std	12.20	10.00
-932	213	oltre_sette_giorni	std	119.00	97.96
-933	214	uno_giorno	std	221.00	181.15
 934	214	due_tre_giorni	std	199.00	163.12
 935	214	quattro_sette_giorni	std	179.00	146.72
 936	214	oltre_sette_giorni	std	162.00	132.79
-674	155	uno_giorno	std	6.10	5.00
-1580	289	due_tre_giorni	std	146.40	120.00
-1581	289	quattro_sette_giorni	std	134.20	110.00
-1582	289	oltre_sette_giorni	std	119.50	97.96
-921	211	uno_giorno	std	99.00	81.15
 1599	290	uno_giorno	std	162.00	132.79
 1600	290	due_tre_giorni	std	146.40	120.00
+5321	199	mezzo_giorno	c	83.61	\N
+676	155	quattro_sette_giorni	std	6.10	5.00
+1582	289	oltre_sette_giorni	std	119.50	97.96
+921	211	uno_giorno	std	99.00	81.15
+922	211	due_tre_giorni	std	89.00	72.96
+923	211	quattro_sette_giorni	std	80.00	65.57
 1601	290	quattro_sette_giorni	std	134.20	110.00
 1602	290	oltre_sette_giorni	std	119.50	98.00
 1603	291	uno_giorno	std	199.00	163.12
@@ -7592,6 +7839,9 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1620	293	quattro_sette_giorni	std	86.00	70.49
 1621	293	oltre_sette_giorni	std	77.00	63.12
 1626	294	uno_giorno	std	189.00	154.92
+5326	200	mezzo_giorno	c	42.63	\N
+674	155	uno_giorno	std	6.10	5.00
+675	155	due_tre_giorni	std	6.10	5.00
 686	158	uno_giorno	std	30.50	25.00
 687	158	due_tre_giorni	std	30.50	25.00
 688	158	quattro_sette_giorni	std	30.50	25.00
@@ -7702,9 +7952,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 898	205	due_tre_giorni	std	55.00	45.08
 899	205	quattro_sette_giorni	std	50.00	40.98
 900	205	oltre_sette_giorni	std	45.00	36.89
-1629	294	oltre_sette_giorni	std	138.00	113.11
-1630	295	uno_giorno	std	24.00	19.68
+5331	201	mezzo_giorno	c	45.90	\N
+5336	284	mezzo_giorno	c	58.20	\N
 1631	295	due_tre_giorni	std	21.00	17.22
+1630	295	uno_giorno	std	24.00	19.68
 913	209	uno_giorno	std	177.00	145.08
 914	209	due_tre_giorni	std	159.00	130.33
 915	209	quattro_sette_giorni	std	143.00	117.21
@@ -7781,12 +8032,11 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1068	249	due_tre_giorni	std	195.00	159.84
 1069	249	quattro_sette_giorni	std	176.00	144.26
 1070	249	oltre_sette_giorni	std	158.00	129.51
+5341	203	mezzo_giorno	c	106.56	\N
 964	221	uno_giorno	std	189.00	154.92
 965	221	due_tre_giorni	std	170.00	139.35
 966	221	quattro_sette_giorni	std	153.00	125.41
 967	221	oltre_sette_giorni	std	138.00	113.11
-951	218	uno_giorno	std	107.00	87.71
-952	218	due_tre_giorni	std	96.00	78.69
 953	218	quattro_sette_giorni	std	86.00	70.49
 954	218	oltre_sette_giorni	std	77.00	63.12
 960	220	uno_giorno	std	164.00	134.43
@@ -7811,17 +8061,18 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 997	228	oltre_sette_giorni	std	17.00	13.93
 998	229	uno_giorno	std	71.00	58.20
 999	229	due_tre_giorni	std	64.00	52.46
+950	218	mezzo_giorno	std	75.00	61.48
 1051	245	uno_giorno	std	161.00	131.97
 1052	245	due_tre_giorni	std	145.00	118.86
 1053	245	quattro_sette_giorni	std	131.00	107.38
 1054	245	oltre_sette_giorni	std	118.00	96.73
-950	218	mezzo_giorno	std	75.00	61.48
+951	218	uno_giorno	std	107.00	87.71
+952	218	due_tre_giorni	std	96.00	78.69
+3073	203	quattro_sette_giorni	c	106.56	\N
 1071	124	quattro_sette_giorni	b	150.82	150.82
 1107	188	quattro_sette_giorni	b	40.98	40.98
 1125	221	quattro_sette_giorni	b	125.41	125.41
 1137	124	oltre_sette_giorni	c	136.07	136.07
-1002	230	uno_giorno	std	71.00	58.20
-1003	230	due_tre_giorni	std	64.00	52.46
 1004	230	quattro_sette_giorni	std	58.00	47.54
 1005	230	oltre_sette_giorni	std	52.00	42.62
 1018	237	uno_giorno	std	12.00	9.84
@@ -7846,6 +8097,7 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1072	125	quattro_sette_giorni	b	150.82	150.82
 1001	229	oltre_sette_giorni	std	52.00	42.62
 1073	126	quattro_sette_giorni	b	310.66	310.66
+1003	230	due_tre_giorni	std	64.00	52.46
 1074	127	quattro_sette_giorni	b	94.27	94.27
 1075	128	quattro_sette_giorni	b	131.97	131.97
 1076	129	quattro_sette_giorni	b	131.97	131.97
@@ -7918,12 +8170,28 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1150	141	oltre_sette_giorni	c	42.62	42.62
 1151	142	oltre_sette_giorni	c	85.25	85.25
 1152	144	oltre_sette_giorni	c	45.90	45.90
+1002	230	uno_giorno	std	71.00	58.20
+1164	176	oltre_sette_giorni	c	182.79	182.79
+1165	177	oltre_sette_giorni	c	83.61	83.61
 1173	188	oltre_sette_giorni	c	36.89	36.89
+1166	179	oltre_sette_giorni	c	118.85	118.85
 1191	221	oltre_sette_giorni	c	113.11	113.11
-1632	295	quattro_sette_giorni	std	19.00	15.57
-1633	295	oltre_sette_giorni	std	17.00	13.93
-978	224	quattro_sette_giorni	std	86.00	70.49
-1642	296	uno_giorno	std	107.00	87.71
+1167	180	oltre_sette_giorni	c	132.79	132.79
+1168	181	oltre_sette_giorni	c	118.85	118.85
+1169	182	oltre_sette_giorni	c	118.85	118.85
+1170	183	oltre_sette_giorni	c	36.89	36.89
+1171	184	oltre_sette_giorni	c	36.89	36.89
+1172	185	oltre_sette_giorni	c	58.20	58.20
+1174	190	oltre_sette_giorni	c	36.89	36.89
+1175	192	oltre_sette_giorni	c	42.63	42.63
+1176	197	oltre_sette_giorni	c	63.12	63.12
+1177	198	oltre_sette_giorni	c	63.12	63.12
+1178	199	oltre_sette_giorni	c	83.61	83.61
+1179	200	oltre_sette_giorni	c	42.63	42.63
+1181	203	oltre_sette_giorni	c	106.56	106.56
+5346	285	mezzo_giorno	c	33.19	\N
+5351	286	mezzo_giorno	c	36.89	\N
+5356	287	mezzo_giorno	c	45.90	\N
 1643	296	due_tre_giorni	std	96.00	78.69
 1644	296	quattro_sette_giorni	std	86.00	70.49
 1645	296	oltre_sette_giorni	std	77.00	63.12
@@ -7933,6 +8201,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1654	297	quattro_sette_giorni	std	115.00	94.26
 1655	297	oltre_sette_giorni	std	104.00	85.25
 1000	229	quattro_sette_giorni	std	58.00	47.54
+1676	233	uno_giorno	std	109.80	90.00
+1677	233	due_tre_giorni	std	98.30	80.58
+1678	233	quattro_sette_giorni	std	88.60	72.63
+1679	233	oltre_sette_giorni	std	79.75	65.37
 1668	298	uno_giorno	std	170.00	139.35
 1669	298	due_tre_giorni	std	153.00	125.41
 1670	298	quattro_sette_giorni	std	137.70	112.87
@@ -7941,14 +8213,12 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1673	232	due_tre_giorni	std	104.50	85.66
 1674	232	quattro_sette_giorni	std	94.00	77.05
 1675	232	oltre_sette_giorni	std	84.60	69.35
-1676	233	uno_giorno	std	109.80	90.00
-1677	233	due_tre_giorni	std	98.30	80.58
-1678	233	quattro_sette_giorni	std	88.60	72.63
-1679	233	oltre_sette_giorni	std	79.75	65.37
 1684	300	uno_giorno	std	71.00	58.20
 1685	300	due_tre_giorni	std	64.00	52.46
 1686	300	quattro_sette_giorni	std	58.00	47.54
 1687	300	oltre_sette_giorni	std	52.00	42.62
+978	224	quattro_sette_giorni	std	86.00	70.49
+1642	296	uno_giorno	std	107.00	87.71
 1696	302	uno_giorno	std	142.00	116.40
 1697	302	due_tre_giorni	std	128.00	104.92
 1698	302	quattro_sette_giorni	std	115.00	92.62
@@ -7966,6 +8236,8 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1736	306	oltre_sette_giorni	std	158.00	129.51
 2271	250	uno_giorno	b	150.82	\N
 1154	150	oltre_sette_giorni	c	156.56	156.56
+1632	295	quattro_sette_giorni	std	19.00	15.57
+1633	295	oltre_sette_giorni	std	17.00	13.93
 1155	151	oltre_sette_giorni	c	156.56	156.56
 1156	152	oltre_sette_giorni	c	63.12	63.12
 1157	153	oltre_sette_giorni	c	129.51	129.51
@@ -7974,29 +8246,25 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1161	162	oltre_sette_giorni	c	42.62	42.62
 1162	165	oltre_sette_giorni	c	8.20	8.20
 1163	172	oltre_sette_giorni	c	156.56	156.56
-1164	176	oltre_sette_giorni	c	182.79	182.79
-1165	177	oltre_sette_giorni	c	83.61	83.61
-1166	179	oltre_sette_giorni	c	118.85	118.85
-1167	180	oltre_sette_giorni	c	132.79	132.79
-1168	181	oltre_sette_giorni	c	118.85	118.85
-1169	182	oltre_sette_giorni	c	118.85	118.85
-1170	183	oltre_sette_giorni	c	36.89	36.89
-1171	184	oltre_sette_giorni	c	36.89	36.89
-1172	185	oltre_sette_giorni	c	58.20	58.20
-1174	190	oltre_sette_giorni	c	36.89	36.89
-1175	192	oltre_sette_giorni	c	42.63	42.63
-1176	197	oltre_sette_giorni	c	63.12	63.12
-1177	198	oltre_sette_giorni	c	63.12	63.12
-1178	199	oltre_sette_giorni	c	83.61	83.61
-1179	200	oltre_sette_giorni	c	42.63	42.63
-1181	203	oltre_sette_giorni	c	106.56	106.56
+5361	206	mezzo_giorno	c	129.51	\N
 1182	206	oltre_sette_giorni	c	129.51	129.51
+5366	207	mezzo_giorno	c	156.56	\N
+3093	207	quattro_sette_giorni	c	156.56	\N
 1183	207	oltre_sette_giorni	c	156.56	156.56
+5371	208	mezzo_giorno	c	168.45	\N
 1184	208	oltre_sette_giorni	c	168.45	168.45
+5376	288	mezzo_giorno	c	105.74	\N
+5381	289	mezzo_giorno	c	97.96	\N
+5386	211	mezzo_giorno	c	59.02	\N
 1185	211	oltre_sette_giorni	c	59.02	59.02
+5391	212	mezzo_giorno	c	86.07	\N
+3113	212	quattro_sette_giorni	c	86.07	\N
 1186	212	oltre_sette_giorni	c	86.07	86.07
+5396	213	mezzo_giorno	c	97.96	\N
 1187	213	oltre_sette_giorni	c	97.96	97.96
+5401	214	mezzo_giorno	c	132.79	\N
 1188	214	oltre_sette_giorni	c	132.79	132.79
+5406	290	mezzo_giorno	c	98.00	\N
 1189	218	oltre_sette_giorni	c	63.12	63.12
 1190	220	oltre_sette_giorni	c	97.54	97.54
 1192	223	oltre_sette_giorni	c	21.31	21.31
@@ -8009,7 +8277,7 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 1199	244	oltre_sette_giorni	c	83.61	83.61
 1201	247	oltre_sette_giorni	c	105.74	105.74
 1202	248	oltre_sette_giorni	c	113.12	113.12
-2298	130	oltre_sette_giorni	b	309.84	\N
+5411	291	mezzo_giorno	c	118.85	\N
 2299	131	uno_giorno	b	94.27	\N
 2300	131	due_tre_giorni	b	94.27	\N
 2302	131	oltre_sette_giorni	b	94.27	\N
@@ -8022,7 +8290,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2310	251	oltre_sette_giorni	b	70.49	\N
 2311	134	uno_giorno	b	70.49	\N
 2312	134	due_tre_giorni	b	70.49	\N
-1080	134	quattro_sette_giorni	b	70.49	70.49
 2314	134	oltre_sette_giorni	b	70.49	\N
 2315	252	uno_giorno	b	31.97	\N
 2316	252	due_tre_giorni	b	31.97	\N
@@ -8041,7 +8308,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2330	254	oltre_sette_giorni	b	144.27	\N
 2331	139	uno_giorno	b	144.27	\N
 2332	139	due_tre_giorni	b	144.27	\N
-2334	139	oltre_sette_giorni	b	144.27	\N
 2335	140	uno_giorno	b	100.00	\N
 2336	140	due_tre_giorni	b	100.00	\N
 2338	140	oltre_sette_giorni	b	100.00	\N
@@ -8057,7 +8323,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2350	255	oltre_sette_giorni	b	118.00	\N
 2351	144	uno_giorno	b	50.82	\N
 2352	144	due_tre_giorni	b	50.82	\N
-2354	144	oltre_sette_giorni	b	50.82	\N
 2355	256	uno_giorno	b	33.61	\N
 2356	256	due_tre_giorni	b	33.61	\N
 2357	256	quattro_sette_giorni	b	33.61	\N
@@ -8073,7 +8338,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2367	259	uno_giorno	b	40.98	\N
 2368	259	due_tre_giorni	b	40.98	\N
 2369	259	quattro_sette_giorni	b	40.98	\N
-2370	259	oltre_sette_giorni	b	40.98	\N
 2371	149	uno_giorno	b	117.21	\N
 2372	149	due_tre_giorni	b	117.21	\N
 2374	149	oltre_sette_giorni	b	117.21	\N
@@ -8091,7 +8355,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2390	153	oltre_sette_giorni	b	144.26	\N
 2391	155	uno_giorno	b	5.00	\N
 2392	155	due_tre_giorni	b	5.00	\N
-2394	155	oltre_sette_giorni	b	5.00	\N
 2395	156	uno_giorno	b	8.20	\N
 2396	156	due_tre_giorni	b	8.20	\N
 2398	156	oltre_sette_giorni	b	8.20	\N
@@ -8109,7 +8372,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2410	262	oltre_sette_giorni	b	25.00	\N
 2411	263	uno_giorno	b	25.00	\N
 2412	263	due_tre_giorni	b	25.00	\N
-2413	263	quattro_sette_giorni	b	25.00	\N
 2414	263	oltre_sette_giorni	b	25.00	\N
 2415	161	uno_giorno	b	27.87	\N
 2416	161	due_tre_giorni	b	27.87	\N
@@ -8126,7 +8388,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2430	165	oltre_sette_giorni	b	9.02	\N
 2431	265	uno_giorno	b	70.49	\N
 2432	265	due_tre_giorni	b	70.49	\N
-2433	265	quattro_sette_giorni	b	70.49	\N
 2434	265	oltre_sette_giorni	b	70.49	\N
 2435	266	uno_giorno	b	27.87	\N
 2436	266	due_tre_giorni	b	27.87	\N
@@ -8137,7 +8398,15 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2441	267	quattro_sette_giorni	b	50.82	\N
 2442	267	oltre_sette_giorni	b	50.82	\N
 2443	268	uno_giorno	b	107.38	\N
-2444	268	due_tre_giorni	b	107.38	\N
+5416	292	mezzo_giorno	c	83.61	\N
+2511	309	uno_giorno	b	33.61	\N
+2512	309	due_tre_giorni	b	33.61	\N
+2513	309	quattro_sette_giorni	b	33.61	\N
+2514	309	oltre_sette_giorni	b	33.61	\N
+2515	310	uno_giorno	b	33.61	\N
+2516	310	due_tre_giorni	b	33.61	\N
+2517	310	quattro_sette_giorni	b	33.61	\N
+2518	310	oltre_sette_giorni	b	33.61	\N
 2445	268	quattro_sette_giorni	b	107.38	\N
 2446	268	oltre_sette_giorni	b	107.38	\N
 2447	269	uno_giorno	b	118.04	\N
@@ -8146,7 +8415,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2450	269	oltre_sette_giorni	b	118.04	\N
 2451	270	uno_giorno	b	146.72	\N
 2452	270	due_tre_giorni	b	146.72	\N
-2453	270	quattro_sette_giorni	b	146.72	\N
 2454	270	oltre_sette_giorni	b	146.72	\N
 2455	172	uno_giorno	b	173.77	\N
 2456	172	due_tre_giorni	b	173.77	\N
@@ -8165,7 +8433,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2470	273	oltre_sette_giorni	b	215.58	\N
 2471	176	uno_giorno	b	202.46	\N
 2472	176	due_tre_giorni	b	202.46	\N
-2474	176	oltre_sette_giorni	b	202.46	\N
 2475	177	uno_giorno	b	92.62	\N
 2476	177	due_tre_giorni	b	92.62	\N
 1099	177	quattro_sette_giorni	b	92.62	92.62
@@ -8182,7 +8449,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2490	180	oltre_sette_giorni	b	146.72	\N
 2491	181	uno_giorno	b	131.97	\N
 2492	181	due_tre_giorni	b	131.97	\N
-2494	181	oltre_sette_giorni	b	131.97	\N
 2495	182	uno_giorno	b	131.97	\N
 2496	182	due_tre_giorni	b	131.97	\N
 2498	182	oltre_sette_giorni	b	131.97	\N
@@ -8195,17 +8461,8 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2507	185	uno_giorno	b	64.75	\N
 2508	185	due_tre_giorni	b	64.75	\N
 2510	185	oltre_sette_giorni	b	64.75	\N
-2511	309	uno_giorno	b	33.61	\N
-2512	309	due_tre_giorni	b	33.61	\N
-2513	309	quattro_sette_giorni	b	33.61	\N
-2514	309	oltre_sette_giorni	b	33.61	\N
-2515	310	uno_giorno	b	33.61	\N
-2516	310	due_tre_giorni	b	33.61	\N
-2517	310	quattro_sette_giorni	b	33.61	\N
-2518	310	oltre_sette_giorni	b	33.61	\N
 2519	277	uno_giorno	b	40.98	\N
 2520	277	due_tre_giorni	b	40.98	\N
-2521	277	quattro_sette_giorni	b	40.98	\N
 2522	277	oltre_sette_giorni	b	40.98	\N
 2523	278	uno_giorno	b	40.98	\N
 2524	278	due_tre_giorni	b	40.98	\N
@@ -8223,7 +8480,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2538	192	oltre_sette_giorni	b	47.55	\N
 2539	280	uno_giorno	b	47.55	\N
 2540	280	due_tre_giorni	b	47.55	\N
-2541	280	quattro_sette_giorni	b	47.55	\N
 2542	280	oltre_sette_giorni	b	47.55	\N
 2543	281	uno_giorno	b	56.81	\N
 2544	281	due_tre_giorni	b	56.81	\N
@@ -8239,7 +8495,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2554	283	oltre_sette_giorni	b	60.66	\N
 2555	197	uno_giorno	b	70.49	\N
 2556	197	due_tre_giorni	b	70.49	\N
-2558	197	oltre_sette_giorni	b	70.49	\N
 2559	198	uno_giorno	b	70.49	\N
 2560	198	due_tre_giorni	b	70.49	\N
 2562	198	oltre_sette_giorni	b	70.49	\N
@@ -8258,13 +8513,22 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2578	284	oltre_sette_giorni	b	64.75	\N
 2579	203	uno_giorno	b	118.04	\N
 2580	203	due_tre_giorni	b	118.04	\N
-2582	203	oltre_sette_giorni	b	118.04	\N
 2583	285	uno_giorno	b	36.88	\N
 2584	285	due_tre_giorni	b	36.88	\N
 2585	285	quattro_sette_giorni	b	36.88	\N
 2586	285	oltre_sette_giorni	b	36.88	\N
 2587	286	uno_giorno	b	40.98	\N
 2588	286	due_tre_giorni	b	40.98	\N
+2695	298	uno_giorno	b	112.87	\N
+2696	298	due_tre_giorni	b	112.87	\N
+2697	298	quattro_sette_giorni	b	112.87	\N
+2698	298	oltre_sette_giorni	b	112.87	\N
+2699	232	uno_giorno	b	77.05	\N
+2700	232	due_tre_giorni	b	77.05	\N
+2701	232	quattro_sette_giorni	b	77.05	\N
+2702	232	oltre_sette_giorni	b	77.05	\N
+3133	292	quattro_sette_giorni	c	83.61	\N
+5421	218	mezzo_giorno	c	63.12	\N
 2589	286	quattro_sette_giorni	b	40.98	\N
 2590	286	oltre_sette_giorni	b	40.98	\N
 2591	287	uno_giorno	b	50.82	\N
@@ -8357,14 +8621,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2691	230	uno_giorno	b	47.54	\N
 2692	230	due_tre_giorni	b	47.54	\N
 2694	230	oltre_sette_giorni	b	47.54	\N
-2695	298	uno_giorno	b	112.87	\N
-2696	298	due_tre_giorni	b	112.87	\N
-2697	298	quattro_sette_giorni	b	112.87	\N
-2698	298	oltre_sette_giorni	b	112.87	\N
-2699	232	uno_giorno	b	77.05	\N
-2700	232	due_tre_giorni	b	77.05	\N
-2701	232	quattro_sette_giorni	b	77.05	\N
-2702	232	oltre_sette_giorni	b	77.05	\N
 2703	233	uno_giorno	b	72.63	\N
 2704	233	due_tre_giorni	b	72.63	\N
 2705	233	quattro_sette_giorni	b	72.63	\N
@@ -8383,18 +8639,18 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2727	303	uno_giorno	b	131.97	\N
 2728	303	due_tre_giorni	b	131.97	\N
 2729	303	quattro_sette_giorni	b	131.97	\N
-2730	303	oltre_sette_giorni	b	131.97	\N
 2731	304	uno_giorno	b	331.97	\N
+5426	293	mezzo_giorno	c	63.12	\N
+2743	245	uno_giorno	b	107.38	\N
+2744	245	due_tre_giorni	b	107.38	\N
+2745	245	quattro_sette_giorni	b	107.38	\N
+2746	245	oltre_sette_giorni	b	107.38	\N
 2732	304	due_tre_giorni	b	331.97	\N
 2733	304	quattro_sette_giorni	b	331.97	\N
 2734	304	oltre_sette_giorni	b	331.97	\N
 2739	244	uno_giorno	b	92.62	\N
 2740	244	due_tre_giorni	b	92.62	\N
 2742	244	oltre_sette_giorni	b	92.62	\N
-2743	245	uno_giorno	b	107.38	\N
-2744	245	due_tre_giorni	b	107.38	\N
-2745	245	quattro_sette_giorni	b	107.38	\N
-2746	245	oltre_sette_giorni	b	107.38	\N
 2747	246	uno_giorno	b	144.27	\N
 2748	246	due_tre_giorni	b	144.27	\N
 2750	246	oltre_sette_giorni	b	144.27	\N
@@ -8446,7 +8702,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2805	134	quattro_sette_giorni	c	63.12	\N
 2807	252	uno_giorno	c	28.69	\N
 2808	252	due_tre_giorni	c	28.69	\N
-2809	252	quattro_sette_giorni	c	28.69	\N
 2810	252	oltre_sette_giorni	c	28.69	\N
 2811	136	uno_giorno	c	42.63	\N
 2812	136	due_tre_giorni	c	42.63	\N
@@ -8464,7 +8719,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2825	139	quattro_sette_giorni	c	129.51	\N
 2827	140	uno_giorno	c	90.16	\N
 2828	140	due_tre_giorni	c	90.16	\N
-2829	140	quattro_sette_giorni	c	90.16	\N
 2831	141	uno_giorno	c	42.62	\N
 2832	141	due_tre_giorni	c	42.62	\N
 2833	141	quattro_sette_giorni	c	42.62	\N
@@ -8480,7 +8734,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2845	144	quattro_sette_giorni	c	45.90	\N
 2847	256	uno_giorno	c	30.33	\N
 2848	256	due_tre_giorni	c	30.33	\N
-2849	256	quattro_sette_giorni	c	30.33	\N
 2850	256	oltre_sette_giorni	c	30.33	\N
 2851	257	uno_giorno	c	63.12	\N
 2852	257	due_tre_giorni	c	63.12	\N
@@ -8496,7 +8749,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2862	259	oltre_sette_giorni	c	36.89	\N
 2863	149	uno_giorno	c	105.74	\N
 2864	149	due_tre_giorni	c	105.74	\N
-2865	149	quattro_sette_giorni	c	105.74	\N
 1153	149	oltre_sette_giorni	c	105.74	105.74
 2867	150	uno_giorno	c	156.56	\N
 2868	150	due_tre_giorni	c	156.56	\N
@@ -8509,7 +8761,19 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2877	152	quattro_sette_giorni	c	63.12	\N
 2879	153	uno_giorno	c	129.51	\N
 2880	153	due_tre_giorni	c	129.51	\N
-2881	153	quattro_sette_giorni	c	129.51	\N
+2961	273	quattro_sette_giorni	c	194.27	\N
+2962	273	oltre_sette_giorni	c	194.27	\N
+2963	176	uno_giorno	c	182.79	\N
+2964	176	due_tre_giorni	c	182.79	\N
+2965	176	quattro_sette_giorni	c	182.79	\N
+3003	311	uno_giorno	c	30.33	\N
+3004	311	due_tre_giorni	c	30.33	\N
+3005	311	quattro_sette_giorni	c	30.33	\N
+3006	311	oltre_sette_giorni	c	30.33	\N
+3007	312	uno_giorno	c	30.33	\N
+3008	312	due_tre_giorni	c	30.33	\N
+3009	312	quattro_sette_giorni	c	30.33	\N
+3010	312	oltre_sette_giorni	c	30.33	\N
 2883	155	uno_giorno	c	5.00	\N
 2884	155	due_tre_giorni	c	5.00	\N
 2885	155	quattro_sette_giorni	c	5.00	\N
@@ -8518,7 +8782,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2889	156	quattro_sette_giorni	c	8.20	\N
 2891	260	uno_giorno	c	10.00	\N
 2892	260	due_tre_giorni	c	10.00	\N
-2893	260	quattro_sette_giorni	c	10.00	\N
 2894	260	oltre_sette_giorni	c	10.00	\N
 2895	261	uno_giorno	c	25.00	\N
 2896	261	due_tre_giorni	c	25.00	\N
@@ -8535,7 +8798,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2907	161	uno_giorno	c	26.23	\N
 2908	161	due_tre_giorni	c	26.23	\N
 2909	161	quattro_sette_giorni	c	26.23	\N
-1160	161	oltre_sette_giorni	c	26.23	26.23
 2911	162	uno_giorno	c	42.62	\N
 2912	162	due_tre_giorni	c	42.62	\N
 2913	162	quattro_sette_giorni	c	42.62	\N
@@ -8556,7 +8818,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2930	266	oltre_sette_giorni	c	26.23	\N
 2931	267	uno_giorno	c	45.90	\N
 2932	267	due_tre_giorni	c	45.90	\N
-2933	267	quattro_sette_giorni	c	45.90	\N
 2934	267	oltre_sette_giorni	c	45.90	\N
 2935	268	uno_giorno	c	96.72	\N
 2936	268	due_tre_giorni	c	96.72	\N
@@ -8572,7 +8833,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2946	270	oltre_sette_giorni	c	132.79	\N
 2947	172	uno_giorno	c	156.56	\N
 2948	172	due_tre_giorni	c	156.56	\N
-2949	172	quattro_sette_giorni	c	156.56	\N
 2951	271	uno_giorno	c	96.72	\N
 2952	271	due_tre_giorni	c	96.72	\N
 2953	271	quattro_sette_giorni	c	96.72	\N
@@ -8583,17 +8843,11 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2958	272	oltre_sette_giorni	c	146.97	\N
 2959	273	uno_giorno	c	194.27	\N
 2960	273	due_tre_giorni	c	194.27	\N
-2961	273	quattro_sette_giorni	c	194.27	\N
-2962	273	oltre_sette_giorni	c	194.27	\N
-2963	176	uno_giorno	c	182.79	\N
-2964	176	due_tre_giorni	c	182.79	\N
-2965	176	quattro_sette_giorni	c	182.79	\N
 2967	177	uno_giorno	c	83.61	\N
 2968	177	due_tre_giorni	c	83.61	\N
 2969	177	quattro_sette_giorni	c	83.61	\N
 2971	274	uno_giorno	c	113.12	\N
 2972	274	due_tre_giorni	c	113.12	\N
-2973	274	quattro_sette_giorni	c	113.12	\N
 2974	274	oltre_sette_giorni	c	113.12	\N
 2975	179	uno_giorno	c	118.85	\N
 2976	179	due_tre_giorni	c	118.85	\N
@@ -8612,18 +8866,9 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 2993	183	quattro_sette_giorni	c	36.89	\N
 2995	184	uno_giorno	c	36.89	\N
 2996	184	due_tre_giorni	c	36.89	\N
-2997	184	quattro_sette_giorni	c	36.89	\N
 2999	185	uno_giorno	c	58.20	\N
 3000	185	due_tre_giorni	c	58.20	\N
 3001	185	quattro_sette_giorni	c	58.20	\N
-3003	311	uno_giorno	c	30.33	\N
-3004	311	due_tre_giorni	c	30.33	\N
-3005	311	quattro_sette_giorni	c	30.33	\N
-3006	311	oltre_sette_giorni	c	30.33	\N
-3007	312	uno_giorno	c	30.33	\N
-3008	312	due_tre_giorni	c	30.33	\N
-3009	312	quattro_sette_giorni	c	30.33	\N
-3010	312	oltre_sette_giorni	c	30.33	\N
 3011	277	uno_giorno	c	36.89	\N
 3012	277	due_tre_giorni	c	36.89	\N
 3013	277	quattro_sette_giorni	c	36.89	\N
@@ -8637,7 +8882,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3021	190	quattro_sette_giorni	c	36.89	\N
 3023	279	uno_giorno	c	11.48	\N
 3024	279	due_tre_giorni	c	11.48	\N
-3025	279	quattro_sette_giorni	c	11.48	\N
 3026	279	oltre_sette_giorni	c	11.48	\N
 3027	192	uno_giorno	c	42.63	\N
 3028	192	due_tre_giorni	c	42.63	\N
@@ -8648,7 +8892,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3034	280	oltre_sette_giorni	c	42.63	\N
 3035	281	uno_giorno	c	51.15	\N
 3036	281	due_tre_giorni	c	51.15	\N
-3037	281	quattro_sette_giorni	c	51.15	\N
 3038	281	oltre_sette_giorni	c	51.15	\N
 3039	282	uno_giorno	c	36.89	\N
 3040	282	due_tre_giorni	c	36.89	\N
@@ -8663,7 +8906,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3049	197	quattro_sette_giorni	c	63.12	\N
 3051	198	uno_giorno	c	63.12	\N
 3052	198	due_tre_giorni	c	63.12	\N
-3053	198	quattro_sette_giorni	c	63.12	\N
 3055	199	uno_giorno	c	83.61	\N
 3056	199	due_tre_giorni	c	83.61	\N
 3057	199	quattro_sette_giorni	c	83.61	\N
@@ -8680,7 +8922,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3070	284	oltre_sette_giorni	c	58.20	\N
 3071	203	uno_giorno	c	106.56	\N
 3072	203	due_tre_giorni	c	106.56	\N
-3073	203	quattro_sette_giorni	c	106.56	\N
 3075	285	uno_giorno	c	33.19	\N
 3076	285	due_tre_giorni	c	33.19	\N
 3077	285	quattro_sette_giorni	c	33.19	\N
@@ -8698,7 +8939,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3089	206	quattro_sette_giorni	c	129.51	\N
 3091	207	uno_giorno	c	156.56	\N
 3092	207	due_tre_giorni	c	156.56	\N
-3093	207	quattro_sette_giorni	c	156.56	\N
 3095	208	uno_giorno	c	168.45	\N
 3096	208	due_tre_giorni	c	168.45	\N
 3097	208	quattro_sette_giorni	c	168.45	\N
@@ -8715,7 +8955,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3109	211	quattro_sette_giorni	c	59.02	\N
 3111	212	uno_giorno	c	86.07	\N
 3112	212	due_tre_giorni	c	86.07	\N
-3113	212	quattro_sette_giorni	c	86.07	\N
 3115	213	uno_giorno	c	97.96	\N
 3116	213	due_tre_giorni	c	97.96	\N
 3117	213	quattro_sette_giorni	c	97.96	\N
@@ -8732,7 +8971,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3130	291	oltre_sette_giorni	c	118.85	\N
 3131	292	uno_giorno	c	83.61	\N
 3132	292	due_tre_giorni	c	83.61	\N
-3133	292	quattro_sette_giorni	c	83.61	\N
 3134	292	oltre_sette_giorni	c	83.61	\N
 3135	218	uno_giorno	c	63.12	\N
 3136	218	due_tre_giorni	c	63.12	\N
@@ -8750,7 +8988,6 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3150	294	oltre_sette_giorni	c	113.11	\N
 3151	295	uno_giorno	c	13.93	\N
 3152	295	due_tre_giorni	c	13.93	\N
-3153	295	quattro_sette_giorni	c	13.93	\N
 3154	295	oltre_sette_giorni	c	13.93	\N
 3155	223	uno_giorno	c	21.31	\N
 3156	223	due_tre_giorni	c	21.31	\N
@@ -8765,7 +9002,14 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3167	226	uno_giorno	c	97.54	\N
 3168	226	due_tre_giorni	c	97.54	\N
 3169	226	quattro_sette_giorni	c	97.54	\N
-3171	297	uno_giorno	c	85.25	\N
+3187	298	uno_giorno	c	101.56	\N
+3188	298	due_tre_giorni	c	101.56	\N
+3189	298	quattro_sette_giorni	c	101.56	\N
+3190	298	oltre_sette_giorni	c	101.56	\N
+3191	232	uno_giorno	c	69.35	\N
+3192	232	due_tre_giorni	c	69.35	\N
+3193	232	quattro_sette_giorni	c	69.35	\N
+3194	232	oltre_sette_giorni	c	69.35	\N
 3172	297	due_tre_giorni	c	85.25	\N
 3173	297	quattro_sette_giorni	c	85.25	\N
 3174	297	oltre_sette_giorni	c	85.25	\N
@@ -8778,17 +9022,68 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3183	230	uno_giorno	c	42.62	\N
 3184	230	due_tre_giorni	c	42.62	\N
 3185	230	quattro_sette_giorni	c	42.62	\N
-3187	298	uno_giorno	c	101.56	\N
-3188	298	due_tre_giorni	c	101.56	\N
-3189	298	quattro_sette_giorni	c	101.56	\N
-3190	298	oltre_sette_giorni	c	101.56	\N
-3191	232	uno_giorno	c	69.35	\N
-3192	232	due_tre_giorni	c	69.35	\N
-3193	232	quattro_sette_giorni	c	69.35	\N
-3194	232	oltre_sette_giorni	c	69.35	\N
+3235	245	uno_giorno	c	96.73	\N
+3236	245	due_tre_giorni	c	96.73	\N
+3237	245	quattro_sette_giorni	c	96.73	\N
+3238	245	oltre_sette_giorni	c	96.73	\N
+3524	314	mezzo_giorno	std	\N	28.69
+3525	314	uno_giorno	std	\N	40.99
+3526	314	due_tre_giorni	std	\N	36.89
+3527	314	quattro_sette_giorni	std	\N	33.61
+3528	314	oltre_sette_giorni	std	\N	30.33
+3529	315	mezzo_giorno	std	\N	28.69
+3530	315	uno_giorno	std	\N	40.99
+3531	315	due_tre_giorni	std	\N	36.89
+3532	315	quattro_sette_giorni	std	\N	33.61
+3533	315	oltre_sette_giorni	std	\N	30.33
+1382	265	quattro_sette_giorni	std	86.00	70.49
+3440	313	uno_giorno	std	71.00	58.20
+3441	313	due_tre_giorni	std	64.00	52.46
+3442	313	quattro_sette_giorni	std	58.00	47.55
+3443	313	oltre_sette_giorni	std	52.00	42.63
+1399	269	oltre_sette_giorni	std	130.00	106.56
+4062	322	mezzo_giorno	std	35.00	\N
+4063	322	uno_giorno	std	50.00	\N
+4064	322	due_tre_giorni	std	45.00	\N
+4065	322	quattro_sette_giorni	std	41.00	\N
+4066	322	oltre_sette_giorni	std	37.00	\N
+4067	323	mezzo_giorno	std	35.00	\N
+4068	323	uno_giorno	std	50.00	\N
+4069	323	due_tre_giorni	std	45.00	\N
+4070	323	quattro_sette_giorni	std	41.00	\N
+4071	323	oltre_sette_giorni	std	37.00	\N
+1629	294	oltre_sette_giorni	std	138.00	113.11
+3724	316	uno_giorno	std	170.00	139.35
+3725	316	due_tre_giorni	std	153.00	125.41
+3726	316	quattro_sette_giorni	std	137.70	112.87
+3727	316	oltre_sette_giorni	std	123.90	101.56
+3728	317	uno_giorno	std	115.90	95.00
+3729	317	due_tre_giorni	std	104.50	85.66
+3730	317	quattro_sette_giorni	std	94.00	77.05
+3731	317	oltre_sette_giorni	std	84.60	69.35
+3736	318	uno_giorno	std	142.00	116.40
+3737	318	due_tre_giorni	std	128.00	104.92
+3738	318	quattro_sette_giorni	std	115.00	94.26
+3739	318	oltre_sette_giorni	std	104.00	85.25
+3744	319	uno_giorno	std	129.00	105.74
+3745	319	due_tre_giorni	std	116.00	95.09
+3746	319	quattro_sette_giorni	std	104.00	85.25
+3747	319	oltre_sette_giorni	std	94.00	77.05
+3764	320	mezzo_giorno	std	114.80	94.10
+3765	320	uno_giorno	std	164.00	134.43
+3766	320	due_tre_giorni	std	147.00	120.50
+3767	320	quattro_sette_giorni	std	132.00	108.20
+3768	320	oltre_sette_giorni	std	119.00	97.55
+3773	321	uno_giorno	std	161.00	131.97
+3774	321	due_tre_giorni	std	145.00	118.86
+3775	321	quattro_sette_giorni	std	131.00	107.38
+3776	321	oltre_sette_giorni	std	118.00	96.73
+4331	250	mezzo_giorno	b	150.82	\N
+4336	125	mezzo_giorno	b	150.82	\N
+4341	126	mezzo_giorno	b	310.66	\N
+4346	127	mezzo_giorno	b	94.27	\N
 3195	233	uno_giorno	c	65.37	\N
 3196	233	due_tre_giorni	c	65.37	\N
-3197	233	quattro_sette_giorni	c	65.37	\N
 3198	233	oltre_sette_giorni	c	65.37	\N
 3203	300	uno_giorno	c	42.62	\N
 3204	300	due_tre_giorni	c	42.62	\N
@@ -8807,15 +9102,10 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3222	303	oltre_sette_giorni	c	118.85	\N
 3223	304	uno_giorno	c	299.19	\N
 3224	304	due_tre_giorni	c	299.19	\N
-3225	304	quattro_sette_giorni	c	299.19	\N
 3226	304	oltre_sette_giorni	c	299.19	\N
 3231	244	uno_giorno	c	83.61	\N
 3232	244	due_tre_giorni	c	83.61	\N
 3233	244	quattro_sette_giorni	c	83.61	\N
-3235	245	uno_giorno	c	96.73	\N
-3236	245	due_tre_giorni	c	96.73	\N
-3237	245	quattro_sette_giorni	c	96.73	\N
-3238	245	oltre_sette_giorni	c	96.73	\N
 3239	246	uno_giorno	c	129.51	\N
 3240	246	due_tre_giorni	c	129.51	\N
 3241	246	quattro_sette_giorni	c	129.51	\N
@@ -8828,8 +9118,301 @@ COPY public.noleggio_listini (id, macchina_id, fascia, tipo_listino, prezzo_iva,
 3249	248	quattro_sette_giorni	c	113.12	\N
 3251	306	uno_giorno	c	129.51	\N
 3252	306	due_tre_giorni	c	129.51	\N
-3253	306	quattro_sette_giorni	c	129.51	\N
 3254	306	oltre_sette_giorni	c	129.51	\N
+4351	128	mezzo_giorno	b	131.97	\N
+4356	129	mezzo_giorno	b	131.97	\N
+4361	130	mezzo_giorno	b	309.84	\N
+2298	130	oltre_sette_giorni	b	309.84	\N
+4366	131	mezzo_giorno	b	94.27	\N
+4371	132	mezzo_giorno	b	94.27	\N
+4376	251	mezzo_giorno	b	70.49	\N
+4381	134	mezzo_giorno	b	70.49	\N
+1080	134	quattro_sette_giorni	b	70.49	70.49
+4386	252	mezzo_giorno	b	31.97	\N
+4391	136	mezzo_giorno	b	47.55	\N
+4396	253	mezzo_giorno	b	47.55	\N
+4401	254	mezzo_giorno	b	144.27	\N
+4406	139	mezzo_giorno	b	144.27	\N
+2334	139	oltre_sette_giorni	b	144.27	\N
+4411	140	mezzo_giorno	b	100.00	\N
+4416	141	mezzo_giorno	b	47.55	\N
+4421	142	mezzo_giorno	b	94.27	\N
+4426	255	mezzo_giorno	b	118.00	\N
+4431	144	mezzo_giorno	b	50.82	\N
+2354	144	oltre_sette_giorni	b	50.82	\N
+4436	256	mezzo_giorno	b	33.61	\N
+4441	257	mezzo_giorno	b	70.50	\N
+4446	258	mezzo_giorno	b	33.61	\N
+4451	259	mezzo_giorno	b	40.98	\N
+2370	259	oltre_sette_giorni	b	40.98	\N
+4456	149	mezzo_giorno	b	117.21	\N
+4461	150	mezzo_giorno	b	173.77	\N
+4466	151	mezzo_giorno	b	173.77	\N
+4471	152	mezzo_giorno	b	70.49	\N
+4476	153	mezzo_giorno	b	144.26	\N
+4481	155	mezzo_giorno	b	5.00	\N
+2394	155	oltre_sette_giorni	b	5.00	\N
+4486	156	mezzo_giorno	b	8.20	\N
+4491	260	mezzo_giorno	b	10.00	\N
+4496	261	mezzo_giorno	b	25.00	\N
+4501	262	mezzo_giorno	b	25.00	\N
+4506	263	mezzo_giorno	b	25.00	\N
+2413	263	quattro_sette_giorni	b	25.00	\N
+4511	161	mezzo_giorno	b	27.87	\N
+4516	162	mezzo_giorno	b	47.54	\N
+4521	264	mezzo_giorno	b	27.87	\N
+4526	165	mezzo_giorno	b	9.02	\N
+4531	265	mezzo_giorno	b	70.49	\N
+2433	265	quattro_sette_giorni	b	70.49	\N
+4536	266	mezzo_giorno	b	27.87	\N
+4541	313	mezzo_giorno	b	47.55	\N
+4542	313	uno_giorno	b	47.55	\N
+4543	313	due_tre_giorni	b	47.55	\N
+4544	313	quattro_sette_giorni	b	47.55	\N
+4545	313	oltre_sette_giorni	b	47.55	\N
+4546	267	mezzo_giorno	b	50.82	\N
+4551	268	mezzo_giorno	b	107.38	\N
+2444	268	due_tre_giorni	b	107.38	\N
+4556	269	mezzo_giorno	b	118.04	\N
+4561	270	mezzo_giorno	b	146.72	\N
+2453	270	quattro_sette_giorni	b	146.72	\N
+4566	172	mezzo_giorno	b	173.77	\N
+4571	271	mezzo_giorno	b	107.38	\N
+4576	272	mezzo_giorno	b	165.00	\N
+4581	273	mezzo_giorno	b	215.58	\N
+4586	176	mezzo_giorno	b	202.46	\N
+2474	176	oltre_sette_giorni	b	202.46	\N
+4591	177	mezzo_giorno	b	92.62	\N
+4596	274	mezzo_giorno	b	125.41	\N
+4601	179	mezzo_giorno	b	131.97	\N
+4606	180	mezzo_giorno	b	146.72	\N
+4611	181	mezzo_giorno	b	131.97	\N
+2494	181	oltre_sette_giorni	b	131.97	\N
+4616	182	mezzo_giorno	b	131.97	\N
+4621	183	mezzo_giorno	b	40.98	\N
+4626	184	mezzo_giorno	b	40.98	\N
+4631	185	mezzo_giorno	b	64.75	\N
+4636	324	mezzo_giorno	b	33.61	\N
+4637	324	uno_giorno	b	33.61	\N
+4638	324	due_tre_giorni	b	33.61	\N
+4639	324	quattro_sette_giorni	b	33.61	\N
+4640	324	oltre_sette_giorni	b	33.61	\N
+4641	325	mezzo_giorno	b	33.61	\N
+4642	325	uno_giorno	b	33.61	\N
+4643	325	due_tre_giorni	b	33.61	\N
+4644	325	quattro_sette_giorni	b	33.61	\N
+4645	325	oltre_sette_giorni	b	33.61	\N
+4646	277	mezzo_giorno	b	40.98	\N
+2521	277	quattro_sette_giorni	b	40.98	\N
+4651	278	mezzo_giorno	b	40.98	\N
+4656	190	mezzo_giorno	b	40.98	\N
+4661	279	mezzo_giorno	b	13.12	\N
+4666	192	mezzo_giorno	b	47.55	\N
+4671	280	mezzo_giorno	b	47.55	\N
+2541	280	quattro_sette_giorni	b	47.55	\N
+4676	281	mezzo_giorno	b	56.81	\N
+4681	282	mezzo_giorno	b	40.98	\N
+4686	283	mezzo_giorno	b	60.66	\N
+4691	197	mezzo_giorno	b	70.49	\N
+2558	197	oltre_sette_giorni	b	70.49	\N
+4696	198	mezzo_giorno	b	70.49	\N
+4701	199	mezzo_giorno	b	92.62	\N
+4706	200	mezzo_giorno	b	47.55	\N
+4711	201	mezzo_giorno	b	50.82	\N
+4716	284	mezzo_giorno	b	64.75	\N
+4721	203	mezzo_giorno	b	118.04	\N
+2582	203	oltre_sette_giorni	b	118.04	\N
+4726	285	mezzo_giorno	b	36.88	\N
+4731	286	mezzo_giorno	b	40.98	\N
+4736	287	mezzo_giorno	b	50.82	\N
+4741	206	mezzo_giorno	b	144.26	\N
+4746	207	mezzo_giorno	b	174.60	\N
+4751	208	mezzo_giorno	b	186.89	\N
+4756	288	mezzo_giorno	b	117.21	\N
+4761	289	mezzo_giorno	b	110.00	\N
+4766	211	mezzo_giorno	b	65.57	\N
+4771	212	mezzo_giorno	b	95.90	\N
+4776	213	mezzo_giorno	b	108.20	\N
+4781	214	mezzo_giorno	b	146.72	\N
+4786	290	mezzo_giorno	b	110.00	\N
+4791	291	mezzo_giorno	b	131.97	\N
+4796	292	mezzo_giorno	b	92.62	\N
+4801	218	mezzo_giorno	b	70.49	\N
+4806	293	mezzo_giorno	b	70.49	\N
+4811	220	mezzo_giorno	b	108.20	\N
+4816	294	mezzo_giorno	b	125.41	\N
+4821	295	mezzo_giorno	b	15.57	\N
+4826	223	mezzo_giorno	b	23.77	\N
+4831	224	mezzo_giorno	b	70.49	\N
+4836	296	mezzo_giorno	b	70.49	\N
+4841	226	mezzo_giorno	b	108.20	\N
+4846	297	mezzo_giorno	b	94.26	\N
+4851	228	mezzo_giorno	b	15.57	\N
+4856	229	mezzo_giorno	b	47.54	\N
+4861	230	mezzo_giorno	b	47.54	\N
+4866	316	mezzo_giorno	b	112.87	\N
+4867	316	uno_giorno	b	112.87	\N
+4868	316	due_tre_giorni	b	112.87	\N
+4869	316	quattro_sette_giorni	b	112.87	\N
+4870	316	oltre_sette_giorni	b	112.87	\N
+4871	317	mezzo_giorno	b	77.05	\N
+4872	317	uno_giorno	b	77.05	\N
+4873	317	due_tre_giorni	b	77.05	\N
+4874	317	quattro_sette_giorni	b	77.05	\N
+4875	317	oltre_sette_giorni	b	77.05	\N
+4876	233	mezzo_giorno	b	72.63	\N
+4881	318	mezzo_giorno	b	94.26	\N
+4882	318	uno_giorno	b	94.26	\N
+4883	318	due_tre_giorni	b	94.26	\N
+4884	318	quattro_sette_giorni	b	94.26	\N
+4885	318	oltre_sette_giorni	b	94.26	\N
+4886	300	mezzo_giorno	b	47.54	\N
+4891	319	mezzo_giorno	b	85.25	\N
+4892	319	uno_giorno	b	85.25	\N
+4893	319	due_tre_giorni	b	85.25	\N
+4894	319	quattro_sette_giorni	b	85.25	\N
+4895	319	oltre_sette_giorni	b	85.25	\N
+4896	237	mezzo_giorno	b	9.84	\N
+4901	302	mezzo_giorno	b	92.62	\N
+4906	303	mezzo_giorno	b	131.97	\N
+2730	303	oltre_sette_giorni	b	131.97	\N
+4911	304	mezzo_giorno	b	331.97	\N
+4916	320	mezzo_giorno	b	108.20	\N
+4917	320	uno_giorno	b	108.20	\N
+4918	320	due_tre_giorni	b	108.20	\N
+4919	320	quattro_sette_giorni	b	108.20	\N
+4920	320	oltre_sette_giorni	b	108.20	\N
+4921	244	mezzo_giorno	b	92.62	\N
+4926	321	mezzo_giorno	b	107.38	\N
+4927	321	uno_giorno	b	107.38	\N
+4928	321	due_tre_giorni	b	107.38	\N
+4929	321	quattro_sette_giorni	b	107.38	\N
+4930	321	oltre_sette_giorni	b	107.38	\N
+4931	246	mezzo_giorno	b	144.27	\N
+4936	247	mezzo_giorno	b	117.22	\N
+4941	248	mezzo_giorno	b	125.41	\N
+4946	306	mezzo_giorno	b	144.27	\N
+4951	250	mezzo_giorno	c	136.07	\N
+4956	125	mezzo_giorno	c	136.07	\N
+4961	126	mezzo_giorno	c	279.51	\N
+4966	127	mezzo_giorno	c	85.25	\N
+4971	128	mezzo_giorno	c	118.85	\N
+4976	129	mezzo_giorno	c	118.85	\N
+4981	130	mezzo_giorno	c	278.69	\N
+4986	131	mezzo_giorno	c	85.25	\N
+4991	132	mezzo_giorno	c	85.25	\N
+4996	251	mezzo_giorno	c	63.12	\N
+5001	134	mezzo_giorno	c	63.12	\N
+5006	252	mezzo_giorno	c	28.69	\N
+2809	252	quattro_sette_giorni	c	28.69	\N
+5011	136	mezzo_giorno	c	42.63	\N
+5016	253	mezzo_giorno	c	42.63	\N
+5021	254	mezzo_giorno	c	129.51	\N
+5026	139	mezzo_giorno	c	129.51	\N
+5031	140	mezzo_giorno	c	90.16	\N
+2829	140	quattro_sette_giorni	c	90.16	\N
+5036	141	mezzo_giorno	c	42.62	\N
+5041	142	mezzo_giorno	c	85.25	\N
+5046	255	mezzo_giorno	c	106.00	\N
+5051	144	mezzo_giorno	c	45.90	\N
+5056	256	mezzo_giorno	c	30.33	\N
+2849	256	quattro_sette_giorni	c	30.33	\N
+5061	257	mezzo_giorno	c	63.12	\N
+5066	258	mezzo_giorno	c	30.33	\N
+5071	259	mezzo_giorno	c	36.89	\N
+5076	149	mezzo_giorno	c	105.74	\N
+2865	149	quattro_sette_giorni	c	105.74	\N
+5081	150	mezzo_giorno	c	156.56	\N
+5086	151	mezzo_giorno	c	156.56	\N
+5091	152	mezzo_giorno	c	63.12	\N
+5096	153	mezzo_giorno	c	129.51	\N
+2881	153	quattro_sette_giorni	c	129.51	\N
+5101	155	mezzo_giorno	c	5.00	\N
+5106	156	mezzo_giorno	c	8.20	\N
+5111	260	mezzo_giorno	c	10.00	\N
+2893	260	quattro_sette_giorni	c	10.00	\N
+5116	261	mezzo_giorno	c	25.00	\N
+5121	262	mezzo_giorno	c	25.00	\N
+5126	263	mezzo_giorno	c	25.00	\N
+5131	161	mezzo_giorno	c	26.23	\N
+1160	161	oltre_sette_giorni	c	26.23	26.23
+5136	162	mezzo_giorno	c	42.62	\N
+5141	264	mezzo_giorno	c	26.23	\N
+5146	165	mezzo_giorno	c	8.20	\N
+5151	265	mezzo_giorno	c	63.12	\N
+5156	266	mezzo_giorno	c	26.23	\N
+5161	313	mezzo_giorno	c	42.63	\N
+5162	313	uno_giorno	c	42.63	\N
+5163	313	due_tre_giorni	c	42.63	\N
+5164	313	quattro_sette_giorni	c	42.63	\N
+5165	313	oltre_sette_giorni	c	42.63	\N
+5166	267	mezzo_giorno	c	45.90	\N
+2933	267	quattro_sette_giorni	c	45.90	\N
+5171	268	mezzo_giorno	c	96.72	\N
+5176	269	mezzo_giorno	c	106.56	\N
+5181	270	mezzo_giorno	c	132.79	\N
+5186	172	mezzo_giorno	c	156.56	\N
+2949	172	quattro_sette_giorni	c	156.56	\N
+5191	271	mezzo_giorno	c	96.72	\N
+5196	272	mezzo_giorno	c	146.97	\N
+5201	273	mezzo_giorno	c	194.27	\N
+5431	220	mezzo_giorno	c	97.54	\N
+5436	294	mezzo_giorno	c	113.11	\N
+5441	295	mezzo_giorno	c	13.93	\N
+3153	295	quattro_sette_giorni	c	13.93	\N
+5446	223	mezzo_giorno	c	21.31	\N
+5451	224	mezzo_giorno	c	63.12	\N
+5456	296	mezzo_giorno	c	63.12	\N
+5461	226	mezzo_giorno	c	97.54	\N
+5466	297	mezzo_giorno	c	85.25	\N
+3171	297	uno_giorno	c	85.25	\N
+5471	228	mezzo_giorno	c	13.93	\N
+5476	229	mezzo_giorno	c	42.62	\N
+5481	230	mezzo_giorno	c	42.62	\N
+5486	316	mezzo_giorno	c	101.56	\N
+5487	316	uno_giorno	c	101.56	\N
+5488	316	due_tre_giorni	c	101.56	\N
+5489	316	quattro_sette_giorni	c	101.56	\N
+5490	316	oltre_sette_giorni	c	101.56	\N
+5491	317	mezzo_giorno	c	69.35	\N
+5492	317	uno_giorno	c	69.35	\N
+5493	317	due_tre_giorni	c	69.35	\N
+5494	317	quattro_sette_giorni	c	69.35	\N
+5495	317	oltre_sette_giorni	c	69.35	\N
+5496	233	mezzo_giorno	c	65.37	\N
+3197	233	quattro_sette_giorni	c	65.37	\N
+5501	318	mezzo_giorno	c	85.25	\N
+5502	318	uno_giorno	c	85.25	\N
+5503	318	due_tre_giorni	c	85.25	\N
+5504	318	quattro_sette_giorni	c	85.25	\N
+5505	318	oltre_sette_giorni	c	85.25	\N
+5506	300	mezzo_giorno	c	42.62	\N
+5511	319	mezzo_giorno	c	77.05	\N
+5512	319	uno_giorno	c	77.05	\N
+5513	319	due_tre_giorni	c	77.05	\N
+5514	319	quattro_sette_giorni	c	77.05	\N
+5515	319	oltre_sette_giorni	c	77.05	\N
+5516	237	mezzo_giorno	c	8.20	\N
+5521	302	mezzo_giorno	c	83.61	\N
+5526	303	mezzo_giorno	c	118.85	\N
+5531	304	mezzo_giorno	c	299.19	\N
+3225	304	quattro_sette_giorni	c	299.19	\N
+5536	320	mezzo_giorno	c	97.55	\N
+5537	320	uno_giorno	c	97.55	\N
+5538	320	due_tre_giorni	c	97.55	\N
+5539	320	quattro_sette_giorni	c	97.55	\N
+5540	320	oltre_sette_giorni	c	97.55	\N
+5541	244	mezzo_giorno	c	83.61	\N
+5546	321	mezzo_giorno	c	96.73	\N
+5547	321	uno_giorno	c	96.73	\N
+5548	321	due_tre_giorni	c	96.73	\N
+5549	321	quattro_sette_giorni	c	96.73	\N
+5550	321	oltre_sette_giorni	c	96.73	\N
+5551	246	mezzo_giorno	c	129.51	\N
+5556	247	mezzo_giorno	c	105.74	\N
+5561	248	mezzo_giorno	c	113.12	\N
+5566	306	mezzo_giorno	c	129.51	\N
+3253	306	quattro_sette_giorni	c	129.51	\N
 \.
 
 
@@ -9020,10 +9603,25 @@ COPY public.noleggio_macchine (id, nome, note_tecniche, categoria, carburante, d
 225	Braccio tagliasiepe BJ 150 taglia fino a Ø2 cm - alt. Verticale 4 mt - alt.barra orriz. 3 mt	\N	escavatori	\N	\N	t	2026-03-11 14:23:09.672547+00	2026-03-11 14:23:09.672547+00	Minipala	t
 298	Escavatore q. 50	\N	escavatori	\N	\N	t	2026-05-12 06:37:17.042292+00	2026-05-12 06:37:17.042292+00	Escavatore 50	f
 234	Miniescavatore q. 17 JCB/ YANMAR 4.0 con benna mt.1/ cm.50/ cm. 30	\N	escavatori	G	\N	t	2026-03-11 14:23:09.672547+00	2026-03-11 14:23:09.672547+00	JCB 17	f
+316	Escavatore q. 35 + benne 40/60/115	\N	\N	\N	\N	t	2026-05-23 07:26:07.23082+00	2026-05-23 07:26:07.23082+00	\N	f
 300	Trivella x escav. 17 mm. 100/150/200/400	\N	\N	\N	\N	t	2026-05-12 06:37:19.522434+00	2026-05-12 06:37:19.522434+00	JCB 17	t
 236	Miniescavatore q. 8 JCB con benna cm.80/ cm.35/ cm. 25	\N	escavatori	G	\N	t	2026-03-11 14:23:09.672547+00	2026-03-11 14:23:09.672547+00	JCB 8	f
+317	Pinza per ramaglie girevole	\N	\N	\N	\N	t	2026-05-23 07:26:07.997129+00	2026-05-23 07:26:07.997129+00	\N	f
 295	Benna cm. 100 - Forca pallet - Bracetto	\N	\N	\N	\N	t	2026-05-12 06:37:11.866626+00	2026-05-12 06:37:11.866626+00	Minipala	t
 296	Braccio tagliasiepe BJ 150	\N	\N	\N	\N	t	2026-05-12 06:37:13.500518+00	2026-05-12 06:37:13.500518+00	Minipala	t
+313	Spazzola a motore cm. 40 erba sintetica	\N	\N	\N	\N	t	2026-05-23 07:25:21.713195+00	2026-05-23 07:25:21.713195+00	\N	f
+314	Decespugliatore \\ Motosega.	\N	\N	\N	\N	t	2026-05-23 07:25:35.583919+00	2026-05-23 07:25:35.583919+00	\N	f
+315	Rasaerba \\ Tosasiepi.	\N	\N	\N	\N	t	2026-05-23 07:25:36.394125+00	2026-05-23 07:25:36.394125+00	\N	f
+318	Miniescavatore q. 17	\N	\N	\N	\N	t	2026-05-23 07:26:09.387084+00	2026-05-23 07:26:09.387084+00	\N	f
+319	Miniescavatore q. 8	\N	\N	\N	\N	t	2026-05-23 07:26:10.567067+00	2026-05-23 07:26:10.567067+00	\N	f
+320	Rasaerba radiocomandato a cingoli	\N	\N	\N	\N	t	2026-05-23 07:26:14.247886+00	2026-05-23 07:26:14.247886+00	\N	f
+321	Piattaforma a cingoli mt. 14 - 15.	\N	\N	\N	\N	t	2026-05-23 07:26:15.668648+00	2026-05-23 07:26:15.668648+00	\N	f
+322	Decespugliatore \\ Motosega.	\N	\N	\N	\N	t	2026-05-23 07:27:26.574329+00	2026-05-23 07:27:26.574329+00	\N	f
+323	Rasaerba \\ Tosasiepi.	\N	\N	\N	\N	t	2026-05-23 07:27:27.268093+00	2026-05-23 07:27:27.268093+00	\N	f
+324	Decespugliatore \\ Motosega.	\N	\N	\N	\N	t	2026-05-23 07:29:40.368677+00	2026-05-23 07:29:40.368677+00	\N	f
+325	Rasaerba \\ Tosasiepi.	\N	\N	\N	\N	t	2026-05-23 07:29:41.066721+00	2026-05-23 07:29:41.066721+00	\N	f
+326	Decespugliatore \\ Motosega.	\N	\N	\N	\N	t	2026-05-23 08:11:06.812707+00	2026-05-23 08:11:06.812707+00	\N	f
+327	Rasaerba \\ Tosasiepi.	\N	\N	\N	\N	t	2026-05-23 08:11:07.611168+00	2026-05-23 08:11:07.611168+00	\N	f
 \.
 
 
@@ -9093,6 +9691,11 @@ afaaae33-e0bc-4e0d-a841-33da98f98c5f	2026-04-24 17:04:58.391298+00	Domenico	200	
 adddad92-8e7a-4562-af32-b4afe37aee2f	2026-05-19 16:04:56.151151+00	Il Gelso srl cantiere de' Longhi SpA	13000	piano_annuo	ornamentale	standard	albatros	normale	pallido	centralizzata	fidelizzato	\N	f	t	\N	\N	\N	{"mq": 13000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
 ea200d0c-0698-4d0d-8a92-734828fa36bc	2026-05-19 16:08:36.190868+00	Il Gelso srl cantiere de' Longhi SpA	13000	piano_annuo	ornamentale	standard	albatros	normale	pallido	centralizzata	fidelizzato	\N	f	t	\N	\N	9127.7	{"mq": 13000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
 c59e2eac-b9c5-4dd1-af40-d70de886e705	2026-05-19 16:42:20.999876+00	Il Gelso srl cantiere de' Longhi SpA	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	fidelizzato	\N	f	t	\N	\N	550.4	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
+dbb9dc1b-fe11-4126-8cf1-1fb75e80b25a	2026-05-23 08:15:19.348791+00	Il Gelso srl cantiere de' Longhi SpA	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	fidelizzato	\N	f	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
+2792136d-b5c5-45e0-a123-eb940e155720	2026-05-23 08:16:49.017287+00	Il Gelso srl cantiere de' Longhi SpA	13000	piano_annuo	ornamentale	standard	albatros	normale	pallido	centralizzata	fidelizzato	\N	f	t	\N	\N	\N	{"mq": 13000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
+09d8f996-9c8b-4396-a567-2bbecf5b9254	2026-06-01 07:56:05.863169+00	Michielon Sergio	300	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 300, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-06-01", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Michielon Sergio", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-06-01
+151ec0e2-eea0-4bd8-acb0-4ebd281fee24	2026-06-01 07:56:17.784269+00	Michielon Sergio	300	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 300, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-06-01", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Michielon Sergio", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-06-01
+bc480f80-d134-4119-ae06-f72aa36587de	2026-06-01 07:56:40.754824+00	Michielon Sergio	300	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	352.2	{"mq": 300, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-06-01", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Michielon Sergio", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-06-01
 \.
 
 
@@ -9101,6 +9704,7 @@ c59e2eac-b9c5-4dd1-af40-d70de886e705	2026-05-19 16:42:20.999876+00	Il Gelso srl 
 --
 
 COPY public.preventivi_catalogo (id, cliente, righe, totale_imponibile, totale_ic, data_preventivo, titolo, pagamento, garanzia, note, created_at) FROM stdin;
+d3787d30-3cd4-4a86-8bfd-16d49376244d	Buosi Mosè 389 6312244	[{"id": "r-1780123472174-00ybe76smrd5", "qty": 1, "listino_ic": "", "descrizione": "MOTOCOLTIVATORE GRILLO G85, MOTORE HONDA GX 270, RUOTE 942412 4.00-10, FRESA 984511 CM 58", "scontato_ic": "3600"}, {"id": "r-1780123710788-51hurbfal2p", "qty": 1, "listino_ic": "", "descrizione": "RUOTE 900412 5.00-10 PER DIFFERENZA", "scontato_ic": "100"}, {"id": "r-1780123876923-b3uwfda71tv", "qty": 1, "listino_ic": "", "descrizione": "FRESA CONTROROTANTE 58 CM, COMPRESO ZAVORRA 11 KG 9G3211, PER DIFFERENZA ", "scontato_ic": "150"}]	3155.74	3850	2026-05-30	PREVENTIVO: MOTOCOLTIVATORE GRILLO G85				2026-05-30 07:22:37.691373+00
 \.
 
 
@@ -9116,7 +9720,6 @@ COPY public.pricing_policies (id, brand, cliente_privato, professionista, promoz
 e6be6a44-5f92-46f9-975a-fe081ec5cdb1	BILLY GOAT	Listino OMPRA (ultima colonna)	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna). In casi particolari, solo se serve a chiudere la trattativa e con chiari segnali di chiusura, posso scendere sotto allo sconto massimo.	Dal listino sconto max 10-13%	\N	2026-02-22 05:26:20.424705+00
 33ce52e5-b2e6-4205-b474-5d816135ec77	CAPTAIN TRACTORS	\N	\N	\N	\N	2026-02-22 05:26:20.424705+00
 0f85832d-6183-450c-8e82-9ee127e8916c	CASTELGARDEN	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna)	\N	\N	\N	2026-02-22 05:26:20.424705+00
-ba8c6a84-d6bc-422d-b7cd-03e982f3f90c	CAST GROUP	Sconto 25% dal listino ufficiale della casa	Sconto 25% dal listino + ulteriore 3% in trattativa	\N	\N	2026-02-22 05:26:20.424705+00
 e015966f-085a-438c-ba13-41c920509845	ECHO	Listino OMPRA (ultima colonna)	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna). Per accessori non compresi nel listino OMPRA, applicare sul listino ufficiale della casa uno sconto massimo del 14%. In casi particolari, solo se serve a chiudere la trattativa e con chiari segnali di chiusura, posso scendere sotto allo sconto massimo.	\N	\N	2026-02-22 05:26:20.424705+00
 bb6ac812-54db-415c-bbf8-d5138aa57aa6	FERRIS	Prezzo di listino. Scontistica da valutare a seconda del caso.	\N	\N	\N	2026-02-22 05:26:20.424705+00
 fe2fea67-dc83-4f7a-a553-48386656de3c	FIABA	Max 5%	Dal 5% al 7%, fino ad un max del 10%	\N	\N	2026-02-22 05:26:20.424705+00
@@ -9139,6 +9742,7 @@ d9c69c17-9ea7-4194-9725-b8e52732b9ee	TORO	Sconto massimo del 8-10% sul listino u
 eb69ceb8-69e0-4eb8-b9d4-5a8b0c70aa72	VOLPI MY SPRAYERS	Listino ufficiale della casa + IVA, stornare IVA = prezzo in listino	Sconto massimo del 15-18% sul listino ufficiale della casa	\N	\N	2026-02-22 05:26:20.424705+00
 294f23f9-48ff-4226-b6e3-76e9486b51ae	WEIBANG	Sconto massimo del 20% sul listino ufficiale della casa + IVA	\N	\N	\N	2026-02-22 05:26:20.424705+00
 dd95d73a-ba9c-47b6-9fde-931a79a98617	FEMA	Listino A max 10% — Listino B max 14% — Listino C max 19%	\N	\N	\N	2026-02-22 05:37:00.063+00
+ba8c6a84-d6bc-422d-b7cd-03e982f3f90c	CAST GROUP	Sconto 25% dal listino ufficiale della casa	Sconto 15% dal listino + ulteriore 3% in trattativa	\N	\N	2026-05-30 16:24:44.683+00
 \.
 
 
@@ -10215,62 +10819,80 @@ b3c97e64-44c9-48ef-9133-9e2f1d7fa83e	Stihl	Decespugliatore FS 120 R	1	2026-05-09
 7a3d1387-d578-45a3-8868-87409a89ea0e	Weibang	Rasaerba WB537SC V-M	1	2026-05-09 10:06:10.972529+00	2026-05-09 10:06:10.972529+00
 cdf762b6-13bd-4982-9111-ff3fd6f864b2	Echo	Tagliasiepi S27-25A	1	2026-05-11 08:07:57.572745+00	2026-05-11 08:07:57.572745+00
 2a4689fe-e28d-4fd9-b311-492261d3055f	Honda	Rasaerba HRN536C2	1	2026-05-22 16:19:42.621112+00	2026-05-22 16:19:42.621112+00
+434c0fa9-6329-4a67-8dd9-756fda748941	Stihl	Tagliasiepi HLA 56	1	2026-05-23 08:47:12.940984+00	2026-05-23 08:47:12.940984+00
+789c555e-68c6-4625-b7e6-09ad70ada985	Stihl	Batteria AK 20	1	2026-05-23 08:48:48.456395+00	2026-05-23 08:48:48.456395+00
+80529a31-4a59-4c15-8ee7-3ba9a64d0e02	Stihl	Batteria AP 30 (270 Wh)	1	2026-05-26 14:29:06.749639+00	2026-05-26 14:29:06.749639+00
+201ebd9c-a70f-42e4-b557-f338e6cc246c	Stihl	Caricabatteria AL 301	1	2026-05-26 14:29:47.151468+00	2026-05-26 14:29:47.151468+00
+92a81c06-6692-47aa-8265-ec1ca73a8465	Stihl	FS55R	1	2026-05-26 14:42:51.9775+00	2026-05-26 14:42:51.9775+00
+82fbc576-4f66-4c48-88b3-6ec9a4b0ffc2	Stihl	Motosega MSA 60.0 C	1	2026-05-29 07:48:29.365558+00	2026-05-29 07:48:29.365558+00
+63242964-b695-416a-a05b-f8b3904b9c55	Stihl	Decespugliatore FS 94 RC-E Brushcutter	1	2026-05-30 06:00:39.28988+00	2026-05-30 06:00:39.28988+00
+419487f6-212d-4e12-8ab4-090ca5a07900	Stihl	Soffiatore SR 430 Atomizzatore	1	2026-06-01 07:41:02.742189+00	2026-06-01 07:41:02.742189+00
+17b872f7-a4c5-4d74-9dbc-2f594fd70e01	Stihl	Forbice elettronica ASA 20.0	1	2026-06-01 08:23:31.40745+00	2026-06-01 08:23:31.40745+00
+387bf73d-1053-47c4-8be8-04909494188f	Stihl	Caricabatteria AL 1.0.A	1	2026-06-01 08:25:01.089219+00	2026-06-01 08:25:01.089219+00
+3ec475ba-e19e-426b-90cf-cdd5888f2ef2	Stihl	Tagliasiepi HSA 50.1	1	2026-06-01 09:15:01.792855+00	2026-06-01 09:15:01.792855+00
+ee7505f7-b5b4-43e5-a1fc-c06c556b5202	Echo	Motosega CS-2511TES	1	2026-06-01 13:48:48.307605+00	2026-06-01 13:48:48.307605+00
+121252ad-2e03-4c21-a229-32c4fdf6a8d2	Stihl	Tagliasiepi HSA 60.1	1	2026-06-05 08:52:46.989342+00	2026-06-05 08:52:46.989342+00
+e217e324-0134-498e-ba9c-177bb6511510	Stihl	Decespugliatore KM 94 RC-E	1	2026-06-05 16:33:22.045283+00	2026-06-05 16:33:22.045283+00
+ec1148f6-87ba-4613-8eed-2aed0c9ce9ab	Echo	Motosega DCS-2500T	1	2026-06-05 16:58:52.06768+00	2026-06-05 16:58:52.06768+00
+6a1bdc3e-7f9a-42d5-ae41-a3eb9784c8a6	Echo	Batteria LBP-56V125	1	2026-06-05 17:00:52.567561+00	2026-06-05 17:00:52.567561+00
+ac738d2f-0e7d-4f99-8631-20e1a5e5bfcb	Echo	Batteria LBP-56V125 EU35	1	2026-06-05 17:01:32.213472+00	2026-06-05 17:01:32.213472+00
+160c256a-cb6a-4a47-a6cc-871d4ee0c895	Echo	Caricabatteria LCJQ-560	1	2026-06-05 17:02:58.33557+00	2026-06-05 17:02:58.33557+00
 \.
 
 
 --
--- Data for Name: messages_2026_05_19; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_03; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_19 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_03 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_20; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_04; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_20 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_04 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_21; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_05; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_21 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_05 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_22; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_06; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_22 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_06 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_23; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_07; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_23 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_07 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_24; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_08; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_24 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_08 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_25; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_09; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_25 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_09 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
@@ -10348,6 +10970,10 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 20251120215549	2026-02-04 12:50:11
 20260218120000	2026-02-27 12:19:38
 20260326120000	2026-04-10 04:13:53
+20260514120000	2026-06-03 04:35:23
+20260527120000	2026-06-03 04:35:23
+20260528120000	2026-06-03 04:35:23
+20260603120000	2026-06-04 05:01:18
 \.
 
 
@@ -10355,7 +10981,7 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 -- Data for Name: subscription; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter) FROM stdin;
+COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter, selected_columns) FROM stdin;
 \.
 
 
@@ -10503,7 +11129,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 578, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 634, true);
 
 
 --
@@ -10517,21 +11143,21 @@ SELECT pg_catalog.setval('public.noleggio_abbonamenti_id_seq', 1, false);
 -- Name: noleggio_listini_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.noleggio_listini_id_seq', 3254, true);
+SELECT pg_catalog.setval('public.noleggio_listini_id_seq', 5570, true);
 
 
 --
 -- Name: noleggio_macchine_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 312, true);
+SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 327, true);
 
 
 --
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 8318, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 9078, true);
 
 
 --
@@ -11175,59 +11801,67 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_05_19 messages_2026_05_19_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_03 messages_2026_06_03_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_19
-    ADD CONSTRAINT messages_2026_05_19_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_05_20 messages_2026_05_20_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_05_20
-    ADD CONSTRAINT messages_2026_05_20_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_03
+    ADD CONSTRAINT messages_2026_06_03_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_05_21 messages_2026_05_21_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_04 messages_2026_06_04_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_21
-    ADD CONSTRAINT messages_2026_05_21_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_05_22 messages_2026_05_22_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_05_22
-    ADD CONSTRAINT messages_2026_05_22_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_04
+    ADD CONSTRAINT messages_2026_06_04_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_05_23 messages_2026_05_23_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05 messages_2026_06_05_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_23
-    ADD CONSTRAINT messages_2026_05_23_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_05_24 messages_2026_05_24_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_05_24
-    ADD CONSTRAINT messages_2026_05_24_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_05
+    ADD CONSTRAINT messages_2026_06_05_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_05_25 messages_2026_05_25_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06 messages_2026_06_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_25
-    ADD CONSTRAINT messages_2026_05_25_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_06
+    ADD CONSTRAINT messages_2026_06_06_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_07 messages_2026_06_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_07
+    ADD CONSTRAINT messages_2026_06_07_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_08 messages_2026_06_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_08
+    ADD CONSTRAINT messages_2026_06_08_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_09 messages_2026_06_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_09
+    ADD CONSTRAINT messages_2026_06_09_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages messages_payload_exclusive; Type: CHECK CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE realtime.messages
+    ADD CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL))) NOT VALID;
 
 
 --
@@ -11928,59 +12562,59 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_05_19_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_03_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_19_inserted_at_topic_idx ON realtime.messages_2026_05_19 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_05_20_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_05_20_inserted_at_topic_idx ON realtime.messages_2026_05_20 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_03_inserted_at_topic_idx ON realtime.messages_2026_06_03 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_05_21_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_04_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_21_inserted_at_topic_idx ON realtime.messages_2026_05_21 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_05_22_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_05_22_inserted_at_topic_idx ON realtime.messages_2026_05_22 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_04_inserted_at_topic_idx ON realtime.messages_2026_06_04 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_05_23_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_23_inserted_at_topic_idx ON realtime.messages_2026_05_23 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_05_24_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_05_24_inserted_at_topic_idx ON realtime.messages_2026_05_24 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_05_inserted_at_topic_idx ON realtime.messages_2026_06_05 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_05_25_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_25_inserted_at_topic_idx ON realtime.messages_2026_05_25 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_06_inserted_at_topic_idx ON realtime.messages_2026_06_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: subscription_subscription_id_entity_filters_action_filter_key; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_key ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter);
+CREATE INDEX messages_2026_06_07_inserted_at_topic_idx ON realtime.messages_2026_06_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_08_inserted_at_topic_idx ON realtime.messages_2026_06_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_09_inserted_at_topic_idx ON realtime.messages_2026_06_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: subscription_subscription_id_entity_filters_action_filter_selec; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_selec ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter, COALESCE(selected_columns, '{}'::text[]));
 
 
 --
@@ -12040,101 +12674,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_05_19_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_03_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_19_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_19_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_19_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_03_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_20_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_03_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_20_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_20_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_20_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_03_pkey;
 
 
 --
--- Name: messages_2026_05_21_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_04_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_21_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_21_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_21_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_04_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_22_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_04_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_22_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_22_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_22_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_04_pkey;
 
 
 --
--- Name: messages_2026_05_23_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_23_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_23_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_23_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_05_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_24_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_24_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_24_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_24_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_05_pkey;
 
 
 --
--- Name: messages_2026_05_25_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_25_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_06_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_25_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_25_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_06_pkey;
+
+
+--
+-- Name: messages_2026_06_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_07_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_07_pkey;
+
+
+--
+-- Name: messages_2026_06_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_08_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_08_pkey;
+
+
+--
+-- Name: messages_2026_06_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_09_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_09_pkey;
 
 
 --
@@ -12728,6 +13362,18 @@ CREATE POLICY "Lettura promo autenticati" ON public.stihl_promo FOR SELECT TO au
 ALTER TABLE public.agent_audit_log ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: agro_listino; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agro_listino ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: agro_mapping; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agro_mapping ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: noleggio_abbonamenti allow_all_noleggio_abbonamenti; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -12753,6 +13399,12 @@ CREATE POLICY allow_all_noleggio_macchine ON public.noleggio_macchine USING (tru
 --
 
 ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: catalogo_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.catalogo_prodotti ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: clienti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -12809,6 +13461,12 @@ ALTER TABLE public.noleggio_listini ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.noleggio_macchine ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: note_clienti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.note_clienti ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: operatori; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12819,6 +13477,12 @@ ALTER TABLE public.operatori ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.pratovivo_archivio ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: preventivi_catalogo; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.preventivi_catalogo ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: pricing_policies; Type: ROW SECURITY; Schema: public; Owner: -
@@ -12848,6 +13512,30 @@ CREATE POLICY public_select_stihl_promo ON public.stihl_promo FOR SELECT TO auth
 
 
 --
+-- Name: pv_interventi; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_interventi ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_intervento_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_intervento_prodotti ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_kit; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_kit ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_kit_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_kit_prodotti ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pv_liquidi_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -12860,10 +13548,40 @@ ALTER TABLE public.pv_liquidi_prodotti ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pv_liquidi_programmati ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: pv_piani; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_piani ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_preventivi; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_preventivi ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_preventivo_righe; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_preventivo_righe ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_prodotti ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pv_templates; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.pv_templates ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: sopralluoghi; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.sopralluoghi ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: stihl_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -12882,6 +13600,202 @@ ALTER TABLE public.stihl_promo ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.stock_thresholds ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: agro_listino tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.agro_listino TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: agro_mapping tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.agro_mapping TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: catalogo_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.catalogo_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: note_clienti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.note_clienti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: preventivi_catalogo tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.preventivi_catalogo TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_interventi tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_interventi TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_intervento_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_intervento_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_kit TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_kit_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_piani tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_piani TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivi tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_preventivi TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivo_righe tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_preventivo_righe TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: sopralluoghi tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.sopralluoghi TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: agro_listino tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.agro_listino TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: agro_mapping tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.agro_mapping TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: catalogo_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.catalogo_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: note_clienti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.note_clienti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: preventivi_catalogo tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.preventivi_catalogo TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_interventi tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_interventi TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_intervento_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_intervento_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_kit TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_kit_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_piani tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_piani TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivi tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_preventivi TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivo_righe tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_preventivo_righe TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: sopralluoghi tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.sopralluoghi TO authenticated USING (true) WITH CHECK (true);
+
 
 --
 -- Name: messages; Type: ROW SECURITY; Schema: realtime; Owner: -
@@ -13028,5 +13942,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PZwK73BWJbctBUdQTP8jyTjIYbRj7RTZN3ODsn6sq9mtaBHA3yYpRnC8I4rrj1U
+\unrestrict e9cxY7z6fDIraVBUs7GG8MIxa5bYuVibzWVD2FLhnZqhJ8ViPkdH0G0chHENBfZ
 

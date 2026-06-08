@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SZqkbOl2TAc2aFgYf3gM9ryOaSNMaPFuZp8xqS2JQXcfBx52Yv2eyqGhVWT3HGj
+\restrict UX3SvSf3uPRiH67DAa2mykk2u0EIRUcavcbgppQR4RDQM618WX1HFFP1kRSYmUH
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
@@ -27,6 +27,34 @@ DROP EVENT TRIGGER IF EXISTS issue_pg_cron_access;
 DROP EVENT TRIGGER IF EXISTS issue_graphql_placeholder;
 DROP PUBLICATION IF EXISTS supabase_realtime_messages_publication;
 DROP PUBLICATION IF EXISTS supabase_realtime;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.sopralluoghi;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_preventivo_righe;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_preventivi;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_piani;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_kit_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_kit;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_intervento_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_interventi;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.preventivi_catalogo;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.note_clienti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.catalogo_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.agro_mapping;
+DROP POLICY IF EXISTS tmp_allow_all_auth ON public.agro_listino;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.sopralluoghi;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_preventivo_righe;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_preventivi;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_piani;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_kit_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_kit;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_intervento_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.pv_interventi;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.preventivi_catalogo;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.note_clienti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.catalogo_prodotti;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.agro_mapping;
+DROP POLICY IF EXISTS tmp_allow_all_anon ON public.agro_listino;
 DROP POLICY IF EXISTS public_select_stihl_promo ON public.stihl_promo;
 DROP POLICY IF EXISTS public_select_stihl_prodotti ON public.stihl_prodotti;
 DROP POLICY IF EXISTS public_access ON public.pv_templates;
@@ -105,7 +133,7 @@ DROP INDEX IF EXISTS storage.idx_multipart_uploads_list;
 DROP INDEX IF EXISTS storage.buckets_analytics_unique_name_idx;
 DROP INDEX IF EXISTS storage.bucketid_objname;
 DROP INDEX IF EXISTS storage.bname;
-DROP INDEX IF EXISTS realtime.subscription_subscription_id_entity_filters_action_filter_key;
+DROP INDEX IF EXISTS realtime.subscription_subscription_id_entity_filters_action_filter_selec;
 DROP INDEX IF EXISTS realtime.messages_inserted_at_topic_index;
 DROP INDEX IF EXISTS realtime.ix_realtime_subscription_entity;
 DROP INDEX IF EXISTS public.pratovivo_archivio_created_at_idx;
@@ -202,13 +230,14 @@ ALTER TABLE IF EXISTS ONLY storage.buckets DROP CONSTRAINT IF EXISTS buckets_pke
 ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS buckets_analytics_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_27 DROP CONSTRAINT IF EXISTS messages_2026_05_27_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_26 DROP CONSTRAINT IF EXISTS messages_2026_05_26_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_25 DROP CONSTRAINT IF EXISTS messages_2026_05_25_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_24 DROP CONSTRAINT IF EXISTS messages_2026_05_24_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_23 DROP CONSTRAINT IF EXISTS messages_2026_05_23_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_22 DROP CONSTRAINT IF EXISTS messages_2026_05_22_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_05_21 DROP CONSTRAINT IF EXISTS messages_2026_05_21_pkey;
+ALTER TABLE IF EXISTS realtime.messages DROP CONSTRAINT IF EXISTS messages_payload_exclusive;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_11 DROP CONSTRAINT IF EXISTS messages_2026_06_11_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_10 DROP CONSTRAINT IF EXISTS messages_2026_06_10_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_09 DROP CONSTRAINT IF EXISTS messages_2026_06_09_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_08 DROP CONSTRAINT IF EXISTS messages_2026_06_08_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_07 DROP CONSTRAINT IF EXISTS messages_2026_06_07_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_06 DROP CONSTRAINT IF EXISTS messages_2026_06_06_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_05 DROP CONSTRAINT IF EXISTS messages_2026_06_05_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -304,13 +333,13 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_05_27;
-DROP TABLE IF EXISTS realtime.messages_2026_05_26;
-DROP TABLE IF EXISTS realtime.messages_2026_05_25;
-DROP TABLE IF EXISTS realtime.messages_2026_05_24;
-DROP TABLE IF EXISTS realtime.messages_2026_05_23;
-DROP TABLE IF EXISTS realtime.messages_2026_05_22;
-DROP TABLE IF EXISTS realtime.messages_2026_05_21;
+DROP TABLE IF EXISTS realtime.messages_2026_06_11;
+DROP TABLE IF EXISTS realtime.messages_2026_06_10;
+DROP TABLE IF EXISTS realtime.messages_2026_06_09;
+DROP TABLE IF EXISTS realtime.messages_2026_06_08;
+DROP TABLE IF EXISTS realtime.messages_2026_06_07;
+DROP TABLE IF EXISTS realtime.messages_2026_06_06;
+DROP TABLE IF EXISTS realtime.messages_2026_06_05;
 DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
@@ -391,9 +420,11 @@ DROP FUNCTION IF EXISTS storage.enforce_bucket_name_length();
 DROP FUNCTION IF EXISTS storage.can_insert_object(bucketid text, name text, owner uuid, metadata jsonb);
 DROP FUNCTION IF EXISTS storage.allow_only_operation(expected_operation text);
 DROP FUNCTION IF EXISTS storage.allow_any_operation(expected_operations text[]);
+DROP FUNCTION IF EXISTS realtime.wal2json_escape_identifier(name text);
 DROP FUNCTION IF EXISTS realtime.topic();
 DROP FUNCTION IF EXISTS realtime.to_regrole(role_name text);
 DROP FUNCTION IF EXISTS realtime.subscription_check_filters();
+DROP FUNCTION IF EXISTS realtime.send_binary(payload bytea, event text, topic text, private boolean);
 DROP FUNCTION IF EXISTS realtime.send(payload jsonb, event text, topic text, private boolean);
 DROP FUNCTION IF EXISTS realtime.quote_wal2json(entity regclass);
 DROP FUNCTION IF EXISTS realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer);
@@ -1233,119 +1264,114 @@ CREATE FUNCTION realtime.apply_rls(wal jsonb, max_record_bytes integer DEFAULT (
     LANGUAGE plpgsql
     AS $$
 declare
--- Regclass of the table e.g. public.notes
-entity_ regclass = (quote_ident(wal ->> 'schema') || '.' || quote_ident(wal ->> 'table'))::regclass;
+    -- Regclass of the table e.g. public.notes
+    entity_ regclass = (quote_ident(wal ->> 'schema') || '.' || quote_ident(wal ->> 'table'))::regclass;
 
--- I, U, D, T: insert, update ...
-action realtime.action = (
-    case wal ->> 'action'
-        when 'I' then 'INSERT'
-        when 'U' then 'UPDATE'
-        when 'D' then 'DELETE'
-        else 'ERROR'
-    end
-);
+    -- I, U, D, T: insert, update ...
+    action realtime.action = (
+        case wal ->> 'action'
+            when 'I' then 'INSERT'
+            when 'U' then 'UPDATE'
+            when 'D' then 'DELETE'
+            else 'ERROR'
+        end
+    );
 
--- Is row level security enabled for the table
-is_rls_enabled bool = relrowsecurity from pg_class where oid = entity_;
+    -- Is row level security enabled for the table
+    is_rls_enabled bool = relrowsecurity from pg_class where oid = entity_;
 
-subscriptions realtime.subscription[] = array_agg(subs)
-    from
-        realtime.subscription subs
-    where
-        subs.entity = entity_
-        -- Filter by action early - only get subscriptions interested in this action
-        -- action_filter column can be: '*' (all), 'INSERT', 'UPDATE', or 'DELETE'
-        and (subs.action_filter = '*' or subs.action_filter = action::text);
+    subscriptions realtime.subscription[] = array_agg(subs)
+        from
+            realtime.subscription subs
+        where
+            subs.entity = entity_
+            -- Filter by action early - only get subscriptions interested in this action
+            -- action_filter column can be: '*' (all), 'INSERT', 'UPDATE', or 'DELETE'
+            and (subs.action_filter = '*' or subs.action_filter = action::text);
 
--- Subscription vars
-roles regrole[] = array_agg(distinct us.claims_role::text)
-    from
-        unnest(subscriptions) us;
+    -- Subscription vars
+    working_role regrole;
+    working_selected_columns text[];
+    claimed_role regrole;
+    claims jsonb;
 
-working_role regrole;
-claimed_role regrole;
-claims jsonb;
+    subscription_id uuid;
+    subscription_has_access bool;
+    visible_to_subscription_ids uuid[] = '{}';
 
-subscription_id uuid;
-subscription_has_access bool;
-visible_to_subscription_ids uuid[] = '{}';
+    -- structured info for wal's columns
+    columns realtime.wal_column[];
+    -- previous identity values for update/delete
+    old_columns realtime.wal_column[];
 
--- structured info for wal's columns
-columns realtime.wal_column[];
--- previous identity values for update/delete
-old_columns realtime.wal_column[];
+    error_record_exceeds_max_size boolean = octet_length(wal::text) > max_record_bytes;
 
-error_record_exceeds_max_size boolean = octet_length(wal::text) > max_record_bytes;
+    -- Primary jsonb output for record
+    output jsonb;
 
--- Primary jsonb output for record
-output jsonb;
+    -- Loop record for iterating unique roles (outer loop)
+    role_record record;
+    -- Loop record for iterating unique selected_columns within a role (inner loop)
+    cols_record record;
+    -- Subscription ids visible at the role level (before fanning out by selected_columns)
+    visible_role_sub_ids uuid[] = '{}';
 
 begin
-perform set_config('role', null, true);
+    perform set_config('role', null, true);
 
-columns =
-    array_agg(
-        (
-            x->>'name',
-            x->>'type',
-            x->>'typeoid',
-            realtime.cast(
-                (x->'value') #>> '{}',
-                coalesce(
-                    (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
-                    (x->>'type')::regtype
-                )
-            ),
-            (pks ->> 'name') is not null,
-            true
-        )::realtime.wal_column
-    )
-    from
-        jsonb_array_elements(wal -> 'columns') x
-        left join jsonb_array_elements(wal -> 'pk') pks
-            on (x ->> 'name') = (pks ->> 'name');
-
-old_columns =
-    array_agg(
-        (
-            x->>'name',
-            x->>'type',
-            x->>'typeoid',
-            realtime.cast(
-                (x->'value') #>> '{}',
-                coalesce(
-                    (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
-                    (x->>'type')::regtype
-                )
-            ),
-            (pks ->> 'name') is not null,
-            true
-        )::realtime.wal_column
-    )
-    from
-        jsonb_array_elements(wal -> 'identity') x
-        left join jsonb_array_elements(wal -> 'pk') pks
-            on (x ->> 'name') = (pks ->> 'name');
-
-for working_role in select * from unnest(roles) loop
-
-    -- Update `is_selectable` for columns and old_columns
     columns =
         array_agg(
             (
-                c.name,
-                c.type_name,
-                c.type_oid,
-                c.value,
-                c.is_pkey,
-                pg_catalog.has_column_privilege(working_role, entity_, c.name, 'SELECT')
+                x->>'name',
+                x->>'type',
+                x->>'typeoid',
+                realtime.cast(
+                    (x->'value') #>> '{}',
+                    coalesce(
+                        (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
+                        (x->>'type')::regtype
+                    )
+                ),
+                (pks ->> 'name') is not null,
+                true
             )::realtime.wal_column
         )
         from
-            unnest(columns) c;
+            jsonb_array_elements(wal -> 'columns') x
+            left join jsonb_array_elements(wal -> 'pk') pks
+                on (x ->> 'name') = (pks ->> 'name');
 
     old_columns =
+        array_agg(
+            (
+                x->>'name',
+                x->>'type',
+                x->>'typeoid',
+                realtime.cast(
+                    (x->'value') #>> '{}',
+                    coalesce(
+                        (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
+                        (x->>'type')::regtype
+                    )
+                ),
+                (pks ->> 'name') is not null,
+                true
+            )::realtime.wal_column
+        )
+        from
+            jsonb_array_elements(wal -> 'identity') x
+            left join jsonb_array_elements(wal -> 'pk') pks
+                on (x ->> 'name') = (pks ->> 'name');
+
+    for role_record in
+        select claims_role
+        from (select distinct claims_role from unnest(subscriptions)) t
+        order by claims_role::text
+    loop
+        working_role := role_record.claims_role;
+
+        -- Update `is_selectable` for columns and old_columns (once per role)
+        columns =
             array_agg(
                 (
                     c.name,
@@ -1357,178 +1383,238 @@ for working_role in select * from unnest(roles) loop
                 )::realtime.wal_column
             )
             from
-                unnest(old_columns) c;
+                unnest(columns) c;
 
-    if action <> 'DELETE' and count(1) = 0 from unnest(columns) c where c.is_pkey then
-        return next (
-            jsonb_build_object(
-                'schema', wal ->> 'schema',
-                'table', wal ->> 'table',
-                'type', action
-            ),
-            is_rls_enabled,
-            -- subscriptions is already filtered by entity
-            (select array_agg(s.subscription_id) from unnest(subscriptions) as s where claims_role = working_role),
-            array['Error 400: Bad Request, no primary key']
-        )::realtime.wal_rls;
-
-    -- The claims role does not have SELECT permission to the primary key of entity
-    elsif action <> 'DELETE' and sum(c.is_selectable::int) <> count(1) from unnest(columns) c where c.is_pkey then
-        return next (
-            jsonb_build_object(
-                'schema', wal ->> 'schema',
-                'table', wal ->> 'table',
-                'type', action
-            ),
-            is_rls_enabled,
-            (select array_agg(s.subscription_id) from unnest(subscriptions) as s where claims_role = working_role),
-            array['Error 401: Unauthorized']
-        )::realtime.wal_rls;
-
-    else
-        output = jsonb_build_object(
-            'schema', wal ->> 'schema',
-            'table', wal ->> 'table',
-            'type', action,
-            'commit_timestamp', to_char(
-                ((wal ->> 'timestamp')::timestamptz at time zone 'utc'),
-                'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
-            ),
-            'columns', (
-                select
-                    jsonb_agg(
-                        jsonb_build_object(
-                            'name', pa.attname,
-                            'type', pt.typname
-                        )
-                        order by pa.attnum asc
-                    )
-                from
-                    pg_attribute pa
-                    join pg_type pt
-                        on pa.atttypid = pt.oid
-                where
-                    attrelid = entity_
-                    and attnum > 0
-                    and pg_catalog.has_column_privilege(working_role, entity_, pa.attname, 'SELECT')
-            )
-        )
-        -- Add "record" key for insert and update
-        || case
-            when action in ('INSERT', 'UPDATE') then
-                jsonb_build_object(
-                    'record',
+        old_columns =
+                array_agg(
                     (
+                        c.name,
+                        c.type_name,
+                        c.type_oid,
+                        c.value,
+                        c.is_pkey,
+                        pg_catalog.has_column_privilege(working_role, entity_, c.name, 'SELECT')
+                    )::realtime.wal_column
+                )
+                from
+                    unnest(old_columns) c;
+
+        if action <> 'DELETE' and count(1) = 0 from unnest(columns) c where c.is_pkey then
+            -- Fan out 400 error per distinct selected_columns for this role
+            for cols_record in
+                select selected_columns
+                from (select distinct selected_columns from unnest(subscriptions) s where s.claims_role = working_role) t
+                order by coalesce(array_to_string(selected_columns, ','), '')
+            loop
+                working_selected_columns := cols_record.selected_columns;
+                return next (
+                    jsonb_build_object(
+                        'schema', wal ->> 'schema',
+                        'table', wal ->> 'table',
+                        'type', action
+                    ),
+                    is_rls_enabled,
+                    (select array_agg(s.subscription_id) from unnest(subscriptions) as s where s.claims_role = working_role and (s.selected_columns is not distinct from working_selected_columns)),
+                    array['Error 400: Bad Request, no primary key']
+                )::realtime.wal_rls;
+            end loop;
+
+        -- The claims role does not have SELECT permission to the primary key of entity
+        elsif action <> 'DELETE' and sum(c.is_selectable::int) <> count(1) from unnest(columns) c where c.is_pkey then
+            -- Fan out 401 error per distinct selected_columns for this role
+            for cols_record in
+                select selected_columns
+                from (select distinct selected_columns from unnest(subscriptions) s where s.claims_role = working_role) t
+                order by coalesce(array_to_string(selected_columns, ','), '')
+            loop
+                working_selected_columns := cols_record.selected_columns;
+                return next (
+                    jsonb_build_object(
+                        'schema', wal ->> 'schema',
+                        'table', wal ->> 'table',
+                        'type', action
+                    ),
+                    is_rls_enabled,
+                    (select array_agg(s.subscription_id) from unnest(subscriptions) as s where s.claims_role = working_role and (s.selected_columns is not distinct from working_selected_columns)),
+                    array['Error 401: Unauthorized']
+                )::realtime.wal_rls;
+            end loop;
+
+        else
+            -- Create the prepared statement (once per role)
+            if is_rls_enabled and action <> 'DELETE' then
+                if (select 1 from pg_prepared_statements where name = 'walrus_rls_stmt' limit 1) > 0 then
+                    deallocate walrus_rls_stmt;
+                end if;
+                execute realtime.build_prepared_statement_sql('walrus_rls_stmt', entity_, columns);
+            end if;
+
+            -- Collect all visible subscription IDs for this role (filter check + RLS check)
+            visible_role_sub_ids = '{}';
+
+            for subscription_id, claims in (
+                    select
+                        subs.subscription_id,
+                        subs.claims
+                    from
+                        unnest(subscriptions) subs
+                    where
+                        subs.entity = entity_
+                        and subs.claims_role = working_role
+                        and (
+                            realtime.is_visible_through_filters(columns, subs.filters)
+                            or (
+                              action = 'DELETE'
+                              and realtime.is_visible_through_filters(old_columns, subs.filters)
+                            )
+                        )
+            ) loop
+
+                if not is_rls_enabled or action = 'DELETE' then
+                    visible_role_sub_ids = visible_role_sub_ids || subscription_id;
+                else
+                    -- Check if RLS allows the role to see the record
+                    perform
+                        -- Trim leading and trailing quotes from working_role because set_config
+                        -- doesn't recognize the role as valid if they are included
+                        set_config('role', trim(both '"' from working_role::text), true),
+                        set_config('request.jwt.claims', claims::text, true);
+
+                    execute 'execute walrus_rls_stmt' into subscription_has_access;
+
+                    if subscription_has_access then
+                        visible_role_sub_ids = visible_role_sub_ids || subscription_id;
+                    end if;
+                end if;
+            end loop;
+
+            perform set_config('role', null, true);
+
+            -- Inner loop: per distinct selected_columns for this role
+            for cols_record in
+                select selected_columns
+                from (select distinct selected_columns from unnest(subscriptions) s where s.claims_role = working_role) t
+                order by coalesce(array_to_string(selected_columns, ','), '')
+            loop
+                working_selected_columns := cols_record.selected_columns;
+
+                output = jsonb_build_object(
+                    'schema', wal ->> 'schema',
+                    'table', wal ->> 'table',
+                    'type', action,
+                    'commit_timestamp', to_char(
+                        ((wal ->> 'timestamp')::timestamptz at time zone 'utc'),
+                        'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+                    ),
+                    'columns', (
                         select
-                            jsonb_object_agg(
-                                -- if unchanged toast, get column name and value from old record
-                                coalesce((c).name, (oc).name),
-                                case
-                                    when (c).name is null then (oc).value
-                                    else (c).value
-                                end
+                            jsonb_agg(
+                                jsonb_build_object(
+                                    'name', pa.attname,
+                                    'type', pt.typname
+                                )
+                                order by pa.attnum asc
                             )
                         from
-                            unnest(columns) c
-                            full outer join unnest(old_columns) oc
-                                on (c).name = (oc).name
+                            pg_attribute pa
+                            join pg_type pt
+                                on pa.atttypid = pt.oid
+                            left join (
+                                select unnest(conkey) as pkey_attnum
+                                from pg_constraint
+                                where conrelid = entity_ and contype = 'p'
+                            ) pk on pk.pkey_attnum = pa.attnum
                         where
-                            coalesce((c).is_selectable, (oc).is_selectable)
-                            and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                            attrelid = entity_
+                            and attnum > 0
+                            and pg_catalog.has_column_privilege(working_role, entity_, pa.attname, 'SELECT')
+                            and (working_selected_columns is null or pa.attname = any(working_selected_columns) or pk.pkey_attnum is not null)
                     )
                 )
-            else '{}'::jsonb
-        end
-        -- Add "old_record" key for update and delete
-        || case
-            when action = 'UPDATE' then
-                jsonb_build_object(
-                        'old_record',
-                        (
-                            select jsonb_object_agg((c).name, (c).value)
-                            from unnest(old_columns) c
-                            where
-                                (c).is_selectable
-                                and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                -- Add "record" key for insert and update
+                || case
+                    when action in ('INSERT', 'UPDATE') then
+                        jsonb_build_object(
+                            'record',
+                            (
+                                select
+                                    jsonb_object_agg(
+                                        -- if unchanged toast, get column name and value from old record
+                                        coalesce((c).name, (oc).name),
+                                        case
+                                            when (c).name is null then (oc).value
+                                            else (c).value
+                                        end
+                                    )
+                                from
+                                    unnest(columns) c
+                                    full outer join unnest(old_columns) oc
+                                        on (c).name = (oc).name
+                                where
+                                    coalesce((c).is_selectable, (oc).is_selectable)
+                                    and (working_selected_columns is null or coalesce((c).name, (oc).name) = any(working_selected_columns) or coalesce((c).is_pkey, (oc).is_pkey))
+                                    and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                            )
                         )
-                    )
-            when action = 'DELETE' then
-                jsonb_build_object(
-                    'old_record',
+                    else '{}'::jsonb
+                end
+                -- Add "old_record" key for update and delete
+                || case
+                    when action = 'UPDATE' then
+                        jsonb_build_object(
+                                'old_record',
+                                (
+                                    select jsonb_object_agg((c).name, (c).value)
+                                    from unnest(old_columns) c
+                                    where
+                                        (c).is_selectable
+                                        and (working_selected_columns is null or (c).name = any(working_selected_columns) or (c).is_pkey)
+                                        and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                                )
+                            )
+                    when action = 'DELETE' then
+                        jsonb_build_object(
+                            'old_record',
+                            (
+                                select jsonb_object_agg((c).name, (c).value)
+                                from unnest(old_columns) c
+                                where
+                                    (c).is_selectable
+                                    and (working_selected_columns is null or (c).name = any(working_selected_columns) or (c).is_pkey)
+                                    and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                                    and ( not is_rls_enabled or (c).is_pkey ) -- if RLS enabled, we can't secure deletes so filter to pkey
+                            )
+                        )
+                    else '{}'::jsonb
+                end;
+
+                -- Filter visible_role_sub_ids to those matching the current selected_columns group
+                visible_to_subscription_ids = coalesce(
                     (
-                        select jsonb_object_agg((c).name, (c).value)
-                        from unnest(old_columns) c
-                        where
-                            (c).is_selectable
-                            and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
-                            and ( not is_rls_enabled or (c).is_pkey ) -- if RLS enabled, we can't secure deletes so filter to pkey
-                    )
-                )
-            else '{}'::jsonb
-        end;
+                        select array_agg(s.subscription_id)
+                        from unnest(subscriptions) s
+                        where s.claims_role = working_role
+                          and (s.selected_columns is not distinct from working_selected_columns)
+                          and s.subscription_id = any(visible_role_sub_ids)
+                    ),
+                    '{}'::uuid[]
+                );
 
-        -- Create the prepared statement
-        if is_rls_enabled and action <> 'DELETE' then
-            if (select 1 from pg_prepared_statements where name = 'walrus_rls_stmt' limit 1) > 0 then
-                deallocate walrus_rls_stmt;
-            end if;
-            execute realtime.build_prepared_statement_sql('walrus_rls_stmt', entity_, columns);
+                return next (
+                    output,
+                    is_rls_enabled,
+                    visible_to_subscription_ids,
+                    case
+                        when error_record_exceeds_max_size then array['Error 413: Payload Too Large']
+                        else '{}'
+                    end
+                )::realtime.wal_rls;
+            end loop;
+
         end if;
+    end loop;
 
-        visible_to_subscription_ids = '{}';
-
-        for subscription_id, claims in (
-                select
-                    subs.subscription_id,
-                    subs.claims
-                from
-                    unnest(subscriptions) subs
-                where
-                    subs.entity = entity_
-                    and subs.claims_role = working_role
-                    and (
-                        realtime.is_visible_through_filters(columns, subs.filters)
-                        or (
-                          action = 'DELETE'
-                          and realtime.is_visible_through_filters(old_columns, subs.filters)
-                        )
-                    )
-        ) loop
-
-            if not is_rls_enabled or action = 'DELETE' then
-                visible_to_subscription_ids = visible_to_subscription_ids || subscription_id;
-            else
-                -- Check if RLS allows the role to see the record
-                perform
-                    -- Trim leading and trailing quotes from working_role because set_config
-                    -- doesn't recognize the role as valid if they are included
-                    set_config('role', trim(both '"' from working_role::text), true),
-                    set_config('request.jwt.claims', claims::text, true);
-
-                execute 'execute walrus_rls_stmt' into subscription_has_access;
-
-                if subscription_has_access then
-                    visible_to_subscription_ids = visible_to_subscription_ids || subscription_id;
-                end if;
-            end if;
-        end loop;
-
-        perform set_config('role', null, true);
-
-        return next (
-            output,
-            is_rls_enabled,
-            visible_to_subscription_ids,
-            case
-                when error_record_exceeds_max_size then array['Error 413: Payload Too Large']
-                else '{}'
-            end
-        )::realtime.wal_rls;
-
-    end if;
-end loop;
-
-perform set_config('role', null, true);
+    perform set_config('role', null, true);
 end;
 $$;
 
@@ -1709,7 +1795,7 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
         string_agg(
           realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
           ','
-        ) filter (WHERE ppt.tablename IS NOT NULL AND ppt.tablename NOT LIKE '% %'),
+        ) filter (WHERE ppt.tablename IS NOT NULL),
         ''
       ) AS w2j_add_tables
     FROM pg_publication pp
@@ -1733,13 +1819,11 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
            'add-tables', pub.w2j_add_tables
          ) x
   ),
-  -- Count raw slot entries before apply_rls/subscription filter
   slot_count AS (
     SELECT count(*)::bigint AS cnt
     FROM w2j
     WHERE w2j.w2j_add_tables <> ''
   ),
-  -- Apply RLS and filter as before
   rls_filtered AS (
     SELECT xyz.wal, xyz.is_rls_enabled, xyz.subscription_ids, xyz.errors
     FROM w2j,
@@ -1750,14 +1834,11 @@ CREATE FUNCTION realtime.list_changes(publication name, slot_name name, max_chan
     WHERE w2j.w2j_add_tables <> ''
       AND xyz.subscription_ids[1] IS NOT NULL
   )
-  -- Real rows with slot count attached
   SELECT rf.wal, rf.is_rls_enabled, rf.subscription_ids, rf.errors, sc.cnt
   FROM rls_filtered rf, slot_count sc
 
   UNION ALL
 
-  -- Sentinel row: always returned when no real rows exist so Elixir can
-  -- always read slot_changes_count. Identified by wal IS NULL.
   SELECT null, null, null, null, sc.cnt
   FROM slot_count sc
   WHERE NOT EXISTS (SELECT 1 FROM rls_filtered)
@@ -1771,35 +1852,14 @@ $$;
 CREATE FUNCTION realtime.quote_wal2json(entity regclass) RETURNS text
     LANGUAGE sql IMMUTABLE STRICT
     AS $$
-      select
-        (
-          select string_agg('' || ch,'')
-          from unnest(string_to_array(nsp.nspname::text, null)) with ordinality x(ch, idx)
-          where
-            not (x.idx = 1 and x.ch = '"')
-            and not (
-              x.idx = array_length(string_to_array(nsp.nspname::text, null), 1)
-              and x.ch = '"'
-            )
-        )
-        || '.'
-        || (
-          select string_agg('' || ch,'')
-          from unnest(string_to_array(pc.relname::text, null)) with ordinality x(ch, idx)
-          where
-            not (x.idx = 1 and x.ch = '"')
-            and not (
-              x.idx = array_length(string_to_array(nsp.nspname::text, null), 1)
-              and x.ch = '"'
-            )
-          )
-      from
-        pg_class pc
-        join pg_namespace nsp
-          on pc.relnamespace = nsp.oid
-      where
-        pc.oid = entity
-    $$;
+  SELECT
+    realtime.wal2json_escape_identifier(nsp.nspname::text)
+    || '.'
+    || realtime.wal2json_escape_identifier(pc.relname::text)
+  FROM pg_class pc
+  JOIN pg_namespace nsp ON pc.relnamespace = nsp.oid
+  WHERE pc.oid = entity
+$$;
 
 
 --
@@ -1840,77 +1900,119 @@ $$;
 
 
 --
+-- Name: send_binary(bytea, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
+--
+
+CREATE FUNCTION realtime.send_binary(payload bytea, event text, topic text, private boolean DEFAULT true) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  generated_id uuid;
+BEGIN
+  BEGIN
+    generated_id := gen_random_uuid();
+
+    EXECUTE format('SET LOCAL realtime.topic TO %L', topic);
+
+    INSERT INTO realtime.messages (id, binary_payload, event, topic, private, extension)
+    VALUES (generated_id, payload, event, topic, private, 'broadcast');
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+  END;
+END;
+$$;
+
+
+--
 -- Name: subscription_check_filters(); Type: FUNCTION; Schema: realtime; Owner: -
 --
 
 CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-    /*
-    Validates that the user defined filters for a subscription:
-    - refer to valid columns that the claimed role may access
-    - values are coercable to the correct column type
-    */
-    declare
-        col_names text[] = coalesce(
-                array_agg(c.column_name order by c.ordinal_position),
-                '{}'::text[]
-            )
-            from
-                information_schema.columns c
-            where
-                format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
-                and pg_catalog.has_column_privilege(
-                    (new.claims ->> 'role'),
-                    format('%I.%I', c.table_schema, c.table_name)::regclass,
-                    c.column_name,
-                    'SELECT'
-                );
-        filter realtime.user_defined_filter;
-        col_type regtype;
-
-        in_val jsonb;
-    begin
-        for filter in select * from unnest(new.filters) loop
-            -- Filtered column is valid
-            if not filter.column_name = any(col_names) then
-                raise exception 'invalid column for filter %', filter.column_name;
-            end if;
-
-            -- Type is sanitized and safe for string interpolation
-            col_type = (
-                select atttypid::regtype
-                from pg_catalog.pg_attribute
-                where attrelid = new.entity
-                      and attname = filter.column_name
+declare
+    col_names text[] = coalesce(
+            array_agg(c.column_name order by c.ordinal_position),
+            '{}'::text[]
+        )
+        from
+            information_schema.columns c
+        where
+            format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
+            and pg_catalog.has_column_privilege(
+                (new.claims ->> 'role'),
+                format('%I.%I', c.table_schema, c.table_name)::regclass,
+                c.column_name,
+                'SELECT'
             );
-            if col_type is null then
-                raise exception 'failed to lookup type for column %', filter.column_name;
-            end if;
+    table_col_names text[] = coalesce(
+            array_agg(pa.attname),
+            '{}'::text[]
+        )
+        from
+            pg_attribute pa
+        where
+            pa.attrelid = new.entity
+            and pa.attnum > 0;
+    filter realtime.user_defined_filter;
+    col_type regtype;
+    in_val jsonb;
+    selected_col text;
+begin
+    for filter in select * from unnest(new.filters) loop
+        -- Filtered column is valid
+        if not filter.column_name = any(col_names) then
+            raise exception 'invalid column for filter %', filter.column_name;
+        end if;
 
-            -- Set maximum number of entries for in filter
-            if filter.op = 'in'::realtime.equality_op then
-                in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
-                if coalesce(jsonb_array_length(in_val), 0) > 100 then
-                    raise exception 'too many values for `in` filter. Maximum 100';
-                end if;
-            else
-                -- raises an exception if value is not coercable to type
-                perform realtime.cast(filter.value, col_type);
+        -- Type is sanitized and safe for string interpolation
+        col_type = (
+            select atttypid::regtype
+            from pg_catalog.pg_attribute
+            where attrelid = new.entity
+                  and attname = filter.column_name
+        );
+        if col_type is null then
+            raise exception 'failed to lookup type for column %', filter.column_name;
+        end if;
+        if filter.op = 'in'::realtime.equality_op then
+            in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
+            if coalesce(jsonb_array_length(in_val), 0) > 100 then
+                raise exception 'too many values for `in` filter. Maximum 100';
             end if;
+        else
+            -- raises an exception if value is not coercable to type
+            perform realtime.cast(filter.value, col_type);
+        end if;
+    end loop;
 
+    -- Validate that selected_columns reference columns the role can SELECT
+    if new.selected_columns is not null then
+        for selected_col in select * from unnest(new.selected_columns) loop
+            if not selected_col = any(col_names) then
+                raise exception 'invalid column for select %', selected_col;
+            end if;
         end loop;
+    end if;
 
-        -- Apply consistent order to filters so the unique constraint on
-        -- (subscription_id, entity, filters) can't be tricked by a different filter order
-        new.filters = coalesce(
-            array_agg(f order by f.column_name, f.op, f.value),
-            '{}'
-        ) from unnest(new.filters) f;
+    -- Apply consistent order to filters so the unique constraint on
+    -- (subscription_id, entity, filters) can't be tricked by a different filter order
+    new.filters = coalesce(
+        array_agg(f order by f.column_name, f.op, f.value),
+        '{}'
+    ) from unnest(new.filters) f;
 
-        return new;
-    end;
-    $$;
+    -- Normalize selected_columns order so ARRAY['a','b'] and ARRAY['b','a'] are
+    -- treated as the same subscription group in apply_rls
+    new.selected_columns = (
+        select array_agg(c order by c)
+        from unnest(new.selected_columns) c
+    );
+
+    return new;
+end;
+$$;
 
 
 --
@@ -1930,6 +2032,18 @@ CREATE FUNCTION realtime.topic() RETURNS text
     LANGUAGE sql STABLE
     AS $$
 select nullif(current_setting('realtime.topic', true), '')::text;
+$$;
+
+
+--
+-- Name: wal2json_escape_identifier(text); Type: FUNCTION; Schema: realtime; Owner: -
+--
+
+CREATE FUNCTION realtime.wal2json_escape_identifier(name text) RETURNS text
+    LANGUAGE sql IMMUTABLE STRICT
+    AS $$
+  -- Prefix `\`, `,`, `.`, and any whitespace with `\`
+  SELECT regexp_replace(name, '([\\,.[:space:]])', '\\\1', 'g')
 $$;
 
 
@@ -4234,16 +4348,17 @@ CREATE TABLE realtime.messages (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea
 )
 PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_05_21; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_21 (
+CREATE TABLE realtime.messages_2026_06_05 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4251,15 +4366,16 @@ CREATE TABLE realtime.messages_2026_05_21 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea
 );
 
 
 --
--- Name: messages_2026_05_22; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_22 (
+CREATE TABLE realtime.messages_2026_06_06 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4267,15 +4383,17 @@ CREATE TABLE realtime.messages_2026_05_22 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_23; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_23 (
+CREATE TABLE realtime.messages_2026_06_07 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4283,15 +4401,17 @@ CREATE TABLE realtime.messages_2026_05_23 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_24; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_24 (
+CREATE TABLE realtime.messages_2026_06_08 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4299,15 +4419,17 @@ CREATE TABLE realtime.messages_2026_05_24 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_25; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_09; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_25 (
+CREATE TABLE realtime.messages_2026_06_09 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4315,15 +4437,17 @@ CREATE TABLE realtime.messages_2026_05_25 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_26; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_10; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_26 (
+CREATE TABLE realtime.messages_2026_06_10 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4331,15 +4455,17 @@ CREATE TABLE realtime.messages_2026_05_26 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
 --
--- Name: messages_2026_05_27; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_11; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_05_27 (
+CREATE TABLE realtime.messages_2026_06_11 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4347,7 +4473,9 @@ CREATE TABLE realtime.messages_2026_05_27 (
     private boolean DEFAULT false,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
 );
 
 
@@ -4374,6 +4502,7 @@ CREATE TABLE realtime.subscription (
     claims_role regrole GENERATED ALWAYS AS (realtime.to_regrole((claims ->> 'role'::text))) STORED NOT NULL,
     created_at timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     action_filter text DEFAULT '*'::text,
+    selected_columns text[],
     CONSTRAINT subscription_action_filter_check CHECK ((action_filter = ANY (ARRAY['*'::text, 'INSERT'::text, 'UPDATE'::text, 'DELETE'::text])))
 );
 
@@ -4538,52 +4667,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_05_21; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_21 FOR VALUES FROM ('2026-05-21 00:00:00') TO ('2026-05-22 00:00:00');
-
-
---
--- Name: messages_2026_05_22; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_22 FOR VALUES FROM ('2026-05-22 00:00:00') TO ('2026-05-23 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_05 FOR VALUES FROM ('2026-06-05 00:00:00') TO ('2026-06-06 00:00:00');
 
 
 --
--- Name: messages_2026_05_23; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_23 FOR VALUES FROM ('2026-05-23 00:00:00') TO ('2026-05-24 00:00:00');
-
-
---
--- Name: messages_2026_05_24; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_24 FOR VALUES FROM ('2026-05-24 00:00:00') TO ('2026-05-25 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_06 FOR VALUES FROM ('2026-06-06 00:00:00') TO ('2026-06-07 00:00:00');
 
 
 --
--- Name: messages_2026_05_25; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_25 FOR VALUES FROM ('2026-05-25 00:00:00') TO ('2026-05-26 00:00:00');
-
-
---
--- Name: messages_2026_05_26; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_26 FOR VALUES FROM ('2026-05-26 00:00:00') TO ('2026-05-27 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_07 FOR VALUES FROM ('2026-06-07 00:00:00') TO ('2026-06-08 00:00:00');
 
 
 --
--- Name: messages_2026_05_27; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_05_27 FOR VALUES FROM ('2026-05-27 00:00:00') TO ('2026-05-28 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_08 FOR VALUES FROM ('2026-06-08 00:00:00') TO ('2026-06-09 00:00:00');
+
+
+--
+-- Name: messages_2026_06_09; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_09 FOR VALUES FROM ('2026-06-09 00:00:00') TO ('2026-06-10 00:00:00');
+
+
+--
+-- Name: messages_2026_06_10; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_10 FOR VALUES FROM ('2026-06-10 00:00:00') TO ('2026-06-11 00:00:00');
+
+
+--
+-- Name: messages_2026_06_11; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_11 FOR VALUES FROM ('2026-06-11 00:00:00') TO ('2026-06-12 00:00:00');
 
 
 --
@@ -5812,14 +5941,44 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1778685954948	2026-05-13 10:00:00+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1778685950565, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 30.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	30.8	\N	\N	\N	scontrino	completed	2026-05-13 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1778912688111	2026-05-16 06:24:48.111+00	Pillon Giovanni	{"id": "500791", "cap": "31032", "nome": "Pillon Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "0422785031", "indirizzo": "VIA PESCHIERE 108 - CONSCIO", "provincia": "TV", "searchText": "pillon giovanni casale sul sile ", "telefonoOriginale": "0422785031"}	0422785031	Simone	[]	[{"id": 1778912672746, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-05-16 06:24:48.111+00	t	user_1778911488203	vendita	f	f	f	in_attesa	\N
 1778923420712	2026-05-16 09:23:40.712+00	GUMIERO DAMIANO	\N	\N	Simone	[]	[{"id": 1778923379140, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1778923386396, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-05-16 09:23:40.712+00	t	user_1778911488203	vendita	f	f	f	in_attesa	\N
-1779282664880	2026-05-20 13:11:04.88+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1779282017655, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-20 13:11:04.88+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1779461468072	2026-05-22 14:51:08.072+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Simone	[]	[{"id": 1779461458629, "nome": "Palo iniettore con contalitri", "prezzo": 325, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	scontrino	completed	2026-05-22 14:51:08.072+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
-1779465179944	2026-05-22 15:52:59.944+00	Res H Project Srl	{"id": "513792", "cap": "32100", "nome": "Res H Project Srl", "email": "s.depra@rch.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BELLUNO", "telefono": "3487110130", "indirizzo": "VIA GHARIBALDI, 3", "provincia": "BL", "searchText": "res h project srl belluno ", "telefonoOriginale": "3487110130"}	3487110130	Admin	[]	[{"id": 1779465158651, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1779465173259, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	fattura	completed	2026-05-22 15:52:59.944+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1779466805441	2026-05-22 16:20:05.021+00	Barison Michele	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2", "prezzo": 839, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1077924"}]	[]	839	\N	\N	\N	scontrino	completed	2026-05-22 16:20:05.021+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1779466950557	2026-05-22 16:22:30.556+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1779466927509, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 89.3, "quantita": 3, "matricola": null, "aliquotaIva": 10}]	267.9	\N	\N	\N	fattura	completed	2026-05-22 16:22:30.556+00	t	user_1779453953714	vendita	f	f	f	in_attesa	\N
 1779517968789	2026-05-22 10:00:00+00	.	\N	\N	Simone	[]	[{"id": 1779517953338, "nome": "Zaino Volpi Vita 12", "prezzo": 126.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	126.9	\N	\N	\N	scontrino	completed	2026-05-22 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1779518952352	2026-05-23 10:00:00+00	Benotto Andreina via Bragato 15 Sambughé Preganziol 340 8336931	\N	\N	Simone	[]	[{"id": 1779518945226, "nome": "Robot Segway Navimow i108, completo di installazione ", "prezzo": 1400, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	1400	\N	\N	\N	scontrino	completed	2026-05-23 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1779526654314	2026-05-23 08:57:32.125+00	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	\N	\N	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600034499"}, {"brand": "Stihl", "model": "Tagliasiepi HLA 56", "prezzo": 249, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "944036782"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912863193"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703104544"}]	[]	548	\N	\N	\N	scontrino	completed	2026-05-23 08:57:32.125+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779465179944	2026-05-22 10:00:00+00	Res H Project Srl	{"id": "513792", "cap": "32100", "nome": "Res H Project Srl", "email": "s.depra@rch.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BELLUNO", "telefono": "3487110130", "indirizzo": "VIA GHARIBALDI, 3", "provincia": "BL", "searchText": "res h project srl belluno ", "telefonoOriginale": "3487110130"}	3487110130	Simone	[]	[{"id": 1779465158651, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1779465173259, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	fattura	completed	2026-05-22 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779714968467	2026-05-25 13:16:08.466+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1779714944688, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	31.2	\N	\N	\N	scontrino	completed	2026-05-25 13:16:08.466+00	t	user_1779693791262	vendita	f	f	f	in_attesa	\N
+1779774602625	2026-05-26 10:00:00+00	Camerin Federica via Ottavio Ottavi 10/D Treviso	\N	\N	Simone	[]	[{"id": 1779774463050, "nome": "Centralina ZA 150 Premium, sistema antizanzare a due prodotti e doppia linea di uscita, compresa installazione impianto", "prezzo": 4700, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	4700	\N	\N	Bonifico caparra all'ordine del 30% pari a 1.410 €\n+34 648 87 71 65   federica.camerin87@gmail.com    CMRFRC87H46L407J	scontrino	completed	2026-05-26 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779805809416	2026-05-26 14:30:08.112+00	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	{"id": "401099", "cap": "31056", "nome": "RIST.ALL'ORSO SAS-EREDI Tonet Angelo", "email": "hotelorso@hotelorso.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "0422849173", "indirizzo": "VIA G. D'ANNUNZIO, 138 - BIANCADE", "provincia": "TV", "searchText": "rist.all'orso sas-eredi tonet angelo roncade ", "telefonoOriginale": "0422849173"}	0422849173	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 100.1", "prezzo": 390, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451949950"}, {"brand": "Stihl", "model": "Batteria AP 30 (270 Wh)", "prezzo": 260, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "546061414"}, {"brand": "Stihl", "model": "Caricabatteria AL 301", "prezzo": 125, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "718634349"}]	[]	775	\N	\N	\N	fattura	completed	2026-05-26 14:30:08.112+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779806608366	2026-05-26 14:43:27.978+00	Nardin Marco 3493118388	\N	\N	Simone	[{"brand": "Stihl", "model": "FS55R", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "838434200"}]	[{"id": 1779806597030, "nome": "Filo 2,4", "prezzo": 8, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	247	\N	\N	\N	scontrino	completed	2026-05-26 14:43:27.978+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1779811068981	2026-05-26 15:57:48.98+00	Carpenedo Thomas via Foscarini 23 Treviso	\N	\N	Simone	[]	[{"id": 1779811005220, "nome": "Zhalt Evolution Connect, compreso installazione impianto", "prezzo": 2300, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2300	\N	\N	Caparra 700,00 € i.c. Saldo al collaudo dell'impianto	scontrino	completed	2026-05-26 15:57:48.98+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779951604725	2026-05-28 07:00:04.725+00	.	\N	\N	Simone	[]	[{"id": 1779951549067, "nome": "AllRound 20 kg", "prezzo": 64.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	64.5	\N	\N	\N	scontrino	completed	2026-05-28 07:00:04.725+00	t	user_1779950675461	vendita	f	f	f	in_attesa	\N
+1779714812301	2026-05-25 10:00:00+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1779714810201, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	24.7	\N	\N	\N	scontrino	completed	2026-05-25 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779811600881	2026-05-26 10:00:00+00	Gianni Giardini Di Tudora Bogdan Ion	{"id": "510681", "cap": "31055", "nome": "Gianni Giardini Di Tudora Bogdan Ion", "email": "tudoragianni@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "QUINTO DI TREVISO", "telefono": "3405574144", "indirizzo": "VIA BOIAGO, 15B", "provincia": "TV", "searchText": "gianni giardini di tudora bogdan ion quinto di treviso ", "telefonoOriginale": "3405574144"}	3405574144	Simone	[]	[{"id": 1779811595093, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 57.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	57.7	\N	\N	\N	scontrino	completed	2026-05-26 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779961045486	2026-05-28 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779961041486, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-28 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779983622938	2026-05-28 10:00:00+00	Barbon Ivan	{"id": "511048", "cap": "31056", "nome": "Barbon Ivan", "email": "", "nomeP": "", "cognome": "", "contatto": "Cel Salvian Stefano", "localita": "RONCADE", "telefono": "3493865038", "indirizzo": "VIA GALLI, 85/D - BIANCADE", "provincia": "TV", "searchText": "barbon ivan roncade cel salvian stefano", "telefonoOriginale": "3493865038"}	3493865038	Simone	[]	[{"id": 1779983612966, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 57.7, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	461.6	\N	\N	\N	scontrino	completed	2026-05-28 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780041076269	2026-05-29 10:00:00+00	Schiavinato Amorino	{"id": "504602", "cap": "31032", "nome": "Schiavinato Amorino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "0422788482", "indirizzo": "LUGHIGNANO", "provincia": "TV", "searchText": "schiavinato amorino casale sul sile ", "telefonoOriginale": "0422788482"}	0422788482	Simone	[{"brand": "Stihl", "model": "Motosega MSA 60.0 C", "prezzo": 369, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452325283"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703210773"}]	[{"nome": "Olio catena bioplus ", "prezzo": 6.5, "quantita": 1, "aliquotaIva": 22}]	375.5	\N	\N	\N	scontrino	completed	2026-05-29 10:00:00+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780064422262	2026-05-29 14:20:22.251+00	Carniato Mario	{"id": "504640", "cap": "31100", "nome": "Carniato Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3454395117", "indirizzo": "VIA ROTA, 9", "provincia": "TV", "searchText": "carniato mario treviso ", "telefonoOriginale": "3454395117"}	3454395117	Simone	[]	[{"id": 1780064385028, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1780064412463, "nome": "NPK Enduring 5 kg 5 kg", "prezzo": 41, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	95.8	\N	\N	\N	scontrino	completed	2026-05-29 14:20:22.251+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1780067654781	2026-05-29 15:14:14.781+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1780067648804, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 57.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	57.7	\N	\N	\N	scontrino	completed	2026-05-29 15:14:14.781+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1780120954032	2026-05-30 06:02:32.677+00	Fantinello Alex 3467577542	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 94 RC-E Brushcutter", "prezzo": 419, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "549141064"}]	[{"id": 1780120891524, "nome": "Filo 2,4", "prezzo": 8, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780120906756, "nome": "Visiera", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780120935605, "nome": "Olio HP Ultra ", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	458.5	\N	\N	\N	scontrino	completed	2026-05-30 06:02:32.677+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780125541248	2026-05-30 07:19:01.248+00	Pontello Alessandro	\N	\N	Simone	[]	[{"id": 1780125532671, "nome": "Zaino Volpi Vita16", "prezzo": 147.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	147.9	\N	\N	\N	scontrino	completed	2026-05-30 07:19:01.248+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780302314006	2026-06-01 08:25:12.366+00	Marcolin Anna 3407234756 (Fabrizio)	\N	\N	Simone	[{"brand": "Stihl", "model": "Forbice elettronica ASA 20.0", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955859434"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "BH051H019"}, {"brand": "Stihl", "model": "Caricabatteria AL 1.0.A", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707635787"}]	[]	219	\N	\N	\N	scontrino	completed	2026-06-01 08:25:12.366+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780305316572	2026-06-01 09:15:16.09+00	Santolin Enrico	{"id": "506585", "cap": "31052", "nome": "Santolin Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3487005813", "indirizzo": "VICOLO PIAVESELLA, 14 - CANDELU'", "provincia": "TV", "searchText": "santolin enrico maserada sul piave ", "telefonoOriginale": "3487005813"}	3487005813	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 50.1", "prezzo": 169, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452196718"}]	[]	169	\N	\N	\N	scontrino	completed	2026-06-01 09:15:16.09+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780321773022	2026-06-01 13:49:31.813+00	Schiavinato Guglielmo 3405665534	\N	\N	Simone	[{"brand": "Echo", "model": "Motosega CS-2511TES", "prezzo": 509, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C74638145237"}]	[]	509	\N	\N	\N	scontrino	completed	2026-06-01 13:49:31.813+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780487909670	2026-06-03 11:58:29.67+00	Cooperativa Meolese - SOCIETA' Cooperativa	{"id": "504332", "cap": "30020", "nome": "Cooperativa Meolese - SOCIETA' Cooperativa", "email": "amministrazione@cooperativameolese.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3371060305", "indirizzo": "VIA DELLE INDUSTRIE II, 90", "provincia": "VE", "searchText": "cooperativa meolese - societa' cooperativa meolo ", "telefonoOriginale": "3371060305"}	3371060305	Simone	[]	[{"id": 1780487876826, "nome": "Olio 10w 30 Honda", "prezzo": 8.3, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780487899896, "nome": "Tuta 3M XL", "prezzo": 10, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	28.3	\N	\N	\N	fattura	completed	2026-06-03 11:58:29.67+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1780132463564	2026-05-30 10:00:00+00	Perissinotto Marco	{"id": "512033", "cap": "31057", "nome": "Perissinotto Marco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "", "indirizzo": "VIA FRATELLI BANDIERA, 15", "provincia": "TV", "searchText": "perissinotto marco silea ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1780132461168, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.9	\N	\N	\N	scontrino	completed	2026-05-30 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780549906170	2026-06-04 05:11:46.17+00	De Demo Daniele	{"id": "500278", "cap": "31030", "nome": "De Demo Daniele", "email": "polo.chiara@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3480880270", "indirizzo": "VIA VALDEMONEGHE, 18/A", "provincia": "TV", "searchText": "de demo daniele carbonera ", "telefonoOriginale": "3480880270"}	3480880270	Simone	[]	[{"id": 1780549871774, "nome": "Granustar 20 kg", "prezzo": 70.3, "quantita": 8, "matricola": null, "aliquotaIva": 4}]	562.4	\N	\N	\N	fattura	completed	2026-06-04 05:11:46.17+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1780588204979	2026-06-04 10:00:00+00	Tubia Matteo	{"id": "509612", "cap": "31056", "nome": "Tubia Matteo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3493557213", "indirizzo": "VIA SANT'ANTONIO, 11 - BIANCADE", "provincia": "TV", "searchText": "tubia matteo roncade ", "telefonoOriginale": "3493557213"}	3493557213	Simone	[]	[{"id": 1780588199884, "nome": "Freezanz Professional PMC (New) - Lt. 1 Lt. 1", "prezzo": 45, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	45	\N	\N	\N	scontrino	completed	2026-06-04 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780299680792	2026-06-01 10:00:00+00	Michielon Sergio	{"id": "202558", "cap": "31032", "nome": "Michielon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "3394273510", "indirizzo": "VIA DELLE GRAZIE 35 - LUGHIGNANO", "provincia": "TV", "searchText": "michielon sergio casale sul sile ", "telefonoOriginale": "3394273510"}	3394273510	Simone	[{"brand": "Stihl", "model": "Soffiatore SR 430 Atomizzatore", "prezzo": 750, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370196554"}]	[]	750	\N	\N	\N	scontrino	completed	2026-06-01 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1779282664880	2026-05-20 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779282017655, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-20 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1779721753728	2026-05-25 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779721736191, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1779721746796, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	165.4	\N	\N	\N	scontrino	completed	2026-05-25 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1780642860247	2026-06-05 07:01:00.247+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Admin	[]	[{"id": 1780642855209, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	246.5	\N	\N	\N	scontrino	completed	2026-06-05 07:01:00.247+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1780649587125	2026-06-05 08:53:06.437+00	Officine Carraretto Loris Srl	{"id": "202387", "cap": "31032", "nome": "Officine Carraretto Loris Srl", "email": "alessandra.carraretto@carrarettosrl.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "3283082840", "indirizzo": "VIA C. GARDAN 2", "provincia": "TV", "searchText": "officine carraretto loris srl casale sul sile ", "telefonoOriginale": "3283082840"}	3283082840	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 60.1", "prezzo": 280, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452957720"}]	[]	280	\N	\N	\N	fattura	completed	2026-06-05 08:53:06.437+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1780662346023	2026-06-05 12:25:46.023+00	Buosi Mosè 389 6312244	\N	\N	Simone	[]	[{"id": 1780662273932, "nome": "MOTOCULTIVATORE GRILLO G85, MOTORE HONDA GX 270, RUOTE 942412 4.00-10, FRESA 984511 CM 58", "prezzo": 3600, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780662297721, "nome": "RUOTE 900412 5.00-10 PER DIFFERENZA", "prezzo": 100, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780662307358, "nome": "FRESA CONTROROTANTE 58 CM, COMPRESO ZAVORRA 11 KG 9G3211, PER DIFFERENZA", "prezzo": 150, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3850	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
+1780677285718	2026-06-05 16:34:45.169+00	Salvalaio Lorenzo 3491428794	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore KM 94 RC-E", "prezzo": 455, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545319888"}]	[{"id": 1780677267182, "nome": "Testina autocut 26-2", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	480	\N	\N	\N	scontrino	completed	2026-06-05 16:34:45.169+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1780679006531	2026-06-05 10:00:00+00	Cenedese Andrea	{"cf": "", "id": "244f09c0-9929-48c0-bad3-89de8885fc48", "cap": "31048", "sdi": "", "nome": "Cenedese Andrea", "piva": "", "email": "andrea.cenedese@alice.it", "nomeP": "Cenedese Andrea", "_fonte": "db", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta "}	3318200684	Simone	[{"brand": "Echo", "model": "Motosega DCS-2500T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535022520"}, {"brand": "Echo", "model": "Batteria LBP-56V125", "prezzo": 469, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935022196"}, {"brand": "Echo", "model": "Batteria LBP-56V125 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935022265"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435038235"}]	[{"nome": "Catena", "prezzo": 15, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 15, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena", "prezzo": 12.5, "quantita": 1, "aliquotaIva": 22}]	970.5	\N	\N	\N	scontrino	completed	2026-06-05 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1780929722503	2026-06-08 14:42:01.801+00	Oasi Garden Snc Di Casagrande G. & C.	{"id": "510784", "cap": "31050", "nome": "Oasi Garden Snc Di Casagrande G. & C.", "email": "oasigardensnc@libero.it", "nomeP": "", "cognome": "", "contatto": "Cel Francesca", "localita": "VEDELAGO", "telefono": "3289543922", "indirizzo": "VIA CA' MATTA 31- CASACORBA", "provincia": "TV", "searchText": "oasi garden snc di casagrande g. & c. vedelago cel francesca", "telefonoOriginale": "3289543922"}	3289543922	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLA 66", "prezzo": 400, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452961854"}]	[]	400	\N	\N	\N	fattura	completed	2026-06-08 14:42:01.801+00	t	user_1770584612559	vendita	f	f	f	\N	\N
 \.
 
 
@@ -5831,10 +5990,14 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 577	2026-05-22 16:19:42.104+00	CARICO	Honda	Rasaerba HRN536C2	MCSF1077924	\N	\N	\N	available	user_1775131564325	main	t
 578	2026-05-22 16:20:05.021+00	SCARICO	Honda	Rasaerba HRN536C2	MCSF1077924	Barison Michele	0	0	sold	user_1775131564325	main	f
 178	2026-02-16 08:50:59.119+00	SCARICO	STIHL	Batteria AK 30.0S	912736933	Bisetto Mario	0	0	sold	user_1769961017929	main	f
+595	2026-05-26 14:28:19.422+00	CARICO	Stihl	Tagliasiepi HSA 100.1	451949950	\N	\N	\N	available	user_1775131564325	main	t
 177	2026-02-16 08:50:58.969+00	SCARICO	STIHL	Caricabatterie AL 101	702817744	Bisetto Mario	0	0	sold	user_1769961017929	main	f
 183	2026-02-19 09:12:21.296+00	CARICO	STIHL	Motosega MSA 190.0 T	452310977	\N	\N	\N	available	user_1769961017929	main	f
+609	2026-05-30 06:00:38.598+00	CARICO	Stihl	Decespugliatore FS 94 RC-E Brushcutter	549141064	\N	\N	\N	available	user_1775131564325	main	t
 188	2026-02-19 09:34:06.327+00	SCARICO	STIHL	Tagliabordi FSA 30.0	838110682	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
 193	2026-02-19 10:53:27.211+00	SCARICO	STIHL	Motosega MSA 190.0 T	452310979	AZ. AGR. Vivai Piante Di Dragancea Andrei	0	0	sold	user_1769961017929	main	f
+622	2026-06-01 13:49:31.813+00	SCARICO	Echo	Motosega CS-2511TES	C74638145237	Schiavinato Guglielmo 3405665534	0	0	sold	user_1775131564325	main	f
+636	2026-06-08 14:42:01.801+00	SCARICO	Stihl	Tagliasiepi HLA 66	452961854	Oasi Garden Snc Di Casagrande G. & C.	0	0	sold	user_1770584612559	main	f
 200	2026-02-21 10:36:10.272+00	CARICO	STIHL	Motosega MS 194 T 1/4 P Chainsaw	540455888	\N	\N	\N	available	user_1769961017929	main	f
 215	2026-02-28 08:35:43.824+00	SCARICO	NEGRI	Biotrituratore R95BRAHP65	27489101	Bergamo Nello - Impresa Edile	0	0	sold	user_1769961017929	main	f
 222	2026-03-02 16:56:25.432+00	CARICO	STIHL	Troncatrice TS 910.0i, 400mm/16"	196978666	\N	\N	\N	available	user_1769961017929	main	t
@@ -5873,9 +6036,13 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 184	2026-02-19 09:14:24.352+00	SCARICO	STIHL	Motosega MSA 190.0 T	452310977	Sartori Luca	0	0	sold	user_1769961017929	main	f
 189	2026-02-19 09:34:06.583+00	SCARICO	STIHL	Caricabatterie AL 1	935280185	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
 190	2026-02-19 09:34:06.74+00	SCARICO	STIHL	Batteria AS 2	937056842	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
+596	2026-05-26 14:29:06.03+00	CARICO	Stihl	Batteria AP 30 (270 Wh)	546061414	\N	\N	\N	available	user_1775131564325	main	t
+610	2026-05-30 06:02:32.677+00	SCARICO	Stihl	Decespugliatore FS 94 RC-E Brushcutter	549141064	Fantinello Alex 3467577542	0	0	sold	user_1775131564325	main	f
 198	2026-02-20 14:08:39.828+00	CARICO	VOLPI	Potatore KVS8000	SL3325.372NB	\N	\N	\N	available	user_1769961017929	main	f
 201	2026-02-21 10:40:26.358+00	SCARICO	STIHL	Motosega MS 194 T 1/4 P Chainsaw	540455888	Chiericati Massimo	0	0	sold	user_1769961017929	main	f
+623	2026-06-05 08:52:46.759+00	CARICO	Stihl	Tagliasiepi HSA 60.1	452957720	\N	\N	\N	available	user_1775131564325	main	t
 207	2026-02-22 21:29:42.07+00	SCARICO	STIHL	RM 248.3 T	451394256	Habitat Natura Di Simone Taffarello	0	0	sold	user_1770584612559	main	f
+624	2026-06-05 08:53:06.438+00	SCARICO	Stihl	Tagliasiepi HSA 60.1	452957720	Officine Carraretto Loris Srl	0	0	sold	user_1775131564325	main	f
 223	2026-03-02 16:59:14.322+00	SCARICO	STIHL	Troncatrice TS 910.0i, 400mm/16"	196978666	Edil Demi Di Covassin Demido	0	0	sold	user_1769961017929	main	f
 226	2026-03-03 09:07:49.161+00	CARICO	STIHL	Tosaerba RMA 239.1	451990095	\N	\N	\N	available	user_1769961017929	main	t
 229	2026-03-03 09:10:52.138+00	CARICO	STIHL	AL 101	986413411	\N	\N	\N	available	user_1769961017929	main	t
@@ -5914,9 +6081,14 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 105	2026-01-09 11:00:00+00	VENDITA	ACCESSORI	TRONCARAMI RS 750 x2	NOMAT-1770546596554	MICHELE GOLFETTO	134	134	sold	Simone	main	f
 110	2026-01-12 11:00:00+00	VENDITA	Echo	Echo Motosega ECHO DCS 2500T (SN: C 81535021918) + BATTERIA LBP 56V 125  E83935013630 + CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA	NOMAT-1770571853303	MORO ENRICO	708	708	sold	Simone	main	f
 192	2026-02-19 10:50:02.949+00	CARICO	STIHL	Motosega MSA 190.0 T	452310979	\N	\N	\N	available	user_1769961017929	main	f
+597	2026-05-26 14:29:46.381+00	CARICO	Stihl	Caricabatteria AL 301	718634349	\N	\N	\N	available	user_1775131564325	main	t
+600	2026-05-26 14:30:09.017+00	SCARICO	Stihl	Caricabatteria AL 301	718634349	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
 199	2026-02-20 14:09:50.604+00	SCARICO	VOLPI	Potatore KVS8000	SL3325.372NB	Bonetto Franco	0	0	sold	user_1769961017929	main	f
+611	2026-06-01 07:41:02.447+00	CARICO	Stihl	Soffiatore SR 430 Atomizzatore	370196554	\N	\N	\N	available	user_1770584612559	main	t
 205	2026-02-22 20:46:02.271+00	CARICO	STIHL	RM 248.3 T	451394256	\N	\N	\N	available	user_1770584612559	main	t
 257	2026-03-07 08:35:14.711+00	CARICO	STIHL	 AL 101	702287103	\N	\N	\N	available	user_1772723709793	main	t
+612	2026-06-01 07:41:19.953+00	SCARICO	Stihl	Soffiatore SR 430 Atomizzatore	370196554	Michielon Sergio	0	0	sold	user_1770584612559	main	f
+625	2026-06-05 16:33:21.821+00	CARICO	Stihl	Decespugliatore KM 94 RC-E	545319888	\N	\N	\N	available	user_1775131564325	main	t
 162	2026-02-02 11:00:00+00	VENDITA	ACCESSORI	61 PMM3 Piccolo Micro Mini Catena x3 + catena m47-91 + CATENA 91 - 53M x3 + CATENA 1/4 1,1 52M x3	NOMAT-1771001013437	Bimetal	132.55	132.55	sold	Simone	main	f
 214	2026-02-28 08:35:04.363+00	CARICO	NEGRI	Biotrituratore R95BRAHP65	27489101	\N	\N	\N	available	user_1769961017929	main	t
 220	2026-02-28 11:02:45.037+00	CARICO	STIHL	Decespugliatore FSA 60 R	450921356	\N	\N	\N	available	user_1769961017929	main	t
@@ -5962,6 +6134,10 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 322	2026-03-18 10:19:50.325+00	SCARICO	STIHL	Caricabatteria AL 5-2	709055579	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
 584	2026-05-23 08:49:33.985+00	SCARICO	Stihl	Soffiatore BGA 50.0	600034499	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
 585	2026-05-23 08:49:34.249+00	SCARICO	Stihl	Batteria AK 20	BK181G029	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+598	2026-05-26 14:30:08.112+00	SCARICO	Stihl	Tagliasiepi HSA 100.1	451949950	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
+599	2026-05-26 14:30:08.518+00	SCARICO	Stihl	Batteria AP 30 (270 Wh)	546061414	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
+613	2026-06-01 08:23:31.148+00	CARICO	Stihl	Forbice elettronica ASA 20.0	955859434	\N	\N	\N	available	user_1775131564325	main	t
+626	2026-06-05 16:34:45.17+00	SCARICO	Stihl	Decespugliatore KM 94 RC-E	545319888	Salvalaio Lorenzo 3491428794	0	0	sold	user_1775131564325	main	f
 340	2026-03-18 16:30:51.209+00	CARICO	STIHL	Forbice elettronica ASA 20.0	955836076	\N	\N	\N	available	user_1769961017929	main	t
 341	2026-03-18 16:31:02.759+00	SCARICO	STIHL	Forbice elettronica ASA 20.0	955836076	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	0	0	sold	user_1769961017929	main	f
 342	2026-03-19 16:12:30.106+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540013827	\N	\N	\N	available	user_1769961017929	main	t
@@ -5978,12 +6154,15 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 307	2026-03-14 09:42:42.784+00	SCARICO	STIHL	Caricabatteria AL101	701192870	Bortolato Franco	0	0	sold	user_1769961017929	main	f
 353	2026-03-20 13:49:50.136+00	CARICO	STIHL	Caricabatteria AL 301-4	711612931	\N	\N	\N	available	user_1769961017929	main	t
 587	2026-05-23 08:53:20.815+00	CARICO	Stihl	Tagliasiepi HLA 56	944036782	\N	\N	\N	available	user_1775131564325	main	t
+601	2026-05-26 14:40:07.219+00	CARICO	Stihl	Decespugliatore FS 55 R	414001223	\N	\N	\N	available	user_1775131564325	main	t
+614	2026-06-01 08:24:16.893+00	CARICO	Stihl	Batteria AS 2	BH051H019	\N	\N	\N	available	user_1775131564325	main	t
 357	2026-03-20 14:37:57.28+00	CARICO	STIHL	Motosega MSA 70.0 C	452200582	\N	\N	\N	available	user_1769961017929	main	t
 358	2026-03-20 14:38:14.301+00	SCARICO	STIHL	Motosega MSA 70.0 C	452200582	Dossini Annalisa	0	0	sold	user_1769961017929	main	f
 359	2026-03-21 07:23:55.587+00	CARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	\N	\N	\N	available	user_1769961017929	main	t
 360	2026-03-21 07:24:15.813+00	SCARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	Dametto Giulio	0	0	sold	user_1769961017929	main	f
 361	2026-03-21 09:17:21.899+00	CARICO	Echo	Decespugliatore SRM-3611T	U65140005458	\N	\N	\N	available	user_1769961017929	main	t
 362	2026-03-21 09:17:36.946+00	SCARICO	Echo	Decespugliatore SRM-3611T	U65140005458	Bonotto Franco	0	0	sold	user_1769961017929	main	f
+627	2026-06-05 16:58:51.798+00	CARICO	Echo	Motosega DCS-2500T	C81535022520	\N	\N	\N	available	user_1775131564325	main	t
 365	2026-03-21 10:15:57.677+00	CARICO	STIHL	Rasaerba RM 453.3 V	451098503	\N	\N	\N	available	user_1769961017929	main	t
 366	2026-03-21 10:16:09.752+00	SCARICO	STIHL	Rasaerba RM 453.3 V	451098503	Bergamo Nello	0	0	sold	user_1769961017929	main	f
 374	2026-03-24 14:55:07.299+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	548997510	\N	\N	\N	available	user_1769961017929	main	t
@@ -6018,13 +6197,20 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 414	2026-03-26 10:55:17.744+00	SCARICO	STIHL	Batteria AP 300.0 S	921008379	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 418	2026-03-26 10:55:18.207+00	SCARICO	STIHL	Batteria AP 200S	953255781	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 588	2026-05-23 08:53:55.42+00	CARICO	Stihl	Soffiatore BGA 50.0	600034499	\N	\N	\N	available	user_1775131564325	main	t
+602	2026-05-26 14:42:51.111+00	CARICO	Stihl	FS55R	838434200	\N	\N	\N	available	user_1775131564325	main	t
+615	2026-06-01 08:25:00.92+00	CARICO	Stihl	Caricabatteria AL 1.0.A	707635787	\N	\N	\N	available	user_1775131564325	main	t
+616	2026-06-01 08:25:12.367+00	SCARICO	Stihl	Forbice elettronica ASA 20.0	955859434	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
+628	2026-06-05 17:00:52.279+00	CARICO	Echo	Batteria LBP-56V125	E83935022196	\N	\N	\N	available	user_1775131564325	main	t
 408	2026-03-26 10:55:17.086+00	SCARICO	STIHL	Caricabatteria AL 301-4	711612935	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 410	2026-03-26 10:55:17.282+00	SCARICO	STIHL	Batteria AP 300.0 S (281Wh)	920001602	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 411	2026-03-26 10:55:17.402+00	SCARICO	STIHL	Batteria AP 300.0 S	920001605	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 589	2026-05-23 08:56:44.772+00	CARICO	Stihl	Batteria AK 20	912863193	\N	\N	\N	available	user_1775131564325	main	t
 416	2026-03-26 10:55:17.971+00	SCARICO	STIHL	Batteria AP 200S	953255776	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
 417	2026-03-26 10:55:18.076+00	SCARICO	STIHL	Batteria AP 200S	953255780	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+603	2026-05-26 14:43:27.978+00	SCARICO	Stihl	FS55R	838434200	Nardin Marco 3493118388	0	0	sold	user_1775131564325	main	f
 421	2026-03-26 10:55:18.532+00	SCARICO	STIHL	Batteria AP 200S (187 Wh)	953256596	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
+617	2026-06-01 08:25:13.078+00	SCARICO	Stihl	Batteria AS 2	BH051H019	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
+629	2026-06-05 17:01:31.907+00	CARICO	Echo	Batteria LBP-56V125 EU35	E83935022265	\N	\N	\N	available	user_1775131564325	main	t
 424	2026-03-28 09:23:25.86+00	CARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	\N	\N	\N	available	user_1769961017929	main	t
 425	2026-03-28 09:24:03.287+00	SCARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	0	0	sold	user_1769961017929	main	f
 426	2026-03-28 10:27:49.366+00	CARICO	Echo	Decespugliatore SRM-301TES	U48738203070	\N	\N	\N	available	user_1769961017929	main	t
@@ -6040,12 +6226,16 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 461	2026-04-11 09:28:18.417+00	CARICO	Echo	Motosega CS-3410	F09238006191	\N	\N	\N	available	user_1775131564325	main	t
 462	2026-04-11 09:31:01.061+00	SCARICO	Echo	Motosega CS-3410	F09238006191	Moro Ivano	0	0	sold	user_1775131564325	main	f
 590	2026-05-23 08:57:21.147+00	CARICO	Stihl	Caricabatteria AL 101	703104544	\N	\N	\N	available	user_1775131564325	main	t
+604	2026-05-29 07:48:28.804+00	CARICO	Stihl	Motosega MSA 60.0 C	452325283	\N	\N	\N	available	user_1775131564325	main	t
+618	2026-06-01 08:25:13.575+00	SCARICO	Stihl	Caricabatteria AL 1.0.A	707635787	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
 469	2026-04-15 09:23:04.794+00	CARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	\N	\N	\N	available	user_1770584612559	main	t
 470	2026-04-15 09:23:55.293+00	CARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	\N	\N	\N	available	user_1770584612559	main	t
 471	2026-04-15 09:24:45.846+00	CARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	\N	\N	\N	available	user_1770584612559	main	t
 472	2026-04-15 09:25:09.062+00	SCARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
 473	2026-04-15 09:25:09.378+00	SCARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
 474	2026-04-15 09:25:09.62+00	SCARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
+630	2026-06-05 17:02:57.965+00	CARICO	Echo	Caricabatteria LCJQ-560	T91435038235	\N	\N	\N	available	user_1775131564325	main	t
+634	2026-06-05 17:03:26.109+00	SCARICO	Echo	Caricabatteria LCJQ-560	T91435038235	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
 483	2026-04-17 09:05:17.761+00	CARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	\N	\N	\N	available	user_1775131564325	main	t
 484	2026-04-17 09:05:47.765+00	SCARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	Criveller Renato	0	0	sold	user_1775131564325	main	f
 501	2026-04-17 16:53:48.356+00	CARICO	Echo	Motosega CS-251	C74638145275	\N	\N	\N	available	user_1775131564325	main	t
@@ -6054,6 +6244,12 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 504	2026-04-21 08:16:26.155+00	SCARICO	WORTEX	Irroratore T 25-T4	140H768	Rosina Roberto	0	0	sold	user_1775131564325	main	f
 591	2026-05-23 08:57:32.126+00	SCARICO	Stihl	Soffiatore BGA 50.0	600034499	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
 592	2026-05-23 08:57:32.578+00	SCARICO	Stihl	Tagliasiepi HLA 56	944036782	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+605	2026-05-29 07:50:18.824+00	CARICO	Stihl	Batteria AK 30.0 S	912818443	\N	\N	\N	available	user_1775131564325	main	t
+619	2026-06-01 09:15:01.639+00	CARICO	Stihl	Tagliasiepi HSA 50.1	452196718	\N	\N	\N	available	user_1775131564325	main	t
+620	2026-06-01 09:15:16.09+00	SCARICO	Stihl	Tagliasiepi HSA 50.1	452196718	Santolin Enrico	0	0	sold	user_1775131564325	main	f
+631	2026-06-05 17:03:24.387+00	SCARICO	Echo	Motosega DCS-2500T	C81535022520	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
+632	2026-06-05 17:03:24.897+00	SCARICO	Echo	Batteria LBP-56V125	E83935022196	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
+633	2026-06-05 17:03:25.43+00	SCARICO	Echo	Batteria LBP-56V125 EU35	E83935022265	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
 541	2026-05-08 09:51:15.218+00	CARICO	Echo	Motosega CS-3410	F09238005907	\N	\N	\N	available	user_1775131564325	main	t
 542	2026-05-08 09:54:10.939+00	SCARICO	Echo	Motosega CS-3410	F09238005907	Dma Srl	0	0	sold	user_1775131564325	main	f
 543	2026-05-08 12:01:15.606+00	CARICO	Weibang	Rasaerba WBBC537SCV	WBC537SCVS021B250201131	\N	\N	\N	available	user_1770584612559	main	t
@@ -6269,6 +6465,11 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 273	2026-03-09 13:20:39.101+00	CARICO	GGP	Trattorino XD 150 HD	25KA3RON005636	\N	\N	\N	available	user_1772723709793	main	f
 275	2026-03-09 13:21:52.518+00	CARICO	GGP	Trattorino XDC 150 HD	25LA3RON017986	\N	\N	\N	available	user_1772723709793	main	f
 594	2026-05-23 08:57:33.56+00	SCARICO	Stihl	Caricabatteria AL 101	703104544	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
+606	2026-05-29 07:51:02.877+00	CARICO	Stihl	Caricabatteria AL 101	703210773	\N	\N	\N	available	user_1775131564325	main	t
+607	2026-05-29 07:51:14.799+00	SCARICO	Stihl	Motosega MSA 60.0 C	452325283	Schiavinato Amorino	0	0	sold	user_1775131564325	main	f
+608	2026-05-29 07:51:15.502+00	SCARICO	Stihl	Caricabatteria AL 101	703210773	Schiavinato Amorino	0	0	sold	user_1775131564325	main	f
+621	2026-06-01 13:48:48.022+00	CARICO	Echo	Motosega CS-2511TES	C74638145237	\N	\N	\N	available	user_1775131564325	main	t
+635	2026-06-08 14:41:12.366+00	CARICO	Stihl	Tagliasiepi HLA 66	452961854	\N	\N	\N	available	user_1770584612559	main	t
 \.
 
 
@@ -9497,6 +9698,9 @@ ea200d0c-0698-4d0d-8a92-734828fa36bc	2026-05-19 16:08:36.190868+00	Il Gelso srl 
 c59e2eac-b9c5-4dd1-af40-d70de886e705	2026-05-19 16:42:20.999876+00	Il Gelso srl cantiere de' Longhi SpA	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	fidelizzato	\N	f	t	\N	\N	550.4	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
 dbb9dc1b-fe11-4126-8cf1-1fb75e80b25a	2026-05-23 08:15:19.348791+00	Il Gelso srl cantiere de' Longhi SpA	1000	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	fidelizzato	\N	f	t	\N	\N	\N	{"mq": 1000, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
 2792136d-b5c5-45e0-a123-eb940e155720	2026-05-23 08:16:49.017287+00	Il Gelso srl cantiere de' Longhi SpA	13000	piano_annuo	ornamentale	standard	albatros	normale	pallido	centralizzata	fidelizzato	\N	f	t	\N	\N	\N	{"mq": 13000, "linea": "albatros", "colore": "pallido", "livello": "standard", "terreno": "normale", "estendi12": false, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-05-19", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Il Gelso srl cantiere de' Longhi SpA", "tipoCliente": "fidelizzato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-05-19
+09d8f996-9c8b-4396-a567-2bbecf5b9254	2026-06-01 07:56:05.863169+00	Michielon Sergio	300	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 300, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-06-01", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Michielon Sergio", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-06-01
+151ec0e2-eea0-4bd8-acb0-4ebd281fee24	2026-06-01 07:56:17.784269+00	Michielon Sergio	300	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	\N	{"mq": 300, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-06-01", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Michielon Sergio", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-06-01
+bc480f80-d134-4119-ae06-f72aa36587de	2026-06-01 07:56:40.754824+00	Michielon Sergio	300	piano_annuo	ornamentale	standard	albatros	normale	intenso	centralizzata	privato	\N	t	t	\N	\N	352.2	{"mq": 300, "linea": "albatros", "colore": "intenso", "livello": "standard", "terreno": "normale", "estendi12": true, "miscuglio": null, "tipoPrato": "ornamentale", "dataInizio": "2026-06-01", "liquidiSab": true, "irrigazione": "centralizzata", "nomeCliente": "Michielon Sergio", "tipoCliente": "privato", "degradazione": null, "tipoIntervento": "piano_annuo", "primoConcimeIncluso": false}	\N	2026-06-01
 \.
 
 
@@ -9505,6 +9709,7 @@ dbb9dc1b-fe11-4126-8cf1-1fb75e80b25a	2026-05-23 08:15:19.348791+00	Il Gelso srl 
 --
 
 COPY public.preventivi_catalogo (id, cliente, righe, totale_imponibile, totale_ic, data_preventivo, titolo, pagamento, garanzia, note, created_at) FROM stdin;
+d3787d30-3cd4-4a86-8bfd-16d49376244d	Buosi Mosè 389 6312244	[{"id": "r-1780123472174-00ybe76smrd5", "qty": 1, "listino_ic": "", "descrizione": "MOTOCOLTIVATORE GRILLO G85, MOTORE HONDA GX 270, RUOTE 942412 4.00-10, FRESA 984511 CM 58", "scontato_ic": "3600"}, {"id": "r-1780123710788-51hurbfal2p", "qty": 1, "listino_ic": "", "descrizione": "RUOTE 900412 5.00-10 PER DIFFERENZA", "scontato_ic": "100"}, {"id": "r-1780123876923-b3uwfda71tv", "qty": 1, "listino_ic": "", "descrizione": "FRESA CONTROROTANTE 58 CM, COMPRESO ZAVORRA 11 KG 9G3211, PER DIFFERENZA ", "scontato_ic": "150"}]	3155.74	3850	2026-05-30	PREVENTIVO: MOTOCOLTIVATORE GRILLO G85				2026-05-30 07:22:37.691373+00
 \.
 
 
@@ -9520,7 +9725,6 @@ COPY public.pricing_policies (id, brand, cliente_privato, professionista, promoz
 e6be6a44-5f92-46f9-975a-fe081ec5cdb1	BILLY GOAT	Listino OMPRA (ultima colonna)	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna). In casi particolari, solo se serve a chiudere la trattativa e con chiari segnali di chiusura, posso scendere sotto allo sconto massimo.	Dal listino sconto max 10-13%	\N	2026-02-22 05:26:20.424705+00
 33ce52e5-b2e6-4205-b474-5d816135ec77	CAPTAIN TRACTORS	\N	\N	\N	\N	2026-02-22 05:26:20.424705+00
 0f85832d-6183-450c-8e82-9ee127e8916c	CASTELGARDEN	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna)	\N	\N	\N	2026-02-22 05:26:20.424705+00
-ba8c6a84-d6bc-422d-b7cd-03e982f3f90c	CAST GROUP	Sconto 25% dal listino ufficiale della casa	Sconto 25% dal listino + ulteriore 3% in trattativa	\N	\N	2026-02-22 05:26:20.424705+00
 e015966f-085a-438c-ba13-41c920509845	ECHO	Listino OMPRA (ultima colonna)	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna). Per accessori non compresi nel listino OMPRA, applicare sul listino ufficiale della casa uno sconto massimo del 14%. In casi particolari, solo se serve a chiudere la trattativa e con chiari segnali di chiusura, posso scendere sotto allo sconto massimo.	\N	\N	2026-02-22 05:26:20.424705+00
 bb6ac812-54db-415c-bbf8-d5138aa57aa6	FERRIS	Prezzo di listino. Scontistica da valutare a seconda del caso.	\N	\N	\N	2026-02-22 05:26:20.424705+00
 fe2fea67-dc83-4f7a-a553-48386656de3c	FIABA	Max 5%	Dal 5% al 7%, fino ad un max del 10%	\N	\N	2026-02-22 05:26:20.424705+00
@@ -9543,6 +9747,7 @@ d9c69c17-9ea7-4194-9725-b8e52732b9ee	TORO	Sconto massimo del 8-10% sul listino u
 eb69ceb8-69e0-4eb8-b9d4-5a8b0c70aa72	VOLPI MY SPRAYERS	Listino ufficiale della casa + IVA, stornare IVA = prezzo in listino	Sconto massimo del 15-18% sul listino ufficiale della casa	\N	\N	2026-02-22 05:26:20.424705+00
 294f23f9-48ff-4226-b6e3-76e9486b51ae	WEIBANG	Sconto massimo del 20% sul listino ufficiale della casa + IVA	\N	\N	\N	2026-02-22 05:26:20.424705+00
 dd95d73a-ba9c-47b6-9fde-931a79a98617	FEMA	Listino A max 10% — Listino B max 14% — Listino C max 19%	\N	\N	\N	2026-02-22 05:37:00.063+00
+ba8c6a84-d6bc-422d-b7cd-03e982f3f90c	CAST GROUP	Sconto 25% dal listino ufficiale della casa	Sconto 15% dal listino + ulteriore 3% in trattativa	\N	\N	2026-05-30 16:24:44.683+00
 \.
 
 
@@ -10621,62 +10826,78 @@ cdf762b6-13bd-4982-9111-ff3fd6f864b2	Echo	Tagliasiepi S27-25A	1	2026-05-11 08:07
 2a4689fe-e28d-4fd9-b311-492261d3055f	Honda	Rasaerba HRN536C2	1	2026-05-22 16:19:42.621112+00	2026-05-22 16:19:42.621112+00
 434c0fa9-6329-4a67-8dd9-756fda748941	Stihl	Tagliasiepi HLA 56	1	2026-05-23 08:47:12.940984+00	2026-05-23 08:47:12.940984+00
 789c555e-68c6-4625-b7e6-09ad70ada985	Stihl	Batteria AK 20	1	2026-05-23 08:48:48.456395+00	2026-05-23 08:48:48.456395+00
+80529a31-4a59-4c15-8ee7-3ba9a64d0e02	Stihl	Batteria AP 30 (270 Wh)	1	2026-05-26 14:29:06.749639+00	2026-05-26 14:29:06.749639+00
+201ebd9c-a70f-42e4-b557-f338e6cc246c	Stihl	Caricabatteria AL 301	1	2026-05-26 14:29:47.151468+00	2026-05-26 14:29:47.151468+00
+92a81c06-6692-47aa-8265-ec1ca73a8465	Stihl	FS55R	1	2026-05-26 14:42:51.9775+00	2026-05-26 14:42:51.9775+00
+82fbc576-4f66-4c48-88b3-6ec9a4b0ffc2	Stihl	Motosega MSA 60.0 C	1	2026-05-29 07:48:29.365558+00	2026-05-29 07:48:29.365558+00
+63242964-b695-416a-a05b-f8b3904b9c55	Stihl	Decespugliatore FS 94 RC-E Brushcutter	1	2026-05-30 06:00:39.28988+00	2026-05-30 06:00:39.28988+00
+419487f6-212d-4e12-8ab4-090ca5a07900	Stihl	Soffiatore SR 430 Atomizzatore	1	2026-06-01 07:41:02.742189+00	2026-06-01 07:41:02.742189+00
+17b872f7-a4c5-4d74-9dbc-2f594fd70e01	Stihl	Forbice elettronica ASA 20.0	1	2026-06-01 08:23:31.40745+00	2026-06-01 08:23:31.40745+00
+387bf73d-1053-47c4-8be8-04909494188f	Stihl	Caricabatteria AL 1.0.A	1	2026-06-01 08:25:01.089219+00	2026-06-01 08:25:01.089219+00
+3ec475ba-e19e-426b-90cf-cdd5888f2ef2	Stihl	Tagliasiepi HSA 50.1	1	2026-06-01 09:15:01.792855+00	2026-06-01 09:15:01.792855+00
+ee7505f7-b5b4-43e5-a1fc-c06c556b5202	Echo	Motosega CS-2511TES	1	2026-06-01 13:48:48.307605+00	2026-06-01 13:48:48.307605+00
+121252ad-2e03-4c21-a229-32c4fdf6a8d2	Stihl	Tagliasiepi HSA 60.1	1	2026-06-05 08:52:46.989342+00	2026-06-05 08:52:46.989342+00
+e217e324-0134-498e-ba9c-177bb6511510	Stihl	Decespugliatore KM 94 RC-E	1	2026-06-05 16:33:22.045283+00	2026-06-05 16:33:22.045283+00
+ec1148f6-87ba-4613-8eed-2aed0c9ce9ab	Echo	Motosega DCS-2500T	1	2026-06-05 16:58:52.06768+00	2026-06-05 16:58:52.06768+00
+6a1bdc3e-7f9a-42d5-ae41-a3eb9784c8a6	Echo	Batteria LBP-56V125	1	2026-06-05 17:00:52.567561+00	2026-06-05 17:00:52.567561+00
+ac738d2f-0e7d-4f99-8631-20e1a5e5bfcb	Echo	Batteria LBP-56V125 EU35	1	2026-06-05 17:01:32.213472+00	2026-06-05 17:01:32.213472+00
+160c256a-cb6a-4a47-a6cc-871d4ee0c895	Echo	Caricabatteria LCJQ-560	1	2026-06-05 17:02:58.33557+00	2026-06-05 17:02:58.33557+00
 \.
 
 
 --
--- Data for Name: messages_2026_05_21; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_05; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_21 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_05 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_22; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_06; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_22 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_06 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_23; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_07; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_23 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_07 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_24; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_08; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_24 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_08 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_25; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_09; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_25 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_09 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_26; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_10; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_26 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_10 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_05_27; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_11; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_05_27 (topic, extension, payload, event, private, updated_at, inserted_at, id) FROM stdin;
+COPY realtime.messages_2026_06_11 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
@@ -10754,6 +10975,10 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 20251120215549	2026-02-04 12:50:11
 20260218120000	2026-02-27 12:19:38
 20260326120000	2026-04-10 04:13:53
+20260514120000	2026-06-03 04:35:23
+20260527120000	2026-06-03 04:35:23
+20260528120000	2026-06-03 04:35:23
+20260603120000	2026-06-04 05:01:18
 \.
 
 
@@ -10761,7 +10986,9 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 -- Data for Name: subscription; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter) FROM stdin;
+COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter, selected_columns) FROM stdin;
+9101	3401fb00-6350-11f1-8014-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-06-08 15:39:14.634081	*	\N
+9102	3401f3bc-6350-11f1-8e06-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-06-08 15:39:14.634081	*	\N
 \.
 
 
@@ -10909,7 +11136,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 594, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 636, true);
 
 
 --
@@ -10937,7 +11164,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 327, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 8414, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 9102, true);
 
 
 --
@@ -11581,59 +11808,67 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_05_21 messages_2026_05_21_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05 messages_2026_06_05_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_21
-    ADD CONSTRAINT messages_2026_05_21_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_05_22 messages_2026_05_22_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_05_22
-    ADD CONSTRAINT messages_2026_05_22_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_05
+    ADD CONSTRAINT messages_2026_06_05_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_05_23 messages_2026_05_23_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06 messages_2026_06_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_23
-    ADD CONSTRAINT messages_2026_05_23_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_05_24 messages_2026_05_24_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_05_24
-    ADD CONSTRAINT messages_2026_05_24_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_06
+    ADD CONSTRAINT messages_2026_06_06_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_05_25 messages_2026_05_25_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07 messages_2026_06_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_25
-    ADD CONSTRAINT messages_2026_05_25_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_05_26 messages_2026_05_26_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_05_26
-    ADD CONSTRAINT messages_2026_05_26_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_07
+    ADD CONSTRAINT messages_2026_06_07_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_05_27 messages_2026_05_27_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08 messages_2026_06_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_05_27
-    ADD CONSTRAINT messages_2026_05_27_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_08
+    ADD CONSTRAINT messages_2026_06_08_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_09 messages_2026_06_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_09
+    ADD CONSTRAINT messages_2026_06_09_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_10 messages_2026_06_10_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_10
+    ADD CONSTRAINT messages_2026_06_10_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_11 messages_2026_06_11_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_11
+    ADD CONSTRAINT messages_2026_06_11_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages messages_payload_exclusive; Type: CHECK CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE realtime.messages
+    ADD CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL))) NOT VALID;
 
 
 --
@@ -12334,59 +12569,59 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_05_21_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_21_inserted_at_topic_idx ON realtime.messages_2026_05_21 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_05_22_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_05_22_inserted_at_topic_idx ON realtime.messages_2026_05_22 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_05_inserted_at_topic_idx ON realtime.messages_2026_06_05 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_05_23_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_23_inserted_at_topic_idx ON realtime.messages_2026_05_23 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_05_24_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_05_24_inserted_at_topic_idx ON realtime.messages_2026_05_24 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_06_inserted_at_topic_idx ON realtime.messages_2026_06_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_05_25_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_25_inserted_at_topic_idx ON realtime.messages_2026_05_25 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_05_26_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_05_26_inserted_at_topic_idx ON realtime.messages_2026_05_26 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_07_inserted_at_topic_idx ON realtime.messages_2026_06_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_05_27_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_05_27_inserted_at_topic_idx ON realtime.messages_2026_05_27 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_08_inserted_at_topic_idx ON realtime.messages_2026_06_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: subscription_subscription_id_entity_filters_action_filter_key; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_key ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter);
+CREATE INDEX messages_2026_06_09_inserted_at_topic_idx ON realtime.messages_2026_06_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_10_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_10_inserted_at_topic_idx ON realtime.messages_2026_06_10 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_11_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_11_inserted_at_topic_idx ON realtime.messages_2026_06_11 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: subscription_subscription_id_entity_filters_action_filter_selec; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_selec ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter, COALESCE(selected_columns, '{}'::text[]));
 
 
 --
@@ -12446,101 +12681,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_05_21_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_21_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_21_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_21_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_05_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_22_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_05_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_22_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_22_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_22_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_05_pkey;
 
 
 --
--- Name: messages_2026_05_23_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_23_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_23_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_23_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_06_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_24_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_24_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_24_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_24_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_06_pkey;
 
 
 --
--- Name: messages_2026_05_25_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_25_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_25_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_25_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_07_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_26_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_26_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_05_26_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_26_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_07_pkey;
 
 
 --
--- Name: messages_2026_05_27_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_05_27_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_08_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_05_27_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_05_27_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_08_pkey;
+
+
+--
+-- Name: messages_2026_06_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_09_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_09_pkey;
+
+
+--
+-- Name: messages_2026_06_10_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_10_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_10_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_10_pkey;
+
+
+--
+-- Name: messages_2026_06_11_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_11_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_11_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_11_pkey;
 
 
 --
@@ -13134,6 +13369,18 @@ CREATE POLICY "Lettura promo autenticati" ON public.stihl_promo FOR SELECT TO au
 ALTER TABLE public.agent_audit_log ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: agro_listino; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agro_listino ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: agro_mapping; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.agro_mapping ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: noleggio_abbonamenti allow_all_noleggio_abbonamenti; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -13159,6 +13406,12 @@ CREATE POLICY allow_all_noleggio_macchine ON public.noleggio_macchine USING (tru
 --
 
 ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: catalogo_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.catalogo_prodotti ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: clienti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -13215,6 +13468,12 @@ ALTER TABLE public.noleggio_listini ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.noleggio_macchine ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: note_clienti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.note_clienti ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: operatori; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13225,6 +13484,12 @@ ALTER TABLE public.operatori ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.pratovivo_archivio ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: preventivi_catalogo; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.preventivi_catalogo ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: pricing_policies; Type: ROW SECURITY; Schema: public; Owner: -
@@ -13254,6 +13519,30 @@ CREATE POLICY public_select_stihl_promo ON public.stihl_promo FOR SELECT TO auth
 
 
 --
+-- Name: pv_interventi; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_interventi ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_intervento_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_intervento_prodotti ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_kit; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_kit ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_kit_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_kit_prodotti ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pv_liquidi_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -13266,10 +13555,40 @@ ALTER TABLE public.pv_liquidi_prodotti ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pv_liquidi_programmati ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: pv_piani; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_piani ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_preventivi; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_preventivi ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_preventivo_righe; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_preventivo_righe ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pv_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.pv_prodotti ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pv_templates; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.pv_templates ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: sopralluoghi; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.sopralluoghi ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: stihl_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -13288,6 +13607,202 @@ ALTER TABLE public.stihl_promo ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.stock_thresholds ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: agro_listino tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.agro_listino TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: agro_mapping tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.agro_mapping TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: catalogo_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.catalogo_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: note_clienti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.note_clienti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: preventivi_catalogo tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.preventivi_catalogo TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_interventi tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_interventi TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_intervento_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_intervento_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_kit TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_kit_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_piani tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_piani TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivi tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_preventivi TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivo_righe tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_preventivo_righe TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_prodotti tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.pv_prodotti TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: sopralluoghi tmp_allow_all_anon; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_anon ON public.sopralluoghi TO anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: agro_listino tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.agro_listino TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: agro_mapping tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.agro_mapping TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: catalogo_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.catalogo_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: note_clienti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.note_clienti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: preventivi_catalogo tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.preventivi_catalogo TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_interventi tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_interventi TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_intervento_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_intervento_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_kit TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_kit_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_kit_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_piani tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_piani TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivi tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_preventivi TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_preventivo_righe tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_preventivo_righe TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pv_prodotti tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.pv_prodotti TO authenticated USING (true) WITH CHECK (true);
+
+
+--
+-- Name: sopralluoghi tmp_allow_all_auth; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tmp_allow_all_auth ON public.sopralluoghi TO authenticated USING (true) WITH CHECK (true);
+
 
 --
 -- Name: messages; Type: ROW SECURITY; Schema: realtime; Owner: -
@@ -13434,5 +13949,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SZqkbOl2TAc2aFgYf3gM9ryOaSNMaPFuZp8xqS2JQXcfBx52Yv2eyqGhVWT3HGj
+\unrestrict UX3SvSf3uPRiH67DAa2mykk2u0EIRUcavcbgppQR4RDQM618WX1HFFP1kRSYmUH
 

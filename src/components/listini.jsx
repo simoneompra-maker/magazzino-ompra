@@ -254,6 +254,102 @@ function parseGeogreen(workbook) {
   return prodotti
 }
 
+// ========== PARSER EXCEL GENERICO + NORMALIZZATORE ==========
+// Campi della tabella `listini` e sinonimi di intestazione accettati.
+const CAMPI_LISTINI = [
+  { key: 'codice',       label: 'Codice',               req: true,  syn: ['codice','cod','cod.','articolo','art','art.'] },
+  { key: 'descrizione',  label: 'Descrizione',          req: true,  syn: ['descrizione','descr','nome','modello'] },
+  { key: 'brand',        label: 'Brand',                req: false, syn: ['brand','marca'] },
+  { key: 'categoria',    label: 'Categoria',            req: false, syn: ['categoria','serie','famiglia','gruppo'] },
+  { key: 'confezione',   label: 'Confezione',           req: false, syn: ['confezione','conf','formato'] },
+  { key: 'prezzo_a',     label: 'Prezzo listino',       req: true,  syn: ['prezzo_a','prezzo a','prezzo','listino','prezzo listino','prezzo_listino','list','prezzo i.c.','listino i.c.','list. i.c.'] },
+  { key: 'prezzo_b',     label: 'Prezzo B',             req: false, syn: ['prezzo_b','prezzo b'] },
+  { key: 'prezzo_c',     label: 'Prezzo C',             req: false, syn: ['prezzo_c','prezzo c'] },
+  { key: 'prezzo_d',     label: 'Prezzo D',             req: false, syn: ['prezzo_d','prezzo d'] },
+  { key: 'prezzo_promo', label: 'Prezzo vendita/netto', req: false, syn: ['prezzo_promo','vendita','netto','prezzo netto','listino web','web','vendita i.c.','prezzo vendita'] },
+  { key: 'iva',          label: 'IVA %',                req: false, syn: ['iva','iva %','aliquota'] },
+  { key: 'note',         label: 'Note (prestazioni)',   req: false, syn: ['note','nota','prestazioni','mq','copertura','superficie','note tecniche'] },
+  { key: 'note_promo',   label: 'Note promo/sconto',    req: false, syn: ['note_promo','sconto','promo','note sconto'] },
+]
+
+const normHdr = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').replace(/[*:]/g, '').trim()
+
+// Numero IT/EN tollerante: "1.234,56 €" -> 1234.56 ; "123,45" -> 123.45 ; "1,234.56" -> 1234.56
+function parseNumeroIT(v) {
+  if (v == null || v === '') return null
+  if (typeof v === 'number') return isFinite(v) ? v : null
+  let s = String(v).replace(/[^0-9.,-]/g, '')
+  if (s.includes(',') && s.includes('.')) {
+    // l'ultimo separatore presente è quello decimale
+    s = s.lastIndexOf(',') > s.lastIndexOf('.')
+      ? s.replace(/\./g, '').replace(',', '.')
+      : s.replace(/,/g, '')
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.')
+  }
+  const n = parseFloat(s)
+  return isNaN(n) ? null : n
+}
+
+// Trova la riga d'intestazione e restituisce headers + righe dati del foglio "migliore".
+function parseGenericExcel(workbook) {
+  const COD = ['codice','cod','cod.','articolo','art','art.']
+  const DESC = ['descrizione','descr','nome','modello']
+  let best = null
+  for (const name of workbook.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: null })
+    for (let r = 0; r < Math.min(rows.length, 30); r++) {
+      const cells = (rows[r] || []).map(normHdr)
+      if (cells.some(c => COD.includes(c)) && cells.some(c => DESC.includes(c))) {
+        const righe = rows.slice(r + 1).filter(rw => rw && rw.some(c => c != null && String(c).trim() !== ''))
+        if (!best || righe.length > best.righe.length) {
+          best = { sheetName: name, headerRowIdx: r, headers: (rows[r] || []).map(c => String(c ?? '').trim()), righe }
+        }
+      }
+    }
+  }
+  if (!best) return null
+  const autoMap = {}
+  CAMPI_LISTINI.forEach(c => { autoMap[c.key] = best.headers.findIndex(h => c.syn.includes(normHdr(h))) })
+  return { ...best, autoMap }
+}
+
+// Applica la mappatura (campo -> indice colonna) alle righe grezze e valida riga per riga.
+function applicaMappa(grezzo, mappa, brandManuale) {
+  const prodotti = [], scartati = []
+  const get = (row, key) => { const i = mappa?.[key]; return (i != null && i >= 0) ? row[i] : null }
+  const noteMapped = mappa?.note != null && mappa.note >= 0
+  for (const row of grezzo.righe) {
+    const codice = String(get(row, 'codice') ?? '').trim()
+    const descrizione = String(get(row, 'descrizione') ?? '').trim()
+    const brand = (String(get(row, 'brand') ?? '').trim() || brandManuale || '').trim().toUpperCase()
+    const prezzo_a = parseNumeroIT(get(row, 'prezzo_a'))
+    const motivi = []
+    if (!codice) motivi.push('codice mancante')
+    if (!descrizione) motivi.push('descrizione mancante')
+    if (!brand) motivi.push('brand mancante')
+    if (prezzo_a == null || prezzo_a <= 0) motivi.push('prezzo listino non valido')
+    if (motivi.length) { scartati.push({ codice, descrizione, motivo: motivi.join(', ') }); continue }
+    const p = {
+      brand, codice, descrizione,
+      categoria: String(get(row, 'categoria') ?? '').trim() || null,
+      confezione: String(get(row, 'confezione') ?? '').trim() || null,
+      prezzo_a,
+      prezzo_b: parseNumeroIT(get(row, 'prezzo_b')),
+      prezzo_c: parseNumeroIT(get(row, 'prezzo_c')),
+      prezzo_d: parseNumeroIT(get(row, 'prezzo_d')),
+      prezzo_promo: parseNumeroIT(get(row, 'prezzo_promo')),
+      iva: parseNumeroIT(get(row, 'iva')),
+      note_promo: String(get(row, 'note_promo') ?? '').trim() || null,
+    }
+    // `note` è una colonna nuova: la includo SOLO se mappata, così l'import non rompe
+    // se la migrazione "ADD COLUMN note" non è ancora stata lanciata.
+    if (noteMapped) p.note = String(get(row, 'note') ?? '').trim() || null
+    prodotti.push(p)
+  }
+  return { prodotti, scartati }
+}
+
 // ========== PARSER HONDA EXCEL ==========
 function parseHondaExcel(workbook) {
   const prodotti = []
@@ -439,6 +535,12 @@ export default function Listini({ onNavigate }) {
   const [cronologia, setCronologia] = useState([])
   const [loadingCronologia, setLoadingCronologia] = useState(false)
 
+  // ---- STATE per l'import Excel generico (normalizzatore) ----
+  const [excelGrezzo, setExcelGrezzo] = useState(null)   // { headers, righe, autoMap, sheetName }
+  const [mappa, setMappa] = useState(null)               // { campo: indiceColonna }
+  const [brandManuale, setBrandManuale] = useState('')   // usato se il file non ha colonna brand
+  const [scartati, setScartati] = useState([])           // righe scartate dalla validazione
+
   // ---- STATE per la nuova tab "Promo PDF" ----
   const [promoFile, setPromoFile] = useState(null)
   const [promoBrand, setPromoBrand] = useState('')
@@ -455,6 +557,9 @@ export default function Listini({ onNavigate }) {
     setFile(f)
     setMessaggio(null)
     setAnteprima([])
+    setExcelGrezzo(null)
+    setMappa(null)
+    setScartati([])
     setParsing(true)
 
     const isPDF = f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf'
@@ -480,13 +585,33 @@ export default function Listini({ onNavigate }) {
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
           return rows.some(row => row.some(cell => cell && /HONDA/i.test(String(cell))))
         }) || /honda/i.test(f.name || '')
-        const hondaResult = isHonda ? parseHondaExcel(wb) : null
-        const prodotti = isHonda ? hondaResult.prodotti : parseGeogreen(wb)
-        setVersioneListino(isHonda ? (hondaResult.versione || '') : '')
-        setAnteprima(prodotti)
-        if (prodotti.length === 0) {
-          const hint = isHonda ? 'Verifica che il file contenga le colonne descrizione e prezzo.' : 'Verifica che il file sia il listino Geogreen corretto (fogli STAMPA SEME / STAMPA CONCIMI).'
-          setMessaggio({ tipo: 'errore', testo: `Nessun prodotto trovato. ${hint}` })
+        const isGeogreen = wb.SheetNames.some(s => /STAMPA SEME|STAMPA CONCIMI/i.test(s))
+
+        if (isHonda) {
+          const hondaResult = parseHondaExcel(wb)
+          setVersioneListino(hondaResult.versione || '')
+          setAnteprima(hondaResult.prodotti)
+          if (hondaResult.prodotti.length === 0) {
+            setMessaggio({ tipo: 'errore', testo: 'Nessun prodotto trovato. Verifica che il file contenga le colonne descrizione e prezzo.' })
+          }
+        } else if (isGeogreen) {
+          const prodotti = parseGeogreen(wb)
+          setVersioneListino('')
+          setAnteprima(prodotti)
+          if (prodotti.length === 0) {
+            setMessaggio({ tipo: 'errore', testo: 'Nessun prodotto trovato. Verifica che il file sia il listino Geogreen corretto (fogli STAMPA SEME / STAMPA CONCIMI).' })
+          }
+        } else {
+          // Qualsiasi altro Excel -> normalizzatore generico
+          const g = parseGenericExcel(wb)
+          setVersioneListino('')
+          if (!g) {
+            setMessaggio({ tipo: 'errore', testo: 'Non trovo l\'intestazione. Il foglio deve avere almeno una colonna "Codice" e una "Descrizione" (sono accettati sinonimi: Articolo, Cod., Nome...).' })
+          } else {
+            setExcelGrezzo(g)
+            setMappa(g.autoMap)
+            ricalcolaAnteprima(g, g.autoMap, brandManuale)
+          }
         }
       }
     } catch (err) {
@@ -494,6 +619,30 @@ export default function Listini({ onNavigate }) {
     } finally {
       setParsing(false)
     }
+  }
+
+  // Ricalcola l'anteprima applicando la mappatura corrente (import Excel generico)
+  const ricalcolaAnteprima = (grezzo, mappaCorr, brand) => {
+    const { prodotti, scartati: sc } = applicaMappa(grezzo, mappaCorr, brand)
+    setAnteprima(prodotti)
+    setScartati(sc)
+    setMessaggio({
+      tipo: prodotti.length ? 'ok' : 'errore',
+      testo: prodotti.length
+        ? `${prodotti.length} righe valide${sc.length ? `, ${sc.length} scartate` : ''}. Controlla la mappatura e premi Importa.`
+        : `Nessuna riga valida (${sc.length} scartate). Controlla la mappatura: servono Codice, Descrizione, Brand e Prezzo listino.`,
+    })
+  }
+
+  const cambiaMappa = (campo, indiceColonna) => {
+    const nuova = { ...(mappa || {}), [campo]: indiceColonna }
+    setMappa(nuova)
+    if (excelGrezzo) ricalcolaAnteprima(excelGrezzo, nuova, brandManuale)
+  }
+
+  const cambiaBrandManuale = (valore) => {
+    setBrandManuale(valore)
+    if (excelGrezzo && mappa) ricalcolaAnteprima(excelGrezzo, mappa, valore)
   }
 
   const handleImporta = async () => {
@@ -536,6 +685,9 @@ export default function Listini({ onNavigate }) {
       setMessaggio({ tipo: 'ok', testo: `✓ Importati ${importati} prodotti con successo.` })
       setAnteprima([])
       setFile(null)
+      setExcelGrezzo(null)
+      setMappa(null)
+      setScartati([])
     } catch (err) {
       setMessaggio({ tipo: 'errore', testo: 'Errore durante il salvataggio: ' + err.message })
     } finally {
@@ -912,7 +1064,7 @@ export default function Listini({ onNavigate }) {
                 </div>
                 <div className="bg-green-50 p-2 rounded-lg">
                   <span className="font-bold text-green-800">📊 Excel</span>
-                  <p className="text-green-700 text-xs">Geogreen (fogli STAMPA SEME e STAMPA CONCIMI)</p>
+                  <p className="text-green-700 text-xs">Geogreen, Honda e <strong>qualsiasi altro brand</strong>: il file deve avere una riga d'intestazione con almeno <em>Codice</em> e <em>Descrizione</em>. Dopo il caricamento controlli/correggi la mappatura delle colonne.</p>
                 </div>
               </div>
               <label className="block w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-green-400 transition-colors">
@@ -927,6 +1079,65 @@ export default function Listini({ onNavigate }) {
             {messaggio && (
               <div className={`rounded-lg p-3 ${messaggio.tipo === 'ok' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
                 {messaggio.testo}
+              </div>
+            )}
+
+            {/* PANNELLO MAPPATURA (solo import Excel generico) */}
+            {excelGrezzo && (
+              <div className="border border-blue-200 bg-blue-50/40 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <p className="font-semibold text-blue-900 text-sm">
+                    🧭 Mappatura colonne <span className="font-normal text-blue-700">— foglio "{excelGrezzo.sheetName}", {excelGrezzo.righe.length} righe</span>
+                  </p>
+                  {scartati.length > 0 && (
+                    <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                      {scartati.length} righe scartate
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-600 block mb-1">Brand <span className="text-gray-400">(usato se il file non ha la colonna brand)</span></label>
+                  <input
+                    type="text"
+                    value={brandManuale}
+                    onChange={e => cambiaBrandManuale(e.target.value)}
+                    placeholder="Es: DIMA"
+                    className="w-full sm:w-64 border rounded-lg px-3 py-2 text-sm uppercase"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {CAMPI_LISTINI.map(campo => (
+                    <div key={campo.key}>
+                      <label className="text-xs text-gray-600 block mb-0.5">
+                        {campo.label}{campo.req && <span className="text-red-500"> *</span>}
+                      </label>
+                      <select
+                        value={mappa?.[campo.key] ?? -1}
+                        onChange={e => cambiaMappa(campo.key, Number(e.target.value))}
+                        className={`w-full border rounded-lg px-2 py-1.5 text-sm bg-white ${campo.req && (mappa?.[campo.key] ?? -1) < 0 ? 'border-red-300' : 'border-gray-300'}`}
+                      >
+                        <option value={-1}>— (nessuna)</option>
+                        {excelGrezzo.headers.map((h, idx) => (
+                          <option key={idx} value={idx}>{h || `Colonna ${idx + 1}`}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                {scartati.length > 0 && (
+                  <details className="text-xs text-gray-600">
+                    <summary className="cursor-pointer text-amber-700">Vedi righe scartate ({scartati.length})</summary>
+                    <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                      {scartati.slice(0, 30).map((s, i) => (
+                        <li key={i}><span className="font-mono">{s.codice || '—'}</span> {s.descrizione ? `· ${s.descrizione}` : ''} <span className="text-amber-700">→ {s.motivo}</span></li>
+                      ))}
+                      {scartati.length > 30 && <li className="text-gray-400">… e altre {scartati.length - 30}</li>}
+                    </ul>
+                  </details>
+                )}
               </div>
             )}
 
@@ -975,7 +1186,7 @@ export default function Listini({ onNavigate }) {
                           <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{p.categoria}</td>
                           <td className="px-3 py-2 text-right text-gray-400 text-xs whitespace-nowrap">€ {p.prezzo_a?.toFixed(2) ?? '-'}</td>
                           <td className="px-3 py-2 text-right font-bold text-green-700 text-xs whitespace-nowrap">
-                            {p.prezzo_b ? `€ ${p.prezzo_b.toFixed(2)}` : '-'}
+                            {(p.prezzo_promo ?? p.prezzo_b) != null ? `€ ${(p.prezzo_promo ?? p.prezzo_b).toFixed(2)}` : '-'}
                           </td>
                         </tr>
                       ))}

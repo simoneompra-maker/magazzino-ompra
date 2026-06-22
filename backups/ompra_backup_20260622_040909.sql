@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict e9cxY7z6fDIraVBUs7GG8MIxa5bYuVibzWVD2FLhnZqhJ8ViPkdH0G0chHENBfZ
+\restrict U8kJOdFmh9cPLHnNpbMqvyykbJoZepD4t5ZeQHoX2mYXY04GLaTnhoz985bQ7eC
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
@@ -231,13 +231,13 @@ ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS b
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
 ALTER TABLE IF EXISTS realtime.messages DROP CONSTRAINT IF EXISTS messages_payload_exclusive;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_09 DROP CONSTRAINT IF EXISTS messages_2026_06_09_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_08 DROP CONSTRAINT IF EXISTS messages_2026_06_08_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_07 DROP CONSTRAINT IF EXISTS messages_2026_06_07_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_06 DROP CONSTRAINT IF EXISTS messages_2026_06_06_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_05 DROP CONSTRAINT IF EXISTS messages_2026_06_05_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_04 DROP CONSTRAINT IF EXISTS messages_2026_06_04_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_03 DROP CONSTRAINT IF EXISTS messages_2026_06_03_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_24 DROP CONSTRAINT IF EXISTS messages_2026_06_24_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_23 DROP CONSTRAINT IF EXISTS messages_2026_06_23_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_22 DROP CONSTRAINT IF EXISTS messages_2026_06_22_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_21 DROP CONSTRAINT IF EXISTS messages_2026_06_21_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_20 DROP CONSTRAINT IF EXISTS messages_2026_06_20_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_19 DROP CONSTRAINT IF EXISTS messages_2026_06_19_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_18 DROP CONSTRAINT IF EXISTS messages_2026_06_18_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -333,13 +333,13 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_06_09;
-DROP TABLE IF EXISTS realtime.messages_2026_06_08;
-DROP TABLE IF EXISTS realtime.messages_2026_06_07;
-DROP TABLE IF EXISTS realtime.messages_2026_06_06;
-DROP TABLE IF EXISTS realtime.messages_2026_06_05;
-DROP TABLE IF EXISTS realtime.messages_2026_06_04;
-DROP TABLE IF EXISTS realtime.messages_2026_06_03;
+DROP TABLE IF EXISTS realtime.messages_2026_06_24;
+DROP TABLE IF EXISTS realtime.messages_2026_06_23;
+DROP TABLE IF EXISTS realtime.messages_2026_06_22;
+DROP TABLE IF EXISTS realtime.messages_2026_06_21;
+DROP TABLE IF EXISTS realtime.messages_2026_06_20;
+DROP TABLE IF EXISTS realtime.messages_2026_06_19;
+DROP TABLE IF EXISTS realtime.messages_2026_06_18;
 DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
@@ -1874,7 +1874,6 @@ DECLARE
   final_payload jsonb;
 BEGIN
   BEGIN
-    -- Generate a new UUID for the id
     generated_id := gen_random_uuid();
 
     -- Check if payload has an 'id' key, if not, add the generated UUID
@@ -1887,13 +1886,11 @@ BEGIN
     -- Set the topic configuration
     EXECUTE format('SET LOCAL realtime.topic TO %L', topic);
 
-    -- Attempt to insert the message
     INSERT INTO realtime.messages (id, payload, event, topic, private, extension)
     VALUES (generated_id, final_payload, event, topic, private, 'broadcast');
   EXCEPTION
     WHEN OTHERS THEN
-      -- Capture and notify the error
-      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+      RAISE WARNING 'WarnSendingBroadcastMessage: %', SQLERRM;
   END;
 END;
 $$;
@@ -1918,7 +1915,7 @@ BEGIN
     VALUES (generated_id, payload, event, topic, private, 'broadcast');
   EXCEPTION
     WHEN OTHERS THEN
-      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+      RAISE WARNING 'WarnSendingBroadcastMessage: %', SQLERRM;
   END;
 END;
 $$;
@@ -1933,40 +1930,31 @@ CREATE FUNCTION realtime.subscription_check_filters() RETURNS trigger
     AS $$
 declare
     col_names text[] = coalesce(
-            array_agg(c.column_name order by c.ordinal_position),
+            array_agg(a.attname order by a.attnum),
             '{}'::text[]
         )
         from
-            information_schema.columns c
+            pg_catalog.pg_attribute a
         where
-            format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
+            a.attrelid = new.entity
+            and a.attnum > 0
+            and not a.attisdropped
             and pg_catalog.has_column_privilege(
                 (new.claims ->> 'role'),
-                format('%I.%I', c.table_schema, c.table_name)::regclass,
-                c.column_name,
+                a.attrelid,
+                a.attnum,
                 'SELECT'
             );
-    table_col_names text[] = coalesce(
-            array_agg(pa.attname),
-            '{}'::text[]
-        )
-        from
-            pg_attribute pa
-        where
-            pa.attrelid = new.entity
-            and pa.attnum > 0;
     filter realtime.user_defined_filter;
     col_type regtype;
     in_val jsonb;
     selected_col text;
 begin
     for filter in select * from unnest(new.filters) loop
-        -- Filtered column is valid
         if not filter.column_name = any(col_names) then
             raise exception 'invalid column for filter %', filter.column_name;
         end if;
 
-        -- Type is sanitized and safe for string interpolation
         col_type = (
             select atttypid::regtype
             from pg_catalog.pg_attribute
@@ -1976,18 +1964,17 @@ begin
         if col_type is null then
             raise exception 'failed to lookup type for column %', filter.column_name;
         end if;
+
         if filter.op = 'in'::realtime.equality_op then
             in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
             if coalesce(jsonb_array_length(in_val), 0) > 100 then
                 raise exception 'too many values for `in` filter. Maximum 100';
             end if;
         else
-            -- raises an exception if value is not coercable to type
             perform realtime.cast(filter.value, col_type);
         end if;
     end loop;
 
-    -- Validate that selected_columns reference columns the role can SELECT
     if new.selected_columns is not null then
         for selected_col in select * from unnest(new.selected_columns) loop
             if not selected_col = any(col_names) then
@@ -1996,15 +1983,11 @@ begin
         end loop;
     end if;
 
-    -- Apply consistent order to filters so the unique constraint on
-    -- (subscription_id, entity, filters) can't be tricked by a different filter order
     new.filters = coalesce(
         array_agg(f order by f.column_name, f.op, f.value),
         '{}'
     ) from unnest(new.filters) f;
 
-    -- Normalize selected_columns order so ARRAY['a','b'] and ARRAY['b','a'] are
-    -- treated as the same subscription group in apply_rls
     new.selected_columns = (
         select array_agg(c order by c)
         from unnest(new.selected_columns) c
@@ -4355,61 +4338,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_06_03; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_18; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_03 (
-    topic text NOT NULL,
-    extension text NOT NULL,
-    payload jsonb,
-    event text,
-    private boolean DEFAULT false,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea
-);
-
-
---
--- Name: messages_2026_06_04; Type: TABLE; Schema: realtime; Owner: -
---
-
-CREATE TABLE realtime.messages_2026_06_04 (
-    topic text NOT NULL,
-    extension text NOT NULL,
-    payload jsonb,
-    event text,
-    private boolean DEFAULT false,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea
-);
-
-
---
--- Name: messages_2026_06_05; Type: TABLE; Schema: realtime; Owner: -
---
-
-CREATE TABLE realtime.messages_2026_06_05 (
-    topic text NOT NULL,
-    extension text NOT NULL,
-    payload jsonb,
-    event text,
-    private boolean DEFAULT false,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea
-);
-
-
---
--- Name: messages_2026_06_06; Type: TABLE; Schema: realtime; Owner: -
---
-
-CREATE TABLE realtime.messages_2026_06_06 (
+CREATE TABLE realtime.messages_2026_06_18 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4424,10 +4356,10 @@ CREATE TABLE realtime.messages_2026_06_06 (
 
 
 --
--- Name: messages_2026_06_07; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_19; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_07 (
+CREATE TABLE realtime.messages_2026_06_19 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4442,10 +4374,10 @@ CREATE TABLE realtime.messages_2026_06_07 (
 
 
 --
--- Name: messages_2026_06_08; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_20; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_08 (
+CREATE TABLE realtime.messages_2026_06_20 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4460,10 +4392,64 @@ CREATE TABLE realtime.messages_2026_06_08 (
 
 
 --
--- Name: messages_2026_06_09; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_06_21; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_09 (
+CREATE TABLE realtime.messages_2026_06_21 (
+    topic text NOT NULL,
+    extension text NOT NULL,
+    payload jsonb,
+    event text,
+    private boolean DEFAULT false,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
+);
+
+
+--
+-- Name: messages_2026_06_22; Type: TABLE; Schema: realtime; Owner: -
+--
+
+CREATE TABLE realtime.messages_2026_06_22 (
+    topic text NOT NULL,
+    extension text NOT NULL,
+    payload jsonb,
+    event text,
+    private boolean DEFAULT false,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
+);
+
+
+--
+-- Name: messages_2026_06_23; Type: TABLE; Schema: realtime; Owner: -
+--
+
+CREATE TABLE realtime.messages_2026_06_23 (
+    topic text NOT NULL,
+    extension text NOT NULL,
+    payload jsonb,
+    event text,
+    private boolean DEFAULT false,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    binary_payload bytea,
+    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
+);
+
+
+--
+-- Name: messages_2026_06_24; Type: TABLE; Schema: realtime; Owner: -
+--
+
+CREATE TABLE realtime.messages_2026_06_24 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4665,52 +4651,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_06_03; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_18; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_03 FOR VALUES FROM ('2026-06-03 00:00:00') TO ('2026-06-04 00:00:00');
-
-
---
--- Name: messages_2026_06_04; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_04 FOR VALUES FROM ('2026-06-04 00:00:00') TO ('2026-06-05 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_18 FOR VALUES FROM ('2026-06-18 00:00:00') TO ('2026-06-19 00:00:00');
 
 
 --
--- Name: messages_2026_06_05; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_19; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_05 FOR VALUES FROM ('2026-06-05 00:00:00') TO ('2026-06-06 00:00:00');
-
-
---
--- Name: messages_2026_06_06; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_06 FOR VALUES FROM ('2026-06-06 00:00:00') TO ('2026-06-07 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_19 FOR VALUES FROM ('2026-06-19 00:00:00') TO ('2026-06-20 00:00:00');
 
 
 --
--- Name: messages_2026_06_07; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_20; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_07 FOR VALUES FROM ('2026-06-07 00:00:00') TO ('2026-06-08 00:00:00');
-
-
---
--- Name: messages_2026_06_08; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_08 FOR VALUES FROM ('2026-06-08 00:00:00') TO ('2026-06-09 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_20 FOR VALUES FROM ('2026-06-20 00:00:00') TO ('2026-06-21 00:00:00');
 
 
 --
--- Name: messages_2026_06_09; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_21; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_09 FOR VALUES FROM ('2026-06-09 00:00:00') TO ('2026-06-10 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_21 FOR VALUES FROM ('2026-06-21 00:00:00') TO ('2026-06-22 00:00:00');
+
+
+--
+-- Name: messages_2026_06_22; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_22 FOR VALUES FROM ('2026-06-22 00:00:00') TO ('2026-06-23 00:00:00');
+
+
+--
+-- Name: messages_2026_06_23; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_23 FOR VALUES FROM ('2026-06-23 00:00:00') TO ('2026-06-24 00:00:00');
+
+
+--
+-- Name: messages_2026_06_24; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_24 FOR VALUES FROM ('2026-06-24 00:00:00') TO ('2026-06-25 00:00:00');
 
 
 --
@@ -5865,6 +5851,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1775738232391	2026-04-09 10:00:00+00	Giardino Verde Di Maiorano Devid	{"id": "514216", "cap": "31040", "nome": "Giardino Verde Di Maiorano Devid", "email": "lion.leonardo2004@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "VOLPAGO DEL MONTELLO", "telefono": "3457613676", "indirizzo": "VIA SAN PIO X, 101", "provincia": "TV", "searchText": "giardino verde di maiorano devid volpago del montello ", "telefonoOriginale": "3457613676"}	3457613676	Simone	[]	[{"id": 1775738191872, "nome": "hurrica", "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775738228460, "nome": "Hurricane 7 10 kg", "prezzo": 108.9, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	108.9	\N	\N	\N	scontrino	completed	2026-04-09 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1778665123064	2026-05-13 10:00:00+00	LOVO C. P. I. SRL Pi 04880910262. M5UXCR1 via Buel del LOVO 2 Casier	\N	\N	Simone	[{"brand": "Toro", "model": "MR4275T MY RIDE", "prezzo": 7200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "420211459 mod. 74692"}, {"brand": "Worx", "model": "Potatore ad asta WG349 E", "prezzo": 190, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "30232502000"}]	[]	7390	\N	\N	Da ritirare trattorino Viking da vedere e valutare a parte	fattura	completed	2026-05-14 10:11:30.322+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1779526175204	2026-05-23 10:00:00+00	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLA 56", "prezzo": 249, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "944036782"}, {"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600034499"}]	[]	548	\N	\N	\N	scontrino	completed	2026-05-23 10:00:00+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1781881497376	2026-06-19 15:04:57.376+00	Paolin Gianluca	\N	\N	Simone	[{"brand": "GGP", "model": "Rider Combi 166 HD, piatto di taglio 66 cm", "prezzo": 2000, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "GGP", "model": "GGP Trattorino tosaerba XD 150 HD piatto di taglio 98 cm", "prezzo": 2400, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	4400	\N	\N	Eventuale consegna a Strà	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
 1776087669751	2026-04-13 13:41:09.751+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1776087665124, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-13 13:41:09.751+00	t	user_1776067412336	vendita	f	f	f	in_attesa	\N
 1775643436602	2026-04-08 10:00:00+00	De Bortoli Emilio	{"id": "511975", "cap": "30013", "nome": "De Bortoli Emilio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3420471047", "indirizzo": "VIA FAUSTA 167", "provincia": "VE", "searchText": "de bortoli emilio cavallino-treporti ", "telefonoOriginale": "3420471047"}	3420471047	Simone	[{"brand": "GGP", "model": "Trattorino rasaerba XDC 150 HD", "prezzo": 2600, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "26BA3RON003900"}]	[{"id": 1775643339417, "nome": "Kit traino GGP", "prezzo": 50, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	2650	300	pos	Chiamare cliente appena pronto e ritirare trattorino vecchio da rottamare	scontrino	completed	2026-04-13 14:40:06.242+00	f	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776170406257	2026-04-14 12:40:05.805+00	Terradice S.R.L.	{"id": "506854", "cap": "31037", "nome": "Terradice S.R.L.", "email": "info@terradice.com", "nomeP": "", "cognome": "", "contatto": "Guidolin Mauro", "localita": "LORIA", "telefono": "3409433264", "indirizzo": "VIA COLOMBARA, 63/A", "provincia": "TV", "searchText": "terradice s.r.l. loria guidolin mauro", "telefonoOriginale": "3409433264"}	3409433264	Simone	[{"brand": "Grillo", "model": "Climber 10 AWD", "prezzo": 11800, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "767775"}]	[]	11800	\N	\N	\N	scontrino	completed	2026-04-14 12:40:05.805+00	f	user_1770584612559	vendita	f	f	f	in_attesa	\N
@@ -5971,11 +5958,37 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1780299680792	2026-06-01 10:00:00+00	Michielon Sergio	{"id": "202558", "cap": "31032", "nome": "Michielon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "3394273510", "indirizzo": "VIA DELLE GRAZIE 35 - LUGHIGNANO", "provincia": "TV", "searchText": "michielon sergio casale sul sile ", "telefonoOriginale": "3394273510"}	3394273510	Simone	[{"brand": "Stihl", "model": "Soffiatore SR 430 Atomizzatore", "prezzo": 750, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "370196554"}]	[]	750	\N	\N	\N	scontrino	completed	2026-06-01 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1779282664880	2026-05-20 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779282017655, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-20 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1779721753728	2026-05-25 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1779721736191, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 2, "matricola": null, "aliquotaIva": 4}, {"id": 1779721746796, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	165.4	\N	\N	\N	scontrino	completed	2026-05-25 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
-1780642860247	2026-06-05 07:01:00.247+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Admin	[]	[{"id": 1780642855209, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	246.5	\N	\N	\N	scontrino	completed	2026-06-05 07:01:00.247+00	t	user_1771232846694	vendita	f	f	f	\N	\N
 1780649587125	2026-06-05 08:53:06.437+00	Officine Carraretto Loris Srl	{"id": "202387", "cap": "31032", "nome": "Officine Carraretto Loris Srl", "email": "alessandra.carraretto@carrarettosrl.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "3283082840", "indirizzo": "VIA C. GARDAN 2", "provincia": "TV", "searchText": "officine carraretto loris srl casale sul sile ", "telefonoOriginale": "3283082840"}	3283082840	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 60.1", "prezzo": 280, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452957720"}]	[]	280	\N	\N	\N	fattura	completed	2026-06-05 08:53:06.437+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1780662346023	2026-06-05 12:25:46.023+00	Buosi Mosè 389 6312244	\N	\N	Simone	[]	[{"id": 1780662273932, "nome": "MOTOCULTIVATORE GRILLO G85, MOTORE HONDA GX 270, RUOTE 942412 4.00-10, FRESA 984511 CM 58", "prezzo": 3600, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780662297721, "nome": "RUOTE 900412 5.00-10 PER DIFFERENZA", "prezzo": 100, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1780662307358, "nome": "FRESA CONTROROTANTE 58 CM, COMPRESO ZAVORRA 11 KG 9G3211, PER DIFFERENZA", "prezzo": 150, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3850	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
 1780677285718	2026-06-05 16:34:45.169+00	Salvalaio Lorenzo 3491428794	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore KM 94 RC-E", "prezzo": 455, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545319888"}]	[{"id": 1780677267182, "nome": "Testina autocut 26-2", "prezzo": 25, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	480	\N	\N	\N	scontrino	completed	2026-06-05 16:34:45.169+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1780642860247	2026-06-05 10:00:00+00	Nico Giardini Di Bastarolo Nicola	{"cf": "", "id": "a30d71c6-49e4-4587-adc2-d9cb771e0186", "cap": "31059", "sdi": "", "nome": "Nico Giardini Di Bastarolo Nicola", "piva": "", "email": "nickbast74@gmail.com", "nomeP": "Nico Giardini Di Bastarolo Nicola", "_fonte": "db", "cognome": "", "contatto": "", "localita": "ZERO BRANCO", "telefono": "3498200169", "indirizzo": "VIA G.B. GUIDINI, 29", "provincia": "TV", "searchText": "nico giardini di bastarolo nicola zero branco "}	3498200169	Simone	[]	[{"id": 1780642855209, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 49.3, "quantita": 5, "matricola": null, "aliquotaIva": 4}]	246.5	\N	\N	\N	scontrino	completed	2026-06-05 10:00:00+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1781788516570	2026-06-18 13:15:16.57+00	Girotto Loris	{"id": "503318", "cap": "31030", "nome": "Girotto Loris", "email": "logisub@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3469787007", "indirizzo": "VIA CONSCIO, 24", "provincia": "TV", "searchText": "girotto loris casier ", "telefonoOriginale": "3469787007"}	3469787007	Simone	[]	[{"id": 1781788505987, "nome": "Albatros Green 8 Kg 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	54.8	\N	\N	\N	scontrino	completed	2026-06-18 13:15:16.57+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1781885066981	2026-06-19 16:04:26.981+00	Volpato Adriano	{"id": "505924", "cap": "30020", "nome": "Volpato Adriano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "ERACLEA", "telefono": "3474885926", "indirizzo": "VIA BERNINI, 6", "provincia": "VE", "searchText": "volpato adriano eraclea ", "telefonoOriginale": "3474885926"}	3474885926	Simone	[]	[{"id": 1781885058049, "nome": "Humifitos 25 Kg ", "prezzo": 115, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	115	\N	\N	\N	scontrino	completed	2026-06-19 16:04:26.981+00	t	user_1770584612559	vendita	f	f	f	\N	\N
 1780679006531	2026-06-05 10:00:00+00	Cenedese Andrea	{"cf": "", "id": "244f09c0-9929-48c0-bad3-89de8885fc48", "cap": "31048", "sdi": "", "nome": "Cenedese Andrea", "piva": "", "email": "andrea.cenedese@alice.it", "nomeP": "Cenedese Andrea", "_fonte": "db", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta "}	3318200684	Simone	[{"brand": "Echo", "model": "Motosega DCS-2500T", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C81535022520"}, {"brand": "Echo", "model": "Batteria LBP-56V125", "prezzo": 469, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935022196"}, {"brand": "Echo", "model": "Batteria LBP-56V125 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83935022265"}, {"brand": "Echo", "model": "Caricabatteria LCJQ-560", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "T91435038235"}]	[{"nome": "Catena", "prezzo": 15, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 15, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena", "prezzo": 12.5, "quantita": 1, "aliquotaIva": 22}]	970.5	\N	\N	\N	scontrino	completed	2026-06-05 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1780929722503	2026-06-08 14:42:01.801+00	Oasi Garden Snc Di Casagrande G. & C.	{"id": "510784", "cap": "31050", "nome": "Oasi Garden Snc Di Casagrande G. & C.", "email": "oasigardensnc@libero.it", "nomeP": "", "cognome": "", "contatto": "Cel Francesca", "localita": "VEDELAGO", "telefono": "3289543922", "indirizzo": "VIA CA' MATTA 31- CASACORBA", "provincia": "TV", "searchText": "oasi garden snc di casagrande g. & c. vedelago cel francesca", "telefonoOriginale": "3289543922"}	3289543922	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLA 66", "prezzo": 400, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452961854"}]	[]	400	\N	\N	\N	fattura	completed	2026-06-08 14:42:01.801+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1781081226757	2026-06-10 10:00:00+00	Vecchiato Mario	{"id": "507329", "cap": "31030", "nome": "Vecchiato Mario", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "0422396626", "indirizzo": "VICOLO GIUSEPPE, 14 - PEZZAN", "provincia": "TV", "searchText": "vecchiato mario carbonera ", "telefonoOriginale": "0422396626"}	3491966214	Simone	[{"brand": "Volpi", "model": "Zaino a batteria SMART 5 lt", "prezzo": 61.9, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	61.9	\N	\N	Chiamare appena arriva	scontrino	pending	\N	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781095155181	2026-06-10 12:39:15.181+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1781095086220, "nome": "NPK Enduring 5 kg 5 kg", "prezzo": 36.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1781095149917, "nome": "FILO FORESTAL R304330", "prezzo": 47, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	83.9	\N	\N	\N	fattura	completed	2026-06-10 12:39:15.181+00	t	user_1781075901985	vendita	f	f	f	\N	\N
+1781334679307	2026-06-13 07:11:19.307+00	Marini Arturo	{"id": "203214", "cap": "31100", "nome": "Marini Arturo", "email": "az.agr.mariniarturo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3494344074", "indirizzo": "VIA DELL'ISOLA 12", "provincia": "TV", "searchText": "marini arturo treviso ", "telefonoOriginale": "3494344074"}	3494344074	Simone	[]	[{"id": 1781334666313, "nome": "AllRound 20 kg", "prezzo": 58.3, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	116.6	\N	\N	\N	fattura	completed	2026-06-13 07:11:19.307+00	t	user_1781333166243	vendita	f	f	f	\N	\N
+1780985822957	2026-06-09 10:00:00+00	Moretti Marco	{"cf": "", "id": "5a838744-02ab-4e62-bb27-c957ac1ff732", "cap": "31100", "sdi": "", "nome": "Moretti Marco", "piva": "", "email": "moretti72.marco@libero.it", "nomeP": "Moretti Marco", "_fonte": "db", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3392050119", "indirizzo": "VIA TIMAVO", "provincia": "TV", "searchText": "moretti marco treviso "}	3392050119	Simone	[]	[{"id": 1780985810796, "nome": "Ecograss 10 kg", "prezzo": 68, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	136	\N	\N	\N	fattura	completed	2026-06-09 10:00:00+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1780934722901	2026-06-08 10:00:00+00	Berlese Federica	\N	\N	Simone	[]	[{"id": 1780934715743, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	60.8	\N	\N	\N	scontrino	completed	2026-06-08 10:00:00+00	t	user_1771232846694	vendita	t	f	f	\N	\N
+1781874565413	2026-06-19 13:09:24.84+00	Sualto Sas Di Cappelletto Alvise	{"id": "500208", "cap": "31100", "nome": "Sualto Sas Di Cappelletto Alvise", "email": "sualtosas@gmail.com", "nomeP": "", "cognome": "", "contatto": "3387267775", "localita": "TREVISO", "telefono": "3471124204", "indirizzo": "VIA G.ZANELLA, 53/C", "provincia": "TV", "searchText": "sualto sas di cappelletto alvise treviso 3387267775", "telefonoOriginale": "3471124204"}	3471124204	Simone	[{"brand": "Echo", "model": "Decespugliatore DSRM-2400/L", "prezzo": 289, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83535001676"}]	[]	289	\N	\N	\N	fattura	completed	2026-06-19 13:09:24.84+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781936712056	2026-06-20 06:25:12.056+00	Rizzo Giuseppina	\N	\N	Simone	[]	[{"id": 1781936701692, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-06-20 06:25:12.056+00	t	user_1770584612559	vendita	t	f	f	\N	\N
+1781937975150	2026-06-20 06:46:14.651+00	Beltramini Stefano	{"id": "511475", "cap": "31048", "nome": "Beltramini Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335294244", "indirizzo": "VIA POSTUMIA CENTRO, 58", "provincia": "TV", "searchText": "beltramini stefano san biagio di callalta ", "telefonoOriginale": "335294244"}	335294244	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 235 R", "prezzo": 419, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841433854"}]	[{"id": 1781937896480, "nome": "Olio HP Ultra 1 lt", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	440.5	\N	\N	\N	scontrino	completed	2026-06-20 06:46:14.651+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781541633317	2026-06-15 10:00:00+00	Terzo Massimiliano	{"id": "504100", "cap": "31057", "nome": "Terzo Massimiliano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3484430842", "indirizzo": "VIA NERBON, 45", "provincia": "TV", "searchText": "terzo massimiliano silea ", "telefonoOriginale": "3484430842"}	3484430842	Simone	[{"brand": "Echo", "model": "Motosega CS-2511TES", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C74638145209"}, {"brand": "Echo", "model": "Motore multifunzione PAS 2620 ES", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U22838101602"}, {"brand": "Echo", "model": "Potatore MTA-DPP", "prezzo": 312, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U50135003155"}]	[{"nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "aliquotaIva": 22}, {"nome": "Olio catena Pro Up 5 litri ", "prezzo": 23.9, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 16.6, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 9.3, "quantita": 1, "aliquotaIva": 22}]	1291.3	\N	\N	\N	fattura	completed	2026-06-15 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781597303003	2026-06-16 08:08:22.123+00	Schiavon Antonio	{"id": "511028", "cap": "31048", "nome": "Schiavon Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422797633", "indirizzo": "VIA POSTUMIA CENTRO, 200", "provincia": "TV", "searchText": "schiavon antonio san biagio di callalta ", "telefonoOriginale": "0422797633"}	0422797633	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466C1", "prezzo": 490, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1228051"}]	[{"id": 1781597268842, "nome": "Olio motore 1 litro", "prezzo": 14.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	504.9	\N	\N	\N	scontrino	completed	2026-06-16 08:08:22.123+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781599493592	2026-06-16 08:44:53.214+00	De Benetti Angelo	\N	\N	Simone	[{"brand": "ST. S.p.A.", "model": "Rasaerba XE 40", "prezzo": 170, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "25KC8WBH003503"}]	[]	170	\N	\N	\N	scontrino	completed	2026-06-16 08:44:53.214+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1781618467117	2026-06-16 10:00:00+00	Feltrin Rodolfo	\N	\N	Simone	[{"brand": "WORX", "model": "Soffiatore WG547E", "prezzo": 130, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "20220301011969"}, {"brand": "WORX", "model": "Caricabatteria WA3880", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "2022 0300337994"}, {"brand": "WORX", "model": "Batteria WA3551", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "20220300338879"}]	[]	130	\N	\N	\N	scontrino	completed	2026-06-16 10:00:00+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1781619547496	2026-06-16 14:19:05.881+00	Ndoji Andrea	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MSA 190.0 T", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452657925"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 220, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256591"}, {"brand": "Stihl", "model": "Caricabatteria AL 301", "prezzo": 125, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711636134"}]	[]	684	\N	\N	\N	fattura	completed	2026-06-16 14:19:05.881+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1781626423179	2026-06-16 16:13:42.482+00	Busana Giardini Di Busana Francesco	{"id": "510815", "cap": "31010", "nome": "Busana Giardini Di Busana Francesco", "email": "amministrazione@busanagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASER", "telefono": "3408334679", "indirizzo": "VIA CHIESA, 37", "provincia": "TV", "searchText": "busana giardini di busana francesco maser ", "telefonoOriginale": "3408334679"}	3408334679	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 100.1", "prezzo": 375, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451949951"}]	[{"id": 1781626405730, "nome": "Catena 57 m 1.1", "prezzo": 16, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	407	\N	\N	\N	fattura	completed	2026-06-16 16:13:42.482+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781688024388	2026-06-17 09:20:24.387+00	Rella Marco	\N	\N	Simone	[]	[{"id": 1781687990122, "nome": "Eden 8 5 kg", "prezzo": 18.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	18.2	\N	\N	Dose a giugno 3 kg per 100 mq.	scontrino	completed	2026-06-17 09:20:24.387+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1781771049289	2026-06-18 08:24:08.297+00	Meneghel Vittorio	\N	\N	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0700NB"}]	[]	179	\N	\N	\N	scontrino	completed	2026-06-18 08:24:08.297+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1781764587221	2026-06-18 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1781764579542, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	109.6	\N	\N	\N	fattura	completed	2026-06-18 10:00:00+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1781773566642	2026-06-18 09:06:04.338+00	Biasini Eleonora	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "453026266"}, {"brand": "Stihl", "model": "Batteria AK 30.0 S", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948360799"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703589887"}]	[]	368	\N	\N	\N	scontrino	completed	2026-06-18 09:06:04.338+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1781775678558	2026-06-10 10:00:00+00	BARBON EZECHIELE	\N	\N	Simone	[{"brand": "Stihl", "model": "1 DECESPUGLIATORE STIHL FS120", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841 090 918"}, {"brand": "Echo", "model": "1 DECESPUGLIATORE  ECHO SRM 222 ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540109945"}]	[{"id": 1781775662400, "nome": "FILO 2,4", "prezzo": 9, "quantita": 1, "aliquotaIva": 22}, {"id": 1781775662401, "nome": "FILO 2,0 PRO", "prezzo": 12, "quantita": 1, "aliquotaIva": 22}]	579	\N	\N	\N	scontrino	completed	2026-06-10 10:00:00+00	f	user_1770584612559	vendita	t	f	f	\N	\N
+1781877159411	2026-06-19 13:52:39.41+00	Privato	\N	\N	Simone	[]	[{"id": 1781877141570, "nome": "Freezanz Natural Green+ - Lt. 5 Lt. 5", "prezzo": 158, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	158	\N	\N	\N	scontrino	completed	2026-06-19 13:52:39.41+00	t	user_1770584612559	vendita	t	f	f	\N	\N
+1781939313124	2026-06-20 10:00:00+00	Comin Oliviero	{"id": "504571", "cap": "31056", "nome": "Comin Oliviero", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "0422849447", "indirizzo": "VIA MEZZA BRUSCA, 1", "provincia": "TV", "searchText": "comin oliviero roncade ", "telefonoOriginale": "0422849447"}	0422849447	Simone	[{"brand": "Forest", "model": "Spaccalegna SUG 1000", "prezzo": 1460, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Honda", "model": "Rasaerba HRG 466 PK", "prezzo": 490, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	1950	\N	\N	Consegnare al cliente appena pronte prossima settimana	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	\N	\N
+1781942290317	2026-06-20 07:58:09.924+00	Zanon Paolo	{"id": "513747", "cap": "20100", "nome": "Zanon Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MILANO", "telefono": "3274308540", "indirizzo": "VIA BARTOLIN LORENZO, 29", "provincia": "MI", "searchText": "zanon paolo milano ", "telefonoOriginale": "3274308540"}	3274308540	Simone	[{"brand": "Weibang", "model": "Rasaerba WB537SC V-M", "prezzo": 1089, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "W537SCV/LV/M021M&251215017"}]	[]	1089	\N	\N	\N	scontrino	completed	2026-06-20 07:58:09.924+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1781945263353	2026-06-20 08:47:42.447+00	Gira Mihaij via Monte Bianco 70 Quinto di Treviso 389 5147281	\N	\N	Simone	[{"brand": "Stihl", "model": " RME 339.0", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452820108"}]	[]	269	\N	\N	\N	scontrino	completed	2026-06-20 08:47:42.447+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 \.
 
 
@@ -5984,487 +5997,6 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 --
 
 COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cliente, prezzo, totale, status, "user", location, carico_automatico) FROM stdin;
-577	2026-05-22 16:19:42.104+00	CARICO	Honda	Rasaerba HRN536C2	MCSF1077924	\N	\N	\N	available	user_1775131564325	main	t
-578	2026-05-22 16:20:05.021+00	SCARICO	Honda	Rasaerba HRN536C2	MCSF1077924	Barison Michele	0	0	sold	user_1775131564325	main	f
-178	2026-02-16 08:50:59.119+00	SCARICO	STIHL	Batteria AK 30.0S	912736933	Bisetto Mario	0	0	sold	user_1769961017929	main	f
-595	2026-05-26 14:28:19.422+00	CARICO	Stihl	Tagliasiepi HSA 100.1	451949950	\N	\N	\N	available	user_1775131564325	main	t
-177	2026-02-16 08:50:58.969+00	SCARICO	STIHL	Caricabatterie AL 101	702817744	Bisetto Mario	0	0	sold	user_1769961017929	main	f
-183	2026-02-19 09:12:21.296+00	CARICO	STIHL	Motosega MSA 190.0 T	452310977	\N	\N	\N	available	user_1769961017929	main	f
-609	2026-05-30 06:00:38.598+00	CARICO	Stihl	Decespugliatore FS 94 RC-E Brushcutter	549141064	\N	\N	\N	available	user_1775131564325	main	t
-188	2026-02-19 09:34:06.327+00	SCARICO	STIHL	Tagliabordi FSA 30.0	838110682	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
-193	2026-02-19 10:53:27.211+00	SCARICO	STIHL	Motosega MSA 190.0 T	452310979	AZ. AGR. Vivai Piante Di Dragancea Andrei	0	0	sold	user_1769961017929	main	f
-622	2026-06-01 13:49:31.813+00	SCARICO	Echo	Motosega CS-2511TES	C74638145237	Schiavinato Guglielmo 3405665534	0	0	sold	user_1775131564325	main	f
-200	2026-02-21 10:36:10.272+00	CARICO	STIHL	Motosega MS 194 T 1/4 P Chainsaw	540455888	\N	\N	\N	available	user_1769961017929	main	f
-215	2026-02-28 08:35:43.824+00	SCARICO	NEGRI	Biotrituratore R95BRAHP65	27489101	Bergamo Nello - Impresa Edile	0	0	sold	user_1769961017929	main	f
-222	2026-03-02 16:56:25.432+00	CARICO	STIHL	Troncatrice TS 910.0i, 400mm/16"	196978666	\N	\N	\N	available	user_1769961017929	main	t
-225	2026-03-02 17:18:18.951+00	SCARICO	Echo	Motosega CS-280TES	C75138079230	Viviani Antonio	0	0	sold	user_1769961017929	main	f
-108	2026-01-12 11:00:00+00	VENDITA	VARIE	Tosasiepi Stihl HLA 66 (SN: 452306770)	NOMAT-1770550419458	Green Style Srl	405	405	sold	Simone	main	f
-111	2026-01-12 11:00:00+00	VENDITA	SNOWEX	SNOWEX SPARGISALS SNOWEX + VEE PRO 6000	NOMAT-1770589476407	IFAF SPA VIA CALNOVA 105 30020 NOVENTA DIP.	7900	7900	sold	Simone	main	f
-112	2026-01-14 11:00:00+00	VENDITA	ACCESSORI	ECHO MOTOSEGA CS 2511 TES (SN: C87940041634) + FORBICE  + CATENA	NOMAT-1770615936616	Zanardo Fabio	488	488	sold	Simone	main	f
-113	2026-01-14 11:00:00+00	VENDITA	VARIE	SPACCALEGNA SUG 700 7 TONN.	NOMAT-1770616271153	GRACIS PAOLO VIA C. BATTIISTI 47/A VOLPAGO	860	860	sold	Simone	main	f
-114	2026-01-16 11:00:00+00	VENDITA	ACCESSORI	CATENE 52 MAGLIE 1,1 mm x2 + BIOPLUS 20 LITRI + HP ULTRA LT 5	NOMAT-1770616937887	AZ. AGR. La Quercia Di Dal Ben Igor	203.8	203.8	sold	Simone	main	f
-115	2026-01-09 11:00:00+00	VENDITA	ACCESSORI	SOFFIATORE BGA 60 452325465 + BATTERIA AK30 912721072 + CARICABATTERIE AL 101 702817745	NOMAT-1770617231010	De Zottis sas	369	369	sold	Simone	main	f
-117	2026-01-16 11:00:00+00	VENDITA	STIHL	MSA 161 T	451890971	Moretti Marco	425	425	sold	Simone	main	f
-119	2026-01-17 11:00:00+00	VENDITA	VARIE	POTATORE VOLPI KVS 8000 (SN: SL 2025.165NB)	NOMAT-1770626174900	Gardin Adriano	220	220	sold	Simone	main	f
-121	2026-01-17 11:00:00+00	VENDITA	VARIE	IMPIANTO ANTIZANZARE GEYSER PRO, 43 UGELLI	NOMAT-1770626491337	CARNIEL MARCO	2350	2350	sold	Simone	main	f
-122	2026-01-17 11:00:00+00	VENDITA	ACCESSORI	MOTOSEGA MS 194 T (SN: 547317805) + CATENA	NOMAT-1770626684538	Fossaluzza Sandro	359	359	sold	Simone	main	f
-123	2026-01-19 11:00:00+00	VENDITA	ACCESSORI	Pantalone Stihl Function	NOMAT-1770626836963	Toffolo Alessandro	119	119	sold	Simone	main	f
-126	2026-01-23 11:00:00+00	VENDITA	ACCESSORI	SET CINTURA ADVANCE X-FLEX N°4	NOMAT-1770627347884	AZ. AGR. Moz Moreno	98	98	sold	Simone	main	f
-127	2026-01-23 11:00:00+00	VENDITA	ACCESSORI	1 Motosega MS 182 (SN: 837 262 464) + 1 Mix Marline 5LT + 1 Olio PRO-UP 2LT	NOMAT-1770627577462	Bortolato Alessandro	417	417	sold	Simone	main	f
-59	2026-01-16 10:28:29.791+00	CARICO	STIHL	MSA 161 T	451890971	\N	\N	\N	available	user_1766825174502	main	f
-131	2026-01-28 11:00:00+00	VENDITA	ACCESSORI	GANCIO TRAINO AVANT	NOMAT-1770628289583	Favero Giardini Di Favero Mirco	200	200	sold	Simone	main	f
-136	2026-01-30 11:00:00+00	VENDITA	ACCESSORI	Pantalone Echo antitaglio	NOMAT-1770629102868	Tonini Srl	95	95	sold	Simone	main	f
-104	2026-01-07 11:00:00+00	VENDITA	STIHL	STIHL SOFFIATORI BGA 160 (SN: 450906088) + SPRAY SUPERCLEAN	NOMAT-1770542601552	Battistel Thomas	360	360	sold	Simone	main	f
-125	2026-01-22 11:00:00+00	VENDITA	Echo	Motosega CS3410 (SN: F09238003622)	NOMAT-1770627118231	BIANCO DAVIDE	269	269	sold	Simone	main	f
-87	2026-01-07 11:00:00+00	VENDITA	ACCESSORI	SEGACCIO ARS 470mm + MANICO TELES. EXP 5.5	NOMAT-1770538424954	MIOTTO BENIAMINO	190	190	sold	Simone	main	f
-132	2026-01-28 11:00:00+00	VENDITA	STIHL	FORBICE STIHL ASA 20 (SN: 707610915) + BATTERIA AS 2 + CARICABATT. AL 101	NOMAT-1770628454115	Vacilotto Valerio	219	219	sold	Simone	main	f
-128	2026-01-23 11:00:00+00	VENDITA	Echo	MOTOSEGA CS 2511 TES (SN: C87940041531)	NOMAT-1770627778411	TONINI SRL	439	439	sold	Simone	main	f
-130	2026-01-28 11:00:00+00	VENDITA		Trattorino John Deere x 165 usato, visto e piaciuto nello stato in cui si trova	NOMAT-1770628179893	Haprilla Kola	1350	1350	sold	Simone	main	f
-120	2026-01-17 11:00:00+00	VENDITA	STIHL	MOTOSGA MS 182 (SN: 837 262 267)	NOMAT-1770626309484	WALTER RIZZATO	379	379	sold	Simone	main	f
-135	2026-01-30 11:00:00+00	VENDITA	ACCESSORI	Motosega MS 231 (SN: 194053039) + TANICA MOTOMIX 5 L	NOMAT-1770628981076	Piovesan Andrea	566.5	566.5	sold	Simone	main	f
-140	2026-02-06 11:00:00+00	VENDITA	STIHL	STIHL BIOTRITURATORE GHE 105 (SN: 451998874) + Stihl POTATORE GTA 26 942966195 + BATTERIA AS 2 937201708 + CARICABATT. AL 1 718061245	NOMAT-1770629736627	COMMISSATI FRANCESCA	609	609	sold	Simone	main	f
-579	2026-05-23 08:47:12.426+00	CARICO	Stihl	Tagliasiepi HLA 56	944036782	\N	\N	\N	available	user_1775131564325	main	t
-173	2026-02-16 08:43:04.075+00	CARICO	STIHL	Decespugliatore FSA 80 R	546519977	\N	\N	\N	available	user_1769961017929	main	f
-174	2026-02-16 08:43:04.075+00	CARICO	STIHL	Batteria AK 30.0S	912736933	\N	\N	\N	available	user_1769961017929	main	f
-175	2026-02-16 08:43:04.075+00	CARICO	STIHL	Caricabatterie AL 101	702817744	\N	\N	\N	available	user_1769961017929	main	f
-179	2026-02-16 16:17:05.943+00	CARICO	VOLPI	Forbice elettronica KV390	PZ2925.389NB	\N	\N	\N	available	user_1769961017929	main	f
-180	2026-02-16 16:17:05.943+00	CARICO	VOLPI	Potatore KVS6000	SM4222498LS	\N	\N	\N	available	user_1769961017929	main	f
-184	2026-02-19 09:14:24.352+00	SCARICO	STIHL	Motosega MSA 190.0 T	452310977	Sartori Luca	0	0	sold	user_1769961017929	main	f
-189	2026-02-19 09:34:06.583+00	SCARICO	STIHL	Caricabatterie AL 1	935280185	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
-190	2026-02-19 09:34:06.74+00	SCARICO	STIHL	Batteria AS 2	937056842	Buffon Giancarlo	0	0	sold	user_1769961017929	main	f
-596	2026-05-26 14:29:06.03+00	CARICO	Stihl	Batteria AP 30 (270 Wh)	546061414	\N	\N	\N	available	user_1775131564325	main	t
-610	2026-05-30 06:02:32.677+00	SCARICO	Stihl	Decespugliatore FS 94 RC-E Brushcutter	549141064	Fantinello Alex 3467577542	0	0	sold	user_1775131564325	main	f
-198	2026-02-20 14:08:39.828+00	CARICO	VOLPI	Potatore KVS8000	SL3325.372NB	\N	\N	\N	available	user_1769961017929	main	f
-201	2026-02-21 10:40:26.358+00	SCARICO	STIHL	Motosega MS 194 T 1/4 P Chainsaw	540455888	Chiericati Massimo	0	0	sold	user_1769961017929	main	f
-623	2026-06-05 08:52:46.759+00	CARICO	Stihl	Tagliasiepi HSA 60.1	452957720	\N	\N	\N	available	user_1775131564325	main	t
-207	2026-02-22 21:29:42.07+00	SCARICO	STIHL	RM 248.3 T	451394256	Habitat Natura Di Simone Taffarello	0	0	sold	user_1770584612559	main	f
-624	2026-06-05 08:53:06.438+00	SCARICO	Stihl	Tagliasiepi HSA 60.1	452957720	Officine Carraretto Loris Srl	0	0	sold	user_1775131564325	main	f
-223	2026-03-02 16:59:14.322+00	SCARICO	STIHL	Troncatrice TS 910.0i, 400mm/16"	196978666	Edil Demi Di Covassin Demido	0	0	sold	user_1769961017929	main	f
-226	2026-03-03 09:07:49.161+00	CARICO	STIHL	Tosaerba RMA 239.1	451990095	\N	\N	\N	available	user_1769961017929	main	t
-229	2026-03-03 09:10:52.138+00	CARICO	STIHL	AL 101	986413411	\N	\N	\N	available	user_1769961017929	main	t
-231	2026-03-03 09:14:44.295+00	CARICO	STIHL	Soffiatore BGA 50.0	452100454	\N	\N	\N	available	user_1769961017929	main	t
-233	2026-03-03 09:18:19.503+00	SCARICO	STIHL	AL 101	986413411	Ortolan Sara	0	0	sold	user_1769961017929	main	f
-235	2026-03-03 09:18:19.824+00	SCARICO	STIHL	Tagliabordi FSA 50.0	451521369	Ortolan Sara	0	0	sold	user_1769961017929	main	f
-236	2026-03-03 09:18:19.94+00	SCARICO	STIHL	Soffiatore BGA 50.0	452100454	Ortolan Sara	0	0	sold	user_1769961017929	main	f
-242	2026-03-06 10:11:09.298+00	SCARICO			usato giallo	Torresan Silvano	0	0	sold	user_1770584612559	main	f
-244	2026-03-06 10:54:22.709+00	CARICO	STIHL	Batteria AP 500 S	548989613	\N	\N	\N	available	user_1769961017929	main	t
-246	2026-03-06 10:55:34.991+00	CARICO	STIHL	Batteria AP 300.0 S (281 Wh)	921008377	\N	\N	\N	available	user_1769961017929	main	t
-248	2026-03-06 10:59:07.037+00	SCARICO	STIHL	Potatore HTA 86	449457136	Jesolo Gest Arl	0	0	sold	user_1769961017929	main	f
-250	2026-03-06 10:59:08.853+00	SCARICO	STIHL	Batteria AP 500 S	548989674	Jesolo Gest Arl	0	0	sold	user_1769961017929	main	f
-252	2026-03-06 10:59:09.109+00	SCARICO	STIHL	Batteria AP 300.0 S	920001603	Jesolo Gest Arl	0	0	sold	user_1769961017929	main	f
-256	2026-03-07 08:34:20.291+00	CARICO	STIHL	 AK 20	45204006535AE021G02910599504	\N	\N	\N	available	user_1772723709793	main	t
-258	2026-03-07 08:36:11.625+00	SCARICO	STIHL	 MSA 70.0 C	452200572	Favaro Arnaldo	0	0	sold	user_1772723709793	main	f
-260	2026-03-07 08:36:12.198+00	SCARICO	STIHL	 AL 101	702287103	Favaro Arnaldo	0	0	sold	user_1772723709793	main	f
-261	2026-03-07 08:41:37.05+00	CARICO	STIHL	 HSA 60.1	452246465	\N	\N	\N	available	user_1772723709793	main	t
-263	2026-03-07 08:42:03.281+00	CARICO	STIHL	 AL 101	702644370	\N	\N	\N	available	user_1772723709793	main	t
-265	2026-03-07 08:42:44.048+00	SCARICO	STIHL	 AK 20	910695337	Caredi S.R.L.	0	0	sold	user_1772723709793	main	f
-285	2026-03-12 08:38:36.1+00	SCARICO			25CA3RON005540	D'AMELIO Vincenzo	0	0	sold	user_1773303336355	main	f
-286	2026-03-12 13:28:13.02+00	SCARICO			MBWF-1600622	Fantuzzo Luca	0	0	sold	user_1773313248876	main	f
-295	2026-03-13 09:12:09.253+00	CARICO	VOLPI	Potatore KVS5100	SC2624.0633NB	\N	\N	\N	available	user_1769961017929	main	t
-296	2026-03-13 09:12:47.063+00	SCARICO	VOLPI	Potatore KVS5100	SC2624.0633NB	Massolin Franco	0	0	sold	user_1769961017929	main	f
-297	2026-03-13 16:24:23.115+00	CARICO	Echo	Decespugliatore SRM 3021 TES	U65040105586	\N	\N	\N	available	user_1769961017929	main	t
-580	2026-05-23 08:48:14.248+00	CARICO	Stihl	Soffiatore BGA 50.0	600034499	\N	\N	\N	available	user_1775131564325	main	t
-144	2026-02-07 11:00:00+00	VENDITA	ACCESSORI	POTATORE KVS 8000 (SN: SL3325 371 NB) + FORBICE KV 390 (SN: PZ 2925 390NB) + 1 CATENA	NOMAT-1770630351510	XHELAJ REMZI	840	840	sold	Simone	main	f
-581	2026-05-23 08:48:48.135+00	CARICO	Stihl	Batteria AK 20	BK181G029	\N	\N	\N	available	user_1775131564325	main	t
-176	2026-02-16 08:50:58.236+00	SCARICO	STIHL	Decespugliatore FSA 80 R	546519977	Bisetto Mario	0	0	sold	user_1769961017929	main	f
-181	2026-02-16 16:20:32.201+00	SCARICO	VOLPI	Forbice elettronica KV390	PZ2925.389NB	Balanza Marino	0	0	sold	user_1769961017929	main	f
-182	2026-02-16 16:20:32.984+00	SCARICO	VOLPI	Potatore KVS6000	SM4222498LS	Balanza Marino	0	0	sold	user_1769961017929	main	f
-185	2026-02-19 09:30:48.458+00	CARICO	STIHL	Tagliabordi FSA 30.0	838110682	\N	\N	\N	available	user_1769961017929	main	f
-186	2026-02-19 09:30:48.458+00	CARICO	STIHL	Batteria AS 2	937056842	\N	\N	\N	available	user_1769961017929	main	f
-187	2026-02-19 09:30:48.458+00	CARICO	STIHL	Caricabatterie AL 1	935280185	\N	\N	\N	available	user_1769961017929	main	f
-191	2026-02-19 10:50:01.694+00	CARICO	STIHL	Motosega MSA 190.0 T	452310979	\N	\N	\N	available	user_1769961017929	main	f
-586	2026-05-23 08:49:34.858+00	SCARICO	Stihl	Caricabatteria AL 101	68160761	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-105	2026-01-09 11:00:00+00	VENDITA	ACCESSORI	TRONCARAMI RS 750 x2	NOMAT-1770546596554	MICHELE GOLFETTO	134	134	sold	Simone	main	f
-110	2026-01-12 11:00:00+00	VENDITA	Echo	Echo Motosega ECHO DCS 2500T (SN: C 81535021918) + BATTERIA LBP 56V 125  E83935013630 + CARICA BATT. LCJQ 560C  T91435038990 KIT ENERGIA	NOMAT-1770571853303	MORO ENRICO	708	708	sold	Simone	main	f
-192	2026-02-19 10:50:02.949+00	CARICO	STIHL	Motosega MSA 190.0 T	452310979	\N	\N	\N	available	user_1769961017929	main	f
-597	2026-05-26 14:29:46.381+00	CARICO	Stihl	Caricabatteria AL 301	718634349	\N	\N	\N	available	user_1775131564325	main	t
-600	2026-05-26 14:30:09.017+00	SCARICO	Stihl	Caricabatteria AL 301	718634349	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
-199	2026-02-20 14:09:50.604+00	SCARICO	VOLPI	Potatore KVS8000	SL3325.372NB	Bonetto Franco	0	0	sold	user_1769961017929	main	f
-611	2026-06-01 07:41:02.447+00	CARICO	Stihl	Soffiatore SR 430 Atomizzatore	370196554	\N	\N	\N	available	user_1770584612559	main	t
-205	2026-02-22 20:46:02.271+00	CARICO	STIHL	RM 248.3 T	451394256	\N	\N	\N	available	user_1770584612559	main	t
-257	2026-03-07 08:35:14.711+00	CARICO	STIHL	 AL 101	702287103	\N	\N	\N	available	user_1772723709793	main	t
-612	2026-06-01 07:41:19.953+00	SCARICO	Stihl	Soffiatore SR 430 Atomizzatore	370196554	Michielon Sergio	0	0	sold	user_1770584612559	main	f
-625	2026-06-05 16:33:21.821+00	CARICO	Stihl	Decespugliatore KM 94 RC-E	545319888	\N	\N	\N	available	user_1775131564325	main	t
-162	2026-02-02 11:00:00+00	VENDITA	ACCESSORI	61 PMM3 Piccolo Micro Mini Catena x3 + catena m47-91 + CATENA 91 - 53M x3 + CATENA 1/4 1,1 52M x3	NOMAT-1771001013437	Bimetal	132.55	132.55	sold	Simone	main	f
-214	2026-02-28 08:35:04.363+00	CARICO	NEGRI	Biotrituratore R95BRAHP65	27489101	\N	\N	\N	available	user_1769961017929	main	t
-220	2026-02-28 11:02:45.037+00	CARICO	STIHL	Decespugliatore FSA 60 R	450921356	\N	\N	\N	available	user_1769961017929	main	t
-221	2026-02-28 11:03:06.587+00	SCARICO	STIHL	Decespugliatore FSA 60 R	450921356	Patruno Franco	0	0	sold	user_1769961017929	main	f
-259	2026-03-07 08:36:11.987+00	SCARICO	STIHL	 AK 20	45204006535AE021G02910599504	Favaro Arnaldo	0	0	sold	user_1772723709793	main	f
-224	2026-03-02 17:15:40.255+00	CARICO	Echo	Motosega CS-280TES	C75138079230	\N	\N	\N	available	user_1769961017929	main	t
-227	2026-03-03 09:09:06.846+00	CARICO	STIHL	AK 30.0S	912736954	\N	\N	\N	available	user_1769961017929	main	t
-171	2026-02-14 11:00:00+00	VENDITA	ACCESSORI	Affilatore catena Stihl	NOMAT-1771139919436	Piovesan Andrea	52	52	sold	Simone	main	f
-230	2026-03-03 09:13:27.093+00	CARICO	STIHL	Tagliabordi FSA 50.0	451521369	\N	\N	\N	available	user_1769961017929	main	t
-232	2026-03-03 09:18:18.638+00	SCARICO	STIHL	Tosaerba RMA 239.1	451990095	Ortolan Sara	0	0	sold	user_1769961017929	main	f
-234	2026-03-03 09:18:19.711+00	SCARICO	STIHL	AK 30.0S	912736954	Ortolan Sara	0	0	sold	user_1769961017929	main	f
-241	2026-03-05 12:54:46.829+00	SCARICO			WBC537SCV/S021B&251212012	Uliana Giovanni	0	0	sold	user_1769961017929	main	f
-243	2026-03-06 10:19:38.008+00	CARICO	STIHL	Potatore HTA 86	449457136	\N	\N	\N	available	user_1769961017929	main	t
-245	2026-03-06 10:55:02.906+00	CARICO	STIHL	Batteria AP 500 S	548989674	\N	\N	\N	available	user_1769961017929	main	t
-247	2026-03-06 10:55:57.17+00	CARICO	STIHL	Batteria AP 300.0 S	920001603	\N	\N	\N	available	user_1769961017929	main	t
-249	2026-03-06 10:59:08.717+00	SCARICO	STIHL	Batteria AP 500 S	548989613	Jesolo Gest Arl	0	0	sold	user_1769961017929	main	f
-251	2026-03-06 10:59:08.983+00	SCARICO	STIHL	Batteria AP 300.0 S (281 Wh)	921008377	Jesolo Gest Arl	0	0	sold	user_1769961017929	main	f
-253	2026-03-06 16:29:53.647+00	SCARICO			2541572916785	Lombardi Pietro	0	0	sold	user_1770584612559	main	f
-255	2026-03-07 08:33:51.834+00	CARICO	STIHL	 MSA 70.0 C	452200572	\N	\N	\N	available	user_1772723709793	main	t
-262	2026-03-07 08:41:49.216+00	CARICO	STIHL	 AK 20	910695337	\N	\N	\N	available	user_1772723709793	main	t
-264	2026-03-07 08:42:42.894+00	SCARICO	STIHL	 HSA 60.1	452246465	Caredi S.R.L.	0	0	sold	user_1772723709793	main	f
-266	2026-03-07 08:42:44.351+00	SCARICO	STIHL	 AL 101	702644370	Caredi S.R.L.	0	0	sold	user_1772723709793	main	f
-298	2026-03-13 16:25:12.045+00	SCARICO	Echo	Decespugliatore SRM 3021 TES	U65040105586	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	0	0	sold	user_1769961017929	main	f
-301	2026-03-14 09:08:13.208+00	CARICO	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	970360968	\N	\N	\N	available	user_1769961017929	main	t
-302	2026-03-14 09:08:35.999+00	SCARICO	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	970360968	Corazza Alberto	0	0	sold	user_1769961017929	main	f
-303	2026-03-14 09:35:09.433+00	CARICO	STIHL	Decespugliatore FSA 80 R	546519976	\N	\N	\N	available	user_1769961017929	main	t
-305	2026-03-14 09:37:12.554+00	CARICO	STIHL	Batteria AK 30.0 S	919937874	\N	\N	\N	available	user_1769961017929	main	t
-306	2026-03-14 09:42:42.231+00	SCARICO	STIHL	Decespugliatore FSA 80 R	546519976	Bortolato Franco	0	0	sold	user_1769961017929	main	f
-308	2026-03-14 09:42:42.988+00	SCARICO	STIHL	Batteria AK 30.0 S	919937874	Bortolato Franco	0	0	sold	user_1769961017929	main	f
-309	2026-03-14 10:02:08.697+00	CARICO	STIHL	Decespugliatore FSA 80.R	548926738	\N	\N	\N	available	user_1769961017929	main	t
-310	2026-03-14 10:03:15.133+00	SCARICO	STIHL	Decespugliatore FSA 80.R	548926738	Corazza Alberto	0	0	sold	user_1769961017929	main	f
-311	2026-03-16 08:25:08.544+00	CARICO	STIHL	Soffiatore BGA 250.0	452134555	\N	\N	\N	available	user_1769961017929	main	t
-312	2026-03-16 08:26:22.69+00	CARICO	STIHL	Batteria AP 300.0 S	953245642	\N	\N	\N	available	user_1769961017929	main	t
-313	2026-03-16 08:26:45.108+00	SCARICO	STIHL	Soffiatore BGA 250.0	452134555	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1769961017929	main	f
-314	2026-03-16 08:26:45.285+00	SCARICO	STIHL	Batteria AP 300.0 S	953245642	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1769961017929	main	f
-582	2026-05-23 08:49:18.095+00	CARICO	Stihl	Caricabatteria AL 101	68160761	\N	\N	\N	available	user_1775131564325	main	t
-316	2026-03-18 10:18:15.455+00	CARICO	STIHL	Batteria AS 2	951511941	\N	\N	\N	available	user_1769961017929	main	t
-317	2026-03-18 10:18:37.245+00	CARICO	STIHL	Batteria AS 2	951511944	\N	\N	\N	available	user_1769961017929	main	t
-318	2026-03-18 10:19:36.691+00	CARICO	STIHL	Caricabatteria AL 5-2	709055579	\N	\N	\N	available	user_1769961017929	main	t
-583	2026-05-23 08:49:33.497+00	SCARICO	Stihl	Tagliasiepi HLA 56	944036782	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-320	2026-03-18 10:19:50.063+00	SCARICO	STIHL	Batteria AS 2	951511941	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
-321	2026-03-18 10:19:50.165+00	SCARICO	STIHL	Batteria AS 2	951511944	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
-322	2026-03-18 10:19:50.325+00	SCARICO	STIHL	Caricabatteria AL 5-2	709055579	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
-584	2026-05-23 08:49:33.985+00	SCARICO	Stihl	Soffiatore BGA 50.0	600034499	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-585	2026-05-23 08:49:34.249+00	SCARICO	Stihl	Batteria AK 20	BK181G029	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-598	2026-05-26 14:30:08.112+00	SCARICO	Stihl	Tagliasiepi HSA 100.1	451949950	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
-599	2026-05-26 14:30:08.518+00	SCARICO	Stihl	Batteria AP 30 (270 Wh)	546061414	RIST.ALL'ORSO SAS-EREDI Tonet Angelo	0	0	sold	user_1775131564325	main	f
-613	2026-06-01 08:23:31.148+00	CARICO	Stihl	Forbice elettronica ASA 20.0	955859434	\N	\N	\N	available	user_1775131564325	main	t
-626	2026-06-05 16:34:45.17+00	SCARICO	Stihl	Decespugliatore KM 94 RC-E	545319888	Salvalaio Lorenzo 3491428794	0	0	sold	user_1775131564325	main	f
-340	2026-03-18 16:30:51.209+00	CARICO	STIHL	Forbice elettronica ASA 20.0	955836076	\N	\N	\N	available	user_1769961017929	main	t
-341	2026-03-18 16:31:02.759+00	SCARICO	STIHL	Forbice elettronica ASA 20.0	955836076	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	0	0	sold	user_1769961017929	main	f
-342	2026-03-19 16:12:30.106+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540013827	\N	\N	\N	available	user_1769961017929	main	t
-343	2026-03-19 16:12:47.199+00	SCARICO	Echo	Decespugliatore SRM-222ES	U64540013827	Pozzobon Johnny	0	0	sold	user_1769961017929	main	f
-344	2026-03-20 13:35:23.446+00	CARICO	STIHL	Forbice elettronica HSA 26	942794191	\N	\N	\N	available	user_1769961017929	main	t
-345	2026-03-20 13:35:48.851+00	CARICO	STIHL	Batteria AS 2	949709835	\N	\N	\N	available	user_1769961017929	main	t
-347	2026-03-20 13:36:47.184+00	SCARICO	STIHL	Forbice elettronica HSA 26	942794191	Mariuzzo Francesco	0	0	sold	user_1769961017929	main	f
-348	2026-03-20 13:36:47.44+00	SCARICO	STIHL	Batteria AS 2	949709835	Mariuzzo Francesco	0	0	sold	user_1769961017929	main	f
-351	2026-03-20 13:48:00.971+00	CARICO	STIHL	Soffiatore BGA 250.0	BA0601159	\N	\N	\N	available	user_1769961017929	main	t
-352	2026-03-20 13:49:19.221+00	CARICO	STIHL	Caricabatteria AL 301-4	711612935	\N	\N	\N	available	user_1769961017929	main	t
-299	2026-03-14 09:05:09.406+00	CARICO	STIHL	Decespugliatore FSA 50.0	451614118	\N	\N	\N	available	user_1769961017929	main	t
-300	2026-03-14 09:06:35.507+00	SCARICO	STIHL	Decespugliatore FSA 50.0	451614118	Corazza Alberto	0	0	sold	user_1769961017929	main	f
-304	2026-03-14 09:35:57.29+00	CARICO	STIHL	Caricabatteria AL101	701192870	\N	\N	\N	available	user_1769961017929	main	t
-307	2026-03-14 09:42:42.784+00	SCARICO	STIHL	Caricabatteria AL101	701192870	Bortolato Franco	0	0	sold	user_1769961017929	main	f
-353	2026-03-20 13:49:50.136+00	CARICO	STIHL	Caricabatteria AL 301-4	711612931	\N	\N	\N	available	user_1769961017929	main	t
-587	2026-05-23 08:53:20.815+00	CARICO	Stihl	Tagliasiepi HLA 56	944036782	\N	\N	\N	available	user_1775131564325	main	t
-601	2026-05-26 14:40:07.219+00	CARICO	Stihl	Decespugliatore FS 55 R	414001223	\N	\N	\N	available	user_1775131564325	main	t
-614	2026-06-01 08:24:16.893+00	CARICO	Stihl	Batteria AS 2	BH051H019	\N	\N	\N	available	user_1775131564325	main	t
-357	2026-03-20 14:37:57.28+00	CARICO	STIHL	Motosega MSA 70.0 C	452200582	\N	\N	\N	available	user_1769961017929	main	t
-358	2026-03-20 14:38:14.301+00	SCARICO	STIHL	Motosega MSA 70.0 C	452200582	Dossini Annalisa	0	0	sold	user_1769961017929	main	f
-359	2026-03-21 07:23:55.587+00	CARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	\N	\N	\N	available	user_1769961017929	main	t
-360	2026-03-21 07:24:15.813+00	SCARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	547285150	Dametto Giulio	0	0	sold	user_1769961017929	main	f
-361	2026-03-21 09:17:21.899+00	CARICO	Echo	Decespugliatore SRM-3611T	U65140005458	\N	\N	\N	available	user_1769961017929	main	t
-362	2026-03-21 09:17:36.946+00	SCARICO	Echo	Decespugliatore SRM-3611T	U65140005458	Bonotto Franco	0	0	sold	user_1769961017929	main	f
-627	2026-06-05 16:58:51.798+00	CARICO	Echo	Motosega DCS-2500T	C81535022520	\N	\N	\N	available	user_1775131564325	main	t
-365	2026-03-21 10:15:57.677+00	CARICO	STIHL	Rasaerba RM 453.3 V	451098503	\N	\N	\N	available	user_1769961017929	main	t
-366	2026-03-21 10:16:09.752+00	SCARICO	STIHL	Rasaerba RM 453.3 V	451098503	Bergamo Nello	0	0	sold	user_1769961017929	main	f
-374	2026-03-24 14:55:07.299+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	548997510	\N	\N	\N	available	user_1769961017929	main	t
-375	2026-03-24 14:55:58.078+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	548997501	\N	\N	\N	available	user_1769961017929	main	t
-376	2026-03-24 14:56:29.721+00	CARICO	STIHL	Batteria AP 300S	952262635	\N	\N	\N	available	user_1769961017929	main	t
-377	2026-03-24 14:56:59.706+00	CARICO	STIHL	Batteria AP 300S	953245641	\N	\N	\N	available	user_1769961017929	main	t
-378	2026-03-24 14:57:35.057+00	CARICO	STIHL	Batteria AP 300.0 S	921008378	\N	\N	\N	available	user_1769961017929	main	t
-380	2026-03-24 14:57:57.671+00	SCARICO	STIHL	Decespugliatore FSA 120.0 R	548997510	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
-381	2026-03-24 14:57:57.796+00	SCARICO	STIHL	Decespugliatore FSA 120.0 R	548997501	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
-382	2026-03-24 14:57:57.91+00	SCARICO	STIHL	Batteria AP 300S	952262635	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
-383	2026-03-24 14:57:58.021+00	SCARICO	STIHL	Batteria AP 300S	953245641	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
-384	2026-03-24 14:57:58.12+00	SCARICO	STIHL	Batteria AP 300.0 S	921008378	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
-385	2026-03-24 15:18:56.818+00	CARICO	STIHL	 MS 212 3/8" P	837888152	\N	\N	\N	available	user_1769961017929	main	t
-386	2026-03-24 15:23:47.16+00	SCARICO	STIHL	 MS 212 3/8" P	837888152	Lava Edo Autotrasporti	0	0	sold	user_1769961017929	main	f
-387	2026-03-25 15:39:07.009+00	CARICO	STIHL	Motore multifunzione KMA 120.0 R	542315700	\N	\N	\N	available	user_1769961017929	main	f
-388	2026-03-25 15:39:07.009+00	CARICO	STIHL	Caricabatterie AL501	987011256	\N	\N	\N	available	user_1769961017929	main	f
-389	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S (187 Wh)	953256596	\N	\N	\N	available	user_1769961017929	main	f
-391	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953256593	\N	\N	\N	available	user_1769961017929	main	f
-392	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953255776	\N	\N	\N	available	user_1769961017929	main	f
-394	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953255780	\N	\N	\N	available	user_1769961017929	main	f
-395	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 300.0 S (281Wh)	920001602	\N	\N	\N	available	user_1769961017929	main	f
-396	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 300.0 S (281 Wh)	920001606	\N	\N	\N	available	user_1769961017929	main	f
-397	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 300.0 S (281Wh) 4850-400-6575	921009376	\N	\N	\N	available	user_1769961017929	main	f
-398	2026-03-25 15:50:12.998+00	CARICO	STIHL	Batteria AP 300.0 S	920001605	\N	\N	\N	available	user_1769961017929	main	f
-402	2026-03-26 10:55:16.249+00	SCARICO	STIHL	Soffiatore BGA 250.0	BA0601159	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-406	2026-03-26 10:55:16.856+00	SCARICO	STIHL	Motore multifunzione KMA 120.0 R	542315700	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-407	2026-03-26 10:55:16.984+00	SCARICO	STIHL	Caricabatteria AL 301-4	711612931	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-409	2026-03-26 10:55:17.185+00	SCARICO	STIHL	Caricabatterie AL501	987011256	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-412	2026-03-26 10:55:17.513+00	SCARICO	STIHL	Batteria AP 300.0 S (281 Wh)	920001606	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-415	2026-03-26 10:55:17.851+00	SCARICO	STIHL	Batteria AP 300.0 S (281Wh) 4850-400-6575	921009376	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-420	2026-03-26 10:55:18.405+00	SCARICO	STIHL	Batteria AP 200S	953256593	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-414	2026-03-26 10:55:17.744+00	SCARICO	STIHL	Batteria AP 300.0 S	921008379	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-418	2026-03-26 10:55:18.207+00	SCARICO	STIHL	Batteria AP 200S	953255781	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-588	2026-05-23 08:53:55.42+00	CARICO	Stihl	Soffiatore BGA 50.0	600034499	\N	\N	\N	available	user_1775131564325	main	t
-602	2026-05-26 14:42:51.111+00	CARICO	Stihl	FS55R	838434200	\N	\N	\N	available	user_1775131564325	main	t
-615	2026-06-01 08:25:00.92+00	CARICO	Stihl	Caricabatteria AL 1.0.A	707635787	\N	\N	\N	available	user_1775131564325	main	t
-616	2026-06-01 08:25:12.367+00	SCARICO	Stihl	Forbice elettronica ASA 20.0	955859434	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
-628	2026-06-05 17:00:52.279+00	CARICO	Echo	Batteria LBP-56V125	E83935022196	\N	\N	\N	available	user_1775131564325	main	t
-408	2026-03-26 10:55:17.086+00	SCARICO	STIHL	Caricabatteria AL 301-4	711612935	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-410	2026-03-26 10:55:17.282+00	SCARICO	STIHL	Batteria AP 300.0 S (281Wh)	920001602	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-411	2026-03-26 10:55:17.402+00	SCARICO	STIHL	Batteria AP 300.0 S	920001605	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-589	2026-05-23 08:56:44.772+00	CARICO	Stihl	Batteria AK 20	912863193	\N	\N	\N	available	user_1775131564325	main	t
-416	2026-03-26 10:55:17.971+00	SCARICO	STIHL	Batteria AP 200S	953255776	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-417	2026-03-26 10:55:18.076+00	SCARICO	STIHL	Batteria AP 200S	953255780	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-603	2026-05-26 14:43:27.978+00	SCARICO	Stihl	FS55R	838434200	Nardin Marco 3493118388	0	0	sold	user_1775131564325	main	f
-421	2026-03-26 10:55:18.532+00	SCARICO	STIHL	Batteria AP 200S (187 Wh)	953256596	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-617	2026-06-01 08:25:13.078+00	SCARICO	Stihl	Batteria AS 2	BH051H019	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
-629	2026-06-05 17:01:31.907+00	CARICO	Echo	Batteria LBP-56V125 EU35	E83935022265	\N	\N	\N	available	user_1775131564325	main	t
-424	2026-03-28 09:23:25.86+00	CARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	\N	\N	\N	available	user_1769961017929	main	t
-425	2026-03-28 09:24:03.287+00	SCARICO	Echo	Decespugliatore SRM 3021 TES	U65040105573	Zanette Eugenio via F. Corridoni 37 31050 Vascon di Carbonera 335 273548	0	0	sold	user_1769961017929	main	f
-426	2026-03-28 10:27:49.366+00	CARICO	Echo	Decespugliatore SRM-301TES	U48738203070	\N	\N	\N	available	user_1769961017929	main	t
-427	2026-03-28 10:28:21.664+00	SCARICO	Echo	Decespugliatore SRM-301TES	U48738203070	Cicutto Roberto loc. Mattonaia 315 Sandorligo della Valle TS 347 8062220 roberto.cicutto@gmail.com	0	0	sold	user_1769961017929	main	f
-428	2026-03-28 10:41:56.067+00	CARICO	STIHL	Idropulitrice RE 130 PLUS	495001145	\N	\N	\N	available	user_1769961017929	main	t
-429	2026-03-28 10:44:19.218+00	SCARICO	STIHL	Idropulitrice RE 130 PLUS	495001145	Tollardo Palmerino	0	0	sold	user_1769961017929	main	f
-430	2026-03-30 14:20:14.637+00	CARICO	Echo	Decespugliatore SRM-267	U4843B006692	\N	\N	\N	available	user_1769961017929	main	t
-431	2026-03-30 14:24:07.754+00	SCARICO	Echo	Decespugliatore SRM-267	U4843B006692	Tuon Adriano	0	0	sold	user_1769961017929	main	f
-432	2026-04-01 12:30:27.926+00	CARICO	Echo	Soffiatore PB-2620	P55040007374	\N	\N	\N	available	user_1769961017929	main	t
-433	2026-04-01 12:31:20.345+00	SCARICO	Echo	Soffiatore PB-2620	P55040007374	AZ. AGR. Vivai Piante Di Dragancea Andrei	0	0	sold	user_1769961017929	main	f
-447	2026-04-04 07:57:26.051+00	CARICO	Echo	Soffiatore DPB-310	U60535100095	\N	\N	\N	available	user_1775131564325	main	t
-448	2026-04-04 07:58:01.203+00	SCARICO	Echo	Soffiatore DPB-310	U60535100095	Dario Manuel	0	0	sold	user_1775131564325	main	f
-461	2026-04-11 09:28:18.417+00	CARICO	Echo	Motosega CS-3410	F09238006191	\N	\N	\N	available	user_1775131564325	main	t
-462	2026-04-11 09:31:01.061+00	SCARICO	Echo	Motosega CS-3410	F09238006191	Moro Ivano	0	0	sold	user_1775131564325	main	f
-590	2026-05-23 08:57:21.147+00	CARICO	Stihl	Caricabatteria AL 101	703104544	\N	\N	\N	available	user_1775131564325	main	t
-604	2026-05-29 07:48:28.804+00	CARICO	Stihl	Motosega MSA 60.0 C	452325283	\N	\N	\N	available	user_1775131564325	main	t
-618	2026-06-01 08:25:13.575+00	SCARICO	Stihl	Caricabatteria AL 1.0.A	707635787	Marcolin Anna 3407234756 (Fabrizio)	0	0	sold	user_1775131564325	main	f
-469	2026-04-15 09:23:04.794+00	CARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	\N	\N	\N	available	user_1770584612559	main	t
-470	2026-04-15 09:23:55.293+00	CARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	\N	\N	\N	available	user_1770584612559	main	t
-471	2026-04-15 09:24:45.846+00	CARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	\N	\N	\N	available	user_1770584612559	main	t
-472	2026-04-15 09:25:09.062+00	SCARICO	Echo	Tosasiepi a batteria DHC2800R	E80845002239	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
-473	2026-04-15 09:25:09.378+00	SCARICO	Echo	Batteria 2,5 Ah 126 Wh	E83935015188	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
-474	2026-04-15 09:25:09.62+00	SCARICO	Echo	Caricabatterie Rapid LCJ-560	T91435023812	AZ. AGR. Possamai Di Possamai Giuliano & C. S.S.	0	0	sold	user_1770584612559	main	f
-630	2026-06-05 17:02:57.965+00	CARICO	Echo	Caricabatteria LCJQ-560	T91435038235	\N	\N	\N	available	user_1775131564325	main	t
-634	2026-06-05 17:03:26.109+00	SCARICO	Echo	Caricabatteria LCJQ-560	T91435038235	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
-483	2026-04-17 09:05:17.761+00	CARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	\N	\N	\N	available	user_1775131564325	main	t
-484	2026-04-17 09:05:47.765+00	SCARICO	Echo	Decespugliatore SRM-3021TES	U47338203412	Criveller Renato	0	0	sold	user_1775131564325	main	f
-501	2026-04-17 16:53:48.356+00	CARICO	Echo	Motosega CS-251	C74638145275	\N	\N	\N	available	user_1775131564325	main	t
-502	2026-04-17 16:57:32.706+00	SCARICO	Echo	Motosega CS-251	C74638145275	AZ.AGR Fregonese Di Brocchetto Maria	0	0	sold	user_1775131564325	main	f
-503	2026-04-21 08:15:38.166+00	CARICO	WORTEX	Irroratore T 25-T4	140H768	\N	\N	\N	available	user_1775131564325	main	t
-504	2026-04-21 08:16:26.155+00	SCARICO	WORTEX	Irroratore T 25-T4	140H768	Rosina Roberto	0	0	sold	user_1775131564325	main	f
-591	2026-05-23 08:57:32.126+00	SCARICO	Stihl	Soffiatore BGA 50.0	600034499	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-592	2026-05-23 08:57:32.578+00	SCARICO	Stihl	Tagliasiepi HLA 56	944036782	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-605	2026-05-29 07:50:18.824+00	CARICO	Stihl	Batteria AK 30.0 S	912818443	\N	\N	\N	available	user_1775131564325	main	t
-619	2026-06-01 09:15:01.639+00	CARICO	Stihl	Tagliasiepi HSA 50.1	452196718	\N	\N	\N	available	user_1775131564325	main	t
-620	2026-06-01 09:15:16.09+00	SCARICO	Stihl	Tagliasiepi HSA 50.1	452196718	Santolin Enrico	0	0	sold	user_1775131564325	main	f
-631	2026-06-05 17:03:24.387+00	SCARICO	Echo	Motosega DCS-2500T	C81535022520	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
-632	2026-06-05 17:03:24.897+00	SCARICO	Echo	Batteria LBP-56V125	E83935022196	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
-633	2026-06-05 17:03:25.43+00	SCARICO	Echo	Batteria LBP-56V125 EU35	E83935022265	Cenedese Andrea	0	0	sold	user_1775131564325	main	f
-541	2026-05-08 09:51:15.218+00	CARICO	Echo	Motosega CS-3410	F09238005907	\N	\N	\N	available	user_1775131564325	main	t
-542	2026-05-08 09:54:10.939+00	SCARICO	Echo	Motosega CS-3410	F09238005907	Dma Srl	0	0	sold	user_1775131564325	main	f
-543	2026-05-08 12:01:15.606+00	CARICO	Weibang	Rasaerba WBBC537SCV	WBC537SCVS021B250201131	\N	\N	\N	available	user_1770584612559	main	t
-544	2026-05-08 12:03:29.872+00	CARICO	Echo	Motore multifunzione PAS-2620ES	U63040003348	\N	\N	\N	available	user_1770584612559	main	t
-545	2026-05-08 12:04:27.398+00	CARICO	Echo	Soffiatore PB-2620	P55040007552	\N	\N	\N	available	user_1770584612559	main	t
-546	2026-05-08 12:30:55.984+00	CARICO	Echo	Soffiatore PB-2620	P55040007569	\N	\N	\N	available	user_1770584612559	main	t
-547	2026-05-08 12:31:41.51+00	CARICO	Echo	Soffiatore PB-2620	P55040007571	\N	\N	\N	available	user_1770584612559	main	t
-548	2026-05-08 12:32:31.798+00	CARICO	Echo	Decespugliatore SRM-3021TES	U47338202266	\N	\N	\N	available	user_1770584612559	main	t
-549	2026-05-08 12:33:11.374+00	CARICO	Echo	Decespugliatore SRM-3021TES	U4738203494	\N	\N	\N	available	user_1770584612559	main	t
-550	2026-05-08 12:34:44.391+00	CARICO	Echo	Altro MTA-DTB 570	U49935003256	\N	\N	\N	available	user_1770584612559	main	t
-551	2026-05-08 12:36:39.876+00	CARICO	Echo	Altro PRS-231M	Y178489	\N	\N	\N	available	user_1770584612559	main	t
-552	2026-05-08 12:45:27.295+00	CARICO	Echo	Tagliasiepi HCR-165ES	U6340004822	\N	\N	\N	available	user_1770584612559	main	t
-553	2026-05-08 13:01:16.444+00	SCARICO	Weibang	Rasaerba WBBC537SCV	WBC537SCVS021B250201131	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-554	2026-05-08 13:01:17.241+00	SCARICO	Echo	Motore multifunzione PAS-2620ES	U63040003348	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-555	2026-05-08 13:01:17.623+00	SCARICO	Echo	Soffiatore PB-2620	P55040007552	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-556	2026-05-08 13:01:18.039+00	SCARICO	Echo	Soffiatore PB-2620	P55040007569	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-557	2026-05-08 13:01:18.514+00	SCARICO	Echo	Soffiatore PB-2620	P55040007571	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-558	2026-05-08 13:01:19.064+00	SCARICO	Echo	Decespugliatore SRM-3021TES	U47338202266	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-559	2026-05-08 13:01:19.473+00	SCARICO	Echo	Decespugliatore SRM-3021TES	U4738203494	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-560	2026-05-08 13:01:19.815+00	SCARICO	Echo	Altro MTA-DTB 570	U49935003256	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-561	2026-05-08 13:01:20.185+00	SCARICO	Echo	Altro PRS-231M	Y178489	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-562	2026-05-08 13:01:20.465+00	SCARICO	Echo	Tagliasiepi HCR-165ES	U6340004822	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1770584612559	main	f
-571	2026-05-09 10:06:10.617+00	CARICO	Weibang	Rasaerba WB537SC V-M	W537SC/LV/M021M&250109002	\N	\N	\N	available	user_1775131564325	main	t
-521	2026-04-30 15:55:16.067+00	CARICO	STIHL	Soffiatore BGA 30.0	943205484	\N	\N	\N	available	user_1775131564325	main	t
-572	2026-05-09 10:07:32.072+00	SCARICO	Weibang	Rasaerba WB537SC V-M	W537SC/LV/M021M&250109002	Gli Ulivi Del Sole Di Feletto Stefano	0	0	sold	user_1775131564325	main	f
-573	2026-05-11 08:07:57.144+00	CARICO	Echo	Tagliasiepi S27-25A	U18938102501	\N	\N	\N	available	user_1775131564325	main	t
-574	2026-05-11 08:08:47.72+00	SCARICO	Echo	Tagliasiepi S27-25A	U18938102501	Bassetto Tiziano	0	0	sold	user_1775131564325	main	f
-593	2026-05-23 08:57:33.153+00	SCARICO	Stihl	Batteria AK 20	912863193	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-138	2026-02-02 11:00:00+00	VENDITA	STIHL	Stihl TOSASIEPI HS82 R cm 75 (SN: 197814730) + Stihl TOSASIEPI HSA140R cm 75 (SN: 451286601) + PALETTA MANUALE x4 + MANICO ZM-V4 x3	NOMAT-1770629456775	MA.DI. GREEN di Diego Mardegan	1677.1399999999999	1677.14	sold	Simone	main	f
-141	2026-02-06 11:00:00+00	VENDITA	STIHL	Stihl Motosega MS 231 (SN: 194 053 082)	NOMAT-1770629840641	CARRARO PAOLO	539	539	sold	Simone	main	f
-124	2026-01-20 11:00:00+00	VENDITA	STIHL	POTATORE HTA 50 + CARICA BATTERIA AL 101 + BATTERIA AK2O	NOMAT-1770626999774	CORTESE MIRCO	459	459	sold	Simone	main	f
-142	2026-02-05 11:00:00+00	VENDITA	STIHL	Stihl TOSASIEPI HLA 135 (SN: 449925313) + CUFFIA OPTIME x2 + CUFFIA KRAMP	NOMAT-1770630123643	AZ. AGR. SEMPREVERDE DI TOFFOLI SONIA	704.1	704.1	sold	Simone	main	f
-194	2026-02-19 15:20:42.325+00	CARICO	STIHL	Atomizzatore SR 430 Mistblower	370193762	\N	\N	\N	available	user_1769961017929	main	f
-195	2026-02-19 15:20:43.639+00	CARICO	STIHL	Atomizzatore SR 430 Mistblower	370193762	\N	\N	\N	available	user_1769961017929	main	f
-283	2026-03-11 16:13:47.103+00	CARICO	STIHL	Decespugliatore FS 55 R	838434202	\N	\N	\N	available	user_1769961017929	main	t
-284	2026-03-11 16:14:15.315+00	SCARICO	STIHL	Decespugliatore FS 55 R	838434202	Zanetti Sergio	0	0	sold	user_1769961017929	main	f
-143	2026-02-07 11:00:00+00	VENDITA	STIHL	Stihl MOTOSEGA STIHL MS 661 (SN: 193 545 593)	NOMAT-1770630223483	Menegaldo Bruno	1630	1630	sold	Simone	main	f
-196	2026-02-19 15:21:57.175+00	SCARICO	STIHL	Atomizzatore SR 430 Mistblower	370193762	Gasparini Francesco	0	0	sold	user_1769961017929	main	f
-315	2026-03-18 10:17:20.232+00	CARICO	STIHL	Potatore GTA 40.0	449980336	\N	\N	\N	available	user_1769961017929	main	t
-319	2026-03-18 10:19:49.853+00	SCARICO	STIHL	Potatore GTA 40.0	449980336	Gheller Giovanni	0	0	sold	user_1769961017929	main	f
-346	2026-03-20 13:36:36.619+00	CARICO	STIHL	Caricabatteria AL 1	707132101	\N	\N	\N	available	user_1769961017929	main	t
-349	2026-03-20 13:36:47.539+00	SCARICO	STIHL	Caricabatteria AL 1	707132101	Mariuzzo Francesco	0	0	sold	user_1769961017929	main	f
-350	2026-03-20 13:47:19.285+00	CARICO	STIHL	Soffiatore BGA 250.0	452027047	\N	\N	\N	available	user_1769961017929	main	t
-354	2026-03-20 13:55:22.377+00	CARICO	STIHL	Tagliasiepi HSA 140.0 T	HA0201135	\N	\N	\N	available	user_1769961017929	main	t
-355	2026-03-20 13:59:08.87+00	CARICO	STIHL	Tagliasiepi MSA 140.0 R	451286599	\N	\N	\N	available	user_1769961017929	main	t
-356	2026-03-20 14:22:56.819+00	CARICO	STIHL	Motosega MSA 190.0 T	452311136	\N	\N	\N	available	user_1769961017929	main	t
-373	2026-03-24 14:54:11.862+00	CARICO	STIHL	Decespugliatore FSA 120.0 R	545073124	\N	\N	\N	available	user_1769961017929	main	t
-379	2026-03-24 14:57:57.456+00	SCARICO	STIHL	Decespugliatore FSA 120.0 R	545073124	Deoni Giardinaggio S.R.L.	0	0	sold	user_1769961017929	main	f
-390	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953256589	\N	\N	\N	available	user_1769961017929	main	f
-393	2026-03-25 15:44:06.678+00	CARICO	STIHL	Batteria AP 200S	953255781	\N	\N	\N	available	user_1769961017929	main	f
-399	2026-03-25 15:50:12.998+00	CARICO	STIHL	Batteria AP 300.0 S	921008379	\N	\N	\N	available	user_1769961017929	main	f
-400	2026-03-25 15:50:12.998+00	CARICO	STIHL	Batteria AP 300.0 S	921008375	\N	\N	\N	available	user_1769961017929	main	f
-401	2026-03-26 10:55:15.372+00	SCARICO	STIHL	Soffiatore BGA 250.0	452027047	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-403	2026-03-26 10:55:16.393+00	SCARICO	STIHL	Tagliasiepi MSA 140.0 R	451286599	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-404	2026-03-26 10:55:16.542+00	SCARICO	STIHL	Tagliasiepi HSA 140.0 T	HA0201135	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-405	2026-03-26 10:55:16.668+00	SCARICO	STIHL	Motosega MSA 190.0 T	452311136	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-413	2026-03-26 10:55:17.621+00	SCARICO	STIHL	Batteria AP 300.0 S	921008375	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-419	2026-03-26 10:55:18.308+00	SCARICO	STIHL	Batteria AP 200S	953256589	AZ. AGR. La Quercia Di Dal Ben Igor	0	0	sold	user_1770584612559	main	f
-434	2026-04-03 13:23:03+00	CARICO	STIHL	Decespugliatore FSA 70 R	452785537	\N	\N	\N	available	user_1775131564325	main	t
-435	2026-04-03 13:23:49.378+00	CARICO	STIHL	Caricabatteria AL 101	702673116	\N	\N	\N	available	user_1775131564325	main	t
-436	2026-04-03 13:24:24.147+00	CARICO	STIHL	Batteria AK 30.0S	919937881	\N	\N	\N	available	user_1775131564325	main	t
-437	2026-04-03 13:24:37.424+00	SCARICO	STIHL	Decespugliatore FSA 70 R	452785537	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
-438	2026-04-03 13:24:38.331+00	SCARICO	STIHL	Caricabatteria AL 101	702673116	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
-439	2026-04-03 13:24:38.844+00	SCARICO	STIHL	Batteria AK 30.0S	919937881	Lazzaro Stefano	0	0	sold	user_1775131564325	main	f
-440	2026-04-03 16:00:03.051+00	CARICO	STIHL	Decespugliatore FSA 30.0	840710134	\N	\N	\N	available	user_1775131564325	main	t
-442	2026-04-03 16:01:28.632+00	CARICO	STIHL	Caricabatteria AL 1	707554389	\N	\N	\N	available	user_1775131564325	main	t
-443	2026-04-03 16:01:39.398+00	SCARICO	STIHL	Decespugliatore FSA 30.0	840710134	Cracco Ortensia	0	0	sold	user_1775131564325	main	f
-444	2026-04-03 16:01:39.879+00	SCARICO	STIHL	Caricabatteria AL 1	707554389	Cracco Ortensia	0	0	sold	user_1775131564325	main	f
-445	2026-04-04 07:12:27.424+00	CARICO	STIHL	Idropulitrice RE 130 PLUS	840267090	\N	\N	\N	available	user_1775131564325	main	t
-446	2026-04-04 07:15:18.84+00	SCARICO	STIHL	Idropulitrice RE 130 PLUS	840267090	Casagrande Roberto	0	0	sold	user_1775131564325	main	f
-449	2026-04-04 09:14:39.905+00	CARICO	STIHL	Motosega MS 151	198189221	\N	\N	\N	available	user_1775131564325	main	t
-450	2026-04-04 09:16:32.215+00	CARICO	STIHL	Soffiatore BG 56/C	196165943	\N	\N	\N	available	user_1775131564325	main	t
-451	2026-04-04 09:21:48.88+00	SCARICO	STIHL	Motosega MS 151	198189221	Cazanesco Dimitri	0	0	sold	user_1775131564325	main	f
-452	2026-04-04 09:21:49.548+00	SCARICO	STIHL	Soffiatore BG 56/C	196165943	Cazanesco Dimitri	0	0	sold	user_1775131564325	main	f
-453	2026-04-07 07:49:45.1+00	CARICO	STIHL	Decespugliatore FSA 70.0 R	452785538	\N	\N	\N	available	user_1775131564325	main	t
-454	2026-04-07 07:50:01.638+00	SCARICO	STIHL	Decespugliatore FSA 70.0 R	452785538	Basso Mario via Aldo Moro 24/B Frescada	0	0	sold	user_1775131564325	main	f
-455	2026-04-07 08:00:36.799+00	CARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	545377758	\N	\N	\N	available	user_1775131564325	main	t
-456	2026-04-07 08:03:27.351+00	SCARICO	STIHL	Motosega MS 194 T 3/8"P Chainsaw	545377758	Santagà Elena via Grande 2 Rovaré di San Biagio di Callalta	0	0	sold	user_1775131564325	main	f
-475	2026-04-15 14:49:17.099+00	CARICO	STIHL	Biotrituratore GHE 250.0	451561082	\N	\N	\N	available	user_1775131564325	main	t
-476	2026-04-15 14:49:53.164+00	SCARICO	STIHL	Biotrituratore GHE 250.0	451561082	Monti Paolo	0	0	sold	user_1775131564325	main	f
-479	2026-04-16 09:23:21.585+00	CARICO	STIHL	Robot tosaerba RMI 422.2 (EU1)	447242267	\N	\N	\N	available	user_1775131564325	main	t
-480	2026-04-16 09:23:38.027+00	SCARICO	STIHL	Robot tosaerba RMI 422.2 (EU1)	447242267	Elisa Luzzi via San Giorgio 1801 Talamona (SO) 3357005520	0	0	sold	user_1775131564325	main	f
-485	2026-04-17 13:12:17.637+00	CARICO	STIHL	Soffiatore BGA 50.0	600044355	\N	\N	\N	available	user_1775131564325	main	t
-486	2026-04-17 13:12:30.33+00	SCARICO	STIHL	Soffiatore BGA 50.0	600044355	Comunello Marco	0	0	sold	user_1775131564325	main	f
-487	2026-04-17 13:28:39.128+00	CARICO	STIHL	Irroratore SG51	998234688	\N	\N	\N	available	user_1775131564325	main	t
-488	2026-04-17 13:31:01.144+00	SCARICO	STIHL	Irroratore SG51	998234688	Bergamo Guglielmo	0	0	sold	user_1775131564325	main	f
-489	2026-04-17 14:42:08.003+00	CARICO	STIHL	Tagliasiepi HSA 26	943696310	\N	\N	\N	available	user_1775131564325	main	t
-490	2026-04-17 14:42:43.707+00	CARICO	STIHL	Batteria AS 2	936314966	\N	\N	\N	available	user_1775131564325	main	t
-491	2026-04-17 14:43:22.516+00	CARICO	STIHL	Caricabatteria AL 1	707687469	\N	\N	\N	available	user_1775131564325	main	t
-492	2026-04-17 14:43:30.226+00	SCARICO	STIHL	Tagliasiepi HSA 26	943696310	Possamai Manuel via Pantiera 58 G Roncade 3478940411	0	0	sold	user_1775131564325	main	f
-493	2026-04-17 14:43:30.587+00	SCARICO	STIHL	Batteria AS 2	936314966	Possamai Manuel via Pantiera 58 G Roncade 3478940411	0	0	sold	user_1775131564325	main	f
-494	2026-04-17 14:43:30.89+00	SCARICO	STIHL	Caricabatteria AL 1	707687469	Possamai Manuel via Pantiera 58 G Roncade 3478940411	0	0	sold	user_1775131564325	main	f
-495	2026-04-17 16:10:30.373+00	CARICO	STIHL	Motosega MSA 220.0T	445691105	\N	\N	\N	available	user_1775131564325	main	t
-496	2026-04-17 16:11:44.023+00	CARICO	STIHL	Batteria AP 300.0 S	917325889	\N	\N	\N	available	user_1775131564325	main	t
-497	2026-04-17 16:12:27.294+00	SCARICO	STIHL	Motosega MSA 220.0T	445691105	Rosolen Mattia	0	0	sold	user_1775131564325	main	f
-498	2026-04-17 16:12:28.619+00	SCARICO	STIHL	Batteria AP 300.0 S	917325889	Rosolen Mattia	0	0	sold	user_1775131564325	main	f
-505	2026-04-21 08:48:25.069+00	CARICO	STIHL	FSA120R	545073114	\N	\N	\N	available	user_1770584612559	main	t
-506	2026-04-21 08:50:01.773+00	CARICO	STIHL	AP500S	548989613	\N	\N	\N	available	user_1770584612559	main	t
-507	2026-04-21 08:50:14.015+00	SCARICO	STIHL	FSA120R	545073114	Scarpi Francesco	0	0	sold	user_1770584612559	main	f
-508	2026-04-21 08:50:14.36+00	SCARICO	STIHL	AP500S	548989613	Scarpi Francesco	0	0	sold	user_1770584612559	main	f
-509	2026-04-24 08:20:27.59+00	CARICO	STIHL	Tagliasiepi HSA 100.1	451936877	\N	\N	\N	available	user_1775131564325	main	t
-510	2026-04-24 08:21:13.162+00	CARICO	STIHL	Batteria AP 200S	953256592	\N	\N	\N	available	user_1775131564325	main	t
-511	2026-04-24 08:21:29.082+00	SCARICO	STIHL	Tagliasiepi HSA 100.1	451936877	Novello Alberto	0	0	sold	user_1775131564325	main	f
-512	2026-04-24 08:21:29.423+00	SCARICO	STIHL	Batteria AP 200S	953256592	Novello Alberto	0	0	sold	user_1775131564325	main	f
-513	2026-04-24 09:27:03.214+00	CARICO	STIHL	Robot tosaerba RMA 248 T	452754472	\N	\N	\N	available	user_1770584612559	main	t
-514	2026-04-24 09:38:14.506+00	CARICO	STIHL	Batteria AK 30.0 S	913799159	\N	\N	\N	available	user_1770584612559	main	t
-515	2026-04-24 09:38:57.173+00	CARICO	STIHL	Caricabatteria AL 101	703487143	\N	\N	\N	available	user_1770584612559	main	t
-516	2026-04-24 09:39:57.701+00	SCARICO	STIHL	Robot tosaerba RMA 248 T	452754472	Amenta Enrico	0	0	sold	user_1770584612559	main	f
-517	2026-04-24 09:39:58.132+00	SCARICO	STIHL	Batteria AK 30.0 S	913799159	Amenta Enrico	0	0	sold	user_1770584612559	main	f
-518	2026-04-24 09:39:58.409+00	SCARICO	STIHL	Caricabatteria AL 101	703487143	Amenta Enrico	0	0	sold	user_1770584612559	main	f
-522	2026-04-30 15:59:19.231+00	CARICO	STIHL	Tagliasiepi HLA 40.0	928748510	\N	\N	\N	available	user_1775131564325	main	t
-523	2026-04-30 16:00:06.202+00	SCARICO	STIHL	Soffiatore BGA 30.0	943205484	Possamai Manuel via Pantiera 58 G Roncade	0	0	sold	user_1775131564325	main	f
-524	2026-04-30 16:00:07.164+00	SCARICO	STIHL	Tagliasiepi HLA 40.0	928748510	Possamai Manuel via Pantiera 58 G Roncade	0	0	sold	user_1775131564325	main	f
-525	2026-05-02 07:57:44.782+00	CARICO	STIHL	Decespugliatore FSA 50.0	452391125	\N	\N	\N	available	user_1775131564325	main	t
-526	2026-05-02 07:58:16.374+00	CARICO	STIHL	Batteria AK 10	947940041	\N	\N	\N	available	user_1775131564325	main	t
-527	2026-05-02 07:58:45.608+00	CARICO	STIHL	Caricabatteria AL 101	703500724	\N	\N	\N	available	user_1775131564325	main	t
-528	2026-05-02 07:59:16.663+00	SCARICO	STIHL	Decespugliatore FSA 50.0	452391125	Matteo Broccardo	0	0	sold	user_1775131564325	main	f
-529	2026-05-02 07:59:17.181+00	SCARICO	STIHL	Batteria AK 10	947940041	Matteo Broccardo	0	0	sold	user_1775131564325	main	f
-530	2026-05-02 07:59:17.583+00	SCARICO	STIHL	Caricabatteria AL 101	703500724	Matteo Broccardo	0	0	sold	user_1775131564325	main	f
-531	2026-05-02 08:23:17.735+00	CARICO	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	970556089	\N	\N	\N	available	user_1775131564325	main	t
-532	2026-05-02 08:23:41.667+00	SCARICO	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	970556089	Pravato Nicola	0	0	sold	user_1775131564325	main	f
-533	2026-05-02 08:28:03.061+00	CARICO	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	970556089	\N	\N	\N	available	user_1775131564325	main	t
-534	2026-05-02 08:28:23.417+00	SCARICO	STIHL	Idropulitrice RE 100.0 PLUS CONTROL	970556089	Pravato Nicola	0	0	sold	user_1775131564325	main	f
-535	2026-05-02 09:00:41.13+00	CARICO	STIHL	Tagliasiepi HLA 66	452306401	\N	\N	\N	available	user_1775131564325	main	t
-536	2026-05-02 09:02:24.601+00	CARICO	STIHL	Caricabatteria AL 101	703503008	\N	\N	\N	available	user_1775131564325	main	t
-537	2026-05-02 09:03:34.084+00	CARICO	STIHL	Batteria AP 200S	953256598	\N	\N	\N	available	user_1775131564325	main	t
-538	2026-05-02 09:05:32.443+00	SCARICO	STIHL	Tagliasiepi HLA 66	452306401	Moro Gianni via Pozzetto 109 Sant'Elena di Silea	0	0	sold	user_1775131564325	main	f
-539	2026-05-02 09:05:34.299+00	SCARICO	STIHL	Caricabatteria AL 101	703503008	Moro Gianni via Pozzetto 109 Sant'Elena di Silea	0	0	sold	user_1775131564325	main	f
-540	2026-05-02 09:05:34.817+00	SCARICO	STIHL	Batteria AP 200S	953256598	Moro Gianni via Pozzetto 109 Sant'Elena di Silea	0	0	sold	user_1775131564325	main	f
-563	2026-05-09 07:22:18.666+00	CARICO	STIHL	Decespugliatore FS 120 R	841090937	\N	\N	\N	available	user_1775131564325	main	t
-564	2026-05-09 07:28:27.911+00	SCARICO	STIHL	Decespugliatore FS 120 R	841090937	Deoni Giardinaggio S.R.L.	0	0	sold	user_1775131564325	main	f
-565	2026-05-09 10:01:35.053+00	CARICO	STIHL	Decespugliatore FSA 80.R	549757103	\N	\N	\N	available	user_1775131564325	main	t
-566	2026-05-09 10:03:07.718+00	CARICO	STIHL	Batteria AK 30.0S	948345039	\N	\N	\N	available	user_1775131564325	main	t
-567	2026-05-09 10:04:00.779+00	CARICO	STIHL	Caricabatteria AL 101	703557002	\N	\N	\N	available	user_1775131564325	main	t
-568	2026-05-09 10:04:30.718+00	SCARICO	STIHL	Decespugliatore FSA 80.R	549757103	Tavella Viviana	0	0	sold	user_1775131564325	main	f
-569	2026-05-09 10:04:31.17+00	SCARICO	STIHL	Batteria AK 30.0S	948345039	Tavella Viviana	0	0	sold	user_1775131564325	main	f
-570	2026-05-09 10:04:31.48+00	SCARICO	STIHL	Caricabatteria AL 101	703557002	Tavella Viviana	0	0	sold	user_1775131564325	main	f
-133	2026-01-28 11:00:00+00	VENDITA	Echo	MOTOSEGA DCS 2500 T (SN: T 91435039178) + BATTERIA LBP 50-150 + CARICA BATT. LCJQ-560	NOMAT-1770628732478	AZ. AGR. POSSAMAI GIULIANO e C.	708	708	sold	Simone	main	f
-145	2026-02-07 11:00:00+00	VENDITA	Echo	ECHO Motosega CS 2511 TES (SN: C 74638144456)	NOMAT-1770630501655	Xhelaj Kreshnik	439	439	sold	Simone	main	f
-329	2026-03-18 15:07:01.395+00	CARICO	Echo	Tagliasiepi DHCA-310	E80435001582	\N	\N	\N	available	user_1769961017929	main	t
-330	2026-03-18 15:08:01.41+00	CARICO	Echo	Caricabatteria LC-3604 EU35	U61535107521	\N	\N	\N	available	user_1769961017929	main	t
-331	2026-03-18 15:08:40.408+00	CARICO	Echo	Batteria LBP-36-80 EU35	U61235054310	\N	\N	\N	available	user_1769961017929	main	t
-332	2026-03-18 15:08:54.207+00	SCARICO	Echo	Tagliasiepi DHCA-310	E80435001582	Collodo Vladimiro	0	0	sold	user_1769961017929	main	f
-333	2026-03-18 15:08:54.486+00	SCARICO	Echo	Caricabatteria LC-3604 EU35	U61535107521	Collodo Vladimiro	0	0	sold	user_1769961017929	main	f
-334	2026-03-18 15:08:54.661+00	SCARICO	Echo	Batteria LBP-36-80 EU35	U61235054310	Collodo Vladimiro	0	0	sold	user_1769961017929	main	f
-477	2026-04-15 15:14:08.955+00	CARICO	Echo	Motosega CS-501SX	C76038034938	\N	\N	\N	available	user_1775131564325	main	t
-478	2026-04-15 15:18:18.285+00	SCARICO	Echo	Motosega CS-501SX	C76038034938	AZ. AGR. De Martin Bruna	0	0	sold	user_1775131564325	main	f
-218	2026-02-28 10:23:34.259+00	CARICO	HONDA	Tosaerba HRN536C2 VYEH	MCSF1028729	\N	\N	\N	available	user_1769961017929	main	t
-216	2026-02-28 09:24:39.344+00	CARICO	HONDA	Tosaerba HRG466C1 SKEP	MCCF1301493	\N	\N	\N	available	user_1769961017929	main	t
-219	2026-02-28 10:24:07.909+00	SCARICO	HONDA	Tosaerba HRN536C2 VYEH	MCSF1028729	Buscato Mattia via Ca' Memo 29 Noventa di Piave 340 4519357 mbuschy04@gmail.com	0	0	sold	user_1769961017929	main	f
-238	2026-03-03 10:57:14.928+00	SCARICO	HONDA	HRX537C7 HZEH	1032246	Nardi Stefano	0	0	sold	user_1771954874726	main	f
-240	2026-03-05 10:23:43.113+00	SCARICO	HONDA	Motozappa F220K1 GET2	FAAJ-3620207	Tegon Sergio	0	0	sold	user_1769961017929	main	f
-279	2026-03-11 08:26:36.855+00	CARICO	HONDA	Rasaerba HRX476C2 HYEH	MBYF1064510	\N	\N	\N	available	user_1769961017929	main	t
-293	2026-03-13 07:57:11.878+00	CARICO	HONDA	Rasaerba HRX537C7 HYEH	1035893	\N	\N	\N	available	user_1769961017929	main	t
-294	2026-03-13 07:57:51.737+00	SCARICO	HONDA	Rasaerba HRX537C7 HYEH	1035893	De Zottis A. Sas REALIZZAZ. Del Verde	0	0	sold	user_1769961017929	main	f
-217	2026-02-28 09:25:15.284+00	SCARICO	HONDA	Tosaerba HRG466C1 SKEP	MCCF1301493	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	0	0	sold	user_1769961017929	main	f
-237	2026-03-03 10:53:09.567+00	CARICO	HONDA	HRX537C7 HZEH	1032246	\N	\N	\N	available	user_1771954874726	main	t
-239	2026-03-05 10:21:49.186+00	CARICO	HONDA	Motozappa F220K1 GET2	FAAJ-3620207	\N	\N	\N	available	user_1769961017929	main	t
-277	2026-03-10 16:12:25.57+00	CARICO	HONDA	Rasaerba HRN536C2 VYEH	MCSF1069705	\N	\N	\N	available	user_1769961017929	main	t
-278	2026-03-10 16:12:43.197+00	SCARICO	HONDA	Rasaerba HRN536C2 VYEH	MCSF1069705	Il Filo D'ERBA Di De Bernardo Sebastiano	0	0	sold	user_1769961017929	main	f
-280	2026-03-11 08:27:03.353+00	SCARICO	HONDA	Rasaerba HRX476C2 HYEH	MBYF1064510	Boccardelli Alessandro	0	0	sold	user_1769961017929	main	f
-323	2026-03-18 13:37:53.43+00	CARICO	HONDA	Rasaerba HRG416XBPEEA	MCEF1003260	\N	\N	\N	available	user_1769961017929	main	t
-324	2026-03-18 13:41:22.074+00	CARICO	HONDA	Batteria 4.0 li-Ion	UADY-1002910	\N	\N	\N	available	user_1769961017929	main	t
-325	2026-03-18 13:41:51.655+00	CARICO	HONDA	Caricabatteria CV3620XA EM	CAAEY1027252	\N	\N	\N	available	user_1769961017929	main	t
-326	2026-03-18 13:42:18.808+00	SCARICO	HONDA	Rasaerba HRG416XBPEEA	MCEF1003260	Bergamo Pietro	0	0	sold	user_1769961017929	main	f
-327	2026-03-18 13:42:19.083+00	SCARICO	HONDA	Batteria 4.0 li-Ion	UADY-1002910	Bergamo Pietro	0	0	sold	user_1769961017929	main	f
-328	2026-03-18 13:42:19.193+00	SCARICO	HONDA	Caricabatteria CV3620XA EM	CAAEY1027252	Bergamo Pietro	0	0	sold	user_1769961017929	main	f
-367	2026-03-24 09:16:21.982+00	CARICO	HONDA	Rasaerba HRG466XB	MCDF1005757	\N	\N	\N	available	user_1769961017929	main	t
-368	2026-03-24 09:17:18.702+00	CARICO	HONDA	Caricabatteria	CAAEY1027253	\N	\N	\N	available	user_1769961017929	main	t
-369	2026-03-24 09:19:10.57+00	CARICO	HONDA	Batteria DP3640XA	UADY1002444	\N	\N	\N	available	user_1769961017929	main	t
-370	2026-03-24 09:19:55.238+00	SCARICO	HONDA	Rasaerba HRG466XB	MCDF1005757	Piovesan Aldo 3289160851 0422708651	0	0	sold	user_1769961017929	main	f
-371	2026-03-24 09:19:55.667+00	SCARICO	HONDA	Caricabatteria	CAAEY1027253	Piovesan Aldo 3289160851 0422708651	0	0	sold	user_1769961017929	main	f
-372	2026-03-24 09:19:55.839+00	SCARICO	HONDA	Batteria DP3640XA	UADY1002444	Piovesan Aldo 3289160851 0422708651	0	0	sold	user_1769961017929	main	f
-422	2026-03-27 16:46:16.848+00	CARICO	HONDA	Rasaerba HRG466C1 PKEH	MCCF1227945	\N	\N	\N	available	user_1769961017929	main	t
-423	2026-03-27 16:46:39.786+00	SCARICO	HONDA	Rasaerba HRG466C1 PKEH	MCCF1227945	Maggiolo Roberto	0	0	sold	user_1769961017929	main	f
-459	2026-04-11 07:59:59.923+00	CARICO	HONDA	Rasaerba HRG416C1	MCBF1127032	\N	\N	\N	available	user_1775131564325	main	t
-460	2026-04-11 08:00:12.302+00	SCARICO	HONDA	Rasaerba HRG416C1	MCBF1127032	Nena Massimo	0	0	sold	user_1775131564325	main	f
-463	2026-04-13 08:49:54.411+00	CARICO	HONDA	Rasaerba HRG416C1	MCBF1107292	\N	\N	\N	available	user_1775131564325	main	t
-464	2026-04-13 08:50:45.815+00	SCARICO	HONDA	Rasaerba HRG416C1	MCBF1107292	Burato Pierluigi	0	0	sold	user_1775131564325	main	f
-519	2026-04-29 08:57:52.604+00	CARICO	HONDA	Batteria DP 3640 XA 4 Ah	UADY1002908	\N	\N	\N	available	user_1775131564325	main	t
-520	2026-04-29 08:58:03.92+00	SCARICO	HONDA	Batteria DP 3640 XA 4 Ah	UADY1002908	Piovesan Aldo	0	0	sold	user_1775131564325	main	f
-575	2026-05-14 12:48:31.167+00	CARICO	HONDA	Rasaerba HRG416C1	MCBF1141185	\N	\N	\N	available	user_1775131564325	main	t
-576	2026-05-14 12:48:45.447+00	SCARICO	HONDA	Rasaerba HRG416C1	MCBF1141185	Eraclea Patrimonio E Servizi Srl	0	0	sold	user_1775131564325	main	f
-281	2026-03-11 09:27:14.402+00	CARICO	GRILLO	 Trimmer HWT600	695024	\N	\N	\N	available	user_1769961017929	main	t
-282	2026-03-11 09:28:45.472+00	SCARICO	GRILLO	 Trimmer HWT600	695024	Pavan Claudio	0	0	sold	user_1769961017929	main	f
-465	2026-04-14 06:38:20.547+00	CARICO	GRILLO	Trattorino rasaerba Climber 10 AWD 27	767775	\N	\N	\N	available	user_1775131564325	main	t
-466	2026-04-14 06:38:43.896+00	SCARICO	GRILLO	Trattorino rasaerba Climber 10 AWD 27	767775	Terradice S.R.L.	0	0	sold	user_1775131564325	main	f
-467	2026-04-14 12:39:35.903+00	CARICO	GRILLO	Climber 10 AWD	767775	\N	\N	\N	available	user_1770584612559	main	t
-468	2026-04-14 12:40:05.805+00	SCARICO	GRILLO	Climber 10 AWD	767775	Terradice S.R.L.	0	0	sold	user_1770584612559	main	f
-209	2026-02-23 14:35:10.086+00	SCARICO	VOLPI	Forbice elettronica KV360	PP4624.359NB	Cenedese Andrea	0	0	sold	user_1769961017929	main	f
-212	2026-02-27 11:56:52.4+00	SCARICO	VOLPI	Decespugliatore Ciao	PP4624.359NB	Habitat Natura Di Simone Taffarello	0	0	sold	user_1769961017929	main	f
-134	2026-01-30 11:00:00+00	VENDITA	VOLPI	Volpi POTATORE VOLPI KVS 7100P (SN: SRØ123 Ø773LS)	NOMAT-1770628839453	Taffarello Daniele	409	409	sold	Simone	main	f
-208	2026-02-23 14:11:35.261+00	CARICO	VOLPI	Forbice elettronica KV360	PP4624.359NB	\N	\N	\N	available	user_1769961017929	main	t
-211	2026-02-27 11:56:00.401+00	CARICO	VOLPI	Decespugliatore Ciao	PP4624.359NB	\N	\N	\N	available	user_1769961017929	main	f
-457	2026-04-10 12:48:45.884+00	CARICO	VOLPI	Potatore KVS5100	SC2624.0699NB	\N	\N	\N	available	user_1775131564325	main	t
-458	2026-04-10 12:49:05.86+00	SCARICO	VOLPI	Potatore KVS5100	SC2624.0699NB	Palmas Michele Francesco	0	0	sold	user_1775131564325	main	f
-116	2026-01-10 11:00:00+00	VENDITA	Weibang	WEIBANG TRINCIAERBA WEIBANG 3. VEL. WBBC 532 SCV (SN: WBC537SCV/S021B&250103036)	NOMAT-1770617528321	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	1350	1350	sold	Simone	main	f
-129	2026-01-26 11:00:00+00	VENDITA	Weibang	TRINCIAERBA CARDANO 3 VELOCITA\nWBBC537SCV	NOMAT-1770628005264	PAOLO BARBON	1350	1350	sold	Simone	main	f
-499	2026-04-17 16:43:18.353+00	CARICO	SEGWAY	Robot tosaerba Navimow i108	S4THA2519K2349	\N	\N	\N	available	user_1770584612559	main	t
-500	2026-04-17 16:44:30.871+00	SCARICO	SEGWAY	Robot tosaerba Navimow i108	S4THA2519K2349	Pietrobon Davide	0	0	sold	user_1770584612559	main	f
-481	2026-04-17 07:13:41.619+00	CARICO	FREEZANZ	 Zhalt Portable Connect	ZC016602024	\N	\N	\N	available	user_1775131564325	main	t
-482	2026-04-17 07:14:40.603+00	SCARICO	FREEZANZ	 Zhalt Portable Connect	ZC016602024	Fabio Pasqual via Ex Internati 10 Carbonera 3292618553	0	0	sold	user_1775131564325	main	f
-363	2026-03-21 09:40:19.032+00	CARICO	TORO	Arieggiatore	325000333	\N	\N	\N	available	user_1769961017929	main	t
-364	2026-03-21 09:41:14.645+00	SCARICO	TORO	Arieggiatore	325000333	Daniel Enrico	0	0	sold	user_1769961017929	main	f
-268	2026-03-09 13:15:27.098+00	CARICO	GGP	Trattorino XD 150 HD	25KA3RON005639	\N	\N	\N	available	user_1772723709793	main	f
-270	2026-03-09 13:17:44.217+00	CARICO	GGP	Trattorino XF 135 HD	25KA3RON011398	\N	\N	\N	available	user_1772723709793	main	f
-272	2026-03-09 13:18:27.916+00	CARICO	GGP	Trattorino XD 150 HD	25LA3RON016463	\N	\N	\N	available	user_1772723709793	main	f
-274	2026-03-09 13:21:25.667+00	CARICO	GGP	Trattorino XD 150 HD	25KA3RON005635	\N	\N	\N	available	user_1772723709793	main	f
-276	2026-03-09 13:22:38.873+00	CARICO	GGP	Trattorino XDC 150 HD	25LA3RON017987	\N	\N	\N	available	user_1772723709793	main	f
-267	2026-03-09 13:14:19.333+00	CARICO	GGP	Trattorino XDL 210 HD	25KA3RON009394	\N	\N	\N	available	user_1772723709793	main	f
-269	2026-03-09 13:15:46.169+00	CARICO	GGP	Trattorino XD 150 HD	25KA3RON005640	\N	\N	\N	available	user_1772723709793	main	f
-271	2026-03-09 13:18:26.157+00	CARICO	GGP	Trattorino XD 150 HD	25LA3RON016463	\N	\N	\N	available	user_1772723709793	main	f
-273	2026-03-09 13:20:39.101+00	CARICO	GGP	Trattorino XD 150 HD	25KA3RON005636	\N	\N	\N	available	user_1772723709793	main	f
-275	2026-03-09 13:21:52.518+00	CARICO	GGP	Trattorino XDC 150 HD	25LA3RON017986	\N	\N	\N	available	user_1772723709793	main	f
-594	2026-05-23 08:57:33.56+00	SCARICO	Stihl	Caricabatteria AL 101	703104544	Pilllon Paolo. Viale della Liberazione 45 Casier 348 8049211	0	0	sold	user_1775131564325	main	f
-606	2026-05-29 07:51:02.877+00	CARICO	Stihl	Caricabatteria AL 101	703210773	\N	\N	\N	available	user_1775131564325	main	t
-607	2026-05-29 07:51:14.799+00	SCARICO	Stihl	Motosega MSA 60.0 C	452325283	Schiavinato Amorino	0	0	sold	user_1775131564325	main	f
-608	2026-05-29 07:51:15.502+00	SCARICO	Stihl	Caricabatteria AL 101	703210773	Schiavinato Amorino	0	0	sold	user_1775131564325	main	f
-621	2026-06-01 13:48:48.022+00	CARICO	Echo	Motosega CS-2511TES	C74638145237	\N	\N	\N	available	user_1775131564325	main	t
 \.
 
 
@@ -10837,62 +10369,72 @@ ec1148f6-87ba-4613-8eed-2aed0c9ce9ab	Echo	Motosega DCS-2500T	1	2026-06-05 16:58:
 6a1bdc3e-7f9a-42d5-ae41-a3eb9784c8a6	Echo	Batteria LBP-56V125	1	2026-06-05 17:00:52.567561+00	2026-06-05 17:00:52.567561+00
 ac738d2f-0e7d-4f99-8631-20e1a5e5bfcb	Echo	Batteria LBP-56V125 EU35	1	2026-06-05 17:01:32.213472+00	2026-06-05 17:01:32.213472+00
 160c256a-cb6a-4a47-a6cc-871d4ee0c895	Echo	Caricabatteria LCJQ-560	1	2026-06-05 17:02:58.33557+00	2026-06-05 17:02:58.33557+00
+9e22915d-b608-4276-a0a1-a05ebc1628a6	Echo	Motore multifunzione PAS 2620 ES	1	2026-06-15 16:37:06.755693+00	2026-06-15 16:37:06.755693+00
+ff297223-79ce-4ec1-830c-d662fe56ecb6	Echo	Potatore MTA-DPP	1	2026-06-15 16:39:52.525532+00	2026-06-15 16:39:52.525532+00
+fba316ab-4be3-417e-8a15-81d80e8479fc	Honda	Rasaerba HRG466C1	1	2026-06-16 08:04:27.944121+00	2026-06-16 08:04:27.944121+00
+737f5013-c579-4d4b-a984-4b8e1c6d4693	ST. S.p.A.	Rasaerba XE 40	1	2026-06-16 08:44:39.035565+00	2026-06-16 08:44:39.035565+00
+75256c51-4de9-4f31-b649-45aeb67c479d	WORX	Soffiatore WG547E	1	2026-06-16 13:57:46.525999+00	2026-06-16 13:57:46.525999+00
+56d9e8a7-4689-48d8-bcd7-214303d13af4	WORX	Batteria WA3551	1	2026-06-16 13:58:24.411841+00	2026-06-16 13:58:24.411841+00
+547c4ac7-705e-4d2d-9bc4-c2202fea37b7	WORX	Caricabatteria WA3880	1	2026-06-16 13:59:10.004177+00	2026-06-16 13:59:10.004177+00
+cb8536da-2403-491c-b1d0-31b1be46af0f	Echo	Decespugliatore DSRM-2400/L	1	2026-06-19 13:08:56.065549+00	2026-06-19 13:08:56.065549+00
+6ce32a22-9a9a-4607-986c-ecd1b0b893b1	Stihl	Decespugliatore FS 235 R	1	2026-06-20 06:45:56.305899+00	2026-06-20 06:45:56.305899+00
+0a1adc67-798f-4d79-ac34-06a010063d09	Stihl	 RME 339.0	1	2026-06-20 08:46:59.654515+00	2026-06-20 08:46:59.654515+00
 \.
 
 
 --
--- Data for Name: messages_2026_06_03; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_18; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_03 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_18 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_04; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_19; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_04 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_19 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_05; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_20; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_05 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_20 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_06; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_21; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_06 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_21 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_07; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_22; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_07 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_22 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_08; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_23; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_08 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_23 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_09; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_06_24; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_09 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_06_24 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
@@ -10974,6 +10516,8 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 20260527120000	2026-06-03 04:35:23
 20260528120000	2026-06-03 04:35:23
 20260603120000	2026-06-04 05:01:18
+20260605120000	2026-06-16 08:03:18
+20260606110000	2026-06-16 08:03:18
 \.
 
 
@@ -11129,7 +10673,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 634, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 678, true);
 
 
 --
@@ -11157,7 +10701,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 327, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 9078, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 9622, true);
 
 
 --
@@ -11801,59 +11345,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_06_03 messages_2026_06_03_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_18 messages_2026_06_18_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_03
-    ADD CONSTRAINT messages_2026_06_03_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_06_04 messages_2026_06_04_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_06_04
-    ADD CONSTRAINT messages_2026_06_04_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_18
+    ADD CONSTRAINT messages_2026_06_18_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_06_05 messages_2026_06_05_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_19 messages_2026_06_19_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_05
-    ADD CONSTRAINT messages_2026_06_05_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_06_06 messages_2026_06_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_06_06
-    ADD CONSTRAINT messages_2026_06_06_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_19
+    ADD CONSTRAINT messages_2026_06_19_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_06_07 messages_2026_06_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_20 messages_2026_06_20_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_07
-    ADD CONSTRAINT messages_2026_06_07_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_06_08 messages_2026_06_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_06_08
-    ADD CONSTRAINT messages_2026_06_08_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_20
+    ADD CONSTRAINT messages_2026_06_20_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_06_09 messages_2026_06_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_06_21 messages_2026_06_21_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_09
-    ADD CONSTRAINT messages_2026_06_09_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_06_21
+    ADD CONSTRAINT messages_2026_06_21_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_22 messages_2026_06_22_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_22
+    ADD CONSTRAINT messages_2026_06_22_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_23 messages_2026_06_23_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_23
+    ADD CONSTRAINT messages_2026_06_23_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_06_24 messages_2026_06_24_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_06_24
+    ADD CONSTRAINT messages_2026_06_24_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -12562,52 +12106,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_06_03_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_18_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_03_inserted_at_topic_idx ON realtime.messages_2026_06_03 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_06_04_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_06_04_inserted_at_topic_idx ON realtime.messages_2026_06_04 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_18_inserted_at_topic_idx ON realtime.messages_2026_06_18 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_06_05_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_19_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_05_inserted_at_topic_idx ON realtime.messages_2026_06_05 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_06_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_06_06_inserted_at_topic_idx ON realtime.messages_2026_06_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_19_inserted_at_topic_idx ON realtime.messages_2026_06_19 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_06_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_20_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_07_inserted_at_topic_idx ON realtime.messages_2026_06_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_06_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_06_08_inserted_at_topic_idx ON realtime.messages_2026_06_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_20_inserted_at_topic_idx ON realtime.messages_2026_06_20 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_06_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_06_21_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_09_inserted_at_topic_idx ON realtime.messages_2026_06_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_06_21_inserted_at_topic_idx ON realtime.messages_2026_06_21 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_22_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_22_inserted_at_topic_idx ON realtime.messages_2026_06_22 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_23_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_23_inserted_at_topic_idx ON realtime.messages_2026_06_23 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_06_24_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_06_24_inserted_at_topic_idx ON realtime.messages_2026_06_24 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -12674,101 +12218,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_06_03_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_18_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_03_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_03_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_03_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_18_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_04_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_18_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_04_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_04_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_04_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_18_pkey;
 
 
 --
--- Name: messages_2026_06_05_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_19_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_05_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_05_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_05_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_19_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_19_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_06_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_06_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_19_pkey;
 
 
 --
--- Name: messages_2026_06_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_20_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_07_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_07_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_20_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_20_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_08_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_08_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_20_pkey;
 
 
 --
--- Name: messages_2026_06_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_21_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_09_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_21_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_06_21_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_09_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_21_pkey;
+
+
+--
+-- Name: messages_2026_06_22_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_22_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_22_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_22_pkey;
+
+
+--
+-- Name: messages_2026_06_23_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_23_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_23_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_23_pkey;
+
+
+--
+-- Name: messages_2026_06_24_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_24_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_06_24_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_24_pkey;
 
 
 --
@@ -13942,5 +13486,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict e9cxY7z6fDIraVBUs7GG8MIxa5bYuVibzWVD2FLhnZqhJ8ViPkdH0G0chHENBfZ
+\unrestrict U8kJOdFmh9cPLHnNpbMqvyykbJoZepD4t5ZeQHoX2mYXY04GLaTnhoz985bQ7eC
 

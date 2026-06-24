@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch, BookOpen, FilePlus2 } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, PieChart, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch, BookOpen, FilePlus2 } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -393,7 +393,7 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
       {isAdmin && (
         <div className="mt-2">
           {/* ── STRUMENTI ADMIN ── */}
-          <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="grid grid-cols-3 gap-2 mb-2">
             <button
               onClick={() => onNavigate('stihl')}
               className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-gray-200 bg-white shadow-sm active:scale-95 transition-transform"
@@ -409,6 +409,13 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
             >
               <BarChart2 className="w-5 h-5 text-gray-400" />
               <div className="text-xs font-bold">BUDGET</div>
+            </button>
+            <button
+              onClick={() => onNavigate('vendite-categoria')}
+              className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-gray-200 bg-white shadow-sm active:scale-95 transition-transform text-gray-600"
+            >
+              <PieChart className="w-5 h-5 text-gray-400" />
+              <div className="text-xs font-bold text-center leading-tight">VENDITE<br />CATEGORIA</div>
             </button>
           </div>
           {/* ── STOCK ALERTS ── */}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../store';
+import { supabase } from '../../store';
 
 const ORDINE_CATEGORIE = ['MACCHINE', 'GEOGREEN', 'ANTIZANZARE', 'CONSULENZA'];
 

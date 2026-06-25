@@ -408,14 +408,14 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
               className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-gray-200 bg-white shadow-sm active:scale-95 transition-transform text-gray-600"
             >
               <BarChart2 className="w-5 h-5 text-gray-400" />
-              <div className="text-xs font-bold">BUDGET</div>
+              <div className="text-xs font-bold text-center leading-tight">BUDGET<br />SETTIMANALE</div>
             </button>
             <button
-              onClick={() => onNavigate('vendite-categoria')}
+              onClick={() => onNavigate('budget')}
               className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl border border-gray-200 bg-white shadow-sm active:scale-95 transition-transform text-gray-600"
             >
               <PieChart className="w-5 h-5 text-gray-400" />
-              <div className="text-xs font-bold text-center leading-tight">VENDITE<br />CATEGORIA</div>
+              <div className="text-xs font-bold">BUDGET</div>
             </button>
           </div>
           {/* ── STOCK ALERTS ── */}

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { ArrowLeft, Download, RefreshCw, Lock } from 'lucide-react';
-import { useRiepilogoCategorie, useDettaglioVendite } from './useVenditeCategoria';
-import VenditeCategoriaRiepilogo from './VenditeCategoriaRiepilogo';
-import VenditeCategoriaDettaglio from './VenditeCategoriaDettaglio';
-import { exportVenditeCategoriaXlsx } from './exportVenditeCategoriaXlsx';
+import { useRiepilogoCategorie, useDettaglioVendite } from './useBudget';
+import BudgetRiepilogo from './BudgetRiepilogo';
+import BudgetDettaglio from './BudgetDettaglio';
+import { exportBudgetXlsx } from './exportBudgetXlsx';
 
-export default function VenditeCategoria({ onNavigate }) {
+export default function BudgetModule({ onNavigate }) {
   const operatoreLoggato = (() => {
     try { return localStorage.getItem('ompra_ultimo_operatore') || ''; } catch { return ''; }
   })();
@@ -54,7 +54,7 @@ export default function VenditeCategoria({ onNavigate }) {
           <button onClick={() => onNavigate('home')} className="p-1 hover:bg-gray-100 rounded">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-gray-800">Vendite per categoria</h1>
+          <h1 className="font-bold text-gray-800">Budget</h1>
         </div>
         <div className="flex items-center gap-2">
           <select
@@ -73,7 +73,7 @@ export default function VenditeCategoria({ onNavigate }) {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
-            onClick={() => exportVenditeCategoriaXlsx(righeDettaglio, anno)}
+            onClick={() => exportBudgetXlsx(righeDettaglio, anno)}
             disabled={!righeDettaglio.length}
             className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
           >
@@ -100,9 +100,9 @@ export default function VenditeCategoria({ onNavigate }) {
       </div>
 
       {tab === 'riepilogo' ? (
-        <VenditeCategoriaRiepilogo righe={righeAnno} loading={loadingRiepilogo} error={errorRiepilogo} />
+        <BudgetRiepilogo righe={righeAnno} loading={loadingRiepilogo} error={errorRiepilogo} />
       ) : (
-        <VenditeCategoriaDettaglio righe={righeDettaglio} loading={loadingDettaglio} error={errorDettaglio} />
+        <BudgetDettaglio righe={righeDettaglio} loading={loadingDettaglio} error={errorDettaglio} />
       )}
     </div>
   );

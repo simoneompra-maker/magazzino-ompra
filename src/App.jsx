@@ -9,7 +9,7 @@ import ArchivioCommissioni from './components/ArchivioCommissioni';
 import Listini from './components/Listini';
 import PoliticheCommerciali from './components/PoliticheCommerciali';
 import BudgetAdmin from './components/BudgetAdmin';
-import VenditeCategoria from './components/VenditeCategoria';
+import BudgetModule from './modules/budget/BudgetModule';
 import SelezionaOperatore from './components/SelezionaOperatore';
 import PratoVivo from './components/PratoVivo';
 import Sopralluogo from './components/Sopralluogo';
@@ -106,8 +106,8 @@ function App() {
         return <PoliticheCommerciali onNavigate={navigate} />;
       case 'budget-admin':
         return <BudgetAdmin onNavigate={navigate} />;
-      case 'vendite-categoria':
-        return <VenditeCategoria onNavigate={navigate} />;
+      case 'budget':
+        return <BudgetModule onNavigate={navigate} />;
       case 'pratovivo':
         return <PratoVivo onNavigate={navigate} />;
       case 'sopralluogo':

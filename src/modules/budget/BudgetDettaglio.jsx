@@ -6,7 +6,7 @@ const fmt = (v) =>
 
 const fmtCella = (v) => (!v ? '—' : fmt(v));
 
-export default function VenditeCategoriaDettaglio({ righe, loading, error }) {
+export default function BudgetDettaglio({ righe, loading, error }) {
   const [trimestre, setTrimestre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [ricercaCliente, setRicercaCliente] = useState('');

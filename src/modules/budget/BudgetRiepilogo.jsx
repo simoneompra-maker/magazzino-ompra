@@ -13,7 +13,7 @@ const fmt = (v) =>
 const fmtPct = (v) =>
   v == null ? null : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
-export default function VenditeCategoriaRiepilogo({ righe, loading, error }) {
+export default function BudgetRiepilogo({ righe, loading, error }) {
   if (error) {
     return <div className="p-4 text-center text-red-600 text-sm">Errore nel caricamento: {error.message}</div>;
   }

@@ -440,7 +440,7 @@ export default function BudgetAdmin({ onNavigate }) {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="font-bold text-gray-800">📊 Budget 2026</h1>
+            <h1 className="font-bold text-gray-800">📊 Budget Settimanale 2026</h1>
             {lastUpdate && <p className="text-xs text-gray-400">Aggiornato: {lastUpdate}</p>}
           </div>
         </div>

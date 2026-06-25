@@ -732,8 +732,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
       cliente: comm.cliente || '',
       telefono: comm.telefono || '',
       operatore: comm.operatore || '',
-      prodotti: comm.prodotti.map(p => ({ ...p, aliquotaIva: p.aliquotaIva || 22 })),
-      accessori: comm.accessori ? comm.accessori.map(a => ({ ...a, aliquotaIva: a.aliquotaIva || 22 })) : [],
+      prodotti: comm.prodotti.map(p => ({ ...p, aliquotaIva: p.aliquotaIva || 22, _key: p._key || crypto.randomUUID() })),
+      accessori: comm.accessori ? comm.accessori.map(a => ({ ...a, aliquotaIva: a.aliquotaIva || 22, _key: a._key || crypto.randomUUID() })) : [],
       totale: comm.totale?.toString() || '',
       caparra: comm.caparra?.toString() || '',
       metodoPagamento: comm.metodoPagamento || '',
@@ -780,7 +780,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
   // Aggiungi prodotto in modifica
   const handleAddEditProduct = () => {
-    const updated = [...editForm.prodotti, { brand: '', model: '', serialNumber: '', prezzo: null, aliquotaIva: 22 }];
+    const updated = [...editForm.prodotti, { brand: '', model: '', serialNumber: '', prezzo: null, aliquotaIva: 22, _key: crypto.randomUUID() }];
     setEditForm({ ...editForm, prodotti: updated });
   };
 
@@ -814,7 +814,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
   const handleAddEditAccessorio = () => {
     setEditForm({
       ...editForm,
-      accessori: [...editForm.accessori, { nome: '', prezzo: 0, quantita: 1, aliquotaIva: 22 }]
+      accessori: [...editForm.accessori, { nome: '', prezzo: 0, quantita: 1, aliquotaIva: 22, _key: crypto.randomUUID() }]
     });
   };
 
@@ -1854,7 +1854,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <label className="text-sm font-bold text-gray-700">Prodotti</label>
                 <div className="space-y-2 mt-2">
                   {editForm.prodotti.map((prod, idx) => (
-                    <div key={idx} className="p-3 bg-gray-50 rounded-lg space-y-2">
+                    <div key={prod._key} className="p-3 bg-gray-50 rounded-lg space-y-2">
                       {/* Riga 1: brand + model (solo se vuoti = nuova riga) */}
                       {(!prod.brand && !prod.model) ? (
                         <div className="flex gap-2">
@@ -1923,7 +1923,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <label className="text-sm font-bold text-gray-700">Accessori</label>
                 <div className="space-y-2 mt-2">
                   {editForm.accessori.map((acc, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
+                    <div key={acc._key} className="flex items-center gap-2">
                       <input
                         type="text"
                         placeholder="Nome"

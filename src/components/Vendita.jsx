@@ -235,6 +235,8 @@ export default function Vendita({ onNavigate }) {
           telefono:  lato === 'fronte' ? (d.telefono || prev.telefono)   : (prev.telefono || d.telefono),
           email:     lato === 'fronte' ? (d.email || prev.email)         : (prev.email || d.email),
           cf:        lato === 'fronte' ? (d.cf || prev.cf)               : (prev.cf || d.cf),
+          piva:      prev.piva || '',
+          sdi:       prev.sdi || '',
         }));
         setScanStep(lato === 'fronte' ? 'fronte_done' : 'idle');
       } else {
@@ -245,41 +247,49 @@ export default function Vendita({ onNavigate }) {
   };
 
   const handleConfermaClienteManuale = async () => {
-    const f = nuovoClienteForm;
-    const nomeCompleto = [f.cognome.trim(), f.nome.trim()].filter(Boolean).join(' ');
-    if (!nomeCompleto) { alert('Inserisci almeno nome o cognome!'); return; }
-    const clienteVirtuale = {
-      id: null, nome: nomeCompleto, nomeP: nomeCompleto, searchText: nomeCompleto.toLowerCase(),
-      indirizzo: f.indirizzo.trim() || null, cap: f.cap.trim() || null, localita: f.localita.trim() || null,
-      provincia: f.provincia.trim() || null, telefono: f.telefono.trim() || null, email: f.email.trim() || null,
-      cf: f.cf.trim() || null, piva: f.piva.trim() || null, sdi: f.sdi.trim() || null,
-    };
-    setCliente(nomeCompleto); setClienteSelezionato(clienteVirtuale);
-    setTelefonoCliente(f.telefono.trim() || ''); setShowNuovoCliente(false);
-    const searchKey = nomeCompleto.toLowerCase();
     try {
-      const { data: esistente, error: errCheck } = await supabase.from('clienti').select('id')
-        .ilike('search_text', `%${searchKey}%`).is('deleted_at', null).maybeSingle();
-      if (errCheck) throw errCheck;
-      if (esistente) { setClienteSelezionato(prev => ({ ...prev, id: esistente.id })); return; }
-      const { data: inserted, error: errInsert } = await supabase.from('clienti').insert({
-        nome: f.nome.trim() || null, cognome: f.cognome.trim() || null, nome_completo: nomeCompleto,
-        indirizzo: f.indirizzo.trim() || null, cap: f.cap.trim() || null, localita: f.localita.trim() || null,
-        provincia: f.provincia.trim() || null, telefono: f.telefono.trim() || null, email: f.email.trim() || null,
-        codice_fiscale: f.cf.trim() || null, partita_iva: f.piva.trim() || null, sdi: f.sdi.trim() || null,
-        search_text: nomeCompleto, fonte: 'manuale',
-      }).select('id').single();
-      if (errInsert) {
-        if (errInsert.code === '23505' || errInsert.code === '409') {
-          const { data: dup } = await supabase.from('clienti').select('id').ilike('search_text', `%${searchKey}%`).is('deleted_at', null).maybeSingle();
-          if (dup) setClienteSelezionato(prev => ({ ...prev, id: dup.id }));
-          invalidaClienteCache(); return;
+      const f = nuovoClienteForm;
+      const nomeCompleto = [(f.cognome || '').trim(), (f.nome || '').trim()].filter(Boolean).join(' ');
+      if (!nomeCompleto) { alert('Inserisci almeno nome o cognome!'); return; }
+      const clienteVirtuale = {
+        id: null, nome: nomeCompleto, nomeP: nomeCompleto, searchText: nomeCompleto.toLowerCase(),
+        indirizzo: (f.indirizzo || '').trim() || null, cap: (f.cap || '').trim() || null,
+        localita: (f.localita || '').trim() || null, provincia: (f.provincia || '').trim() || null,
+        telefono: (f.telefono || '').trim() || null, email: (f.email || '').trim() || null,
+        cf: (f.cf || '').trim() || null, piva: (f.piva || '').trim() || null, sdi: (f.sdi || '').trim() || null,
+      };
+      setCliente(nomeCompleto); setClienteSelezionato(clienteVirtuale);
+      setTelefonoCliente((f.telefono || '').trim() || ''); setShowNuovoCliente(false);
+      const searchKey = nomeCompleto.toLowerCase();
+      try {
+        const { data: esistente, error: errCheck } = await supabase.from('clienti').select('id')
+          .ilike('search_text', `%${searchKey}%`).is('deleted_at', null).maybeSingle();
+        if (errCheck) throw errCheck;
+        if (esistente) { setClienteSelezionato(prev => ({ ...prev, id: esistente.id })); return; }
+        const { data: inserted, error: errInsert } = await supabase.from('clienti').insert({
+          nome: (f.nome || '').trim() || null, cognome: (f.cognome || '').trim() || null, nome_completo: nomeCompleto,
+          indirizzo: (f.indirizzo || '').trim() || null, cap: (f.cap || '').trim() || null,
+          localita: (f.localita || '').trim() || null, provincia: (f.provincia || '').trim() || null,
+          telefono: (f.telefono || '').trim() || null, email: (f.email || '').trim() || null,
+          codice_fiscale: (f.cf || '').trim() || null, partita_iva: (f.piva || '').trim() || null,
+          sdi: (f.sdi || '').trim() || null, search_text: nomeCompleto, fonte: 'manuale',
+        }).select('id').single();
+        if (errInsert) {
+          if (errInsert.code === '23505' || errInsert.code === '409') {
+            const { data: dup } = await supabase.from('clienti').select('id').ilike('search_text', `%${searchKey}%`).is('deleted_at', null).maybeSingle();
+            if (dup) setClienteSelezionato(prev => ({ ...prev, id: dup.id }));
+            invalidaClienteCache(); return;
+          }
+          throw errInsert;
         }
-        throw errInsert;
+        if (inserted) { setClienteSelezionato(prev => ({ ...prev, id: inserted.id })); invalidaClienteCache(); }
+      } catch (err) {
+        console.error('Errore salvataggio cliente in rubrica:', err);
+        alert(`⚠️ Cliente "${nomeCompleto}" aggiunto ma NON salvato in rubrica.\nMotivo: ${err?.message || 'Errore di rete'}`);
       }
-      if (inserted) { setClienteSelezionato(prev => ({ ...prev, id: inserted.id })); invalidaClienteCache(); }
     } catch (err) {
-      alert(`⚠️ Cliente "${nomeCompleto}" aggiunto ma NON salvato in rubrica.\nMotivo: ${err?.message || 'Errore di rete'}`);
+      console.error('Errore handleConfermaClienteManuale:', err);
+      alert(`⚠️ Errore durante la conferma del cliente: ${err?.message || 'Errore imprevisto'}`);
     }
   };
 

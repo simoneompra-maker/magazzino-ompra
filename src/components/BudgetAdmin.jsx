@@ -65,6 +65,29 @@ function currentIsoWeek() {
   return isoWeek(new Date().toISOString().split('T')[0]);
 }
 
+// ─── CALCOLO IMPONIBILE ───────────────────────────────────────────────────────
+// Replica v_vendite_dettaglio: scorpora IVA riga per riga da prodotti e accessori.
+// Fallback su totale/1.22 per commissioni storiche senza dettaglio JSONB.
+function calcImponibile(c) {
+  const segno = c.tipo_operazione === 'reso' ? -1 : 1;
+  const ALIQ_VALIDE = [4, 10, 22];
+  let imp = 0;
+  for (const p of (c.prodotti || [])) {
+    if (p.isOmaggio) continue;
+    const aliq = ALIQ_VALIDE.includes(Number(p.aliquotaIva)) ? Number(p.aliquotaIva) : 22;
+    imp += (parseFloat(p.prezzo) || 0) / (1 + aliq / 100);
+  }
+  for (const a of (c.accessori || [])) {
+    if (a.isOmaggio) continue;
+    const aliq = ALIQ_VALIDE.includes(Number(a.aliquotaIva)) ? Number(a.aliquotaIva) : 22;
+    imp += ((parseFloat(a.prezzo) || 0) / (1 + aliq / 100)) * (parseFloat(a.quantita) || 1);
+  }
+  if (imp === 0 && (parseFloat(c.totale) || 0) !== 0) {
+    imp = parseFloat(c.totale) / 1.22;
+  }
+  return segno * imp;
+}
+
 // ─── FORMATTA EURO ────────────────────────────────────────────────────────────
 // Formato completo con € (usato nei KPI)
 const fmt = (v) =>
@@ -149,10 +172,9 @@ export default function BudgetAdmin({ onNavigate }) {
       // Query con filtro operatore
       let query = supabase
         .from('commissioni')
-        .select('created_at, totale')
+        .select('created_at, totale, prodotti, accessori, tipo_operazione')
         .gte('created_at', '2026-01-01')
         .lt('created_at',  '2027-01-01')
-        .not('totale', 'is', null)
         .eq('status', 'completed');
 
       if (isAdmin && filtroVenditore) {
@@ -171,7 +193,7 @@ export default function BudgetAdmin({ onNavigate }) {
         const w = isoWeek(c.created_at);
         const y = isoYear(c.created_at);
         if (!w || y !== 2026) continue;
-        per_settimana[w] = (per_settimana[w] || 0) + (parseFloat(c.totale) || 0);
+        per_settimana[w] = (per_settimana[w] || 0) + calcImponibile(c);
       }
 
       setRealizzato2026(per_settimana);

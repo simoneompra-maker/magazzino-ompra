@@ -125,12 +125,14 @@ export default function BudgetAdmin({ onNavigate }) {
   const [realizzato2026, setRealizzato2026] = useState({});
   const [loading, setLoading]               = useState(false);
   const [lastUpdate, setLastUpdate]         = useState(null);
+  const [erroreCaricamento, setErroreCaricamento] = useState(null);
 
   const settimanaCorrente = currentIsoWeek();
 
   // ── Carica realizzato 2026 da Supabase ────────────────────────────────────
   const caricaDati = async () => {
     setLoading(true);
+    setErroreCaricamento(null);
     try {
       // Carica lista venditori (solo admin)
       if (isAdmin && venditori.length === 0) {
@@ -176,6 +178,7 @@ export default function BudgetAdmin({ onNavigate }) {
       setLastUpdate(new Date().toLocaleTimeString('it-IT'));
     } catch (e) {
       console.error('Errore caricamento budget:', e);
+      setErroreCaricamento(e.message || 'Errore durante il caricamento dei dati');
     } finally {
       setLoading(false);
     }
@@ -188,8 +191,9 @@ export default function BudgetAdmin({ onNavigate }) {
   // ── Righe tabella ─────────────────────────────────────────────────────────
   const righe = useMemo(() => {
     const tot_semane = 52;
-    let rolling2026 = 0;
-    let rolling2025 = 0;
+    let rolling2026 = 0;  // per la colonna Rolling (cumulato senza vincoli)
+    let cumReal = 0;       // cumulato YTD realizzato (solo settimane trascorse/corrente)
+    let cumBase = 0;       // cumulato YTD baseline 2025 (solo settimane trascorse/corrente)
     return Array.from({ length: tot_semane }, (_, i) => {
       const w       = i + 1;
       const base    = REALIZZATO_2025[w] || 0;
@@ -201,11 +205,17 @@ export default function BudgetAdmin({ onNavigate }) {
       const corrente = w === settimanaCorrente;
 
       rolling2026 += real || 0;
-      rolling2025 += base;
 
-      const roll26   = (real != null || passata) ? rolling2026 : null;
-      const perc_yoy = roll26 != null && rolling2025 > 0
-        ? ((roll26 / rolling2025 - 1) * 100)
+      // Cumulati YTD: accumula solo settimane già trascorse o corrente
+      if (passata || corrente) {
+        cumReal += real || 0;
+        cumBase += base;
+      }
+
+      const roll26  = (real != null || passata) ? rolling2026 : null;
+      // % YoY cumulata (year-to-date): cumReal / cumBase al momento della settimana w
+      const pctYoY  = (passata || corrente) && cumBase > 0
+        ? ((cumReal / cumBase) - 1) * 100
         : null;
 
       return {
@@ -216,7 +226,7 @@ export default function BudgetAdmin({ onNavigate }) {
         allin, delta_allin: real != null ? real - allin : null,
         real,
         rolling: roll26,
-        perc_yoy,
+        pctYoY,
         passata,
         corrente,
       };
@@ -230,8 +240,15 @@ export default function BudgetAdmin({ onNavigate }) {
     const tot_tgt   = tot_base * MULT_TARGET;
     const tot_allin = tot_base * MULT_ALLIN;
     const tot_real  = Object.values(realizzato2026).reduce((a, b) => a + b, 0);
-    return { tot_base, tot_min, tot_tgt, tot_allin, tot_real };
-  }, [realizzato2026]);
+    // YTD cumulato fino alla settimana corrente: confronto equo anno su anno
+    const ytd_base = Array.from({ length: settimanaCorrente }, (_, i) => REALIZZATO_2025[i + 1] || 0)
+      .reduce((a, b) => a + b, 0);
+    const ytd_real = Object.entries(realizzato2026)
+      .filter(([w]) => parseInt(w) <= settimanaCorrente)
+      .reduce((a, [, v]) => a + v, 0);
+    const pct_yoy_ytd = ytd_base > 0 ? ((ytd_real / ytd_base) - 1) * 100 : null;
+    return { tot_base, tot_min, tot_tgt, tot_allin, tot_real, ytd_base, ytd_real, pct_yoy_ytd };
+  }, [realizzato2026, settimanaCorrente]);
 
   // ── Export Excel ──────────────────────────────────────────────────────────
   const esportaExcel = () => {
@@ -561,8 +578,15 @@ export default function BudgetAdmin({ onNavigate }) {
         </div>
       )}
 
+      {/* Errore caricamento */}
+      {erroreCaricamento && (
+        <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          ⚠️ {erroreCaricamento}
+        </div>
+      )}
+
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 p-4">
         {[
           { label: 'Base 2025', val: totali.tot_base, color: 'text-gray-700' },
           { label: 'Target 2026', val: totali.tot_tgt, color: 'text-blue-700' },
@@ -573,13 +597,23 @@ export default function BudgetAdmin({ onNavigate }) {
             color: totali.tot_real >= totali.tot_tgt ? 'text-green-600' : 'text-red-600',
             delta: true,
           },
+          {
+            label: '% YoY cumulato',
+            val: totali.pct_yoy_ytd,
+            color: totali.pct_yoy_ytd == null ? 'text-gray-400' : totali.pct_yoy_ytd >= 0 ? 'text-green-600' : 'text-red-600',
+            isPct: true,
+          },
         ].map(k => (
           <div key={k.label} className="bg-white rounded-xl p-3 shadow-sm border">
             <p className="text-xs text-gray-400">{k.label}</p>
             <p className={`font-bold text-sm mt-0.5 ${k.color}`}>
-              {k.val != null && k.val !== 0
-                ? k.delta ? fmtDelta(k.val) : fmt(k.val)
-                : '—'}
+              {k.isPct
+                ? k.val != null
+                  ? `${k.val >= 0 ? '+' : ''}${k.val.toFixed(1)}%`
+                  : '—'
+                : k.val != null && k.val !== 0
+                  ? k.delta ? fmtDelta(k.val) : fmt(k.val)
+                  : '—'}
             </p>
           </div>
         ))}
@@ -600,7 +634,7 @@ export default function BudgetAdmin({ onNavigate }) {
               <th className="px-1 py-2 text-right">Δ AI</th>
               <th className="px-1 py-2 text-right font-bold">Reale</th>
               <th className="px-1 py-2 text-right">Rolling</th>
-              <th className="px-1 py-2 text-right">%YoY</th>
+              <th className="px-1 py-2 text-right">% YoY cum.</th>
             </tr>
           </thead>
           <tbody>
@@ -648,8 +682,8 @@ export default function BudgetAdmin({ onNavigate }) {
                   <td className="px-1 py-1 text-right font-mono text-gray-600 text-xs">
                     {r.rolling != null ? fmtN(r.rolling) : ''}
                   </td>
-                  <td className={`px-1 py-1 text-right font-mono font-semibold text-xs ${r.perc_yoy != null ? (r.perc_yoy >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-300'}`}>
-                    {r.perc_yoy != null ? `${r.perc_yoy >= 0 ? '+' : ''}${r.perc_yoy.toFixed(1)}%` : '—'}
+                  <td className={`px-1 py-1 text-right font-mono font-semibold text-xs ${r.pctYoY != null ? (r.pctYoY >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-300'}`}>
+                    {r.pctYoY != null ? `${r.pctYoY >= 0 ? '+' : ''}${r.pctYoY.toFixed(1)}%` : '—'}
                   </td>
                 </tr>
               );
@@ -672,8 +706,8 @@ export default function BudgetAdmin({ onNavigate }) {
               </td>
               <td className="px-1 py-1.5 text-right font-mono text-xs">{totali.tot_real ? fmtN(totali.tot_real) : '—'}</td>
               <td className="px-1 py-1.5 text-right font-mono text-xs">{totali.tot_real ? fmtN(totali.tot_real) : '—'}</td>
-              <td className={`px-2 py-2 text-right font-mono font-bold ${totali.tot_real && totali.tot_base ? (totali.tot_real >= totali.tot_base ? 'text-green-300' : 'text-red-300') : ''}`}>
-                {totali.tot_real && totali.tot_base ? `${((totali.tot_real / totali.tot_base - 1) * 100) >= 0 ? '+' : ''}${((totali.tot_real / totali.tot_base - 1) * 100).toFixed(1)}%` : '—'}
+              <td className={`px-2 py-2 text-right font-mono font-bold ${totali.pct_yoy_ytd != null ? (totali.pct_yoy_ytd >= 0 ? 'text-green-300' : 'text-red-300') : ''}`}>
+                {totali.pct_yoy_ytd != null ? `${totali.pct_yoy_ytd >= 0 ? '+' : ''}${totali.pct_yoy_ytd.toFixed(1)}%` : '—'}
               </td>
             </tr>
             {/* Riga percentuali */}
@@ -687,8 +721,8 @@ export default function BudgetAdmin({ onNavigate }) {
               <td className="px-1 py-1.5 text-right text-xs">+20,0%</td>
               <td></td>
               <td className="px-1 py-1.5 text-right font-mono text-white text-xs">
-                {totali.tot_real && totali.tot_base
-                  ? `${((totali.tot_real / totali.tot_base - 1) * 100).toFixed(2)}%`
+                {totali.pct_yoy_ytd != null
+                  ? `${totali.pct_yoy_ytd >= 0 ? '+' : ''}${totali.pct_yoy_ytd.toFixed(2)}%`
                   : '—'}
               </td>
               <td></td>

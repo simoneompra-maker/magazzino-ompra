@@ -45,7 +45,7 @@ export default function Vendita({ onNavigate }) {
   const [telefonoCliente, setTelefonoCliente] = useState('');
   const [prodotti, setProdotti] = useState([]);
   const [accessori, setAccessori] = useState([]);
-  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 });
+  const [newAccessorio, setNewAccessorio] = useState({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22, brand: null });
   const [totaleManuale, setTotaleManuale] = useState('');
   const [ivaCompresa, setIvaCompresa] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -621,15 +621,16 @@ export default function Vendita({ onNavigate }) {
       prodotto.prezzo_c != null && { label: 'C', prezzo: prodotto.prezzo_c },
       prodotto.prezzo_d != null && { label: 'D', prezzo: prodotto.prezzo_d },
     ].filter(Boolean);
+    const brand = prodotto.brand || null;
     setListiniSuggerimenti([]); setShowListiniDropdown(false);
-    if (fasce.length > 1) { setNewAccessorio(prev => ({ ...prev, nome, prezzo: '', aliquotaIva: iva })); setFasceProdottoListino(fasce); }
-    else { setNewAccessorio(prev => ({ ...prev, nome, prezzo: fasce.length === 1 ? fasce[0].prezzo.toString() : '', aliquotaIva: iva })); setFasceProdottoListino([]); }
+    if (fasce.length > 1) { setNewAccessorio(prev => ({ ...prev, nome, prezzo: '', aliquotaIva: iva, brand })); setFasceProdottoListino(fasce); }
+    else { setNewAccessorio(prev => ({ ...prev, nome, prezzo: fasce.length === 1 ? fasce[0].prezzo.toString() : '', aliquotaIva: iva, brand })); setFasceProdottoListino([]); }
   };
 
   const handleAddAccessorio = () => {
     if (!newAccessorio.nome) { alert('Inserisci la descrizione!'); return; }
     setAccessori([...accessori, { ...newAccessorio, id: Date.now(), prezzo: parseFloat(newAccessorio.prezzo) || 0, quantita: parseInt(newAccessorio.quantita) || 1, matricola: newAccessorio.matricola?.trim() || null, aliquotaIva: newAccessorio.aliquotaIva || 22 }]);
-    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22 }); setFasceProdottoListino([]);
+    setNewAccessorio({ nome: '', prezzo: '', quantita: '1', matricola: '', aliquotaIva: 22, brand: null }); setFasceProdottoListino([]);
   };
   const handleRemoveAccessorio = (id) => setAccessori(accessori.filter(a => a.id !== id));
   const handleEditAccessorio = (acc) => { setEditingAccessorio(acc.id); setEditAccessorioData({ nome: acc.nome, prezzo: acc.prezzo.toString(), quantita: (acc.quantita || 1).toString(), matricola: acc.matricola || '' }); };

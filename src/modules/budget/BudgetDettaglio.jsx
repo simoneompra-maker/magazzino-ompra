@@ -1,36 +1,40 @@
 import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Calendar } from 'lucide-react';
+
+const fmtData = (iso) => {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+};
 
 const fmt = (v) =>
   v == null ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const fmtCella = (v) => (!v ? '—' : fmt(v));
 
-export default function BudgetDettaglio({ righe, loading, error }) {
-  const [trimestre, setTrimestre] = useState('');
+export default function BudgetDettaglio({ righe, loading, error, periodoMode, anno, trimestre, dateFrom, dateTo }) {
   const [categoria, setCategoria] = useState('');
   const [ricercaCliente, setRicercaCliente] = useState('');
 
   const filtrate = useMemo(() => {
     return righe.filter(r => {
-      if (trimestre && String(r.trimestre) !== trimestre) return false;
-      if (categoria === 'MACCHINE' && !r.imp_macchine) return false;
-      if (categoria === 'GEOGREEN' && !r.imp_geogreen) return false;
+      if (categoria === 'MACCHINE'    && !r.imp_macchine)    return false;
+      if (categoria === 'GEOGREEN'    && !r.imp_geogreen)    return false;
       if (categoria === 'ANTIZANZARE' && !r.imp_antizanzare) return false;
-      if (categoria === 'CONSULENZA' && !r.imp_consulenza) return false;
+      if (categoria === 'CONSULENZA'  && !r.imp_consulenza)  return false;
       if (ricercaCliente.trim()) {
         const term = ricercaCliente.trim().toLowerCase();
         if (!r.cliente?.toLowerCase().includes(term)) return false;
       }
       return true;
     });
-  }, [righe, trimestre, categoria, ricercaCliente]);
+  }, [righe, categoria, ricercaCliente]);
 
   const totali = useMemo(() => filtrate.reduce((acc, r) => ({
-    imp_macchine: acc.imp_macchine + (r.imp_macchine || 0),
-    imp_geogreen: acc.imp_geogreen + (r.imp_geogreen || 0),
+    imp_macchine:    acc.imp_macchine    + (r.imp_macchine    || 0),
+    imp_geogreen:    acc.imp_geogreen    + (r.imp_geogreen    || 0),
     imp_antizanzare: acc.imp_antizanzare + (r.imp_antizanzare || 0),
-    imp_consulenza: acc.imp_consulenza + (r.imp_consulenza || 0),
+    imp_consulenza:  acc.imp_consulenza  + (r.imp_consulenza  || 0),
     imponibile_totale: acc.imponibile_totale + (r.imponibile_totale || 0),
   }), { imp_macchine: 0, imp_geogreen: 0, imp_antizanzare: 0, imp_consulenza: 0, imponibile_totale: 0 }), [filtrate]);
 
@@ -40,16 +44,27 @@ export default function BudgetDettaglio({ righe, loading, error }) {
 
   return (
     <div className="p-4">
-      {/* Filtri */}
+      {/* Badge periodo attivo */}
+      {periodoMode === 'trimestre' && (
+        <div className="flex items-center gap-1.5 mb-2 px-2 py-1 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 w-fit">
+          <Calendar className="w-3 h-3" />
+          <span>T{trimestre} {anno}</span>
+        </div>
+      )}
+      {periodoMode === 'date' && (
+        <div className="flex items-center gap-1.5 mb-2 px-2 py-1 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 w-fit">
+          <Calendar className="w-3 h-3" />
+          <span>{fmtData(dateFrom)} → {fmtData(dateTo)}</span>
+        </div>
+      )}
+
+      {/* Filtri locali */}
       <div className="flex flex-wrap gap-2 mb-3">
-        <select value={trimestre} onChange={e => setTrimestre(e.target.value)} className="border-2 border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white">
-          <option value="">— Tutti i trimestri —</option>
-          <option value="1">T1</option>
-          <option value="2">T2</option>
-          <option value="3">T3</option>
-          <option value="4">T4</option>
-        </select>
-        <select value={categoria} onChange={e => setCategoria(e.target.value)} className="border-2 border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white">
+        <select
+          value={categoria}
+          onChange={e => setCategoria(e.target.value)}
+          className="border-2 border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white"
+        >
           <option value="">— Tutte le categorie —</option>
           <option value="MACCHINE">Macchine</option>
           <option value="GEOGREEN">Geogreen</option>

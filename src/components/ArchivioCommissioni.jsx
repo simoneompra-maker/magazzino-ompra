@@ -780,7 +780,7 @@ export default function ArchivioCommissioni({ onNavigate }) {
 
   // Aggiungi prodotto in modifica
   const handleAddEditProduct = () => {
-    const updated = [...editForm.prodotti, { brand: '', model: '', serialNumber: '', prezzo: null, aliquotaIva: 22, _key: crypto.randomUUID() }];
+    const updated = [...editForm.prodotti, { brand: '', model: '', serialNumber: '', prezzo: null, aliquotaIva: 22, _key: crypto.randomUUID(), _isNew: true }];
     setEditForm({ ...editForm, prodotti: updated });
   };
 
@@ -1855,8 +1855,8 @@ export default function ArchivioCommissioni({ onNavigate }) {
                 <div className="space-y-2 mt-2">
                   {editForm.prodotti.map((prod, idx) => (
                     <div key={prod._key} className="p-3 bg-gray-50 rounded-lg space-y-2">
-                      {/* Riga 1: brand + model (solo se vuoti = nuova riga) */}
-                      {(!prod.brand && !prod.model) ? (
+                      {/* Riga 1: brand + model (solo per prodotti nuovi aggiunti manualmente) */}
+                      {prod._isNew ? (
                         <div className="flex gap-2">
                           <input
                             type="text"

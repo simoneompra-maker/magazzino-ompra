@@ -609,7 +609,10 @@ export default function Vendita({ onNavigate }) {
   const selezionaDaListino = (prodotto) => {
     const ivaRaw = prodotto.iva;
     const iva = ivaRaw == null ? 22 : ivaRaw < 1 ? Math.round(ivaRaw * 100) : Math.round(ivaRaw);
-    const nome = `${prodotto.descrizione}${prodotto.confezione ? ' ' + prodotto.confezione : ''}`;
+    const confNorm = (prodotto.confezione || '').trim().toLowerCase();
+    const descNorm = (prodotto.descrizione || '').toLowerCase();
+    const suffisso = confNorm && !descNorm.includes(confNorm) ? ' ' + prodotto.confezione.trim() : '';
+    const nome = `${prodotto.descrizione}${suffisso}`;
     const promoAttiva = isPromoAttiva(prodotto);
     const fasce = [
       promoAttiva && { label: '🏷️ PROMO', prezzo: prodotto.prezzo_promo, isPromo: true },
@@ -914,7 +917,7 @@ export default function Vendita({ onNavigate }) {
                     {listiniSuggerimenti.map((p, i) => (
                       <button key={i} type="button" onMouseDown={() => selezionaDaListino(p)} className={`w-full text-left px-3 py-2 hover:bg-green-50 border-b last:border-0 border-gray-100 ${isPromoAttiva(p) ? 'bg-orange-50 hover:bg-orange-100' : ''}`}>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-sm font-medium text-gray-800 truncate">{p.descrizione}{p.confezione ? ` ${p.confezione}` : ''}</span>
+                          <span className="text-sm font-medium text-gray-800 truncate">{p.descrizione}{p.confezione && !p.descrizione.toLowerCase().includes(p.confezione.trim().toLowerCase()) ? ` ${p.confezione.trim()}` : ''}</span>
                           {isPromoAttiva(p) && <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-orange-500 text-white shrink-0">🏷️ PROMO</span>}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">

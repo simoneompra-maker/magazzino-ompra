@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 // Layout in stile foglio storico "VENDITE 2025".
 // Colonna A = progressivo non nullo su ogni riga dati: senza, SheetJS sfalsa
 // gli indici di sheet_to_json al reimport (vedi convenzioni progetto).
-export function exportBudgetXlsx(righe, anno) {
+export function exportBudgetXlsx(righe, periodoLabel) {
   const dati = [
     ['#', 'DATA', 'CLIENTE', 'DESCRIZIONE', 'IMPORTO IVATO', 'IMPONIBILE',
       'TOT. IMP. MACCHINE', 'TOT. IMP. GEOGREEN', 'TOT. IMP. ANTIZANZARE', 'TOT. IMP. CONSULENZA', 'TOTALE'],
@@ -31,6 +31,7 @@ export function exportBudgetXlsx(righe, anno) {
     { wch: 16 }, { wch: 16 }, { wch: 14 },
   ];
 
-  XLSX.utils.book_append_sheet(wb, ws, `Budget ${anno}`);
-  XLSX.writeFile(wb, `BUDGET_${anno}.xlsx`);
+  const sheetName = `Budget ${periodoLabel}`.slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, `BUDGET_${periodoLabel}.xlsx`);
 }

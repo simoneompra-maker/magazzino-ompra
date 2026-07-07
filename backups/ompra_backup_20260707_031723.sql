@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict U8kJOdFmh9cPLHnNpbMqvyykbJoZepD4t5ZeQHoX2mYXY04GLaTnhoz985bQ7eC
+\restrict gQGzQ8xPWOdL6CTcRM4d3O3S4xCtCOPmdA1YFFfQ82udHEKEUDQ4FKDrT19YyKL
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
@@ -149,6 +149,7 @@ DROP INDEX IF EXISTS public.idx_pv_preventivi_cliente;
 DROP INDEX IF EXISTS public.idx_pv_piani_slug;
 DROP INDEX IF EXISTS public.idx_pv_piani_fase;
 DROP INDEX IF EXISTS public.idx_pv_interventi_piano;
+DROP INDEX IF EXISTS public.idx_listini_descrizione_lower;
 DROP INDEX IF EXISTS public.idx_commissioni_status;
 DROP INDEX IF EXISTS public.idx_commissioni_privacy_pending;
 DROP INDEX IF EXISTS public.idx_commissioni_is_preventivo;
@@ -231,13 +232,13 @@ ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS b
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
 ALTER TABLE IF EXISTS realtime.messages DROP CONSTRAINT IF EXISTS messages_payload_exclusive;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_24 DROP CONSTRAINT IF EXISTS messages_2026_06_24_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_23 DROP CONSTRAINT IF EXISTS messages_2026_06_23_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_22 DROP CONSTRAINT IF EXISTS messages_2026_06_22_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_21 DROP CONSTRAINT IF EXISTS messages_2026_06_21_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_20 DROP CONSTRAINT IF EXISTS messages_2026_06_20_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_19 DROP CONSTRAINT IF EXISTS messages_2026_06_19_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_06_18 DROP CONSTRAINT IF EXISTS messages_2026_06_18_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_09 DROP CONSTRAINT IF EXISTS messages_2026_07_09_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_08 DROP CONSTRAINT IF EXISTS messages_2026_07_08_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_07 DROP CONSTRAINT IF EXISTS messages_2026_07_07_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_06 DROP CONSTRAINT IF EXISTS messages_2026_07_06_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_05 DROP CONSTRAINT IF EXISTS messages_2026_07_05_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_04 DROP CONSTRAINT IF EXISTS messages_2026_07_04_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_03 DROP CONSTRAINT IF EXISTS messages_2026_07_03_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -333,14 +334,16 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_06_24;
-DROP TABLE IF EXISTS realtime.messages_2026_06_23;
-DROP TABLE IF EXISTS realtime.messages_2026_06_22;
-DROP TABLE IF EXISTS realtime.messages_2026_06_21;
-DROP TABLE IF EXISTS realtime.messages_2026_06_20;
-DROP TABLE IF EXISTS realtime.messages_2026_06_19;
-DROP TABLE IF EXISTS realtime.messages_2026_06_18;
+DROP TABLE IF EXISTS realtime.messages_2026_07_09;
+DROP TABLE IF EXISTS realtime.messages_2026_07_08;
+DROP TABLE IF EXISTS realtime.messages_2026_07_07;
+DROP TABLE IF EXISTS realtime.messages_2026_07_06;
+DROP TABLE IF EXISTS realtime.messages_2026_07_05;
+DROP TABLE IF EXISTS realtime.messages_2026_07_04;
+DROP TABLE IF EXISTS realtime.messages_2026_07_03;
 DROP TABLE IF EXISTS realtime.messages;
+DROP VIEW IF EXISTS public.v_riepilogo_trimestrale;
+DROP VIEW IF EXISTS public.v_vendite_dettaglio;
 DROP TABLE IF EXISTS public.stock_thresholds;
 DROP TABLE IF EXISTS public.stihl_promo;
 DROP TABLE IF EXISTS public.stihl_prodotti;
@@ -429,6 +432,7 @@ DROP FUNCTION IF EXISTS realtime.send(payload jsonb, event text, topic text, pri
 DROP FUNCTION IF EXISTS realtime.quote_wal2json(entity regclass);
 DROP FUNCTION IF EXISTS realtime.list_changes(publication name, slot_name name, max_changes integer, max_record_bytes integer);
 DROP FUNCTION IF EXISTS realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]);
+DROP FUNCTION IF EXISTS realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text, negate boolean);
 DROP FUNCTION IF EXISTS realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text);
 DROP FUNCTION IF EXISTS realtime."cast"(val text, type_ regtype);
 DROP FUNCTION IF EXISTS realtime.build_prepared_statement_sql(prepared_statement_name text, entity regclass, columns realtime.wal_column[]);
@@ -437,6 +441,7 @@ DROP FUNCTION IF EXISTS realtime.apply_rls(wal jsonb, max_record_bytes integer);
 DROP FUNCTION IF EXISTS public.update_updated_at();
 DROP FUNCTION IF EXISTS public.update_stock_threshold_updated_at();
 DROP FUNCTION IF EXISTS public.stihl_promo_attive();
+DROP FUNCTION IF EXISTS public.ompra_classifica_categoria(testo text);
 DROP FUNCTION IF EXISTS public.auto_create_stock_threshold();
 DROP FUNCTION IF EXISTS pgbouncer.get_auth(p_usename text);
 DROP FUNCTION IF EXISTS graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb);
@@ -710,7 +715,13 @@ CREATE TYPE realtime.equality_op AS ENUM (
     'lte',
     'gt',
     'gte',
-    'in'
+    'in',
+    'like',
+    'ilike',
+    'is',
+    'match',
+    'imatch',
+    'isdistinct'
 );
 
 
@@ -721,7 +732,8 @@ CREATE TYPE realtime.equality_op AS ENUM (
 CREATE TYPE realtime.user_defined_filter AS (
 	column_name text,
 	op realtime.equality_op,
-	value text
+	value text,
+	negate boolean
 );
 
 
@@ -1208,6 +1220,33 @@ BEGIN
   ON CONFLICT (brand, model) DO NOTHING;
   RETURN NEW;
 END;
+$$;
+
+
+--
+-- Name: ompra_classifica_categoria(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ompra_classifica_categoria(testo text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+declare
+  t text := lower(coalesce(testo, ''));
+begin
+  if t ~ '(stocker|stoker|freezanz|frezanz|geyser|gayser|zhalt|zhal|zanzero|nebuzan|florifens|etokraft|pirekraft|tetrapi|ciper|perm plus|silver shield|silve shield|garden extension|kit expanding|natural green|impianto antizanzar|antizanzar|alimentatore)'
+    then return 'ANTIZANZARE';
+  end if;
+  if t ~ '(consulenza|sopralluogo|piano agronomico|pratovivo|analisi suolo|relazione agronomica)'
+    then return 'CONSULENZA';
+  end if;
+  if t like '%spandiconcime%'
+    then return 'MACCHINE';
+  end if;
+  if t ~ '(geogreen|albatros|mivena|micosat|meta-ge|meta ge|humifitos|vigor active|alga park|amino k|fe ulk|leokare|sevenkare|root speed|decal vyro|paint turf|wet turf|npk enduring|granustar|iron power|pro starter|pro slow|universal top|allround|sustenium|eden|green 7|green 8|hurricane|blizzard|no-sun|no sun|renovate|twister|tornado|ecograss|winter sport|strong|sement|micorriz|biostimol|tappeto erboso)'
+    then return 'GEOGREEN';
+  end if;
+  return 'MACCHINE';
+end;
 $$;
 
 
@@ -1707,36 +1746,108 @@ $$;
 CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text) RETURNS boolean
     LANGUAGE plpgsql IMMUTABLE
     AS $$
-      /*
-      Casts *val_1* and *val_2* as type *type_* and check the *op* condition for truthiness
-      */
-      declare
-          op_symbol text = (
-              case
-                  when op = 'eq' then '='
-                  when op = 'neq' then '!='
-                  when op = 'lt' then '<'
-                  when op = 'lte' then '<='
-                  when op = 'gt' then '>'
-                  when op = 'gte' then '>='
-                  when op = 'in' then '= any'
-                  else 'UNKNOWN OP'
-              end
-          );
-          res boolean;
-      begin
-          execute format(
-              'select %L::'|| type_::text || ' ' || op_symbol
-              || ' ( %L::'
-              || (
-                  case
-                      when op = 'in' then type_::text || '[]'
-                      else type_::text end
-              )
-              || ')', val_1, val_2) into res;
-          return res;
-      end;
-      $$;
+/*
+Casts *val_1* and *val_2* as type *type_* and check the *op* condition for truthiness
+*/
+declare
+    op_symbol text = (
+        case
+            when op = 'eq' then '='
+            when op = 'neq' then '!='
+            when op = 'lt' then '<'
+            when op = 'lte' then '<='
+            when op = 'gt' then '>'
+            when op = 'gte' then '>='
+            when op = 'in' then '= any'
+            else 'UNKNOWN OP'
+        end
+    );
+    res boolean;
+begin
+    execute format(
+        'select %L::'|| type_::text || ' ' || op_symbol
+        || ' ( %L::'
+        || (
+            case
+                when op = 'in' then type_::text || '[]'
+                else type_::text end
+        )
+        || ')', val_1, val_2) into res;
+    return res;
+end;
+$$;
+
+
+--
+-- Name: check_equality_op(realtime.equality_op, regtype, text, text, boolean); Type: FUNCTION; Schema: realtime; Owner: -
+--
+
+CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtype, val_1 text, val_2 text, negate boolean) RETURNS boolean
+    LANGUAGE plpgsql STABLE
+    AS $$
+declare
+    op_symbol text;
+    res boolean;
+begin
+    -- IS DISTINCT FROM / IS NOT DISTINCT FROM: infix, both sides typed literals
+    if op = 'isdistinct' then
+        execute format(
+            'select %L::%s %s %L::%s',
+            val_1,
+            type_::text,
+            case when negate then 'IS NOT DISTINCT FROM' else 'IS DISTINCT FROM' end,
+            val_2,
+            type_::text
+        ) into res;
+        return res;
+    end if;
+
+    -- IS requires a keyword RHS (NULL, TRUE, FALSE, UNKNOWN), not a typed literal
+    if op = 'is' then
+        if val_2 not in ('null', 'true', 'false', 'unknown') then
+            raise exception 'invalid value for is filter: must be null, true, false, or unknown';
+        end if;
+        execute format(
+            'select %L::%s %s %s',
+            val_1,
+            type_::text,
+            case when negate then 'IS NOT' else 'IS' end,
+            upper(val_2)
+        ) into res;
+        return res;
+    end if;
+
+    op_symbol = case
+        when op = 'eq'    then '='
+        when op = 'neq'   then '!='
+        when op = 'lt'    then '<'
+        when op = 'lte'   then '<='
+        when op = 'gt'    then '>'
+        when op = 'gte'   then '>='
+        when op = 'in'    then '= any'
+        when op = 'like'   then 'LIKE'
+        when op = 'ilike'  then 'ILIKE'
+        when op = 'match'  then '~'
+        when op = 'imatch' then '~*'
+        else null
+    end;
+
+    if op_symbol is null then
+        raise exception 'unsupported equality operator: %', op::text;
+    end if;
+
+    execute format(
+        'select %L::%s %s (%L::%s)',
+        val_1,
+        type_::text,
+        op_symbol,
+        val_2,
+        case when op = 'in' then type_::text || '[]' else type_::text end
+    ) into res;
+
+    return case when negate then not res else res end;
+end;
+$$;
 
 
 --
@@ -1744,35 +1855,29 @@ CREATE FUNCTION realtime.check_equality_op(op realtime.equality_op, type_ regtyp
 --
 
 CREATE FUNCTION realtime.is_visible_through_filters(columns realtime.wal_column[], filters realtime.user_defined_filter[]) RETURNS boolean
-    LANGUAGE sql IMMUTABLE
-    AS $_$
-    /*
-    Should the record be visible (true) or filtered out (false) after *filters* are applied
-    */
-        select
-            -- Default to allowed when no filters present
-            $2 is null -- no filters. this should not happen because subscriptions has a default
-            or array_length($2, 1) is null -- array length of an empty array is null
-            or bool_and(
-                coalesce(
-                    realtime.check_equality_op(
-                        op:=f.op,
-                        type_:=coalesce(
-                            col.type_oid::regtype, -- null when wal2json version <= 2.4
-                            col.type_name::regtype
-                        ),
-                        -- cast jsonb to text
-                        val_1:=col.value #>> '{}',
-                        val_2:=f.value
-                    ),
-                    false -- if null, filter does not match
-                )
-            )
-        from
-            unnest(filters) f
-            join unnest(columns) col
-                on f.column_name = col.name;
-    $_$;
+    LANGUAGE sql STABLE
+    AS $$
+    select
+        filters is null
+        or array_length(filters, 1) is null
+        or coalesce(
+            count(col.name) = count(1)
+            and sum(
+                realtime.check_equality_op(
+                    op:=f.op,
+                    type_:=coalesce(col.type_oid::regtype, col.type_name::regtype),
+                    val_1:=col.value #>> '{}',
+                    val_2:=f.value,
+                    negate:=coalesce(f.negate, false)
+                )::int
+            ) filter (where col.name is not null) = count(col.name),
+            false
+        )
+    from
+        unnest(filters) f
+        left join unnest(columns) col
+            on f.column_name = col.name;
+$$;
 
 
 --
@@ -1970,7 +2075,48 @@ begin
             if coalesce(jsonb_array_length(in_val), 0) > 100 then
                 raise exception 'too many values for `in` filter. Maximum 100';
             end if;
+        elsif filter.op = 'is'::realtime.equality_op then
+            -- `is` requires a keyword RHS rather than a typed literal
+            if filter.value not in ('null', 'true', 'false', 'unknown') then
+                raise exception 'invalid value for is filter: must be null, true, false, or unknown';
+            end if;
+            -- IS NULL works for any type, but IS TRUE/FALSE/UNKNOWN require a boolean
+            -- operand. Reject the non-null keywords on non-boolean columns here so they
+            -- don't abort apply_rls at WAL time.
+            if filter.value <> 'null' and col_type <> 'boolean'::regtype then
+                raise exception 'is % filter requires a boolean column, got %', filter.value, col_type::text;
+            end if;
+        elsif filter.op in ('like'::realtime.equality_op, 'ilike'::realtime.equality_op) then
+            -- like/ilike apply the text pattern operator (~~); reject column types that
+            -- have no such operator instead of failing at WAL time
+            if not exists (
+                select 1 from pg_catalog.pg_operator
+                where oprname = '~~' and oprleft = col_type
+            ) then
+                raise exception 'operator % requires a text-compatible column type, got %', filter.op::text, col_type::text;
+            end if;
+        elsif filter.op in ('match'::realtime.equality_op, 'imatch'::realtime.equality_op) then
+            -- match/imatch apply the regex operators ~ / ~*; reject column types that have
+            -- no such operator (e.g. integer) instead of failing at WAL time, mirroring the
+            -- like/ilike guard above.
+            if not exists (
+                select 1 from pg_catalog.pg_operator
+                where oprname = case when filter.op = 'imatch'::realtime.equality_op then '~*' else '~' end
+                  and oprleft = col_type
+                  and oprright = col_type
+                  and oprresult = 'boolean'::regtype
+            ) then
+                raise exception 'operator % requires a text-compatible column type, got %', filter.op::text, col_type::text;
+            end if;
+            -- validate the regex eagerly so a bad pattern is rejected here, not inside
+            -- apply_rls where it would abort the WAL stream for the entity
+            begin
+                perform '' ~ filter.value;
+            exception when others then
+                raise exception 'invalid regular expression for % filter: %', filter.op::text, sqlerrm;
+            end;
         else
+            -- eq/neq/lt/lte/gt/gte: value must be coercable to the type
             perform realtime.cast(filter.value, col_type);
         end if;
     end loop;
@@ -1983,8 +2129,10 @@ begin
         end loop;
     end if;
 
+    -- Apply consistent order to filters so the unique constraint can't be tricked by a
+    -- different filter order. negate is part of the sort key.
     new.filters = coalesce(
-        array_agg(f order by f.column_name, f.op, f.value),
+        array_agg(f order by f.column_name, f.op, f.value, f.negate),
         '{}'
     ) from unnest(new.filters) f;
 
@@ -2991,6 +3139,7 @@ CREATE TABLE auth.custom_oauth_providers (
     jwks_uri text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    custom_claims_allowlist text[] DEFAULT '{}'::text[] NOT NULL,
     CONSTRAINT custom_oauth_providers_authorization_url_https CHECK (((authorization_url IS NULL) OR (authorization_url ~~ 'https://%'::text))),
     CONSTRAINT custom_oauth_providers_authorization_url_length CHECK (((authorization_url IS NULL) OR (char_length(authorization_url) <= 2048))),
     CONSTRAINT custom_oauth_providers_client_id_length CHECK (((char_length(client_id) >= 1) AND (char_length(client_id) <= 512))),
@@ -3796,7 +3945,8 @@ CREATE TABLE public.listini (
     prezzo_promo numeric(10,2),
     promo_dal date,
     promo_al date,
-    note_promo text
+    note_promo text,
+    note text
 );
 
 
@@ -4320,6 +4470,223 @@ CREATE TABLE public.stock_thresholds (
 
 
 --
+-- Name: v_vendite_dettaglio; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.v_vendite_dettaglio AS
+ WITH righe AS (
+         SELECT c.id AS commissione_id,
+            c.created_at,
+            c.cliente,
+            c.tipo_operazione,
+            c.totale AS commissione_totale,
+            ((COALESCE((p.value ->> 'brand'::text), ''::text) || ' '::text) || COALESCE((p.value ->> 'model'::text), ''::text)) AS descr,
+            public.ompra_classifica_categoria(((COALESCE((p.value ->> 'brand'::text), ''::text) || ' '::text) || COALESCE((p.value ->> 'model'::text), ''::text))) AS categoria,
+                CASE
+                    WHEN COALESCE(((p.value ->> 'isOmaggio'::text))::boolean, false) THEN (0)::numeric
+                    ELSE (COALESCE((NULLIF((p.value ->> 'prezzo'::text), ''::text))::numeric, (0)::numeric) / ((1)::numeric + (
+                    CASE
+                        WHEN (COALESCE((NULLIF((p.value ->> 'aliquotaIva'::text), ''::text))::numeric, (0)::numeric) = ANY (ARRAY[(4)::numeric, (10)::numeric, (22)::numeric])) THEN COALESCE((NULLIF((p.value ->> 'aliquotaIva'::text), ''::text))::numeric, (0)::numeric)
+                        ELSE (22)::numeric
+                    END / 100.0)))
+                END AS imponibile
+           FROM (public.commissioni c
+             CROSS JOIN LATERAL jsonb_array_elements(
+                CASE
+                    WHEN (jsonb_typeof(c.prodotti) = 'array'::text) THEN c.prodotti
+                    ELSE '[]'::jsonb
+                END) p(value))
+          WHERE ((COALESCE(c.is_preventivo, false) = false) AND (c.created_at IS NOT NULL) AND (COALESCE(c.status, 'completed'::text) = 'completed'::text))
+        UNION ALL
+         SELECT c.id,
+            c.created_at,
+            c.cliente,
+            c.tipo_operazione,
+            c.totale,
+            COALESCE((a.value ->> 'nome'::text), ''::text) AS descr,
+            public.ompra_classifica_categoria(((COALESCE(NULLIF((a.value ->> 'brand'::text), ''::text), l_acc.brand, ''::text) || ' '::text) || COALESCE((a.value ->> 'nome'::text), ''::text))) AS categoria,
+                CASE
+                    WHEN COALESCE(((a.value ->> 'isOmaggio'::text))::boolean, false) THEN (0)::numeric
+                    ELSE ((COALESCE((NULLIF((a.value ->> 'prezzo'::text), ''::text))::numeric, (0)::numeric) / ((1)::numeric + (
+                    CASE
+                        WHEN (COALESCE((NULLIF((a.value ->> 'aliquotaIva'::text), ''::text))::numeric, (0)::numeric) = ANY (ARRAY[(4)::numeric, (10)::numeric, (22)::numeric])) THEN COALESCE((NULLIF((a.value ->> 'aliquotaIva'::text), ''::text))::numeric, (0)::numeric)
+                        ELSE (22)::numeric
+                    END / 100.0))) * COALESCE((NULLIF((a.value ->> 'quantita'::text), ''::text))::numeric, (1)::numeric))
+                END AS imponibile
+           FROM ((public.commissioni c
+             CROSS JOIN LATERAL jsonb_array_elements(
+                CASE
+                    WHEN (jsonb_typeof(c.accessori) = 'array'::text) THEN c.accessori
+                    ELSE '[]'::jsonb
+                END) a(value))
+             LEFT JOIN LATERAL ( SELECT listini.brand
+                   FROM public.listini
+                  WHERE (lower(TRIM(BOTH FROM listini.descrizione)) = lower(TRIM(BOTH FROM COALESCE((a.value ->> 'nome'::text), ''::text))))
+                 LIMIT 1) l_acc ON (true))
+          WHERE ((COALESCE(c.is_preventivo, false) = false) AND (c.created_at IS NOT NULL) AND (COALESCE(c.status, 'completed'::text) = 'completed'::text))
+        ), agg AS (
+         SELECT righe.commissione_id,
+            max(righe.created_at) AS created_at,
+            max(righe.cliente) AS cliente,
+            max(righe.tipo_operazione) AS tipo_operazione,
+            max(righe.commissione_totale) AS commissione_totale,
+            string_agg(NULLIF(TRIM(BOTH FROM righe.descr), ''::text), ' + '::text) AS descrizione,
+            sum(righe.imponibile) AS imp_righe,
+            sum(righe.imponibile) FILTER (WHERE (righe.categoria = 'MACCHINE'::text)) AS m,
+            sum(righe.imponibile) FILTER (WHERE (righe.categoria = 'GEOGREEN'::text)) AS g,
+            sum(righe.imponibile) FILTER (WHERE (righe.categoria = 'ANTIZANZARE'::text)) AS az,
+            sum(righe.imponibile) FILTER (WHERE (righe.categoria = 'CONSULENZA'::text)) AS co
+           FROM righe
+          GROUP BY righe.commissione_id
+        ), calc AS (
+         SELECT a.commissione_id,
+            a.created_at,
+            a.cliente,
+            a.tipo_operazione,
+            a.commissione_totale,
+            a.descrizione,
+            a.imp_righe,
+            a.m,
+            a.g,
+            a.az,
+            a.co,
+            public.ompra_classifica_categoria(COALESCE(a.descrizione, ''::text)) AS cat_fallback,
+                CASE
+                    WHEN ((COALESCE(a.imp_righe, (0)::numeric) = (0)::numeric) AND (COALESCE(a.commissione_totale, (0)::numeric) <> (0)::numeric)) THEN round((a.commissione_totale / ((1)::numeric + ((
+                    CASE
+                        WHEN (public.ompra_classifica_categoria(COALESCE(a.descrizione, ''::text)) = 'GEOGREEN'::text) THEN 10
+                        ELSE 22
+                    END)::numeric / 100.0))), 2)
+                    ELSE NULL::numeric
+                END AS imp_fallback
+           FROM agg a
+        )
+ SELECT commissione_id,
+    (created_at)::date AS data,
+    (EXTRACT(year FROM created_at))::integer AS anno,
+    (EXTRACT(quarter FROM created_at))::integer AS trimestre,
+    (EXTRACT(week FROM created_at))::integer AS settimana,
+    cliente,
+    descrizione,
+    tipo_operazione,
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END AS segno,
+    round(((
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END)::numeric * (COALESCE(m, (0)::numeric) +
+        CASE
+            WHEN ((imp_fallback IS NOT NULL) AND (cat_fallback = 'MACCHINE'::text)) THEN imp_fallback
+            ELSE (0)::numeric
+        END)), 2) AS imp_macchine,
+    round(((
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END)::numeric * (COALESCE(g, (0)::numeric) +
+        CASE
+            WHEN ((imp_fallback IS NOT NULL) AND (cat_fallback = 'GEOGREEN'::text)) THEN imp_fallback
+            ELSE (0)::numeric
+        END)), 2) AS imp_geogreen,
+    round(((
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END)::numeric * (COALESCE(az, (0)::numeric) +
+        CASE
+            WHEN ((imp_fallback IS NOT NULL) AND (cat_fallback = 'ANTIZANZARE'::text)) THEN imp_fallback
+            ELSE (0)::numeric
+        END)), 2) AS imp_antizanzare,
+    round(((
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END)::numeric * (COALESCE(co, (0)::numeric) +
+        CASE
+            WHEN ((imp_fallback IS NOT NULL) AND (cat_fallback = 'CONSULENZA'::text)) THEN imp_fallback
+            ELSE (0)::numeric
+        END)), 2) AS imp_consulenza,
+    round(((
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END)::numeric * (COALESCE(imp_righe, (0)::numeric) + COALESCE(imp_fallback, (0)::numeric))), 2) AS imponibile_totale,
+    round(((
+        CASE
+            WHEN (tipo_operazione = 'reso'::text) THEN '-1'::integer
+            ELSE 1
+        END)::numeric * COALESCE(commissione_totale, (0)::numeric)), 2) AS importo_ivato
+   FROM calc;
+
+
+--
+-- Name: v_riepilogo_trimestrale; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.v_riepilogo_trimestrale AS
+ WITH per_cat AS (
+         SELECT v_vendite_dettaglio.anno,
+            v_vendite_dettaglio.trimestre,
+            'MACCHINE'::text AS categoria,
+            v_vendite_dettaglio.imp_macchine AS imp
+           FROM public.v_vendite_dettaglio
+        UNION ALL
+         SELECT v_vendite_dettaglio.anno,
+            v_vendite_dettaglio.trimestre,
+            'GEOGREEN'::text,
+            v_vendite_dettaglio.imp_geogreen
+           FROM public.v_vendite_dettaglio
+        UNION ALL
+         SELECT v_vendite_dettaglio.anno,
+            v_vendite_dettaglio.trimestre,
+            'ANTIZANZARE'::text,
+            v_vendite_dettaglio.imp_antizanzare
+           FROM public.v_vendite_dettaglio
+        UNION ALL
+         SELECT v_vendite_dettaglio.anno,
+            v_vendite_dettaglio.trimestre,
+            'CONSULENZA'::text,
+            v_vendite_dettaglio.imp_consulenza
+           FROM public.v_vendite_dettaglio
+        ), agg AS (
+         SELECT per_cat.anno,
+            per_cat.categoria,
+            round(COALESCE(sum(per_cat.imp) FILTER (WHERE (per_cat.trimestre = 1)), (0)::numeric), 2) AS t1,
+            round(COALESCE(sum(per_cat.imp) FILTER (WHERE (per_cat.trimestre = 2)), (0)::numeric), 2) AS t2,
+            round(COALESCE(sum(per_cat.imp) FILTER (WHERE (per_cat.trimestre = 3)), (0)::numeric), 2) AS t3,
+            round(COALESCE(sum(per_cat.imp) FILTER (WHERE (per_cat.trimestre = 4)), (0)::numeric), 2) AS t4,
+            round(COALESCE(sum(per_cat.imp), (0)::numeric), 2) AS totale_anno
+           FROM per_cat
+          GROUP BY per_cat.anno, per_cat.categoria
+        )
+ SELECT a.anno,
+    a.categoria,
+    a.t1,
+    a.t2,
+    a.t3,
+    a.t4,
+    a.totale_anno,
+    p.totale_anno AS totale_anno_prec,
+        CASE
+            WHEN ((p.totale_anno IS NULL) OR (p.totale_anno = (0)::numeric)) THEN NULL::numeric
+            ELSE round((((a.totale_anno - p.totale_anno) / p.totale_anno) * (100)::numeric), 1)
+        END AS variazione_pct
+   FROM (agg a
+     LEFT JOIN agg p ON (((p.categoria = a.categoria) AND (p.anno = (a.anno - 1)))))
+  ORDER BY a.anno DESC,
+        CASE a.categoria
+            WHEN 'MACCHINE'::text THEN 1
+            WHEN 'GEOGREEN'::text THEN 2
+            WHEN 'ANTIZANZARE'::text THEN 3
+            WHEN 'CONSULENZA'::text THEN 4
+            ELSE 5
+        END;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: realtime; Owner: -
 --
 
@@ -4338,10 +4705,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_06_18; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_03; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_18 (
+CREATE TABLE realtime.messages_2026_07_03 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4356,10 +4723,10 @@ CREATE TABLE realtime.messages_2026_06_18 (
 
 
 --
--- Name: messages_2026_06_19; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_04; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_19 (
+CREATE TABLE realtime.messages_2026_07_04 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4374,10 +4741,10 @@ CREATE TABLE realtime.messages_2026_06_19 (
 
 
 --
--- Name: messages_2026_06_20; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_05; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_20 (
+CREATE TABLE realtime.messages_2026_07_05 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4392,10 +4759,10 @@ CREATE TABLE realtime.messages_2026_06_20 (
 
 
 --
--- Name: messages_2026_06_21; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_06; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_21 (
+CREATE TABLE realtime.messages_2026_07_06 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4410,10 +4777,10 @@ CREATE TABLE realtime.messages_2026_06_21 (
 
 
 --
--- Name: messages_2026_06_22; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_07; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_22 (
+CREATE TABLE realtime.messages_2026_07_07 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4428,10 +4795,10 @@ CREATE TABLE realtime.messages_2026_06_22 (
 
 
 --
--- Name: messages_2026_06_23; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_08; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_23 (
+CREATE TABLE realtime.messages_2026_07_08 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4446,10 +4813,10 @@ CREATE TABLE realtime.messages_2026_06_23 (
 
 
 --
--- Name: messages_2026_06_24; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_07_09; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_06_24 (
+CREATE TABLE realtime.messages_2026_07_09 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4651,52 +5018,52 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_06_18; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_03; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_18 FOR VALUES FROM ('2026-06-18 00:00:00') TO ('2026-06-19 00:00:00');
-
-
---
--- Name: messages_2026_06_19; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_19 FOR VALUES FROM ('2026-06-19 00:00:00') TO ('2026-06-20 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_03 FOR VALUES FROM ('2026-07-03 00:00:00') TO ('2026-07-04 00:00:00');
 
 
 --
--- Name: messages_2026_06_20; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_04; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_20 FOR VALUES FROM ('2026-06-20 00:00:00') TO ('2026-06-21 00:00:00');
-
-
---
--- Name: messages_2026_06_21; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_21 FOR VALUES FROM ('2026-06-21 00:00:00') TO ('2026-06-22 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_04 FOR VALUES FROM ('2026-07-04 00:00:00') TO ('2026-07-05 00:00:00');
 
 
 --
--- Name: messages_2026_06_22; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_05; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_22 FOR VALUES FROM ('2026-06-22 00:00:00') TO ('2026-06-23 00:00:00');
-
-
---
--- Name: messages_2026_06_23; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_23 FOR VALUES FROM ('2026-06-23 00:00:00') TO ('2026-06-24 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_05 FOR VALUES FROM ('2026-07-05 00:00:00') TO ('2026-07-06 00:00:00');
 
 
 --
--- Name: messages_2026_06_24; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_06; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_06_24 FOR VALUES FROM ('2026-06-24 00:00:00') TO ('2026-06-25 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_06 FOR VALUES FROM ('2026-07-06 00:00:00') TO ('2026-07-07 00:00:00');
+
+
+--
+-- Name: messages_2026_07_07; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_07 FOR VALUES FROM ('2026-07-07 00:00:00') TO ('2026-07-08 00:00:00');
+
+
+--
+-- Name: messages_2026_07_08; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_08 FOR VALUES FROM ('2026-07-08 00:00:00') TO ('2026-07-09 00:00:00');
+
+
+--
+-- Name: messages_2026_07_09; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_09 FOR VALUES FROM ('2026-07-09 00:00:00') TO ('2026-07-10 00:00:00');
 
 
 --
@@ -4746,7 +5113,7 @@ COPY auth.audit_log_entries (instance_id, id, payload, created_at, ip_address) F
 -- Data for Name: custom_oauth_providers; Type: TABLE DATA; Schema: auth; Owner: -
 --
 
-COPY auth.custom_oauth_providers (id, provider_type, identifier, name, client_id, client_secret, acceptable_client_ids, scopes, pkce_enabled, attribute_mapping, authorization_params, enabled, email_optional, issuer, discovery_url, skip_nonce_check, cached_discovery, discovery_cached_at, authorization_url, token_url, userinfo_url, jwks_uri, created_at, updated_at) FROM stdin;
+COPY auth.custom_oauth_providers (id, provider_type, identifier, name, client_id, client_secret, acceptable_client_ids, scopes, pkce_enabled, attribute_mapping, authorization_params, enabled, email_optional, issuer, discovery_url, skip_nonce_check, cached_discovery, discovery_cached_at, authorization_url, token_url, userinfo_url, jwks_uri, created_at, updated_at, custom_claims_allowlist) FROM stdin;
 \.
 
 
@@ -4943,6 +5310,7 @@ COPY auth.schema_migrations (version) FROM stdin;
 20260121000000
 20260219120000
 20260302000000
+20260625000000
 \.
 
 
@@ -5621,6 +5989,9 @@ ab516c2b-278b-493d-9a04-574dbaefb17b	2026-03-11 16:13:22.44597+00	2026-03-11 16:
 07f49ea8-5d4e-4703-8ffb-33ad02dd8f34	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	D'AMELIO Vincenzo			VIA PRINCIPE, 85/A - MUSESTRE	31056	RONCADE	TV	3450818865			\N	\N	d'amelio vincenzo roncade 	migrazione	\N	\N
 9782a688-1195-441c-92fa-8c588bff588a	2026-03-11 09:23:07.636654+00	2026-03-24 18:38:23.743693+00	Claudio	Apvan	Apvan Claudio	Via Rovigo 10	30024	Musile Di Piave	VE	3246197179	\N	\N	\N	\N	Apvan Claudio	manuale	2026-03-24 18:38:23.581+00	\N
 2f866dfb-266b-415a-b6d3-ed7e6cf0861f	2026-03-19 16:19:36.745988+00	2026-03-24 18:38:38.409958+00	toni	pozzobon	pozzobon toni	\N	\N	\N	\N	\N	\N	\N	\N	\N	pozzobon toni	manuale	2026-03-24 18:38:38.235+00	\N
+79a49ce1-74c1-4fd3-a2b4-5ba14d982826	2026-06-26 09:00:20.860382+00	2026-06-26 09:00:20.860382+00	Fiorenzo	Botter	Botter Fiorenzo	via Schiave	\N	Casale sul Sile	\N	335 595 2674	fiorenzo.botter@ilfornaiodelcasale.it	\N	\N	\N	Botter Fiorenzo	manuale	\N	\N
+0ad84f05-b948-4c07-9e82-e9a79e354060	2026-06-30 08:19:27.699324+00	2026-06-30 08:19:27.699324+00	SAMUELE	SAVIAN	SAVIAN SAMUELE	Via Sicilia, 7	\N	TREVISO	TV	3703464006	samuele.savian@gmail.com	\N	SVNSML77A27L407Z	\N	SAVIAN SAMUELE	manuale	\N	\N
+3afd36bd-c083-403a-8bf8-c3320d96f9a9	2026-07-04 09:15:20.79503+00	2026-07-04 09:15:20.79503+00	PAOLO	DOLFATO	DOLFATO PAOLO	Via San Pio X	\N	Villorba	TV	3387967230	dolfatopaolo@libero.it	\N	DLFPLA73E17L407E	\N	DOLFATO PAOLO	manuale	\N	\N
 5a838744-02ab-4e62-bb27-c957ac1ff732	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Moretti Marco			VIA TIMAVO	31100	TREVISO	TV	3392050119	moretti72.marco@libero.it		\N	\N	moretti marco treviso 	migrazione	\N	\N
 a30d71c6-49e4-4587-adc2-d9cb771e0186	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Nico Giardini Di Bastarolo Nicola			VIA G.B. GUIDINI, 29	31059	ZERO BRANCO	TV	3498200169	nickbast74@gmail.com		\N	\N	nico giardini di bastarolo nicola zero branco 	migrazione	\N	\N
 1796fc21-d0ea-49ad-88f8-6408fedd44f3	2026-03-01 18:24:01.415968+00	2026-03-01 18:24:01.415968+00	Piovesan Andrea			VIA PAVANI, 37A	31050	MONASTIER DI TREVISO	TV	3202725545			\N	\N	piovesan andrea monastier di treviso 	migrazione	\N	\N
@@ -5636,6 +6007,9 @@ c7ba5eea-06d8-4641-9bd5-4209c4a00bdc	2026-03-19 12:55:30.082495+00	2026-03-19 12
 2a4a4dd3-de02-4d91-a66d-75f51bf18ef6	2026-03-01 18:24:21.558338+00	2026-03-01 18:24:21.558338+00	Patruno Franco			VIA TREVISO MARE, 8	31048	SAN BIAGIO DI CALLALTA	TV	3935553311			\N	\N	patruno franco san biagio di callalta 	migrazione	\N	\N
 1b22bb1d-dcdf-4af7-af74-02311a3dda35	2026-03-01 18:24:36.226009+00	2026-03-24 18:37:55.527263+00	Habitat Natura Di Simone Taffarello			VIA SAN FLORIANO, 11/A - OLMI	31048	SAN BIAGIO DI CALLALTA	TV	335312402	info@habitatnatura.it		\N	\N	habitat natura di simone taffarello san biagio di callalta 	migrazione	2026-03-24 18:37:55.373+00	\N
 2982b789-8cef-4b17-9fbe-c0636bfb60d5	2026-03-24 18:35:44.21738+00	2026-03-24 18:38:29.740017+00	Pallino	Pinco	Pinco Pallino	via  verdi 10	\N	treviso	\N	\N	\N	\N	\N	\N	Pinco Pallino	manuale	2026-03-24 18:38:29.551+00	\N
+4c6b4c10-59cd-44aa-8628-876823b2da6d	2026-06-26 09:47:25.935557+00	2026-06-26 09:47:25.935557+00	Mauro	Caberlotto	Caberlotto Mauro	Via Zermanese 58	31100	Treviso	TV	3482473773	\N	\N	\N	\N	Caberlotto Mauro	manuale	\N	\N
+7afecff7-272c-4c84-bca8-8a09478dd3d2	2026-07-03 14:57:25.536312+00	2026-07-03 14:57:25.536312+00	RICCARDO	TESO	TESO RICCARDO	VIA FOSSETTA, N. 53 B	\N	MUSILE DI PIAVE	VE	3475878043	tesoservizi@gmail.com	\N	TSERCR05M03H823Q	\N	TESO RICCARDO	manuale	\N	\N
+097a15d7-15ab-4851-b6f6-d2bc230be053	2026-07-06 15:27:53.857333+00	2026-07-06 15:27:53.857333+00	MIRCO	DIQUIGIOVANNI	DIQUIGIOVANNI MIRCO	VIA SOSTEGNO BASSO, N. 16	30020	MEOLO	VE	3334184946	mircodqg@gmail.com	\N	DQGM RCH72H18H823V	\N	DIQUIGIOVANNI MIRCO	manuale	\N	\N
 9329ffa1-03e3-4100-9df4-7abcd8afbbfa	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Bisetto Mario			VIA CODALUNGA, 135	31030	CARBONERA	TV	3493730882			\N	\N	bisetto mario carbonera 	migrazione	\N	\N
 45b79d4b-f42b-4ea0-a3ec-c5632485cb69	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Bonetto Franco			VIA ORTIGARA, 7 - FAGARE'	31048	SAN BIAGIO DI CALLALTA	TV	3452383445			\N	\N	bonetto franco san biagio di callalta 	migrazione	\N	\N
 a78ddf9e-9b8e-4a33-9450-11e09edb35a8	2026-03-01 18:24:36.226009+00	2026-03-01 18:24:36.226009+00	Eos Cooperativa Sociale			VIA OSPEDALE, 10	31033	CASTELFRANCO VENETO	TV	3402249187	info@eoscooperativa.it		\N	\N	eos cooperativa sociale castelfranco veneto 	migrazione	\N	\N
@@ -5678,6 +6052,7 @@ recovered-130	2026-01-28 11:00:00+00	Haprilla Kola	\N	\N	Simone	[]	[{"nome": "Tr
 1772529500057	2026-03-03 09:18:18.637+00	Ortolan Sara	\N	\N	Simone	[{"brand": "STIHL", "model": "Tosaerba RMA 239.1", "prezzo": 309, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451990095"}, {"brand": "STIHL", "model": "AL 101", "prezzo": 160, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "986413411"}, {"brand": "STIHL", "model": "AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "912736954"}, {"brand": "STIHL", "model": "Tagliabordi FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "451521369"}, {"brand": "STIHL", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452100454"}]	[]	807	\N	\N	\N	scontrino	completed	2026-03-03 09:18:18.637+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1772706224154	2026-03-05 10:23:43.113+00	Tegon Sergio	{"id": "508520", "cap": "31048", "nome": "Tegon Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422790312", "indirizzo": "VIA GOITO, 7 - SANT'ANDREA D I BARBARANA", "provincia": "TV", "searchText": "tegon sergio san biagio di callalta ", "telefonoOriginale": "0422790312"}	0422790312	Simone	[{"brand": "Honda", "model": "Motozappa F220K1 GET2", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "FAAJ-3620207"}]	[]	999	50	contanti	\N	scontrino	completed	2026-03-05 10:23:43.113+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1772869167515	2026-03-07 07:39:27.513+00	Pegorer Mauro	{"id": "201639", "cap": "31057", "nome": "Pegorer Mauro", "email": "mauropegorer@virgilio.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "042294542", "indirizzo": "STRADA PROV. TREVISO MARE", "provincia": "TV", "searchText": "pegorer mauro silea ", "telefonoOriginale": "042294542"}	042294542	Simone	[]	[{"id": 1772869122905, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-07 07:39:27.513+00	f	user_1772867117490	vendita	f	f	f	in_attesa	\N
+1783351712576	2026-07-06 15:28:32.169+00	DIQUIGIOVANNI MIRCO	{"cf": "DQGM RCH72H18H823V", "id": "097a15d7-15ab-4851-b6f6-d2bc230be053", "cap": "30020", "sdi": null, "nome": "DIQUIGIOVANNI MIRCO", "piva": null, "email": "mircodqg@gmail.com", "nomeP": "DIQUIGIOVANNI MIRCO", "localita": "MEOLO", "telefono": "3334184946", "indirizzo": "VIA SOSTEGNO BASSO, N. 16", "provincia": "VE", "searchText": "diquigiovanni mirco"}	3334184946	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 94 RC-E", "prezzo": 419, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "549141062"}]	[]	419	\N	\N	\N	scontrino	completed	2026-07-06 15:28:32.169+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 recovered-165	2026-02-14 11:00:00+00	Osan Emil Augustin	\N	\N	Simone	[{"brand": "STIHL", "model": "Tagliasiepi HL 92 C-E", "prezzo": 790, "aliquotaIva": 22, "serialNumber": "542187474"}]	[]	790	\N	\N	\N	scontrino	completed	2026-02-14 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 recovered-143	2026-02-07 11:00:00+00	Menegaldo Bruno	\N	\N	Simone	[{"brand": "Stihl", "model": "MOTOSEGA STIHL MS 661", "prezzo": 1630, "aliquotaIva": 22, "serialNumber": "193 545 593"}]	[]	1630	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 recovered-144	2026-02-07 11:00:00+00	XHELAJ REMZI	\N	\N	Simone	[{"brand": "ACCESSORI", "model": "POTATORE KVS 8000", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "SL3325 371 NB"}, {"brand": "ACCESSORI", "model": "FORBICE KV 390", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "PZ 2925 390NB"}]	[{"nome": "1 CATENA", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	840	\N	\N	\N	scontrino	completed	2026-02-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
@@ -5827,17 +6202,16 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1775206591299	2026-04-03 08:56:31.299+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1775206586803, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 50.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	50.4	\N	\N	\N	scontrino	completed	2026-04-03 08:56:31.299+00	t	user_1775199829736	vendita	f	f	f	in_attesa	\N
 1775219409403	2026-04-03 12:30:09.403+00	Checchin Alberto	\N	\N	Simone	[]	[{"id": 1775218702579, "nome": "Eden 8 5 kg", "prezzo": 18.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218713254, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218728396, "nome": "Leokare 5 kg 5 kg", "prezzo": 62, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218739032, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 40.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775218816044, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	166.2	\N	\N	\N	scontrino	completed	2026-04-03 12:30:09.403+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775222679188	2026-04-03 13:24:37.424+00	Lazzaro Stefano	{"id": "514059", "cap": "31057", "nome": "Lazzaro Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3485204187", "indirizzo": "", "provincia": "TV", "searchText": "lazzaro stefano silea ", "telefonoOriginale": "3485204187"}	3485204187	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 70 R", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452785537"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702673116"}, {"brand": "Stihl", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937881"}]	[]	458	\N	\N	\N	scontrino	completed	2026-04-03 13:24:37.424+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
-1775225947606	2026-04-03 10:00:00+00	Falanga Guglielmo	{"id": "510614", "cap": "31057", "nome": "Falanga Guglielmo", "email": "g.falanga@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "", "indirizzo": "VIA LANZAGHE, 95", "provincia": "TV", "searchText": "falanga guglielmo silea ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1775225658060, "nome": "Kit Expanding 10 ugelli", "prezzo": 270, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"nome": "Silver Shield lt 1", "prezzo": 55, "quantita": 1, "aliquotaIva": 22}]	595	\N	\N	\N	scontrino	completed	2026-04-03 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1775228882541	2026-04-03 15:08:02.54+00	.	\N	\N	Simone	[]	[{"id": 1775228857698, "nome": "Blizzard (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-04-03 15:08:02.54+00	t	user_1775217703102	vendita	f	f	f	in_attesa	\N
 1775230498649	2026-04-03 15:34:58.648+00	Carniel Marco	\N	\N	Simone	[]	[{"id": 1775230479703, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775230489198, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	scontrino	completed	2026-04-03 15:34:58.648+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1775056714848	2026-04-01 10:00:00+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1775056692488, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775056710471, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	157.8	\N	\N	\N	fattura	completed	2026-04-01 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
+1775225947606	2026-04-03 10:00:00+00	Falanga Guglielmo	{"id": "510614", "cap": "31057", "nome": "Falanga Guglielmo", "email": "g.falanga@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "", "indirizzo": "VIA LANZAGHE, 95", "provincia": "TV", "searchText": "falanga guglielmo silea ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1775225658060, "nome": "Freezanz Kit Expanding 10 ugelli", "prezzo": 270, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"nome": "Silver Shield lt 1", "prezzo": 55, "quantita": 1, "aliquotaIva": 22}]	595	\N	\N	\N	scontrino	completed	2026-04-03 10:00:00+00	t	user_1770584612559	vendita	f	f	f	\N	\N
 1775279049872	2026-04-04 05:04:09.872+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1775278985565, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1775278999179, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1775279017757, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1775279036649, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	617.8	\N	\N	\N	fattura	completed	2026-04-04 05:04:09.872+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1775286919426	2026-04-04 07:15:18.84+00	Casagrande Roberto	{"id": "510332", "cap": "30020", "nome": "Casagrande Roberto", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "", "indirizzo": "VIA CA' TRON, 114 O 112", "provincia": "VE", "searchText": "casagrande roberto meolo ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "Stihl", "model": "Idropulitrice RE 130 PLUS", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "840267090"}]	[{"id": 1775286864026, "nome": "Set pulizia tubi 4910 500 8000", "prezzo": 55, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	504	\N	\N	\N	scontrino	completed	2026-04-04 07:15:18.84+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775289481961	2026-04-04 07:58:01.202+00	Dario Manuel	\N	\N	Simone	[{"brand": "Echo", "model": "Soffiatore DPB-310", "prezzo": 99, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U60535100095"}]	[]	99	\N	\N	\N	scontrino	completed	2026-04-04 07:58:01.202+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775294510007	2026-04-04 09:21:48.879+00	Cazanesco Dimitri	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 151", "prezzo": 409, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "198189221"}, {"brand": "Stihl", "model": "Soffiatore BG 56/C", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196165943"}]	[{"id": 1775294303210, "nome": "Copri pantaloni ", "prezzo": 25.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775294313925, "nome": "Visiera", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775294471988, "nome": "Olio catena Bioplus 5 litri ", "prezzo": 23.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775294497461, "nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	759.9	\N	\N	\N	scontrino	completed	2026-04-04 09:21:48.879+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775548202087	2026-04-07 07:50:01.638+00	Basso Mario via Aldo Moro 24/B Frescada	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 70.0 R", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452785538"}]	[]	269	\N	\N	\N	scontrino	completed	2026-04-07 07:50:01.638+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775549008029	2026-04-07 08:03:27.351+00	Santagà Elena via Grande 2 Rovaré di San Biagio di Callalta	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545377758"}]	[{"id": 1775548863814, "nome": "Tanica 5 litri", "prezzo": 7.4, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548879419, "nome": "Cuneo", "prezzo": 4.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548897670, "nome": "Catena 44 M", "prezzo": 14.4, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548944487, "nome": "Olio catena Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548966530, "nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548981640, "nome": "Visiera", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	404.3	\N	\N	\N	scontrino	completed	2026-04-07 08:03:27.351+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
-1775573105389	2026-04-07 14:45:05.389+00	Cariato Mario	\N	\N	Simone	[]	[{"id": 1775573051135, "nome": "Leokare 5 kg 5 kg", "prezzo": 62, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573065891, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573078019, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573086478, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	184.1	\N	\N	\N	scontrino	completed	2026-04-07 14:45:05.389+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1775578363836	2026-04-07 16:12:43.835+00	Romanello Giulio Cesare	{"id": "210036", "cap": "31048", "nome": "Romanello Giulio Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3406175521", "indirizzo": "VIA MARIO DEL MONACO 4 - CAVRIE", "provincia": "TV", "searchText": "romanello giulio cesare san biagio di callalta ", "telefonoOriginale": "3406175521"}	3406175521	Simone	[]	[{"id": 1775578307588, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775578313362, "nome": "Hurricane 1 kg", "prezzo": 13.75, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	61.45	\N	\N	\N	scontrino	completed	2026-04-07 16:12:43.835+00	t	user_1775577353749	vendita	f	f	f	in_attesa	\N
 1776072128511	2026-04-13 10:00:00+00	Cavezzan Ermes	\N	\N	Simone	[]	[{"id": 1776072106535, "nome": "Tornado 10 kg", "prezzo": 71, "quantita": 9, "matricola": null, "aliquotaIva": 10}, {"id": 1776072118551, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 50.4, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	739.8	\N	\N	\N	scontrino	completed	2026-04-13 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1775656456162	2026-04-08 13:54:16.162+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775656430952, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-04-08 13:54:16.162+00	t	user_1775655848781	vendita	f	f	f	in_attesa	\N
@@ -5861,9 +6235,9 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1776266299178	2026-04-15 15:18:18.284+00	AZ. AGR. De Martin Bruna	{"id": "511341", "cap": "30020", "nome": "AZ. AGR. De Martin Bruna", "email": "o.minetto@dataservices.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3488123052", "indirizzo": "VIA DELLA FAVORITA, 45", "provincia": "VE", "searchText": "az. agr. de martin bruna fossalta di piave ", "telefonoOriginale": "3488123052"}	3488123052	Simone	[{"brand": "ECHO", "model": "Motosega CS-501SX", "prezzo": 779, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C76038034938"}]	[{"id": 1776266135160, "nome": "Olio pro up 5 litri", "prezzo": 23, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	802	\N	\N	\N	fattura	completed	2026-04-15 15:18:18.284+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776270072394	2026-04-15 16:21:12.393+00	Evarelli Andrea	{"id": "511116", "cap": "31038", "nome": "Evarelli Andrea", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3494948819", "indirizzo": "VIA PIAVE, 66", "provincia": "TV", "searchText": "evarelli andrea paese ", "telefonoOriginale": "3494948819"}	3494948819	Simone	[]	[{"id": 1776270037908, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1776270047023, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1776270059560, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	190.7	\N	\N	\N	scontrino	completed	2026-04-15 16:21:12.393+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776331418532	2026-04-16 09:23:38.027+00	Elisa Luzzi via San Giorgio 1801 Talamona (SO) 3357005520	\N	\N	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMI 422.2 (EU1)", "prezzo": 360, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "447242267"}]	[]	360	\N	\N	\N	scontrino	completed	2026-04-16 09:23:38.027+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1782917409853	2026-07-01 14:50:09.852+00	STORER SERVICE DI STORER FRANCO	\N	\N	Admin	[]	[{"id": 1782917368590, "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri 5 Lt.", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1782917387016, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	fattura	completed	2026-07-01 14:50:09.852+00	t	user_1771232846694	vendita	t	f	f	\N	\N
 1776410081539	2026-04-17 07:14:40.603+00	Fabio Pasqual via Ex Internati 10 Carbonera 3292618553	\N	\N	Simone	[{"brand": "freezanz", "model": " Zhalt Portable Connect", "prezzo": 420, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "ZC016602024"}]	[{"id": 1776410050272, "nome": "Freezanz Natural Green - Lt. 1 Lt. 1", "prezzo": 25.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1776410068950, "nome": "Tetrapiù PMC (Reg. Min. Salute N. 11826) - Lt. 5 Lt. 5", "prezzo": 23.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	469.8	\N	\N	\N	scontrino	completed	2026-04-17 07:14:40.603+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776416748409	2026-04-17 09:05:47.765+00	Criveller Renato	{"id": "504445", "cap": "31100", "nome": "Criveller Renato", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "0422400644", "indirizzo": "", "provincia": "TV", "searchText": "criveller renato treviso ", "telefonoOriginale": "0422400644"}	0422400644	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3021TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U47338203412"}]	[]	599	\N	\N	\N	scontrino	completed	2026-04-17 09:05:47.765+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
-1776421055441	2026-04-17 10:17:35.441+00	Zanette Adelino	{"id": "505394", "cap": "31030", "nome": "Zanette Adelino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3472949319", "indirizzo": "VIA GRANDE, 82 - SAN GIACOMO", "provincia": "TV", "searchText": "zanette adelino carbonera ", "telefonoOriginale": "3472949319"}	3472949319	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA80 R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Potatore GTA26 kit AS2 e AL1", "prezzo": 169, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Stihl", "model": "Forbice elettronica ASA20", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	1066	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1776431550867	2026-04-17 13:12:30.33+00	Comunello Marco	{"id": "513541", "cap": "31100", "nome": "Comunello Marco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3896551680", "indirizzo": "STRADA COMUNALE DI SAN VITALE 29/D", "provincia": "TV", "searchText": "comunello marco treviso ", "telefonoOriginale": "3896551680"}	3896551680	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600044355"}]	[]	159	\N	\N	\N	scontrino	completed	2026-04-17 13:12:30.33+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776432662014	2026-04-17 13:31:01.144+00	Bergamo Guglielmo	{"id": "506642", "cap": "31047", "nome": "Bergamo Guglielmo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PONTE DI PIAVE", "telefono": "3358325625", "indirizzo": "VIA MASARI, 36", "provincia": "TV", "searchText": "bergamo guglielmo ponte di piave ", "telefonoOriginale": "3358325625"}	3358325625	Simone	[{"brand": "Stihl", "model": "Irroratore SG51", "prezzo": 119, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "998234688"}]	[{"id": 1776432655365, "nome": "Olio motore HP Ultra 1L miscela 2T 1L", "prezzo": 13.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	132.5	\N	\N	\N	scontrino	completed	2026-04-17 13:31:01.144+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776437011471	2026-04-17 14:43:30.226+00	Possamai Manuel via Pantiera 58 G Roncade 3478940411	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943696310"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "936314966"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707687469"}]	[]	139	\N	\N	\N	scontrino	completed	2026-04-17 14:43:30.226+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
@@ -5974,6 +6348,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1781874565413	2026-06-19 13:09:24.84+00	Sualto Sas Di Cappelletto Alvise	{"id": "500208", "cap": "31100", "nome": "Sualto Sas Di Cappelletto Alvise", "email": "sualtosas@gmail.com", "nomeP": "", "cognome": "", "contatto": "3387267775", "localita": "TREVISO", "telefono": "3471124204", "indirizzo": "VIA G.ZANELLA, 53/C", "provincia": "TV", "searchText": "sualto sas di cappelletto alvise treviso 3387267775", "telefonoOriginale": "3471124204"}	3471124204	Simone	[{"brand": "Echo", "model": "Decespugliatore DSRM-2400/L", "prezzo": 289, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E83535001676"}]	[]	289	\N	\N	\N	fattura	completed	2026-06-19 13:09:24.84+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1781936712056	2026-06-20 06:25:12.056+00	Rizzo Giuseppina	\N	\N	Simone	[]	[{"id": 1781936701692, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-06-20 06:25:12.056+00	t	user_1770584612559	vendita	t	f	f	\N	\N
 1781937975150	2026-06-20 06:46:14.651+00	Beltramini Stefano	{"id": "511475", "cap": "31048", "nome": "Beltramini Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "335294244", "indirizzo": "VIA POSTUMIA CENTRO, 58", "provincia": "TV", "searchText": "beltramini stefano san biagio di callalta ", "telefonoOriginale": "335294244"}	335294244	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 235 R", "prezzo": 419, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841433854"}]	[{"id": 1781937896480, "nome": "Olio HP Ultra 1 lt", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	440.5	\N	\N	\N	scontrino	completed	2026-06-20 06:46:14.651+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1783060973920	2026-07-03 06:42:53.384+00	Lorenzon Lino	{"id": "505639", "cap": "31050", "nome": "Lorenzon Lino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "VILLORBA", "telefono": "0422303209", "indirizzo": "VIA CAVE, 14/B", "provincia": "TV", "searchText": "lorenzon lino villorba ", "telefonoOriginale": "0422303209"}	0422303209	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 50.1", "prezzo": 169, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943919997"}]	[]	169	\N	\N	\N	scontrino	completed	2026-07-03 06:42:53.384+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1781541633317	2026-06-15 10:00:00+00	Terzo Massimiliano	{"id": "504100", "cap": "31057", "nome": "Terzo Massimiliano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3484430842", "indirizzo": "VIA NERBON, 45", "provincia": "TV", "searchText": "terzo massimiliano silea ", "telefonoOriginale": "3484430842"}	3484430842	Simone	[{"brand": "Echo", "model": "Motosega CS-2511TES", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C74638145209"}, {"brand": "Echo", "model": "Motore multifunzione PAS 2620 ES", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U22838101602"}, {"brand": "Echo", "model": "Potatore MTA-DPP", "prezzo": 312, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U50135003155"}]	[{"nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "aliquotaIva": 22}, {"nome": "Olio catena Pro Up 5 litri ", "prezzo": 23.9, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 16.6, "quantita": 1, "aliquotaIva": 22}, {"nome": "Catena ", "prezzo": 9.3, "quantita": 1, "aliquotaIva": 22}]	1291.3	\N	\N	\N	fattura	completed	2026-06-15 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1781597303003	2026-06-16 08:08:22.123+00	Schiavon Antonio	{"id": "511028", "cap": "31048", "nome": "Schiavon Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "0422797633", "indirizzo": "VIA POSTUMIA CENTRO, 200", "provincia": "TV", "searchText": "schiavon antonio san biagio di callalta ", "telefonoOriginale": "0422797633"}	0422797633	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466C1", "prezzo": 490, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1228051"}]	[{"id": 1781597268842, "nome": "Olio motore 1 litro", "prezzo": 14.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	504.9	\N	\N	\N	scontrino	completed	2026-06-16 08:08:22.123+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1781599493592	2026-06-16 08:44:53.214+00	De Benetti Angelo	\N	\N	Simone	[{"brand": "ST. S.p.A.", "model": "Rasaerba XE 40", "prezzo": 170, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "25KC8WBH003503"}]	[]	170	\N	\N	\N	scontrino	completed	2026-06-16 08:44:53.214+00	t	user_1775131564325	vendita	t	f	f	\N	\N
@@ -5986,9 +6361,37 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1781773566642	2026-06-18 09:06:04.338+00	Biasini Eleonora	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 50.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "453026266"}, {"brand": "Stihl", "model": "Batteria AK 30.0 S", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948360799"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703589887"}]	[]	368	\N	\N	\N	scontrino	completed	2026-06-18 09:06:04.338+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1781775678558	2026-06-10 10:00:00+00	BARBON EZECHIELE	\N	\N	Simone	[{"brand": "Stihl", "model": "1 DECESPUGLIATORE STIHL FS120", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841 090 918"}, {"brand": "Echo", "model": "1 DECESPUGLIATORE  ECHO SRM 222 ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540109945"}]	[{"id": 1781775662400, "nome": "FILO 2,4", "prezzo": 9, "quantita": 1, "aliquotaIva": 22}, {"id": 1781775662401, "nome": "FILO 2,0 PRO", "prezzo": 12, "quantita": 1, "aliquotaIva": 22}]	579	\N	\N	\N	scontrino	completed	2026-06-10 10:00:00+00	f	user_1770584612559	vendita	t	f	f	\N	\N
 1781877159411	2026-06-19 13:52:39.41+00	Privato	\N	\N	Simone	[]	[{"id": 1781877141570, "nome": "Freezanz Natural Green+ - Lt. 5 Lt. 5", "prezzo": 158, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	158	\N	\N	\N	scontrino	completed	2026-06-19 13:52:39.41+00	t	user_1770584612559	vendita	t	f	f	\N	\N
-1781939313124	2026-06-20 10:00:00+00	Comin Oliviero	{"id": "504571", "cap": "31056", "nome": "Comin Oliviero", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "0422849447", "indirizzo": "VIA MEZZA BRUSCA, 1", "provincia": "TV", "searchText": "comin oliviero roncade ", "telefonoOriginale": "0422849447"}	0422849447	Simone	[{"brand": "Forest", "model": "Spaccalegna SUG 1000", "prezzo": 1460, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}, {"brand": "Honda", "model": "Rasaerba HRG 466 PK", "prezzo": 490, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	1950	\N	\N	Consegnare al cliente appena pronte prossima settimana	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	\N	\N
 1781942290317	2026-06-20 07:58:09.924+00	Zanon Paolo	{"id": "513747", "cap": "20100", "nome": "Zanon Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MILANO", "telefono": "3274308540", "indirizzo": "VIA BARTOLIN LORENZO, 29", "provincia": "MI", "searchText": "zanon paolo milano ", "telefonoOriginale": "3274308540"}	3274308540	Simone	[{"brand": "Weibang", "model": "Rasaerba WB537SC V-M", "prezzo": 1089, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "W537SCV/LV/M021M&251215017"}]	[]	1089	\N	\N	\N	scontrino	completed	2026-06-20 07:58:09.924+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1781945263353	2026-06-20 08:47:42.447+00	Gira Mihaij via Monte Bianco 70 Quinto di Treviso 389 5147281	\N	\N	Simone	[{"brand": "Stihl", "model": " RME 339.0", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452820108"}]	[]	269	\N	\N	\N	scontrino	completed	2026-06-20 08:47:42.447+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1767295735235	2026-01-01 19:28:55.235+00	De Vido S.R.L.	{"id": "200001", "cap": "31056", "nome": "De Vido S.R.L.", "email": "devidosrl@gmail.com", "nomeP": "", "cognome": "", "contatto": "CELL. SIG. Maurizio", "localita": "RONCADE", "telefono": "3402329227", "indirizzo": "VIA CA'MORELLI 74", "provincia": "TV", "searchText": "de vido s.r.l. roncade cell. sig. maurizio", "telefonoOriginale": "3402329227"}	3402329227	Simone	[{"brand": "STIHL", "model": "BGA 250.0", "prezzo": 340, "isOmaggio": false, "serialNumber": "450791430"}, {"brand": "Volpi", "model": "kv390", "prezzo": 465, "isOmaggio": false, "serialNumber": null}]	[]	805	105	contanti	ritira il cliente	scontrino	pending	\N	t	user_1766487104450	vendita	f	f	f	\N	\N
+1782122911323	2026-06-22 10:08:31.323+00	Pietrobon Andrea	\N	\N	Simone	[]	[{"id": 1782122906793, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	280	\N	\N	\N	scontrino	completed	2026-06-22 10:08:31.323+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1782229641707	2026-06-23 15:47:21.706+00	Parisi Giovanni	{"id": "509718", "cap": "31030", "nome": "Parisi Giovanni", "email": "giovanni@martinoparisi.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3484765138", "indirizzo": "VIA GIOVANNI COMISSO, 58 - MIGNAGOLA", "provincia": "TV", "searchText": "parisi giovanni carbonera ", "telefonoOriginale": "3484765138"}	3484765138	Simone	[]	[{"id": 1782229636255, "nome": "Vigor Active 5 kg", "prezzo": 14.5, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	14.5	\N	\N	\N	scontrino	completed	2026-06-23 15:47:21.706+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1782319383796	2026-06-24 16:43:03.796+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1782319370973, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	54.8	\N	\N	\N	scontrino	completed	2026-06-24 16:43:03.796+00	t	user_1782318037425	vendita	f	f	f	\N	\N
+1782319617226	2026-06-24 16:46:57.226+00	.	\N	\N	Simone	[]	[{"id": 1782319580642, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1782319586444, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-06-24 16:46:57.226+00	t	user_1782318037425	vendita	t	f	f	\N	\N
+1775573105389	2026-04-07 10:00:00+00	Carniato Mario	\N	\N	Simone	[]	[{"id": 1775573051135, "nome": "Leokare 5 kg 5 kg", "prezzo": 62, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573065891, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573078019, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775573086478, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 47.9, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	184.1	\N	\N	\N	scontrino	completed	2026-04-07 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1782376628121	2026-06-25 08:37:07.239+00	Massaro Remo	{"id": "512651", "cap": "31100", "nome": "Massaro Remo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3451347860", "indirizzo": "VIA PLINIO IL VECCHIO, 15", "provincia": "TV", "searchText": "massaro remo treviso ", "telefonoOriginale": "3451347860"}	3451347860	Simone	[{"brand": "Stihl", "model": "Motosega MS 172 3/8\\"P", "prezzo": 279, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "837259152"}]	[{"id": 1782376617844, "nome": "Catena 50 maglie", "prezzo": 17.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	296.5	\N	\N	\N	scontrino	completed	2026-06-25 08:37:07.239+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1782467342426	2026-06-26 09:49:02.426+00	Caberlotto Mauro	{"cf": null, "id": "4c6b4c10-59cd-44aa-8628-876823b2da6d", "cap": "31100", "sdi": null, "nome": "Caberlotto Mauro", "piva": null, "email": null, "nomeP": "Caberlotto Mauro", "localita": "Treviso", "telefono": "3482473773", "indirizzo": "Via Zermanese 58", "provincia": "TV", "searchText": "caberlotto mauro"}	3482473773	Simone	[]	[{"id": 1782467274759, "nome": "Nebuzan repellente tanica da 5 litri ", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1782467304275, "nome": "Manodopera per apertura, lavaggio ed avvio impianto antizanzare", "prezzo": 275, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	415	\N	\N	\N	scontrino	completed	2026-06-26 09:49:02.426+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1782465830758	2026-06-26 10:00:00+00	Ciani Bassetti Francesco	{"id": "512209", "cap": "31100", "nome": "Ciani Bassetti Francesco", "email": "francesco.cianibassetti@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3357075383", "indirizzo": "BORGO CAVOUR, 21", "provincia": "TV", "searchText": "ciani bassetti francesco treviso ", "telefonoOriginale": "3357075383"}	3357075383	Simone	[]	[{"id": 1782465736719, "_key": "b88f7431-cfbd-4f0f-9ebc-179bf68f8d34", "nome": "manometro Zhalt Evolution", "prezzo": 35, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1782465764459, "_key": "dbbf5d72-06c8-4aa7-b7fe-b87c36a09fa2", "nome": "tubo pompa peristaltica Zhalt Evolution", "prezzo": 9.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1782465821378, "_key": "3c732a54-3a3c-47ee-bbf0-8eb5c8f02fc0", "nome": "Manodopera per apertura e lavaggio impianto, riparazione centralina di comando Zhalt Evolution", "prezzo": 295, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	339.5	\N	\N	\N	scontrino	completed	2026-06-26 10:00:00+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1782811838231	2026-06-30 09:30:38.231+00	C.I. Coperture Innovative Srl	{"id": "512517", "cap": "31052", "nome": "C.I. Coperture Innovative Srl", "email": "info@copertureinnovative.com", "nomeP": "", "cognome": "", "contatto": "Seminara Manuel", "localita": "MASERADA SUL PIAVE", "telefono": "3805211994", "indirizzo": "VIA POLVERIERA, 4", "provincia": "TV", "searchText": "c.i. coperture innovative srl maserada sul piave seminara manuel", "telefonoOriginale": "3805211994"}	3805211994	Admin	[]	[{"id": 1782811826707, "nome": "Tetrapiù PMC (Reg. Min. Salute N. 11826) - Lt. 5 Lt. 5", "prezzo": 23.9, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	47.8	\N	\N	\N	fattura	completed	2026-06-30 09:30:38.231+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1782828714275	2026-06-30 14:11:54.275+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1782828677711, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	109.6	\N	\N	\N	scontrino	completed	2026-06-30 14:11:54.275+00	t	user_1782824915527	vendita	f	f	f	\N	\N
+1782363705538	2026-06-25 10:00:00+00	Maccan Vanessa via S. Pertini 2 Portobuffolè (TV)	\N	\N	Simone	[]	[{"id": 1782363485192, "_key": "e51dbf61-0d99-42d8-ab6a-03484bb64558", "nome": "Insetticida Vapo Perm Plus 1 lt", "prezzo": 72, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1782363524775, "_key": "eb57add6-3cbd-466a-a6fa-1948f9fc72e5", "nome": "tubolare acciaio inox cm 50", "prezzo": 15, "quantita": 8, "matricola": null, "aliquotaIva": 22}, {"id": 1782363574417, "_key": "69c791fb-73ad-4108-877c-965118c8e902", "nome": "tubolare acciaio inox cm 100", "prezzo": 28, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1782363661274, "_key": "498960a1-f575-4013-85c8-feec7a426f0f", "nome": "tubolare pvc tipo bambù cm 100", "prezzo": 3.6, "quantita": 24, "matricola": null, "aliquotaIva": 22}, {"_key": "d405578e-a6af-4190-b5de-19bd37e7cd0b", "nome": "Fornitura e montaggio di un impianto antizanzare Zanzero con centralina ZA150 completo di raccorderia, tubazioni ed ugelli. Matr. ZA2315007", "prezzo": 4800, "quantita": 1, "aliquotaIva": 22}]	5134.4	\N	\N	\N	scontrino	completed	2026-06-25 10:00:00+00	t	user_1770584612559	vendita	t	f	f	\N	\N
+1782974840139	2026-07-02 06:47:20.138+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Admin	[]	[{"id": 1782974836306, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 54.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	54.8	\N	\N	\N	scontrino	completed	2026-07-02 06:47:20.138+00	t	user_1771232846694	vendita	f	f	f	\N	\N
+1783064575095	2026-07-03 07:42:54.142+00	Chisso Donato	{"id": "504505", "cap": "30020", "nome": "Chisso Donato", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "QUARTO D'ALTINO", "telefono": "3385878330", "indirizzo": "VIA CRETE, 52", "provincia": "VE", "searchText": "chisso donato quarto d'altino ", "telefonoOriginale": "3385878330"}	3385878330	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 30.0", "prezzo": 169, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943699854"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "937538948"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "937378045"}, {"brand": "Stihl", "model": "Caricabatteria AL 1.0.A", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707554396"}]	[]	169	\N	\N	\N	scontrino	completed	2026-07-03 07:42:54.142+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1782465263547	2026-06-26 10:00:00+00	Botter Fiorenzo	{"cf": null, "id": "79a49ce1-74c1-4fd3-a2b4-5ba14d982826", "cap": null, "sdi": null, "nome": "Botter Fiorenzo", "piva": null, "email": "fiorenzo.botter@ilfornaiodelcasale.it", "nomeP": "Botter Fiorenzo", "localita": "Casale sul Sile", "telefono": "335 595 2674", "indirizzo": "via Schiave", "provincia": null, "searchText": "botter fiorenzo"}	335 595 2674	Simone	[]	[{"id": 1782464739004, "_key": "0bf89344-d278-4c6c-8374-2f52b350a138", "nome": "Asta di prolungamento Ø6 x 40 cm", "prezzo": 11, "quantita": 10, "matricola": null, "aliquotaIva": 22}, {"id": 1782464802120, "_key": "c77133eb-ee0c-44d1-a2f4-6221273f62ff", "nome": "Ugelli Ø6", "prezzo": 5.7, "quantita": 5, "matricola": null, "aliquotaIva": 22}, {"id": 1782464826036, "_key": "65123348-e8a6-4efd-bf18-4e10027dbd10", "nome": "Raccordo a 135° Ø6", "prezzo": 2.5, "quantita": 9, "matricola": null, "aliquotaIva": 22}, {"id": 1782464848291, "_key": "a9ab1001-ed4d-4c87-a47d-4aca5d030322", "nome": "Raccordo a T Ø6", "prezzo": 1.5, "quantita": 5, "matricola": null, "aliquotaIva": 22}, {"id": 1782464887545, "_key": "2afac897-59c5-4559-9bcd-56e72001870d", "nome": "Etokraft zanzaricida anti-zanzare PMC 5 litri ", "prezzo": 185, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1782464912607, "_key": "965d46e7-67bb-43d5-839f-4e7184cd8c60", "nome": "Nebuzan repellente tanica da 5 litri ", "prezzo": 140, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1782465006669, "_key": "bba9e1a2-d438-4c7f-b23a-b5ce417755c3", "nome": "Manodopera per apertura impianto, lavaggio e pulizia impianto Geyser Pro, sistemazione ugelli", "prezzo": 250, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	883.5	\N	\N	\N	scontrino	completed	2026-06-26 10:00:00+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1781939313124	2026-06-20 10:00:00+00	Comin Oliviero	{"id": "504571", "cap": "31056", "nome": "Comin Oliviero", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "0422849447", "indirizzo": "VIA MEZZA BRUSCA, 1", "provincia": "TV", "searchText": "comin oliviero roncade ", "telefonoOriginale": "0422849447"}	0422849447	Simone	[{"_key": "b926791f-783b-46df-ad87-cf5eb6d06995", "brand": "Forest", "model": "Spaccalegna SUG 1000", "prezzo": 1460, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "81601392"}, {"_key": "5897feac-1c8b-4745-9494-811f50a8ee73", "brand": "Honda", "model": "Rasaerba HRG 466 PK", "prezzo": 490, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1228046"}]	[]	1950	\N	\N	Consegnare al cliente appena pronte prossima settimana	scontrino	completed	2026-06-26 14:16:27.544+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1776421055441	2026-04-17 10:00:00+00	Zanette Adelino	{"id": "505394", "cap": "31030", "nome": "Zanette Adelino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3472949319", "indirizzo": "VIA GRANDE, 82 - SAN GIACOMO", "provincia": "TV", "searchText": "zanette adelino carbonera ", "telefonoOriginale": "3472949319"}	3472949319	Simone	[{"_key": "4bfcca89-ab9d-4ab2-997f-279735592687", "brand": "Stihl", "model": "Decespugliatore FSA80 R", "prezzo": 379, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "."}, {"_key": "5db052da-abea-4a5b-acbc-03b76e8f76fd", "brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "."}, {"_key": "89a2725c-47a4-42c3-884e-c9cfd5c3e360", "brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "."}]	[]	718	\N	\N	\N	scontrino	completed	2026-06-26 14:21:18.246+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1782546349052	2026-06-27 07:45:49.052+00	privato	\N	\N	Simone	[]	[{"id": 1782546341630, "nome": "Nebuzan repellente tanica da 5 litri ", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-06-27 07:45:49.052+00	t	user_1770584612559	vendita	t	f	f	\N	\N
+1782550233932	2026-06-27 10:00:00+00	Della Libera Matteo	{"id": "506612", "cap": "31030", "nome": "Della Libera Matteo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3490843936", "indirizzo": "VIA VALDEMONEGHE, 50", "provincia": "TV", "searchText": "della libera matteo carbonera ", "telefonoOriginale": "3490843936"}	3490843936	Simone	[{"_key": "80dd8783-b8d9-40c5-8c11-dc3fa1830082", "brand": "Echo", "model": "Motosega CS501SX", "prezzo": 790, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C76038034944"}]	[{"id": 1782550199818, "_key": "0f3d273f-8302-47c2-87f9-e62a2962f602", "nome": "Ritiro Vs motosega usata MS251 C € 180", "prezzo": -180, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"_key": "9a4838c4-437e-4ccc-8a72-7cc0f5bf5488", "nome": "Forbice ", "prezzo": 17, "quantita": 1, "aliquotaIva": 22}]	627	\N	\N	\N	scontrino	completed	2026-06-27 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1782553713636	2026-06-27 09:48:32.958+00	Zanon Paolo	{"id": "513747", "cap": "20100", "nome": "Zanon Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MILANO", "telefono": "3274308540", "indirizzo": "VIA BARTOLIN LORENZO, 29", "provincia": "MI", "searchText": "zanon paolo milano ", "telefonoOriginale": "3274308540"}	3274308540	Simone	[{"brand": "Stihl", "model": "RM 655.0 V", "prezzo": 960, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "447005981"}]	[{"id": 1782553685930, "nome": "Ritiro Weibang Rasaerba WB537SC V-M MAtr.W537SCV/LV/M021M&251215017 € 890,00", "prezzo": -890, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	70	\N	\N	Ritiro Weibang Rasaerba WB537SC V-M MAtr.W537SCV/LV/M021M&251215017 € 890,00	scontrino	completed	2026-06-27 09:48:32.958+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1782554572943	2026-06-27 10:02:52.135+00	Barison Sebastiano	{"id": "507520", "cap": "31057", "nome": "Barison Sebastiano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3290091750", "indirizzo": "", "provincia": "TV", "searchText": "barison sebastiano silea ", "telefonoOriginale": "3290091750"}	3290091750	Simone	[{"brand": "WORX", "model": "Decespugliatore WG157E", "prezzo": 100, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "20240103222749"}, {"brand": "WORX", "model": "Batteria WA3551.I", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "20211101473948"}, {"brand": "WORX", "model": "Caricabatteria WA3880", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "20211101312397"}]	[{"id": 1782554555495, "nome": "Guanti ", "prezzo": 4.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	104.5	\N	\N	\N	scontrino	completed	2026-06-27 10:02:52.135+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1782807800425	2026-06-30 08:23:20.03+00	SAVIAN SAMUELE	{"cf": "SVNSML77A27L407Z", "id": "0ad84f05-b948-4c07-9e82-e9a79e354060", "cap": null, "sdi": null, "nome": "SAVIAN SAMUELE", "piva": null, "email": "samuele.savian@gmail.com", "nomeP": "SAVIAN SAMUELE", "localita": "TREVISO", "telefono": "3703464006", "indirizzo": "Via Sicilia, 7", "provincia": "TV", "searchText": "savian samuele"}	3703464006	Simone	[{"brand": "Stihl", "model": "Motosega MSE 170 C", "prezzo": 270, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "197142040"}]	[{"id": 1782807786276, "nome": "Olio bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	276.5	\N	\N	Indirizzo Monastier di Treviso	scontrino	completed	2026-06-30 08:23:20.03+00	f	user_1775131564325	vendita	f	f	f	\N	\N
+1783088056494	2026-07-03 14:14:16.078+00	Zaniol Luigino	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 255, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540109921"}]	[{"id": 1783088046925, "nome": "Marline 2 tempi 5 litri ", "prezzo": 27, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	282	\N	\N	\N	scontrino	completed	2026-07-03 14:14:16.078+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1783090751959	2026-07-03 14:59:11.959+00	TESO RICCARDO	{"cf": "TSERCR05M03H823Q", "id": "7afecff7-272c-4c84-bca8-8a09478dd3d2", "cap": null, "sdi": null, "nome": "TESO RICCARDO", "piva": null, "email": "tesoservizi@gmail.com", "nomeP": "TESO RICCARDO", "localita": "MUSILE DI PIAVE", "telefono": "3475878043", "indirizzo": "VIA FOSSETTA, N. 53 B", "provincia": "VE", "searchText": "teso riccardo"}	3475878043	Simone	[]	[{"id": 1783090668011, "nome": "Zaino Volpi Vita 12", "prezzo": 110, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1783090688873, "nome": "Manico Wolf ZMV4", "prezzo": 64, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1783090734020, "nome": "Svettatoio Wolf RCVM", "prezzo": 80, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	254	\N	\N	\N	scontrino	completed	2026-07-03 14:59:11.959+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1783091922269	2026-07-03 15:18:41.508+00	Bucciol Serramenti	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 261 C", "prezzo": 990, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "196085997"}]	[]	990	\N	\N	\N	fattura	completed	2026-07-03 15:18:41.508+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1783095223724	2026-07-03 16:13:41.695+00	Serafin Ermes Giardiniere	{"id": "203366", "cap": "31052", "nome": "Serafin Ermes Giardiniere", "email": "martesfaina@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3493648574", "indirizzo": "VIA CASTELLA, 47", "provincia": "TV", "searchText": "serafin ermes giardiniere maserada sul piave ", "telefonoOriginale": "3493648574"}	3493648574	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLA 66", "prezzo": 400, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "453112682"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 220, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256590"}, {"brand": "Stihl", "model": "Batteria AP 200S", "prezzo": 220, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953256595"}, {"brand": "Stihl", "model": "Caricabatteria AL 301", "prezzo": 125, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711636138"}]	[]	965	\N	\N	\N	fattura	completed	2026-07-03 16:13:41.695+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1783147331307	2026-06-27 10:00:00+00	Fabbio Luigino	{"id": "513628", "cap": "31030", "nome": "Fabbio Luigino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3357188480", "indirizzo": "VIA CALLEGARI 2 VASCON", "provincia": "TV", "searchText": "fabbio luigino carbonera ", "telefonoOriginale": "3357188480"}	3357188480	Simone	[{"brand": "Yarbo", "model": "Modulo rasaerba Pro", "prezzo": 8000, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "1234"}]	[]	8000	\N	\N	\N	scontrino	completed	2026-06-27 10:00:00+00	t	user_1770584612559	vendita	f	f	f	\N	\N
+1783155816849	2026-07-04 09:03:36.477+00	Gardin Roberta	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 50.1", "prezzo": 170, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943919998"}]	[{"id": 1783155805701, "nome": "Spray Dirty Killer", "prezzo": 5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	175	\N	\N	\N	scontrino	completed	2026-07-04 09:03:36.477+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1783156625518	2026-07-04 09:17:05.155+00	DOLFATO PAOLO	{"cf": "DLFPLA73E17L407E", "id": "3afd36bd-c083-403a-8bf8-c3320d96f9a9", "cap": null, "sdi": null, "nome": "DOLFATO PAOLO", "piva": null, "email": "dolfatopaolo@libero.it", "nomeP": "DOLFATO PAOLO", "localita": "Villorba", "telefono": "3387967230", "indirizzo": "Via San Pio X", "provincia": "TV", "searchText": "dolfato paolo"}	3387967230	Simone	[{"brand": "Stihl", "model": "Soffiatore BG 56", "prezzo": 290, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "615222327"}]	[]	290	\N	\N	\N	scontrino	completed	2026-07-04 09:17:05.155+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 \.
 
 
@@ -5997,6 +6400,52 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 --
 
 COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cliente, prezzo, totale, status, "user", location, carico_automatico) FROM stdin;
+679	2026-06-25 04:52:57.658+00	CARICO	Zanzero	Fornitura e montaggio di una centralina ZA150 completo di raccorderia, tubazioni ed ugelli.	ZA2315007	\N	\N	\N	available	user_1770584612559	main	t
+680	2026-06-25 05:01:45.111+00	SCARICO	Zanzero	Fornitura e montaggio di una centralina ZA150 completo di raccorderia, tubazioni ed ugelli.	ZA2315007	Maccan Vanessa via S. Pertini 2 Portobuffolè (TV)	0	0	sold	user_1770584612559	main	f
+681	2026-06-25 08:33:18.66+00	CARICO	Stihl	Motosega MS 172 3/8"P	837259152	\N	\N	\N	available	user_1775131564325	main	t
+682	2026-06-25 08:37:07.239+00	SCARICO	Stihl	Motosega MS 172 3/8"P	837259152	Massaro Remo	0	0	sold	user_1775131564325	main	f
+683	2026-06-27 08:48:14.065+00	CARICO	Echo	Motosega CS501SX	C76038034944	\N	\N	\N	available	user_1775131564325	main	t
+684	2026-06-27 08:50:33.431+00	SCARICO	Echo	Motosega CS501SX	C76038034944	Della Libera Matteo	0	0	sold	user_1775131564325	main	f
+685	2026-06-27 09:43:42.911+00	CARICO	Stihl	RM 655.0 V	447005981	\N	\N	\N	available	user_1770584612559	main	t
+686	2026-06-27 09:48:32.958+00	SCARICO	Stihl	RM 655.0 V	447005981	Zanon Paolo	0	0	sold	user_1770584612559	main	f
+687	2026-06-27 09:58:40.753+00	CARICO	WORX	Decespugliatore WG157E	20240103222749	\N	\N	\N	available	user_1775131564325	main	t
+688	2026-06-27 09:59:13.371+00	CARICO	WORX	Batteria WA3551.I	20211101473948	\N	\N	\N	available	user_1775131564325	main	t
+689	2026-06-27 10:00:28.428+00	CARICO	WORX	Caricabatteria WA3880	20211101312397	\N	\N	\N	available	user_1775131564325	main	t
+690	2026-06-27 10:02:52.135+00	SCARICO	WORX	Decespugliatore WG157E	20240103222749	Barison Sebastiano	0	0	sold	user_1775131564325	main	f
+691	2026-06-27 10:02:52.461+00	SCARICO	WORX	Batteria WA3551.I	20211101473948	Barison Sebastiano	0	0	sold	user_1775131564325	main	f
+692	2026-06-27 10:02:52.698+00	SCARICO	WORX	Caricabatteria WA3880	20211101312397	Barison Sebastiano	0	0	sold	user_1775131564325	main	f
+693	2026-06-30 08:21:40.424+00	CARICO	Stihl	Motosega MSE 170 C	197142040	\N	\N	\N	available	user_1775131564325	main	t
+694	2026-06-30 08:23:20.03+00	SCARICO	Stihl	Motosega MSE 170 C	197142040	SAVIAN SAMUELE	0	0	sold	user_1775131564325	main	f
+695	2026-07-03 06:42:12.606+00	CARICO	Stihl	Tagliasiepi HSA 50.1	943919997	\N	\N	\N	available	user_1775131564325	main	t
+696	2026-07-03 06:42:53.384+00	SCARICO	Stihl	Tagliasiepi HSA 50.1	943919997	Lorenzon Lino	0	0	sold	user_1775131564325	main	f
+697	2026-07-03 07:40:07.135+00	CARICO	Stihl	Soffiatore BGA 30.0	943699854	\N	\N	\N	available	user_1775131564325	main	t
+698	2026-07-03 07:41:29.039+00	CARICO	Stihl	Batteria AS 2	937538948	\N	\N	\N	available	user_1775131564325	main	t
+699	2026-07-03 07:42:05.021+00	CARICO	Stihl	Batteria AS 2	937378045	\N	\N	\N	available	user_1775131564325	main	t
+700	2026-07-03 07:42:39.188+00	CARICO	Stihl	Caricabatteria AL 1.0.A	707554396	\N	\N	\N	available	user_1775131564325	main	t
+701	2026-07-03 07:42:54.142+00	SCARICO	Stihl	Soffiatore BGA 30.0	943699854	Chisso Donato	0	0	sold	user_1775131564325	main	f
+702	2026-07-03 07:42:54.433+00	SCARICO	Stihl	Batteria AS 2	937538948	Chisso Donato	0	0	sold	user_1775131564325	main	f
+703	2026-07-03 07:42:54.689+00	SCARICO	Stihl	Batteria AS 2	937378045	Chisso Donato	0	0	sold	user_1775131564325	main	f
+704	2026-07-03 07:42:54.898+00	SCARICO	Stihl	Caricabatteria AL 1.0.A	707554396	Chisso Donato	0	0	sold	user_1775131564325	main	f
+705	2026-07-03 14:11:30.303+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540109921	\N	\N	\N	available	user_1775131564325	main	t
+706	2026-07-03 14:14:16.078+00	SCARICO	Echo	Decespugliatore SRM-222ES	U64540109921	Zaniol Luigino	0	0	sold	user_1775131564325	main	f
+707	2026-07-03 15:17:48.216+00	CARICO	Stihl	Motosega MS 261 C	196085997	\N	\N	\N	available	user_1775131564325	main	t
+708	2026-07-03 15:18:41.509+00	SCARICO	Stihl	Motosega MS 261 C	196085997	Bucciol Serramenti	0	0	sold	user_1775131564325	main	f
+709	2026-07-03 16:08:43.862+00	CARICO	Stihl	Tagliasiepi HLA 66	453112682	\N	\N	\N	available	user_1775131564325	main	t
+710	2026-07-03 16:11:36.88+00	CARICO	Stihl	Batteria AP 200S	953256590	\N	\N	\N	available	user_1775131564325	main	t
+711	2026-07-03 16:12:13.118+00	CARICO	Stihl	Batteria AP 200S	953256595	\N	\N	\N	available	user_1775131564325	main	t
+712	2026-07-03 16:12:48.569+00	CARICO	Stihl	Caricabatteria AL 301	711636138	\N	\N	\N	available	user_1775131564325	main	t
+713	2026-07-03 16:13:41.695+00	SCARICO	Stihl	Tagliasiepi HLA 66	453112682	Serafin Ermes Giardiniere	0	0	sold	user_1775131564325	main	f
+714	2026-07-03 16:13:43.049+00	SCARICO	Stihl	Batteria AP 200S	953256590	Serafin Ermes Giardiniere	0	0	sold	user_1775131564325	main	f
+715	2026-07-03 16:13:43.293+00	SCARICO	Stihl	Batteria AP 200S	953256595	Serafin Ermes Giardiniere	0	0	sold	user_1775131564325	main	f
+716	2026-07-03 16:13:43.506+00	SCARICO	Stihl	Caricabatteria AL 301	711636138	Serafin Ermes Giardiniere	0	0	sold	user_1775131564325	main	f
+717	2026-07-04 06:41:54.199+00	CARICO	Yarbo	Modulo rasaerba Pro	1234	\N	\N	\N	available	user_1770584612559	main	t
+718	2026-07-04 06:42:10.799+00	SCARICO	Yarbo	Modulo rasaerba Pro	1234	Fabbio Luigino	0	0	sold	user_1770584612559	main	f
+719	2026-07-04 09:02:51.605+00	CARICO	Stihl	Tagliasiepi HSA 50.1	943919998	\N	\N	\N	available	user_1775131564325	main	t
+720	2026-07-04 09:03:36.477+00	SCARICO	Stihl	Tagliasiepi HSA 50.1	943919998	Gardin Roberta	0	0	sold	user_1775131564325	main	f
+721	2026-07-04 09:16:04.993+00	CARICO	Stihl	Soffiatore BG 56	615222327	\N	\N	\N	available	user_1775131564325	main	t
+722	2026-07-04 09:17:05.156+00	SCARICO	Stihl	Soffiatore BG 56	615222327	DOLFATO PAOLO	0	0	sold	user_1775131564325	main	f
+723	2026-07-06 15:28:16.057+00	CARICO	Stihl	Decespugliatore FS 94 RC-E	549141062	\N	\N	\N	available	user_1775131564325	main	t
+724	2026-07-06 15:28:32.17+00	SCARICO	Stihl	Decespugliatore FS 94 RC-E	549141062	DIQUIGIOVANNI MIRCO	0	0	sold	user_1775131564325	main	f
 \.
 
 
@@ -6004,786 +6453,1090 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 -- Data for Name: listini; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.listini (id, brand, categoria, codice, descrizione, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva, data_aggiornamento, prezzo_promo, promo_dal, promo_al, note_promo) FROM stdin;
-e4ae5802-3602-401c-beab-0f702ac88710	GEOGREEN	Sementi	MICOTPWM01	Micosat F Tab Plus Wp Mini	gr.100	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-175e2172-3d06-43b8-ad6c-1d5413ac6ecc	GEOGREEN	Sementi	MICOLWM01	Micosat F Len Wp Mini	gr.100	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-6cc7a4dc-c6cc-495f-a352-28e0fa48a544	GEOGREEN	Sementi	SHUR701	Hurricane 7	10 kg	108.90	104.00	98.80	89.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-07750d08-1f29-4846-a980-da59cba44781	GEOGREEN	Sementi	SHUR005	Hurricane (Sole+Ombra)	5 kg	54.45	52.00	50.00	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-1f7813eb-b0af-4ea9-b873-5314fa95967c	GEOGREEN	Sementi	SHUR001	Hurricane	1 kg	13.75	\N	\N	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-543382db-15a8-4c95-8c08-3df93fab1fde	GEOGREEN	Sementi	SBLI01	Blizzard	10 kg	97.90	93.00	88.50	80.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-da866150-4b98-48ee-a690-572f834739c6	GEOGREEN	Sementi	SBLI005	Blizzard (Sole+Ombra)	5 kg	54.45	52.00	50.00	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-0dbaf61b-f535-4e7d-839e-94dba6f19670	GEOGREEN	Sementi	SSTR01	Strong	10 kg	85.80	81.50	77.50	70.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-88b6ebd0-c7d0-403c-a864-c4c3e539aadb	GEOGREEN	Sementi	SSTR005	Strong (Sole+Ombra)	5 kg	46.75	44.50	42.30	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-2d91a3e4-ba9c-4a01-a1a8-4d03eba9bbb7	GEOGREEN	Sementi	SNOS01	No-sun	10 kg	85.80	81.50	77.50	69.80	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-18320cf8-a746-46be-adc8-23063e1f42af	GEOGREEN	Sementi	SNOS005	No-sun (Ombra)	5 kg	46.75	44.50	42.30	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-5f2b1c20-79e5-4224-a90b-12cbcaa66546	GEOGREEN	Sementi	SREN01-SP	Renovate Sport (Rigenerazione)	10 kg	99.00	94.00	89.30	80.40	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-261f0479-17d7-4d12-8eae-19a50ce49dea	GEOGREEN	Sementi	STWI01	Twister (calpestio sole+ombra)	10 kg	119.90	114.00	108.30	97.50	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-2c547d22-5407-484c-8701-5de735f0fd44	GEOGREEN	Sementi	STOR01	Tornado	10 kg	101.75	96.70	91.90	82.80	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-48d1aa4c-bc31-4e3f-8ce0-58bbbaf29a5f	GEOGREEN	Sementi	SECO01	Ecograss	10 kg	71.50	68.00	64.60	58.20	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-209268cb-fb6d-4215-a74e-057f6848c0d0	GEOGREEN	Sementi	SWIN01	Winter Sport	10 kg	73.70	70.00	66.50	60.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-47049ffd-f6b7-4c28-b520-9a3a20e3cf7f	GEOGREEN	Sementi	MICOPG1	Micosat F prati & giardini	1 kg	31.20	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-9bb0f6e3-3165-4fb0-bddd-fdbb55aa1a0d	GEOGREEN	Sementi	MICOTP1	Micosat F Tab Plus	1 kg	49.82	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-eee61504-985c-4b05-b0e9-ded5bc5fbb1d	GEOGREEN	Sementi	MICOL1	Micosat F Len	1 kg	54.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-766e5fa4-e29d-4d2b-98ee-aeb8888770f3	GEOGREEN	Sementi	MICOU02	Micosat F Uno	gr.200	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-77165f2a-6a8e-4ce5-beb4-7ac394bae484	GEOGREEN	Sementi	MICOMO5	Micosat F MO	5 kg	140.40	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-3ecc2fcf-45dd-4e72-b1b7-24e92299d4dc	GEOGREEN	Sementi	METAGEGR1	Meta-Ge Granular	1 kg	24.90	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-b2d843fc-01e5-4fb2-8c40-20cd3fc0f23b	GEOGREEN	Sementi	METAGE1	Meta-Ge	1 lt	71.80	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-127cc287-2668-4814-83a0-48686edd05be	GEOGREEN	Concimi	G7025	Green 7	25 kg	47.70	45.30	43.00	38.70	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-eebb5349-d7a7-44c8-a1a0-15ff8ede26be	GEOGREEN	Concimi	G8025	Albatros Green 8 Kg 25	25 kg	60.80	57.70	54.80	49.30	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-9a19616d-14c6-41c0-af7e-ce1e11baa006	GEOGREEN	Concimi	VA025	Albatros Vigor Active Kg 25	25 kg	53.10	50.40	47.90	43.00	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-da257617-2ad7-40f6-a5ea-51893329a908	GEOGREEN	Concimi	MGP010	Universal Top	20 kg	62.50	59.40	56.50	52.60	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-788c8598-a378-4a10-bc49-0249625af6c2	GEOGREEN	Concimi	MGP080	AllRound	20 kg	64.50	61.30	58.30	54.20	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-cb8f5584-b9af-407b-9698-5cb46f326dfa	GEOGREEN	Concimi	MGE080	Pro Starter	20 kg	76.00	72.20	68.60	63.80	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-c0d2abf7-a5b4-4259-a17f-be37b6769626	GEOGREEN	Concimi	MGE110	Pro Slow	20 kg	75.00	71.30	67.80	63.00	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-e97b7f24-cf1d-4db4-9fc5-c68cbad6b11b	GEOGREEN	Concimi	MGS010	Granustar	20 kg	74.00	70.30	66.80	62.20	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-aa8fdd07-1354-488c-b56a-bb9f5071eaf9	GEOGREEN	Concimi	MGR040	Iron Power	20 kg	68.70	65.30	62.00	57.70	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-1059b0bb-f43f-4854-b8e5-0372eb3cdb28	GEOGREEN	Concimi	PAL001	Alga Park 1Kg	1 kg	38.70	32.90	29.60	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-d03b058d-7b22-4761-bbd5-477c804d2e4c	GEOGREEN	Concimi	PAL005	Alga Park 5Kg	5 kg	165.10	140.00	126.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-9a421827-e4a5-4082-8f6f-ef73c0bdec84	GEOGREEN	Concimi	PAM001	Amino K 1 Kg	1 kg	17.60	15.00	13.50	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-8b6f64ea-064e-4988-9bf9-0fff479616d5	GEOGREEN	Concimi	PAM005	Amino K 5 Kg	5 kg	66.80	56.80	51.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-426fd548-de06-4a8d-a950-b32fd743a630	GEOGREEN	Concimi	PAM025	Amino K 25 Kg	25 kg	264.00	224.00	200.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-4e2524b8-0fa1-493a-93b4-16e0eb89cc33	GEOGREEN	Concimi	PFE001	Fe Ulk 1 Kg	1 kg	32.30	27.40	24.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-b05de636-08d2-4ab2-a07b-718bcf129a06	GEOGREEN	Concimi	PFE010	Fe Ulk 10 Kg	10 kg	238.00	200.00	180.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-4152b636-2d1d-4a22-ba51-f53cd607a3c9	GEOGREEN	Concimi	TNK005	NPK Enduring 5 kg	5 kg	48.10	41.00	36.90	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-7b1479e7-350a-415b-bf11-332a41fbbac8	GEOGREEN	Concimi	PLK005	Leokare 5 kg	5 kg	72.60	62.00	55.80	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-060382c4-30a5-498d-a5f0-b7ed4444c6b1	GEOGREEN	Concimi	PSK001	Sevenkare 1 kg	1 kg	20.60	17.50	15.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-2d0b18fb-27ea-4725-be5d-c084fa767d1b	GEOGREEN	Concimi	PHU005	Humifitos 5 Kg	5 kg	40.30	34.20	30.80	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-d59ac738-1910-4727-adcc-c8bc86a00702	GEOGREEN	Concimi	PHU025	Humifitos 25 Kg	25 kg	135.20	115.00	103.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-72b1a232-9bd8-4860-a3ba-2e5403522d7f	GEOGREEN	Concimi	PRO005	Root Speed 5 Kg	5 kg	57.80	49.00	44.10	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-50aa3ad5-26fb-4753-af04-6ae3acc83644	GEOGREEN	Concimi	PDV001	Decal Vyro 1 Kg	1 kg	13.40	11.40	10.30	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-0383b50d-c3cb-405a-9380-382eab037630	GEOGREEN	Concimi	PATU005	Paint Turf	0,5 kg	73.80	\N	\N	\N	22.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-088c197c-daca-4775-9356-050ff8a986de	GEOGREEN	Concimi	WETU01	Wet Turf	LT.1	73.20	65.90	62.60	\N	22.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-64fcd43a-2783-439a-8e43-90bae6d0e734	GEOGREEN	Concimi	WETU05	Wet Turf	LT.5	256.20	230.60	219.00	\N	22.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-2be0c17b-4785-455c-8f28-0a8abe88a902	GEOGREEN	Concimi	ED7C05	Eden 7	5 kg	15.70	14.90	14.20	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-1874a51a-ebcf-468e-8581-e6c126a5f990	GEOGREEN	Concimi	ED8C05	Eden 8	5 kg	18.20	17.30	16.50	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-c26c5924-7ea3-46ca-a261-c6d9be36b061	GEOGREEN	Concimi	EMUC05	Eden Multi	3,5 kg	19.00	18.10	17.20	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-abd1fdc8-0664-45a0-a0a1-a1e9e8f586e7	GEOGREEN	Concimi	VAC05	Vigor Active	5 kg	14.50	13.80	13.10	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-a189b45e-798c-4847-9c79-dbc4096823c1	GEOGREEN	Concimi	EIN01	Sustenium Eden Integramix	0,25 kg	8.00	7.60	7.20	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-45e6ce40-10ee-4e22-bb8b-1def00caf0fa	GEOGREEN	Concimi	EPR01	Sustenium Eden Prevent	0,25 kg	8.50	8.10	7.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-950a591c-250e-4ad9-a31b-c14baa06e2de	GEOGREEN	Concimi	EFO01	Sustenium Eden Force	0,5 kg	13.00	12.30	11.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-253e2c1e-f5e9-4a82-a491-57e21de6c760	GEOGREEN	Concimi	ENB01	Sustenium Eden Nutribio	0,25 kg	10.00	9.50	9.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-202af68d-e3d9-4a0a-8dfa-c638e296bc7c	GEOGREEN	Concimi	EFB01	Sustenium Eden Ferro G Bio	0,25 kg	13.00	11.40	10.80	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N
-6fc31594-7bbe-41c6-86d7-117b78ed458d	HONDA	MACCHINE A BATTERIA	HRG416XBPESPINTA	IZY ON HRG 416 XB  PE                                SPINTA 41 CM	\N	500.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-39cacbba-835c-4590-bdd9-a1ff53131822	HONDA	MACCHINE A BATTERIA	HRG416XBPE	HRG 416 XB  PE + BATT. 6 Ah + CARICA            350 MT/q 41 CM	\N	720.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-96dfae4e-5961-4074-a8e2-203fd2d3b78d	HONDA	MACCHINE A BATTERIA	HRX_476_XB_400_MT/Q_46_CM	HRX 476 XB                                                       400 MT/q 46 CM	\N	1050.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-2c029bf4-52ff-474c-a89e-12449f98b7c1	HONDA	MACCHINE A BATTERIA	HRX476XB	HRX 476 XB   + BATT. 6 Ah + CARICA                400 MT/q 46 CM	\N	1270.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-b232e231-05dc-473c-92a0-c278bf3a25d7	HONDA	MACCHINE A BATTERIA	HHB36AXB	SOFFIATORE HHB36AXB E	\N	220.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-9de707d1-a7dd-4cc8-a08d-fa1941ba6c5b	HONDA	MACCHINE A BATTERIA	HHH36AXB	TAGLIASIEPE HHH36AXB E6	\N	220.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-bd1ecb39-18e3-4ceb-a814-2d8891063dd1	HONDA	MACCHINE A BATTERIA	HHT36AXB	DECESP. HHT36AXB E	\N	220.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-a91ef021-6d71-410d-a680-40a3be3f5ed3	HONDA	MACCHINE A BATTERIA	HHC36BXB	MOTOSEGA HHC36BXB 35 CM	\N	260.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-14462204-7eea-4ee2-9736-51dfb8b321e4	HONDA	MACCHINE A BATTERIA	DP3620XA	BATTERIA DP3620XA 2 Ah	\N	90.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-24481633-40d4-4753-b103-d11fa2f1dd95	HONDA	MACCHINE A BATTERIA	DP3640XA	BATTERIA DP3640XA 4 Ah	\N	149.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-c90db7bc-3837-41e5-a703-ed9042c785b2	HONDA	MACCHINE A BATTERIA	DP3660XA	BATTERIA DP3660XA 6 Ah	\N	180.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-8119e03a-b573-4db2-ad23-c579fa06ef4e	HONDA	MACCHINE A BATTERIA	CV3620XA	CARICA BATTERIA CV3620XA	\N	39.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-73c30abd-0a21-430f-adc6-7d55abb9eefd	HONDA	MACCHINE A BATTERIA	CV3680XA	CARICA BATTERIA CV3680XA VELOCE	\N	69.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N
-4ed127b1-9822-46e6-b035-e63919c39a53	STOCKER	Nebulizzatori	ST-00-29	Geyser Nebulizzatore Mini 2,5 bar 2 Lt.	2 Lt.	40.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-2d3acd47-ef87-4234-bdd2-d87652fe78f4	STOCKER	Nebulizzatori	ST-00-126	Geyser Nebulizzatore Verde 5 bar 4 Lt.	4 Lt.	170.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-20fc6abe-2433-44b0-b0af-e87976372ce4	STOCKER	Nebulizzatori	ST-00-167	Geyser Nebulizzatore Arancio 5 bar 12 Lt.	12 Lt.	225.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-0fe7baca-97ef-41e0-b550-530fd8838bc9	STOCKER	Nebulizzatori	ST-00-172	Geyser Nebulizzatore Verde 5 bar 12 Lt.	12 Lt.	232.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-736f0957-a80e-4dd8-98fa-1283a9e8bd8c	STOCKER	Nebulizzatori	ST-00-180	Geyser Nebulizzatore E-25 MI Arancio 5 bar 25 Lt.	25 Lt.	240.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-5f350c59-4107-4d2d-a865-0419c3b674fc	STOCKER	Nebulizzatori	ST-00-189	Geyser Nebulizzatore E-25 MI Verde 5 bar 25 Lt.	25 Lt.	250.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-04379c57-b419-4220-a0f4-bbb7a0cfc501	STOCKER	Nebulizzatori	ST-0-1190	Geyser Pro Nebulizzatore a 2 prodotti 12 bar	\N	1590.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-9dca011a-677c-404b-9f2c-0a506ab49741	STOCKER	Kit nebulizzazione	ST-00-12	Kit balcone Geyser 3 ugelli - mt. 10	mt. 10	18.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-b14af5f6-2bc0-44d8-ac67-9546c4e0f0ba	STOCKER	Kit nebulizzazione	ST-00-26	Kit balcone Geyser 10 ugelli - mt. 25	mt. 25	39.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-d375fa64-f519-428d-a360-7ab8bed78164	STOCKER	Kit nebulizzazione	ST-00-96	Kit balcone Geyser 40 ugelli mt. 100	mt. 100	139.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-09623127-4c22-49c7-9661-75a755f118e2	STOCKER	Accessori Geyser	ST-00-6.30	Cappuccio protettivo per Geyser lt. 25	\N	9.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-cff3cb4c-c893-4a8f-b507-5f35499b7964	STOCKER	Accessori Geyser	ST-00-43.2	Treppiede in alluminio Geyser	\N	58.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-aaf44a83-3008-4e0d-9e98-26227ec76fe4	STOCKER	Accessori Geyser	ST-00-2.90	Tappi di chiusura Geyser	\N	4.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-73f4040b-e4c0-47e0-bb79-79f71e0f4ae9	STOCKER	Accessori Geyser	ST-00-49	Batteria 21V - 2,6 Ah Geyser	\N	66.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-35002712-0c62-4297-a525-d4a70001025c	STOCKER	Accessori Geyser	ST-00-18	Caricabatterie doppio 21V Geyser	\N	25.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-28c97d9e-dc40-4868-940b-8e56ffe9cccc	STOCKER	Accessori Geyser	ST-00-92	Alimentatore Geyser Pro AC 220V - DC 21V	\N	124.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-7fc944c1-7a77-4cc2-a7db-7e3b6a0f70f5	STOCKER	Insetticidi	ST-00-27	Nebuzan repellente flacone da 1 litro	1 Lt.	39.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-a73db504-da6a-4955-af74-aab5f3d5d097	STOCKER	Insetticidi	ST-00-104	Nebuzan repellente tanica da 5 litri	5 Lt.	140.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-6e6f3427-5b86-42a1-a281-af28c6afafbf	STOCKER	Insetticidi	ST-00-11-FL	Florifens larvicida zanzare 50 ml.	50 ml.	14.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-7b0008cf-c81f-4829-b971-914efafd868e	STOCKER	Insetticidi	ST-00-137	Etokraft zanzaricida anti-zanzare PMC 5 litri	5 Lt.	185.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-63c9222e-54e2-4e2e-ae2f-bf177f965c6c	STOCKER	Insetticidi	ST-00-30	Pirekraft insetticida concentrato PMC 500 ml.	500 ml.	42.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-ded2c30a-8778-48ee-bda4-8a3f81b5584a	STOCKER	Raccorderia	ST-00-2.2	Ugelli anti-gocciolamento Ø 6 mm	\N	3.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-dd36a636-2aa9-4da3-a042-aa7646f047c8	STOCKER	Raccorderia	ST-00-3.8	Ugelli anti-gocciolamento 135° Ø 6 mm	\N	5.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-3a6f5e8e-81ab-4874-bc69-7723478ce8b1	STOCKER	Raccorderia	ST-00-0.69	Raccordo a T Ø 6-6-6 mm	\N	1.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-840be04d-9f55-4d37-bfcc-b7c2bfd6c0d8	STOCKER	Raccorderia	ST-00-0.63	Raccordo a 90° Ø 8 mm	\N	1.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-3cecc61e-d51c-42fe-89a1-595a58f14330	STOCKER	Raccorderia	ST-00-0.89A	Raccordo a T Ø 8-8-8 mm	\N	1.80	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-7a0f2430-8ecd-47fd-b4ee-34ed92dc247b	STOCKER	Raccorderia	ST-00-0.92	Raccordo a T Ø 6-8-6 mm	\N	1.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-d56d96e4-df82-41ac-9275-d68b1c841d0f	STOCKER	Raccorderia	ST-00-0.89B	Raccordo a T Ø 8-6-8 mm	\N	1.80	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-a25e8c18-4845-4032-8ef3-fff53ef70019	STOCKER	Raccorderia	ST-00-1.22	Raccordo a 135° Ø 6 mm	\N	2.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-b35f7f14-7f47-4e35-a7b8-46162a0d1c4d	STOCKER	Raccorderia	ST-00-0.65	Raccordo dritto Ø 6-8 mm	\N	1.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-373dc051-47e3-4668-8390-cdafb2b5a3d5	STOCKER	Raccorderia	ST-00-13.9	Palo prolunga ugello 100 cm con tubo e raccordo	\N	21.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-32a37332-7a47-490c-a685-a1181138a211	STOCKER	Raccorderia	ST-00-0.43A	Aste di prolungamento 40 cm Ø 6 mm	\N	1.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-77a9025e-2e29-4063-8c53-7d980650b19b	STOCKER	Raccorderia	ST-00-4.51	Kit direzionamento ugelli Geyser 2 tubi flessibili cm 19	\N	6.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-7f7c53bd-835c-4934-9f1b-6b042ce96843	STOCKER	Raccorderia	ST-00-5.50	Tubo nero Ø 6 mm - mt. 10	mt. 10	8.40	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-201d69b7-c3a1-4f60-b084-0e4c9356c3bd	STOCKER	Raccorderia	ST-00-11-TB	Tubo nero Ø 6 mm - mt. 25	mt. 25	15.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-6e9c7e7c-f3d8-47c0-a69e-8a6577a867ef	STOCKER	Raccorderia	ST-00-35	Tubo nero Ø 6 mm - mt. 100	mt. 100	52.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-30c9d8bf-f010-455f-8ce7-d11b61338e0e	STOCKER	Raccorderia	ST-00-57	Tubo nero Ø 8 mm - mt. 100	mt. 100	90.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-fe88ab99-2937-4874-a956-b9ef0e72c812	STOCKER	Raccorderia	ST-00-2.57	Picchetti fissatubo 20 cm per Geyser - 10 pz	10 pz	3.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-29578d64-a91a-4634-ac5f-e6d5de33e5ec	STOCKER	Raccorderia	ST-00-0.36	Fissatubo a P sfuso Ø 6 mm - 25 pz.	25 pz	0.55	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-8ad2880d-eb3b-44ce-b0b4-53edc73d13da	STOCKER	Raccorderia	ST-00-0.43B	Fissatubo a P sfuso Ø 8 mm - 25 pz.	25 pz	0.65	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-fadb8aca-6669-4495-9595-5042cca2e7c9	STOCKER	Raccorderia	ST-00-4.5	Valvola di non ritorno Ø 8 mm	\N	6.80	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-4a5e3536-6229-4e07-963c-94c31f51f080	STOCKER	Raccorderia	ST-00-33	Tubo Eos Anti Torsion 5/8" - mt. 25	mt. 25	49.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-d2b8c61c-283f-467d-869c-48a1c24b87ce	STOCKER	Raccorderia	ST-00-5.10	Raccordo rubinetto 2 uscite 1" - 3/4"	\N	7.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-320f1fbb-8615-4d63-b277-84dbd41f1a3d	STOCKER	Raccorderia	ST-00-2.69	Raccordo portagomma 1/2" - 5/8" - 3/4"	\N	3.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-f374d361-7c85-42cf-95e3-eb1ff864bc54	GGP	Accessori trattorini	LC1500B	Rimorchio LC 1500B 122x87	\N	500.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-5dfba749-bcaf-44b6-89e9-6e7ca5f1d045	GGP	Zero Turning	ZTX105SD	Zero Turning ZTX 105SD scarico lat. B&S 20HP bic. 92cm	\N	5350.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-16527740-8832-4340-ad5b-1be6e3964422	GGP	Zero Turning	ZTX105RD	Zero Turning ZTX 105RD scar.post.+mulch B&S 20HP bic. 92cm	\N	5500.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-6a983fc9-94a7-4062-91e2-f844827dcc5d	GGP	Zero Turning	ZTX175SD	Zero Turning ZTX 175SD scarico lat. B&S 20HP bic. 107cm	\N	6200.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-ef4dd4c4-74e7-4c32-8e4c-218ab8a0f88a	GGP	Zero Turning	ZTX175RD	Zero Turning ZTX 175RD scar.post.+mulch B&S 20HP bic. 107cm	\N	6350.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-d63e0f32-6309-4fbe-974b-7ac27a5f0b03	GGP	Zero Turning	ZTX275SD	Zero Turning ZTX 275SD scarico lat. B&S 24HP bic. 122cm	\N	7330.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-913e50fb-2f95-4ea9-b5de-449b37df6837	FREEZANZ	Nebulizzatori	FZ-ZHALT-PORTABLE	Zhalt Portable Connect	\N	420.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-1cd5f7a0-5bba-456d-b08f-9aceb6b3dd90	FREEZANZ	Kit nebulizzazione	FZ-KIT-GARDEN-25	Kit Garden Extension mt. 25 - 6 ugelli	\N	169.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-d1d845f9-aef6-47b9-afa0-e5a02cd9d792	FREEZANZ	Nebulizzatori	FZ-ZHALT-EVO	Zhalt Evolution Connect + Kit 10 ugelli	\N	1400.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-850a5c47-d655-4c33-ae55-eb5984b84ee2	FREEZANZ	Kit nebulizzazione	FZ-KIT-EXPANDING	Kit Expanding 10 ugelli	\N	270.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-eb4c7813-5d25-4c9b-8bad-f22f4aa9234d	FREEZANZ	Raccorderia	FZ-TUBO-1/4	Tubazione 1/4 nero al mt.	al mt.	1.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-1b71ddfe-ec4a-4cc4-adcc-4656a85c7f70	FREEZANZ	Raccorderia	FZ-RACCORDO-USC	Raccordo speciale uscita	\N	12.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-986f13a0-1600-4b25-b8cb-159721368536	FREEZANZ	Accessori	FZ-TUBETTI-VERDE	Tubetti verdi di rialzo da cm. 150	\N	4.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-6c1eed0a-3fe9-427a-8f0a-842c12b0afa8	FREEZANZ	Insetticidi	FZ-TETRAPIU	Tetrapiù PMC (Reg. Min. Salute N. 11826) - Lt. 5	Lt. 5	23.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-a1eb2a53-af1c-45e4-9320-61114064d28d	FREEZANZ	Insetticidi	FZ-PRO-PMC	Freezanz Professional PMC (New) - Lt. 1	Lt. 1	54.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-9b841e39-da91-43ee-8720-591d63da1c96	FREEZANZ	Prodotti naturali	FZ-NAT-GREEN	Freezanz Natural Green - Lt. 1	Lt. 1	25.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-bbc537e4-f349-4955-ba2f-f36a700fdc3b	FREEZANZ	Prodotti naturali	FZ-NAT-GREEN+	Freezanz Natural Green+ - Lt. 5	Lt. 5	158.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-ee4868c1-43f2-4214-b5ac-6c42c8d4cc46	FREEZANZ	Raccorderia	F01RA1001	Raccordo giunzione intermedio diritto 1/4"	\N	4.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-774ebad7-ed9b-4a1d-821b-f53cde2360b2	FREEZANZ	Raccorderia	F01RA1011	Adattatore per ugello diritto 1/4"	\N	3.05	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-482040c4-38b2-4701-859c-2eec18622da0	FREEZANZ	Raccorderia	MQ300126	Raccordo inizio 1/4" tubo x 1/4" M	\N	5.10	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-de5d2c64-8192-4f0e-8df9-3b56457727e6	FREEZANZ	Raccorderia	MQ300109	Tappo fine linea 1/4" ad incastro	\N	2.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-36958b27-09b7-481b-b872-594fa2db9eae	FREEZANZ	Raccorderia	MQ400109	Valvola di intercettazione da 1/4"	\N	15.85	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-2ff8b003-32e0-47aa-86d5-9eb6b8ba87f7	FREEZANZ	Raccorderia	MQ300110	Adattatore per ugello 45° 1/4" x 10/24"	\N	5.10	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-9ed74ab2-2b24-4e26-8f1c-135f2185a9e8	FREEZANZ	Raccorderia	EC080007	Tappo esclusione ugello ottone nichelato 10/24"	\N	1.60	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-084d3896-9ef9-4243-b100-ea1645211428	FREEZANZ	Raccorderia	MQ300103	Raccordo giunzione tubo da 1/4"	\N	6.10	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-1528a987-2666-4752-8d93-293d9ebeec66	FREEZANZ	Raccorderia	MQ300105	Raccordo curva L 90° 1/4"	\N	7.65	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-bee2b78a-0a0f-46f2-a1fa-125f403f9193	FREEZANZ	Raccorderia	MQ300139	Raccordo tappo fine linea tubo 1/4"	\N	4.60	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-af3c985c-d4ac-41a3-94b6-719fbae3af32	FREEZANZ	Raccorderia	MQ400114	Tubo Mister Mosquito nero 1/4 - 40 bar 50 mt	50 mt	84.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N
-2f1063ee-ae61-4e0d-bc50-536abbb91dbf	HONDA	Generatori	EU10IK1	Generatore insonorizzato EU 10 IK1 0,9 KVA 49cc	\N	1180.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-7f98778b-9485-4229-84aa-1ea579563e6f	HONDA	Generatori	EU22I	Generatore insonorizzato EU 22i 1,8 KVA 121cc	\N	1600.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-b270d90d-628e-48c4-a71e-c3c4e6f98b5a	HONDA	Generatori	EU32I	Generatore insonorizzato EU 32i 2,6 KVA 130cc	\N	3520.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-68cb3ecc-74d7-4309-acb3-5a2fc69e26bb	HONDA	Generatori	EU30IS	Generatore insonorizzato EU 30 IS 4 ruote 2,8 KVA 196cc	\N	2830.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-b69ae1a1-6be5-4b12-aabd-6e04301353ac	HONDA	Generatori	EU70ISTROLLEY	Generatore insonorizzato EU 70 IS IT Trolley 5,5 KVA 389cc	\N	4690.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-dcc0bbbb-f643-4915-8d8b-c1403dc7c5ac	HONDA	Generatori	ATS	Centralina ATS Honda	\N	690.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-803b275d-9d06-47c5-9dcf-d63692e00231	HONDA	Generatori	EG3600IT	Generatore a telaio EG 3600 IT 3,6 KVA 270cc	\N	1500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-5a20c2a3-0143-4a88-8119-a8c8dd8ce881	HONDA	Generatori	EG4500IT	Generatore a telaio EG 4500 IT 4,5 KVA 390cc	\N	1620.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-8fc581aa-9c56-4e3f-8819-74dbf451669a	HONDA	Generatori	EG5500IT	Generatore a telaio EG 5500 IT 5,5 KVA 390cc	\N	1880.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-f948b607-a093-4bfc-830a-439e5dd75142	HONDA	Generatori	TROLLEY-GEN	Trolley per generatore Honda	\N	175.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-8ee7258d-90c3-4d58-b704-2e846d5c602d	HONDA	Motopompe	WX10K1E1T	Motopompa acque pulite WX 10 K1 E1T 25mm 25cc	\N	500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-4cbd9c42-6e7f-455e-a7a7-5305eb7d6c24	HONDA	Motopompe	WX15E1R	Motopompa acque pulite WX 15 E 1R 40mm 49cc	\N	620.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-5ff240d5-652a-4cc5-b869-1538a82f5153	HONDA	Motopompe	WB20XTDRX	Motopompa acque pulite WB 20 XT DRX 50mm 3,5HP	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-9f4928d2-027f-47e0-9f3a-a4217fccde98	HONDA	Motopompe	WB30XTDRX	Motopompa acque pulite WB 30 XT DRX 80mm 4,8HP	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-5964d72b-419b-41c3-946a-05c033fe967d	HONDA	Motopompe	WH20XK1J	Motopompa acque pulite WH 20 XK1J DXE1 50mm 4,8HP	\N	920.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-bbc244e1-9870-4f95-9d43-a4a6441ade4f	HONDA	Motopompe	CARRELLO-POMP	Carrello trasporto motopompa Honda	\N	175.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-45aff72b-1b14-4859-9c84-9c74376c62ec	HONDA	Motopompe	WT20XK3DE	Motopompa acque sporche WT 20 XK3 DE 50mm 4,8HP	\N	1570.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-b6c3d9fa-aef8-4bba-9660-862351d1d77e	HONDA	Motopompe	WT30XK3DE	Motopompa acque sporche WT 30 XK3 DE 80mm 7,1HP	\N	2000.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-03ced4ae-8072-45ec-9a33-9b60f518dc64	HONDA	Motopompe	WT40XK2DE	Motopompa acque sporche WT 40 XK2 DE 100mm 9,5HP	\N	2950.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-a5c1c606-0c73-43d9-b6d2-ac3a22e91b29	HONDA	Motopompe	WMP20X1	Motopompa travaso liquidi corrosivi WMP 20 X1 50mm 4,8HP	\N	820.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-1ff688ab-3f17-45e4-9d51-47e5ccbd149a	HONDA	Motozappe	FG201DE	Motozappa FG 201 DE 30cm 49cc avv. strappo	\N	660.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-9c14e761-8c3e-4f87-9c5c-13cc64662b55	HONDA	Motozappe	FG205DE	Motozappa FG 205 DE 45cm 49cc avv. strappo	\N	810.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-8c4044b9-6857-4a3f-b446-decf30790b76	HONDA	Motozappe	F220GE	Motozappa F 220 GE 52cm 57cc avv. strappo	\N	1000.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-b2cce39f-2999-45c7-aeee-cf3c446ff152	HONDA	Motozappe	FG320	Motozappa FG 320 1+1 80cm 160cc	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-b735698e-c2f8-44ae-b540-f1032d9ea707	HONDA	Motozappe	FJ500SE	Motozappa FJ 500 SE 1+1 90cm 163cc	\N	1230.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-60f004e3-2f55-41ba-8bdf-fc70430d6803	HONDA	Motozappe	FJ500DE	Motozappa FJ 500 DE 2+1 90cm 163cc	\N	1500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-e43c0c13-e687-4844-81ac-db1303c6fee6	HONDA	Motozappe	F501K4GE	Motozappa F 501K4 GE 2+1 90cm 163cc	\N	1500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-f43b48a1-1efb-481a-a357-144876a4f391	HONDA	Motozappe	FF300DE	Motozappa anteriore FF 300 DE 3+1 45cm 57cc	\N	2350.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-090fe943-80f1-4545-89f5-a44fa3aa2ddc	HONDA	Motozappe	FF500DE	Motozappa anteriore FF 500 DE 3+1 55cm 160cc	\N	2800.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-9f4f0844-6c26-4840-a3ff-1c1f200a06ee	HONDA	Soffiatori	HHB25E	Soffiatore Honda HHB 25 E 4T 25cc	\N	449.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-5450c692-288f-4b30-85fd-4dc75f31b396	HONDA	Decespugliatori	UMS425ELE	Decespugliatore curvo 4T UMS 425 E LE 25cc	\N	320.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-6584afb0-3112-47ca-834a-54375da824ee	HONDA	Decespugliatori	UMK425ELE	Decespugliatore 4T UMK 425 E LE 25cc	\N	440.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-c64165ac-0432-45bc-8e81-72f60bcfa1b3	HONDA	Decespugliatori	UMK435ELE	Decespugliatore 4T UMK 435 E LE 36cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-d2374564-7180-4270-b66b-896e94b22294	HONDA	Decespugliatori	UMK450LEET	Decespugliatore 4T UMK 450 LE ET 50cc	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-221e029d-1047-46f1-9d9d-feecb46c2906	HONDA	Decespugliatori	UMR435T	Decespugliatore spalleggiato 4T UMR 435 T 36cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-7942adf6-e28a-4d3d-afdf-fee35872c9bc	HONDA	Accessori decespugliatori	ACC-TAGLIASIEPI-425	Accessorio tagliasiepi x 425/435	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-4844377a-134b-4c23-b4ce-533961945ac5	HONDA	Accessori decespugliatori	ACC-MOTOSEGA	Accessorio motosega Honda	\N	250.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-747b2f09-a3d4-493b-9486-c136532b1d4b	HONDA	Multifunzione	UMC425E	Multifunzione UMC 425 E 25cc	\N	360.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-717d2721-1a09-4643-b203-2833fd5f0826	HONDA	Multifunzione	UMC435E	Multifunzione UMC 435 E 35cc	\N	450.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-54da5428-0b9d-4078-8196-c03c24ece0b4	HONDA	Accessori multifunzione	ACC-ASTA-FILO	Asta filo BC Honda	\N	110.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-5cfd7672-694c-44bf-8dcb-f08018ee2f5d	HONDA	Accessori multifunzione	ACC-POTATORE	Potatore PP Honda	\N	260.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-fb41d6e6-838c-45ef-a4c3-85017b63b84d	HONDA	Accessori multifunzione	ACC-TS-CORTO	Tagliasiepi albero corto HH SE Honda	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-c9b52f64-081b-4810-935a-b88c8a872d86	HONDA	Accessori multifunzione	ACC-TS-LUNGO	Tagliasiepi albero lungo HF LE Honda	\N	310.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-8027c014-9abd-451d-b529-ed97854a059e	HONDA	Accessori multifunzione	ACC-SOFFIATORE	Soffiatore BL Honda	\N	135.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-85f148ef-e512-4ba4-8709-264c6adaa0c4	HONDA	Accessori multifunzione	ACC-FRESA	Fresa CL Honda	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-3e4f0771-7072-4471-83c8-919d5e7e9312	HONDA	Accessori multifunzione	ACC-PROL-50	Prolunga cm 50 ES SE Honda	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-3fada626-33a5-4861-83d5-0a0cd93d446b	HONDA	Accessori multifunzione	ACC-PROL-100	Prolunga cm 100 ES LE Honda	\N	110.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-4c27cb2b-ebea-4109-8b63-3d9d63007ff9	HONDA	Rasaerba	HRG416PKEHC1	Rasaerba IZY HRG 416 PK EH C1 spinta 41cm 145cc	\N	440.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-9f41361b-269f-4537-a886-b6b095e99f20	HONDA	Rasaerba	HRG416SKEHC1	Rasaerba IZY HRG 416 SK EH C1 1vel. 41cm 145cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-1fd8b1b0-2407-4ec2-a591-333b9cf27c52	HONDA	Rasaerba	HRG466PKEHC1	Rasaerba IZY HRG 466 PK EH C1 spinta 46cm 145cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-e3dce1b5-8e5f-4781-b0d7-ecb3d4c3edaf	HONDA	Rasaerba	HRG466SKEHC1	Rasaerba IZY HRG 466 SK EH C1 1vel. 46cm 145cc	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-684b4075-dd3f-4300-a110-c50b2592fcf6	HONDA	Rasaerba	HRG466SKKEP	Rasaerba IZY HRG 466 SKK EP C1 Premium 1vel. 46cm 145cc	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-febb4d7e-c6ea-4e43-96d7-8ecb234926ac	HONDA	Rasaerba	HRN536CVK	Rasaerba HRN 536 C VK Varia 53cm 170cc	\N	890.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-27f2800b-23ba-474a-b83b-606cdd9709e9	HONDA	Rasaerba	HRN536CVY	Rasaerba HRN 536 C VY Frizione lama Varia 53cm 170cc	\N	1000.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-549f85b7-d50c-434e-a929-f4853621220a	HONDA	Rasaerba	HRX476C2VYEH	Rasaerba HRX 476 C2 VY EH Varia 47cm 170cc	\N	1120.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-9cea57a8-f4cc-4299-9cce-b78214bc9132	HONDA	Rasaerba	HRX476C2HYEH	Rasaerba HRX 476 C2 HY EH Idro 47cm 170cc	\N	1280.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-980235e4-8769-48b1-a928-d7817da4b8c1	HONDA	Rasaerba	HRX537C5VKEA	Rasaerba HRX 537 C5 VK EA Varia 53cm 200cc	\N	1100.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-cc2c0122-4b1c-4c1e-8c09-9633d28dc350	HONDA	Rasaerba	HRX537C5VYEA	Rasaerba HRX 537 C5 VY EA Varia 53cm 200cc	\N	1380.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-086718ed-8106-4ac4-87eb-7f60fd0d6131	HONDA	Rasaerba	HRX537C5HYEA	Rasaerba HRX 537 C5 HY EA Idro 53cm 200cc	\N	1520.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-6ec5d4ad-d20c-4089-ae03-59fb3f1ae1cd	HONDA	Rasaerba	HRX537C5HZEA	Rasaerba HRX 537 C5 HZ EA Avv.elett. Idro 53cm 200cc	\N	1780.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-7f8e510f-d577-4e24-af0a-ab5cf359d317	HONDA	Rasaerba	HRD536C3HXE	Rasaerba HRD 536 C3 HXE Idro 53cm 160cc	\N	1520.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-5844103e-fd41-49de-a409-9b0ee935fc8a	HONDA	Rasaerba	HRH536K4HXE	Rasaerba HRH 536 K4 HXE Prof. Idro 53cm 160cc	\N	2180.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-1b66bf67-049f-4ed0-9bf9-f82e7edbc7e5	HONDA	Rasaerba	UM536K3EE2	Rasaerba 3 ruote UM 536 K3 EE 2vel. 53cm 160cc	\N	2100.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-ade9ac54-b4a4-4da0-a781-1c33dbcee4d6	HONDA	Rasaerba	UM616K3EBE2	Rasaerba 3 ruote UM 616 K3 EB E2 Idro 53cm 160cc	\N	2650.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-010255ff-8c8a-4443-b5ed-83660807bf33	HONDA	Trattorini	HF2317HME	Trattorino HF 2317 HM E Idro 530cc 92cm	\N	4200.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-0d6a7fb2-a52f-4cd1-a58d-287dbf845a55	HONDA	Trattorini	HF2417K5HME	Trattorino HF 2417 K5 HM E Idro 530cc 102cm	\N	5300.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-c0845921-8a4b-477b-b1b3-683cfc7b9c7f	HONDA	Trattorini	HF2417K5HTE	Trattorino HF 2417 K5 HT E SC.El. Idro 530cc 102cm	\N	5650.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-97f0d20f-1fa1-4181-b4d4-e69b8d7c14ab	HONDA	Trattorini	HF2625HMEH	Trattorino HF 2625 HM EH Idro 690cc 122cm	\N	6350.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-f17c05c8-e9a9-4cb2-8dbc-e8f7b4c16d1c	HONDA	Trattorini	HF2625HTEH	Trattorino HF 2625 HT EH SC.El. Idro 690cc 122cm	\N	6500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-83e9a53b-d7fc-457b-a400-9af294be1bd1	HONDA	Accessori trattorini	KIT-MULCH-HF2317	Kit Mulching HF 2317	\N	140.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-58467921-7025-4268-94c7-9795fb399538	HONDA	Accessori trattorini	DEFL-SCARICO	Deflettore scarico Honda	\N	70.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-e50ac679-32c0-4e4d-8280-25cf479e5d33	HONDA	Accessori trattorini	GANCIO-TRAINO	Gancio traino Honda	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N
-180bea54-4fd3-42fe-941d-9d5b32074e05	GGP	Rasaerba	XP40	Rasaerba elettrica XP 40 spinta 1600W 38cm	\N	175.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-be6752f6-5fff-49ee-ad11-63bb42b8eefb	GGP	Rasaerba	XC43	Rasaerba XC 43 spinta 123cc OHV 41cm	\N	285.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-e87ee8a2-e2fb-4a9d-80ba-f4b7b8ca8cc0	GGP	Rasaerba	XC48	Rasaerba XC 48 spinta 123cc OHV 46cm	\N	310.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-b6d04120-a1af-4dbe-a47f-b302cc079bb0	GGP	Trattorini	RIDER-COMBI166HD	Rider Stiga Combi 166 HD Idro 8HP 66cm	\N	1900.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-b54d6b54-5085-4255-969c-f42e2200e6c0	GGP	Trattorini	XF135HD	Rider GGP XF 135 HD Stiga Idro 13HP 72cm	\N	2300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-21876c0a-4e8d-4f83-80bc-5474313c5f4b	GGP	Trattorini	XDC150HD	Trattorino GGP XDC 150 HD Idro 14,5HP 84cm	\N	2700.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-c69ee47d-8e9c-4b01-95b7-c8fada73fba6	GGP	Trattorini	XDC180HD	Trattorino GGP XDC 180 HD Idro 18HP bic. 98cm	\N	3500.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-13f45b29-789f-4013-88cb-d76408c5c793	GGP	Trattorini	PTX210HD	Trattorino GGP PTX 210 HD Idro 18HP bic. 102cm	\N	4300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-c61e2d4f-016d-4158-a4e4-ebe5e44dca5c	GGP	Accessori trattorini	KIT-MULCH-TAPPO	Kit Mulching solo tappo cm 72/84/92/102/122	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-9cf07208-1245-40f5-9482-f67f041b853f	GGP	Accessori trattorini	KIT-MULCH-LAME	Kit Mulching lame + tappo 72/84/92/102/122	\N	130.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-2fd76acd-35aa-47a4-a3a8-1ad24f3d0dee	GGP	Accessori trattorini	KIT-PARASASSI	Kit Parasassi cm 84/92/102/122	\N	140.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-cb075d98-f3e4-439a-a0cc-a7a0e208d010	GGP	Accessori trattorini	KIT-TRAINO-GGP	Kit traino GGP	\N	65.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-3ff4eb61-88c1-4228-8bec-7991c85f6118	GGP	Trattorini	XD150HD	Trattorino GGP XD 150 HD Idro 14HP 98cm scarico lat.	\N	2300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-e9d66e44-5ea4-4ba9-b17a-caf7d7f32f1d	GGP	Trattorini	XDL210HD	Trattorino GGP XDL 210 HD Idro 18HP bic. 108cm scarico lat.	\N	3100.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-6bf89149-0d5d-4cc9-9814-2696aab112c8	GGP	Accessori trattorini	TAPPO-MULCH-9898	Tappo Mulching 98/108	\N	60.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-2b429a7f-62b1-4b63-9d35-cb6a1907b949	GGP	Accessori trattorini	KIT-TRAINO-LAT	Kit traino scarico laterale	\N	60.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-182bd35b-6ae4-4120-a7b6-45062a5b2ac5	GGP	Trattorini	PARK500W	Trattorino Stiga Park 500 W Idro 18HP bic. 100cm frontale	\N	5300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-2516ddb9-95f4-42cc-8efc-59e28138d397	GGP	Accessori trattorini	LDC1002	Rimorchio LDC1002 102x76	\N	400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-b2f0a726-35cd-4739-86be-65a4b0974a36	GGP	Zero Turning	ZTX275RD	Zero Turning ZTX 275RD scar.post.+mulch B&S 24HP bic. 122cm	\N	7400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-207e9bcd-48aa-4429-86f5-4c79f19c8380	GGP	Zero Turning	ZTX350	Zero Turning ZTX 350 scarico lat. B&S 27HP bic. 132cm	\N	8400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-c96cd1dd-5345-4324-b712-78d39f517335	GGP	Accessori trattorini	KIT-MULCH-ZTX	Kit Mulching ZTX	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-71899647-6eda-4228-b25c-c5525787d78f	WORX	Soffiatori	WG505E	Soffiatore/aspiratore WG 505E 220V 3000W	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-7548979c-fc4a-4064-8f2d-8676a1b79bb2	WORX	Soffiatori	WG547E	Soffiatore WG 547E 1 batt. 2Ah	\N	139.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-c5eb530b-4055-44a6-a159-a15b187a21a4	WORX	Soffiatori	WG543E	Soffiatore WG 543E 1 batt. 4Ah	\N	210.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-8394ada0-f347-4ca9-98ab-16d04e897686	WORX	Motoseghe	WG894.9E	Seghetto a gattuccio WG894.9E	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-7eeecd81-41f5-4bf9-84e0-872a9c74ce34	WORX	Potatori	WG330E	Forbice WG330E 1 batt. 2Ah + carica	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-3d4b5551-300b-4aa0-8f95-830f11344e3e	WORX	Potatori	WG325E	Potatore a catena WG325E 1 batt. 2Ah + carica 20cm	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-1ad862f6-5e10-4791-92df-2c2adbb3958c	WORX	Potatori	WG349E	Potatore ad asta WG349E 1 batt. 2Ah + carica	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-9153d43d-f5c6-4f2d-a392-28770551a1a2	WORX	Tagliasiepi	WG252E	Tagliasiepe telescopico WG252E 1 batt. 2Ah + carica 45cm	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-fa179cf6-48a9-4af1-b343-190fd6dd6e01	WORX	Tagliasiepi	WG264E	Tagliasiepi WG264E 1 batt. 2Ah +/- 40 min.	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-8d984268-1455-48c7-a652-b9f050a122cb	WORX	Utensili	WX352	Trapano avvitatore WX352 2 batt. 2Ah + carica	\N	235.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-f3110b9d-3737-4fbe-930f-9205e4b36088	WORX	Utensili	WX352.9	Trapano avvitatore WX352.9	\N	140.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-97fcbe1c-1b17-42a7-9bd6-4713c6e0d1bb	WORX	Idropulitrici	HIDROSHOT	Lancia pressione Hidroshot	\N	160.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-8a086715-694b-4419-a2b6-744d5a7a8153	WORX	Decespugliatori	WG119E	Trimmer elettrico WG 119E 220V 550W	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-69d9c92b-c1bf-41ce-b2e7-49275eb07ca2	WORX	Decespugliatori	WG157E	Trimmer WG157E 1 batt. 2Ah 30 min.	\N	110.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-ab23fa29-f343-4c81-9222-c0d40e301c49	WORX	Decespugliatori	WG163E	Trimmer WG163E 2 batt. 2Ah 60 min.	\N	150.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-3c79e7bc-13f9-4fd5-b804-e72716c298f7	WORX	Batterie	KIT-POWER20	Kit Power 20 (1 batt. 2Ah + 1 carica)	\N	75.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-836fdb96-db42-4674-a0dd-0485f75c59fe	WORX	Batterie	BATT-2AH-20V	Batteria 2Ah 20V Worx	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-6b918d34-31d5-4ac2-89a0-5c9852685dd5	WORX	Batterie	BATT-4AH-20V	Batteria 4Ah 20V Worx	\N	80.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N
-4cafb52f-4089-41fc-8ebc-7f4588991cf0	HONDA	Robot rasaerba	HRM1000E	Robot rasaerba Honda Miimo HRM 1000E NEW 1000 m/q	1000 m/q	799.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-c64bf2ef-625d-4369-bc65-a74367156175	HONDA	Robot rasaerba	HRM1500	Robot rasaerba Honda Miimo HRM 1500 NEW 1500 m/q	1500 m/q	1300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-fb879db7-9ee6-4a55-bc55-69a92ee6092b	HONDA	Robot rasaerba	HRM2500	Robot rasaerba Honda Miimo HRM 2500 NEW 2500 m/q	2500 m/q	2200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-ba9ef082-03b4-404e-9f94-7b0bb1eed0e5	HONDA	Robot rasaerba	HRM1500EC	Robot rasaerba Honda Miimo HRM 1500 EC NEW 1500 m/q	1500 m/q	1700.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-63c27492-4515-401f-b143-a740f5034bf9	HONDA	Robot rasaerba	HRM2500EC	Robot rasaerba Honda Miimo HRM 2500 EC NEW 2500 m/q	2500 m/q	2560.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-5b722c6b-348a-4e46-9a32-1ca85b9d14db	HONDA	Robot rasaerba	HRM4000EC	Robot rasaerba Honda Miimo HRM 4000 EC NEW 4000 m/q	4000 m/q	3100.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-5a5cc2f3-8ac8-426a-9966-215de327af88	HONDA	Accessori robot	COPERTURA-40-70	Copertura stazione Miimo 40/70	\N	167.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-07f93c28-15be-45c1-8847-d87e02da74ee	HONDA	Accessori robot	COPERTURA-310-520	Copertura stazione Miimo 310/520/3000	\N	240.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-831324d4-a3ad-444a-80bf-75547459ab1e	SEGWAY	Robot rasaerba	NAVIMOW-108J	Navimow 108 J + kit 4G 800 m/q 5,1Ah 18cm	800 m/q	1000.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-00a0dc99-50ad-41a8-a06d-b372f3a711a4	SEGWAY	Robot rasaerba	NAVIMOW-I210AWD	Navimow I210 AWD 1000 m/q 18cm	1000 m/q	1200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-7643514e-f21f-4334-abe2-3319774b4dbe	SEGWAY	Robot rasaerba	NAVIMOW-H1500E	Navimow H1500E + Vision Fence 1500 m/q 7,65Ah 21cm	1500 m/q	1900.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-0b5b72a4-ecb5-4c58-b593-9fa8e29f1a6f	SEGWAY	Robot rasaerba	NAVIMOW-H206E	Navimow H 206E 600 m/q	600 m/q	1700.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-87490a58-5166-49aa-8a63-61cba1caaa13	SEGWAY	Robot rasaerba	NAVIMOW-H210E	Navimow H 210E 1000 m/q	1000 m/q	1900.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-922fcc1a-fe71-4e2b-8130-dd492e912e5a	SEGWAY	Robot rasaerba	NAVIMOW-H215E	Navimow H 215E 1500 m/q	1500 m/q	2200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-dfbf376c-7a60-4b54-ae3b-ef4fe8a7ed2f	SEGWAY	Robot rasaerba	NAVIMOW-H230E	Navimow H 230E 3000 m/q	3000 m/q	2600.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-3f2e266c-8916-4cbf-b9a5-469791524361	SEGWAY	Robot rasaerba	NAVIMOW-X3-315E	Navimow X3 315E 1500 m/q 6Ah 23,7cm	1500 m/q	2300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-d78662ea-05ed-42d8-8920-9a613f8bc0b3	SEGWAY	Robot rasaerba	NAVIMOW-X3-330E	Navimow X3 330E 3000 m/q 8Ah 23,7cm	3000 m/q	2800.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-39c0173b-6ddb-4feb-b487-ea42163a80aa	SEGWAY	Robot rasaerba	NAVIMOW-X3-350E	Navimow X3 350E 5000 m/q 10,4Ah 23,7cm	5000 m/q	3300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-8197bdce-b221-47fa-891d-7d675773ab1f	SEGWAY	Robot rasaerba	NAVIMOW-X3-390E	Navimow X3 390E 10000 m/q 12,8Ah 23,7cm	10000 m/q	4200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-9c718f86-3abd-4cb8-a86f-7130bab2cb78	SEGWAY	Robot rasaerba	NAVIMOW-X420E	Navimow X420E AWD 2000 m/q	2000 m/q	2500.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-85ac699e-c11d-4103-a692-34c76737c938	SEGWAY	Robot rasaerba	NAVIMOW-X430E	Navimow X430E AWD 3000 m/q	3000 m/q	2800.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-9ccc1456-8a9e-4e72-b50f-3b42d0ed2e77	SEGWAY	Robot rasaerba	NAVIMOW-X450E	Navimow X450E AWD 5000 m/q	5000 m/q	3200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-21052d05-0bc8-41ec-85a4-c288e4f70365	SEGWAY	Robot rasaerba	TERRANOX-120M1	Navimow Terranox CM 120 M1 AWD 12000 m/q 43cm	12000 m/q	5500.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-3225dbe8-2b5f-4906-8309-350669453e7c	SEGWAY	Robot rasaerba	TERRANOX-240M1	Navimow Terranox CM 240 M1 AWD 24000 m/q 43cm	24000 m/q	7000.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-5841397e-3194-4784-a780-7233cdab7cd9	SEGWAY	Accessori robot	NAV-KIT-ANTENNA	Kit estensione antenna Navimow 754840	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-80dea37e-e75a-453a-81b0-e8f4f0a389e6	SEGWAY	Accessori robot	NAV-PROL-ANTENNA	Prolunga cavo antenna Navimow 754880	\N	30.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-73cc8911-7ab7-41dd-ac90-4cfd7148d1c9	SEGWAY	Accessori robot	NAV-VISION-FANCE	Kit Vision Fance Navimow 754920	\N	290.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-b4b33286-9154-4d5a-836c-42b60c3ccc67	SEGWAY	Accessori robot	NAV-KIT-USS	Kit sensori ultrasuoni Navimow 754860	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-1ed71ef6-0ca5-45c7-bfa7-8c937b640218	SEGWAY	Accessori robot	NAV-GARAGE-S	Garage S Navimow 755200	\N	150.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-5cec1f81-d77c-47b1-82b3-8abee067c776	SEGWAY	Accessori robot	NAV-GARAGE-M	Garage M Navimow 755210	\N	200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-b2612e50-0406-44c0-91f2-86564dca3676	SEGWAY	Accessori robot	NAV-GARAGE-L	Garage L X3 Navimow 755310	\N	250.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-2c98f7ac-c3ec-4e99-b235-fe51fe476921	SEGWAY	Accessori robot	NAV-KIT-TRIMMER-X3	Kit Trimmer X3 755390	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-d53f36c8-3c89-461a-90e7-fd32bc887b3a	SEGWAY	Accessori robot	NAV-ANTENNA-SEC-X3	Kit antenna secondaria X3 755380	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-1ed215ae-e0ab-4926-a49d-022da95c8905	SEGWAY	Accessori robot	NAV-ADATT-ANT-X3	Adattatore trasformatore antenna X3 755330	\N	30.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-3e4ac52a-6180-48e5-b314-2f8a8a919dd3	SEGWAY	Accessori robot	NAV-EST-ANT-10M	Kit estensione antenna 10mt X3 755320	\N	30.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-cfdd349a-5bea-4a65-bed0-4bfbe333633a	SEGWAY	Accessori robot	NAV-KIT-MONT-ANT	Kit montaggio antenna 755340	\N	60.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-64cb2758-5dde-4760-8794-a39f0943178d	STIHL	Robot rasaerba	RMI422	Robot rasaerba Stihl iMOW RMI 422 800 m/q 20cm	800 m/q	700.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-7fb70acf-4dd7-4cde-8f5e-daa5bd2d2ce5	STIHL	Robot rasaerba	IMOW5	Robot rasaerba Stihl iMOW 5 1500 m/q 28cm	1500 m/q	1750.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-469f7541-dd79-4cc2-b0eb-ce46418c67d7	STIHL	Accessori robot	IMOW-TETTUCCIO	Tettuccio parasole ribaltabile iMOW	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-3dc5db8e-73b9-43bc-8e3b-1a363c7371e2	WORX	Robot rasaerba	WR147E1	Robot Landroid WR 147E1 L 1000 m/q 18cm	1000 m/q	890.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-ed62da0a-6099-4cf1-8263-cb2b985332af	WORX	Accessori robot	KIT-RUOTE-141	Kit ruote appesantite x 141/165/167	\N	90.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-9172417e-c1b8-4946-bf08-1f4ac822d5c3	WORX	Accessori robot	KIT-RUOTE-148	Kit ruote appesantite x 148/147/155	\N	130.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-04cd2adc-26a1-478a-b19f-40040b85e203	WORX	Accessori robot	KIT-USS-ACS	Kit sensori ultrasuoni ACS Landroid	\N	240.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-47a43941-4feb-4572-aa4d-6ae33846b2d2	WORX	Accessori robot	CAPPOTTINA-LAND	Cappottina apribile Landroid	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-c85ee23c-3493-4c5c-9e5d-4995a6e65732	WORX	Accessori robot	KIT-BASE-141	Kit base ricarica x 141/167/148/167	\N	210.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-b1021e75-7b0f-4c19-93a3-5dcf83156243	WORX	Accessori robot	KIT-BASE-143	Kit base ricarica x 143/147/155	\N	230.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-55507625-96e4-4e75-bcfc-a73084ac2527	WORX	Batterie	BATT-20V-4AH-PRO	Batteria 20V 4,0Ah PRO Landroid	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-9102b382-8457-4db4-a9e8-617bcee83a73	SEGWAY	Robot rasaerba	YARBO-RASAERBA	Yarbo + modulo rasaerba 25.000 m/q 50cm	25000 m/q	7200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N
-e490d332-4ab0-446b-914a-692d4d14b227	GRILLO	Motocoltivatori	G45	Motocoltivatore G 45 contror. 50cm KH 5,5HP 1 marcia	\N	1671.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-049138dc-489e-470d-9aaf-1e88d318e188	GRILLO	Motocoltivatori	G46	Motocoltivatore G 46 contror. 50cm KH 5,5HP 1+1 marce	\N	2466.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-51bf137e-dd8f-4a54-a3be-4b9234b94fac	GRILLO	Motocoltivatori	G55	Motocoltivatore G 55 fresa 58cm R 5,0HP 2+2 marce	\N	2663.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-790d9dfd-2071-431c-98b1-30622270975b	GRILLO	Motocoltivatori	G85D-LONC-S	Motocoltivatore G 85d 58cm Loncin 300 9,3HP B 2+2 strappo	\N	3649.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-207e3768-d381-44ae-8fa7-1d296a134a51	GRILLO	Motocoltivatori	G85D-RATO-E	Motocoltivatore G 85d 58cm Rato 8,5HP B 2+2 elettrico	\N	4026.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-5ac4a9fa-57b7-484c-82ae-182b3ceb2e01	GRILLO	Motocoltivatori	G85D-L350-E	Motocoltivatore G 85d 58cm L 350cc Diesel 2+2 elettrico	\N	5590.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-2189a336-6239-4983-b13a-e6689713063f	GRILLO	Motocoltivatori	G107D-LONC-S	Motocoltivatore G 107d 58cm Loncin 300 9,3HP B 3+3 strappo	\N	3920.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-560580d2-539e-4a62-a247-96e2e4d87a52	GRILLO	Motocoltivatori	G107D-RATO-E	Motocoltivatore G 107d 68cm Rato 8,5HP B 3+3 elettrico	\N	4460.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-ceee56c0-7164-41eb-91da-08f8c8481df4	GRILLO	Motocoltivatori	G107D-L440-E	Motocoltivatore G 107d 68cm L 440cc Diesel 3+3 elettrico	\N	6500.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-9fd0549b-0f6e-46f0-985f-844de28b9882	GRILLO	Motocoltivatori	G131	Motocoltivatore G 131 68cm L 440cc Diesel 4+2 elettrico	\N	7000.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-8edfbe3a-0875-4fd7-a795-db8ca7f1ed62	GRILLO	Accessori motocoltivatori	FRESA-68-G85	Fresa controrottante registrabile G 85/107 da cm 68	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-b0a39887-1494-4ea3-ac41-b2ca2f8de64e	GRILLO	Accessori motocoltivatori	FRESA-68-G108	Fresa controrottante registrabile G 108/110 da cm 68	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-6ea0be0d-dc64-4390-afb0-380eaf35a7c7	GRILLO	Accessori motocoltivatori	FRESA-DOPPIA-G85	Fresa doppia rotazione G 84/85d cm 60	\N	100.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-83ee09f5-db3f-4e10-ba8f-af2fc8439ef1	GRILLO	Motocoltivatori	MAX1	Motocoltivatore MAX 1 58cm Loncin 5,5HP B 2+2 strappo	\N	2380.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-90e18323-94ab-456a-8b91-12f1eae7b93e	GRILLO	Motocoltivatori	MAX2	Motocoltivatore MAX 2 dif. 58cm GD 349cc Diesel 2+2 elettrico	\N	3950.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-94890420-e965-4d20-a0e1-40792495f20a	GRILLO	Motocoltivatori	MAX3	Motocoltivatore MAX 3 dif. 68cm GD 440cc Diesel 2+2 elettrico	\N	4350.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-1ea2b904-f562-4576-b9dd-a4987d7667b0	GRILLO	Trimmer	HWT570	Trimmer HWT 570 Multiforce 140cc spinta	\N	1205.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-43a0d4cb-fb5a-473c-b630-b8a8d87b74fe	GRILLO	Accessori trimmer	KIT-SPAZ-350	Kit spazzola mm 350 x HWT 570	\N	464.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-3cb8f18d-524b-4bc4-8576-8adff67adf63	GRILLO	Trimmer	HWT600WD	Trimmer HWT 600 WD H 160cc 1 marcia	\N	1413.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-5acba464-d17b-45b2-9ced-e9829b22a564	GRILLO	Climber	CL7.15	Climber CL 7.15 85cm L15 Idro elettrico	\N	6250.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-800e615c-1234-416f-9eb5-2ea0e428bc9b	GRILLO	Climber	CL7.18	Climber CL 7.18 85cm B18 Idro elettrico	\N	7987.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-e06ed14a-9814-4ea6-ac98-0ca8fe0709e4	GRILLO	Climber	CL9.18	Climber CL 9.18 91cm B18 Idro elettrico	\N	10860.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-2f61d1f4-3a80-4a9c-b904-a3037baf5543	GRILLO	Climber	CL9.22	Climber CL 9.22 91cm B22 Idro elettrico	\N	11985.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-ba147987-aaaa-4990-80d3-0af04d0669cd	GRILLO	Climber	CL10AWD22	Climber 10 AWD 22 B22 Idro elettrico	\N	13634.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-a148e329-e353-47a4-beda-5ad1b823f4d0	GRILLO	Climber	CL10AWD27	Climber 10 AWD 27 B27 Idro elettrico	\N	15811.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-3565a8d6-60a0-4216-a45c-83de9e73c90d	GRILLO	Climber	FD220R-L15	FD 220 R L15 Idro elettrico	\N	6021.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-0dbed7da-4861-49f6-9da9-36dc9a92fe45	GRILLO	Climber	FD220R-B16	FD 220 R B16 Idro elettrico	\N	7421.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-d14ce3a3-da7a-476d-88ce-0fdac3e85c1e	GRILLO	Climber	FD280R-B16	FD 280 R B16 Idro elettrico	\N	9466.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-468babca-e25c-4401-abb3-772c43918536	GRILLO	Climber	FD450	FD 450 113cm Lt.450 B22 Idro elettrico	\N	12610.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-6c8ff67a-b3af-4cb3-ad4e-849c08548715	GRILLO	Climber	FD500	FD 500 113cm Lt.700 K20 Idro elettrico	\N	20280.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-3f1e51dc-4e63-4460-ba2c-4cb533228b98	GRILLO	Climber	FX27	FX 27 B27 Idro elettrico	\N	11636.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-13886f11-a5df-41f7-bbd7-0fdd34ac5118	PASQUALI	Motocoltivatori	SB28-H5.5	Motocoltivatore SB 28 Powersafe 52cm Honda 5,5HP	\N	2990.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-635e65c4-0070-479e-a00e-dee3ff8043a6	PASQUALI	Motocoltivatori	SB38-H9	Motocoltivatore SB 38 Powersafe 66cm Honda 9HP	\N	3900.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-845ae13b-9d54-4bec-81d6-5e082d10be94	PASQUALI	Motocoltivatori	SB38-H9AE	Motocoltivatore SB 38 Powersafe 66cm Honda 9HP AE	\N	4350.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-b2b3ad6f-370b-4d96-94e8-9ff923c91401	PASQUALI	Motocoltivatori	SB38-H11	Motocoltivatore SB 38 Powersafe 66cm Honda 11HP	\N	4100.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-be9ea809-ea06-4648-ba0f-628b1fed2094	PASQUALI	Motocoltivatori	SB38-KD8	Motocoltivatore SB 38 Powersafe 66cm Kohler Diesel 8HP	\N	4850.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-d64173d7-3b7f-4f3d-bf22-9bfdbcf8261b	PASQUALI	Motocoltivatori	SB38-KD8AE	Motocoltivatore SB 38 Powersafe 66cm Kohler Diesel 8HP AE	\N	5200.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-cfafa167-f71f-4e43-9ee8-66cd1e6e1e8b	PASQUALI	Accessori motocoltivatori	KIT-COFANO-SB38	Kit cofano motore SB 38	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-950c8956-1af4-44eb-bcf2-39a773a21b4f	PASQUALI	Motocoltivatori	XB40-H12	Motocoltivatore XB 40 Powersafe 80cm Honda 12HP	\N	4300.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-55de7ba6-331e-47f4-90f2-f3777fc9e436	PASQUALI	Motocoltivatori	XB40-H12AE	Motocoltivatore XB 40 Powersafe 80cm Honda 12HP AE	\N	4800.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-28d9788b-d052-4653-8332-f96d0411cd24	PASQUALI	Motocoltivatori	XB40-Y10	Motocoltivatore XB 40 Powersafe 80cm Yanmar 10HP	\N	4950.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-205c6e26-510c-4873-9d0e-bba306a4ccc7	PASQUALI	Motocoltivatori	XB40-Y10AE	Motocoltivatore XB 40 Powersafe 80cm Yanmar 10HP AE	\N	5450.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-0c27df23-fb2c-4a3e-87f2-4502382b349a	PASQUALI	Accessori motocoltivatori	KIT-COFANO-XB40	Kit cofano motore XB 40	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-a57f9c31-bb1b-41a9-a94e-1b74cd96713c	PASQUALI	Accessori motocoltivatori	ATTACCO-RAPIDO	Attacco rapido Pasquali	\N	170.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-cad71d88-355e-4267-a6e4-a237235d4ae9	PASQUALI	Motocoltivatori	XB50-KD12AE	Motocoltivatore XB 50 Powersafe 85cm Kohler D440 12HP AE	\N	6750.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-eb6a01b1-37b9-4613-92af-0b705c0df5a4	PASQUALI	Motocoltivatori	XB80HY-H12	Motocoltivatore idrostatico XB 80 HY 80cm Honda 12HP	\N	5500.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-bab82e37-ff10-403d-b330-9ee1752122e3	PASQUALI	Motocoltivatori	XB80HY-H12AE	Motocoltivatore idrostatico XB 80 HY 80cm Honda 12HP AE	\N	6100.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-4ebb156f-8bd5-4c2e-a838-13a786b1004d	PASQUALI	Motocoltivatori	XB80HY-Y10AE	Motocoltivatore idrostatico XB 80 HY 80cm Yanmar 10HP AE	\N	6750.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N
-d1402f67-d269-4583-b899-00d3e44e555d	STIHL	Motoseghe	MA04-011-5800	MSA 60.0 C-B 1/4"P	\N	199.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-5c19d988-ec2a-4194-b4fd-9f2e636035f4	STIHL	Motoseghe	MA04-011-5806	MSA 60.0 C-B 1/4"P SET BATTERIA/CARICA	\N	339.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-784cde8c-67a4-4c79-8f1e-7eef31d3f8da	STIHL	Motoseghe	MA04-011-5816	MSA 70.0 C-B 1/4"P	\N	239.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-8743fb88-a213-4351-98cb-968374f8b025	STIHL	Motoseghe	MA04-011-5822	MSA 70.0 C-B 1/4"P SET BATTERIA/CARICA	\N	409.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-d696df48-c4fa-4758-bb24-5867e614c8bd	STIHL	Motoseghe	MA04-011-5843	MSA 80.0 C-B 1/4"P	\N	389.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-78e08819-aa6a-4abd-984d-3ccc50ba09d8	STIHL	Motoseghe	MA04-011-5832	MSA 80.0 C-B 1/4"P SET BATTERIA/CARICA	\N	559.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-67be2e90-81f9-4b56-ba77-aed1f2ded491	STIHL	Motoseghe	MA03-200-0004	MSA 160.0 C-B Doppia impugnatura 30cm/12"	\N	350.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-406da2e9-647f-4a18-91d7-752d846c991d	STIHL	Motoseghe	1252-200-0043	MSA 161 T 25cm/10"	\N	400.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-87007a16-9b3e-4ae7-8fd7-4eac30c21ad8	STIHL	Motoseghe	1252-200-0044	MSA 161 T 30cm/12"	\N	410.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-b2f45a39-1f4c-40a6-84c1-57ddde9498a1	STIHL	Motoseghe	MA05-200-0000	MSA 190.0 T 30cm/12"	\N	350.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-a5ea0533-2788-43fe-a5a0-c8fb4bde4458	STIHL	Motoseghe	MA03-200-0010	MSA 200.0 C-B 30cm/12"	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-ebbd5424-1e9e-4249-9a57-e76061986b0d	STIHL	Motoseghe	MA01-200-0002	MSA 220.0 TC-O Livello olio 30cm/12"	\N	770.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-5bfed3f3-0bca-4cd8-8eb9-329348d7e13c	STIHL	Motoseghe	MA01-200-0003	MSA 220.0 TC-O Livello olio 35cm/14"	\N	780.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-71b022f1-3693-4dc5-97ff-07488c2b7a95	STIHL	Motoseghe	MA01-200-0021	MSA 220.0 T 30cm/12"	\N	560.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-ca7abb81-312b-4fa0-b282-39b22da8bc1a	STIHL	Motoseghe	MA01-200-0022	MSA 220.0 T 35cm/14"	\N	570.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-08abe05a-3632-478f-a587-dbff5cb7d073	STIHL	Motoseghe	MA03-200-0020	MSA 220.0 C-B 35cm/14"	\N	460.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c79717e1-ed81-4827-942a-26191b52173e	STIHL	Motoseghe	MA03-200-0021	MSA 220.0 C-B 40cm/16"	\N	470.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-8aa85b7a-f73c-4f8b-b83d-7dad6ddc0a25	STIHL	Motoseghe	MA03-200-0027	MSA 220.0 C-B Catena DURO 3 35cm/14"	\N	490.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-6cef6b80-016f-484b-80f3-4eeb74af53e0	STIHL	Motoseghe	MA02-200-0004	MSA 300.0 40cm/16"	\N	760.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-9b71f0ed-c1f8-4cd2-b019-01544f55ace0	STIHL	Motoseghe	MA02-200-0007	MSA 300.0 45cm/18"	\N	770.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-98960e29-fb96-483e-953d-a75aa0579a77	STIHL	Motoseghe	MA02-200-0082	MSA 300.1 C-O Livello olio 40cm/16"	\N	850.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-4bfad4a8-fdda-444f-a6a0-9fc834cf9586	STIHL	Motoseghe	MA02-200-0092	MSA 300.1 C-O Livello olio 45cm/18"	\N	860.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-6c540c9f-4d29-4fa0-9a87-5dc823858e0a	STIHL	Motoseghe	1208-200-0304	MSE 141 C-Q 30cm/12" 61PMM3	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c08d4a0c-5e06-4b01-a699-eee17c63e713	STIHL	Motoseghe	1208-200-0332	MSE 141 C-Q 35cm/14" 61PMM3	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-67fa2c57-1f05-4f58-a24b-8ab4444ab75a	STIHL	Motoseghe	1209-200-0154	MSE 170 C-Q 30cm/12" 61PMM3	\N	270.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-54713263-d206-4ab3-93e2-ae71751d3bf8	STIHL	Motoseghe	1209-200-0155	MSE 170 C-Q 35cm/14" 61PMM3	\N	280.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-000e2339-6dbd-4c82-b752-166d48c9dc47	STIHL	Motoseghe	1209-200-0157	MSE 190 C-Q 35cm/14" 63PM3	\N	320.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c218006c-8038-491d-a782-dcd082fcffb6	STIHL	Motoseghe	1209-200-0180	MSE 190 C-Q 40cm/16" 63PM3	\N	330.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-206b69e5-fc8a-40ab-b352-d9749aaeb982	STIHL	Motoseghe	1209-200-0160	MSE 210 C-BQ 35cm/14" 63PM3	\N	380.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-7b35be7c-d63a-4da0-9399-ab2137380d19	STIHL	Motoseghe	1209-200-0179	MSE 210 C-BQ 40cm/16" 63PM3	\N	390.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-43441b97-9473-4e75-84e5-1fd99159deb9	STIHL	Motoseghe	1148-200-0002	MS 162 61PMM3	\N	199.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-eee1ef3f-3efc-4220-a170-d02d39b76543	STIHL	Motoseghe	1148-200-0003	MS 162 C-BE 61PMM3	\N	240.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-36099197-731c-4118-902f-d555f1bda361	STIHL	Motoseghe	1148-200-0011	MS 172 35cm/14" 63PM3	\N	270.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-ba96b567-45ea-4b93-993e-30fcfd4aedff	STIHL	Motoseghe	1148-200-0014	MS 172 40cm/16" 63PM3	\N	280.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-83da1d1a-6303-4a7a-af99-f2b292f4b28c	STIHL	Motoseghe	1148-200-0033	MS 172 C-BE 35cm/14" 63PM3	\N	320.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-38fa7821-4d74-4ef1-9559-e2248df9d4ba	STIHL	Motoseghe	1148-200-0035	MS 172 C-BE 40cm/16" 63PM3	\N	330.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-f832aabc-fb54-48fe-9c31-75688265c271	STIHL	Motoseghe	1148-200-0064	MS 182 40cm/16" 63PM3	\N	370.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-07041881-8e1a-4243-bdf0-31514bd93d05	STIHL	Motoseghe	1148-200-0104	MS 182 C-BE 40cm/16" 63PM3	\N	420.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-9087494f-401d-4d4f-b0e4-af6a4a56c2b8	STIHL	Motoseghe	1146-200-0056	MS 151 TC-E 1/4"P 25cm	\N	420.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-8c07ff2d-ff35-446b-bd78-151e2c7b9734	STIHL	Motoseghe	1146-200-0057	MS 151 TC-E 1/4"P 30cm	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-dd684010-ff43-4971-b2f3-88cc79f7d917	STIHL	Motoseghe	1146-200-0071	MS 151 TC-E ErgoStart 1/4"P 30cm	\N	560.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-584c1500-1f0e-4d91-9420-18698d7755e8	STIHL	Motoseghe	1146-200-0054	MS 151 C-E 1/4"P 25cm	\N	510.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c854dcf3-bae9-4894-a5dd-b4723e24e8c6	STIHL	Motoseghe	1146-200-0055	MS 151 C-E 1/4"P 30cm	\N	520.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-70a20dcb-3a00-43d8-a03e-138290013578	STIHL	Motoseghe	1146-200-0059	MS 151 C-E 1/4"P ErgoStart 30cm	\N	570.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-5d067119-ae24-4389-ad06-7b5631a2de45	STIHL	Motoseghe	1137-200-0312	MS 194 T 1/4"P 35cm/14"	\N	370.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-bb8d32ee-8cc9-461e-91f2-0439fc4cbf1d	STIHL	Motoseghe	1137-200-0314	MS 194 T 1/4"P 30cm/12" 71PM3	\N	360.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-a1b730e4-f5c4-4c02-9e25-72dfa4a3cdb4	STIHL	Motoseghe	1137-200-0322	MS 194 T 3/8"P 30cm/12"	\N	360.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-5adbce03-39f6-4120-a062-ab10663e3595	STIHL	Motoseghe	1137-200-0323	MS 194 T 3/8"P 35cm/14"	\N	370.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-b4ef9001-56f3-4965-ab77-ea54dc84cd72	STIHL	Motoseghe	1137-200-0324	MS 194 TC-E 3/8"P ErgoStart	\N	460.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-4d1628e7-bfe7-41ab-ba34-ed5efe428474	STIHL	Motoseghe	1137-200-0332	MS 194 C-E 30cm/12" 61PMM3	\N	450.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-57f31eb4-7942-41a2-b57f-230fabfa2a61	STIHL	Motoseghe	1137-200-0334	MS 194 C-E 1/4" ErgoStart	\N	490.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-7c5fc548-370c-42e4-98f4-3c0d9c3fc980	STIHL	Motoseghe	1137-200-0340	MS 194 T 1/4"P 30cm/12" 71PM3 ErgoStart	\N	480.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-f2ffddeb-2be2-448d-bb02-94e19fd0a38a	STIHL	Motoseghe	1137-200-0370	MS 194 TC-E 35cm/14" 61PMM3	\N	470.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c5994396-7b64-4734-9da5-92cbfe4b015c	STIHL	Motoseghe	1145-200-0263	MS 201 C-M 3/8"P Doppia impugnatura 35cm/14"	\N	890.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-ccd469c1-b001-4ccd-803b-c3f63362daed	STIHL	Motoseghe	1145-200-0264	MS 201 C-M 3/8"P Doppia impugnatura 40cm/16"	\N	900.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-0acf8ff3-aff9-451a-a177-3fc6d38a163a	STIHL	Motoseghe	1145-200-0267	MS 201 TC-M 3/8"P 35cm/14"	\N	900.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-6bd72b71-f965-4c62-b0d9-06cd5c58752e	STIHL	Motoseghe	1145-200-0270	MS 201 TC-M 3/8"P 30cm/12"	\N	890.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-9583fc05-4640-4f7b-98bd-0b33c528b836	STIHL	Motoseghe	1148-200-0139	MS 212 35cm/14" 63PM3	\N	440.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-cd894a55-8641-4655-ae90-f0852e87afda	STIHL	Motoseghe	1148-200-0144	MS 212 40cm/16" 63PM3	\N	450.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-5839942b-2ba1-4426-9eb0-07f6cf6dd3f2	STIHL	Motoseghe	1148-200-0179	MS 212 C-BE 35cm/14" 63PM3	\N	480.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-834ad20f-47fd-48a5-be8f-39647b530234	STIHL	Motoseghe	1148-200-0184	MS 212 C-BE 40cm/16" 63PM3	\N	490.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-27b5cb47-7181-4549-a737-667e6f8bb37a	STIHL	Motoseghe	1143-200-0684	MS 231 40cm/16" 23RMS	\N	510.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-f16d219e-2adb-4a68-b9f8-93b81e7a3f56	STIHL	Motoseghe	1143-200-0688	MS 231 C-BE 40cm/16" 23RMS	\N	550.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-e8f2d4ca-8644-41f5-9efa-73aee102c2ea	STIHL	Motoseghe	1143-200-0721	MS 231 45cm/18" 23RMS	\N	520.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-570b7c8a-d0d1-4ed2-8b56-01be1b7f92cb	STIHL	Motoseghe	1143-200-0722	MS 231 C-BE 45cm/18" 23RMS	\N	550.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-41cb45bb-5b14-4495-8bd7-bd3578728a5d	STIHL	Motoseghe	1143-200-0683	MS 251 40cm/16" 23RMS	\N	570.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-227a415e-7cde-4a1b-96dc-dda5b07124ff	STIHL	Motoseghe	1143-200-0686	MS 251 C-BE 40cm/16" 23RMS	\N	630.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-72894bf7-0f62-4cea-90c6-d0f7b7851de5	STIHL	Motoseghe	1143-200-0719	MS 251 45cm/18" 23RMS	\N	580.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-17a12215-89cc-47de-9bb8-dafaa0832e13	STIHL	Motoseghe	1143-200-0720	MS 251 C-BE 45cm/18" 23RMS	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-bd8e8084-de32-476a-932a-6ed732f605d6	STIHL	Motoseghe	1141-200-0647	MS 261 C-M 40cm/16"	\N	1000.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c6c5ba7f-49a2-4d9e-a3e5-c2bdf25ca698	STIHL	Motoseghe	1141-200-0649	MS 261 C-BM 40cm/16"	\N	1030.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-d284786b-47e7-43b6-b642-7ab2813c0a3b	STIHL	Motoseghe	1141-200-0651	MS 261 C-M VW 40cm/16"	\N	1100.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-8d4faee1-d50b-40a7-b68a-06e6a53dbe84	STIHL	Motoseghe	1141-200-0652	MS 261 C-M 45cm/18"	\N	990.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-7b89b8c7-22c4-48dd-9ffd-f5dd5c2b2511	STIHL	Motoseghe	1141-200-0665	MS 261 C-BM 45cm/18"	\N	1040.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-4daf7a5a-abe2-4348-9fdd-ae6e3b424ac8	STIHL	Motoseghe	1141-200-0645	MS 271 40cm/16"	\N	690.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c6ce4e42-e4f5-4ba7-b3ba-17228088c59e	STIHL	Motoseghe	1141-200-0660	MS 271 45cm/18"	\N	700.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-717f5ec5-2e0d-4f12-b18d-3b8451806926	STIHL	Motoseghe	1141-200-0687	MS 291 40cm/16" 36RM	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-5f7c860a-f923-431b-8dd4-f7e223184c58	STIHL	Motoseghe	1141-200-0690	MS 291 45cm/18" 36RM	\N	750.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-1bd57e8d-f53d-405d-9fe3-4618b3115490	STIHL	Motoseghe	1140-200-0777	MS 311 50cm/20" 36RM	\N	850.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-f6ba46a0-928b-473b-9fc0-68385fd15130	STIHL	Motoseghe	1140-200-0741	MS 391 50cm/20" 36RM	\N	910.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-289ab526-aeeb-4335-a6df-445a35c997dd	STIHL	Motoseghe	MB01-200-0008	MS 400.1 C-M 50cm/20" 36RS	\N	1360.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-ac139512-072c-46eb-9e0b-467db70e5be1	STIHL	Motoseghe	1142-200-0032	MS 462 C-M 50cm/20" 36RS3	\N	1400.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-44c94cff-94a6-40c2-a826-ac8399e7b8dc	STIHL	Motoseghe	1142-200-0033	MS 462 C-M 63cm/25" 36RS3	\N	1430.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-4fb27da2-5dff-4093-aa5d-777140de66a9	STIHL	Motoseghe	1147-200-0000	MS 500i 3/8"R 50cm/20" 36RS	\N	1700.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-91f5a8dd-65e5-448e-9a70-aca5aa9bb8c2	STIHL	Motoseghe	1147-200-0001	MS 500i 3/8"R 63cm/25" 36RS	\N	1720.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-1cfdee12-250e-4c0d-8ffd-bbf30c9cc772	STIHL	Motoseghe	1144-200-0319	MS 661 C-M 71cm/28" 36RS	\N	1630.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-2de24e24-a5fc-4e0a-ae8e-14d1f8532801	STIHL	Motoseghe	1144-200-0322	MS 661 C-M 63cm/25" 36RS	\N	1600.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-75d9cad5-4bcc-4ba4-b0fd-4f449ca6a89e	STIHL	Motoseghe	1124-200-0204	MS 881 90cm/36" 46RS	\N	1990.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-a3eb8d62-1fd7-4514-a644-1a5d3e108ebc	STIHL	Motoseghe	1124-200-0206	MS 881 105cm/41" 46RS	\N	2020.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N
-c7e6e274-3e3c-454f-b7fd-53459889b3ea	NEGRI	Biotrituratori	R70B-B&S	Biotrituratore R70 B motore B&S 550e 140cc lame	\N	790.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-12c0760a-86f6-4c50-8f87-87813d3fc831	NEGRI	Biotrituratori	R70B-H	Biotrituratore R70 B motore Honda GCV 160cc lame	\N	890.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-8444c3fd-a528-4150-a448-aab6172cbbac	NEGRI	Biotrituratori	R70D-B&S	Biotrituratore R70 D motore B&S 550e 140cc dischi	\N	790.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-3b179d1a-c1a8-4cd9-9717-0e0cd94becee	NEGRI	Biotrituratori	R70D-H	Biotrituratore R70 D motore Honda GCV 160cc dischi	\N	890.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-0ed80835-c9f0-4778-ac65-99e8dceab5d3	NEGRI	Biotrituratori	R95B-H	Biotrituratore R95 B motore Honda GX 160cc lame	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-97033540-18a2-45c4-b502-318be7fcdd09	NEGRI	Biotrituratori	R95D-H	Biotrituratore R95 D motore Honda GX 160cc dischi	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-875f84fb-5fb1-40e7-9b36-1c3d35fadebe	NEGRI	Biotrituratori	R95B-H200	Biotrituratore R95 B motore Honda GX 200cc lame	\N	1250.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-e69a548a-cb37-4c5a-a5f5-12a9d035f017	NEGRI	Biotrituratori	R95D-H200	Biotrituratore R95 D motore Honda GX 200cc dischi	\N	1250.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-8170dfac-389d-469d-928c-94132bd696ae	NEGRI	Biotrituratori	R185B-H270	Biotrituratore R185 B motore Honda GX 270cc lame	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-522dc11a-ba69-4fe4-a092-0a943d615f13	NEGRI	Biotrituratori	R185D-H270	Biotrituratore R185 D motore Honda GX 270cc dischi	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-db79dc5a-8f53-4689-9d19-67b995215d33	NEGRI	Biotrituratori	R185B-H390	Biotrituratore R185 B motore Honda GX 390cc lame	\N	2350.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-ac5860a8-d8c4-4251-9765-6288e3c0b5b9	NEGRI	Biotrituratori	R185D-H390	Biotrituratore R185 D motore Honda GX 390cc dischi	\N	2350.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-183a2ea7-70ba-45d4-8204-b295f4186a3a	NEGRI	Biotrituratori	R225B-H390	Biotrituratore R225 B motore Honda GX 390cc lame	\N	3100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-ced3dbae-2279-4ff5-8861-06ce2ea4518a	NEGRI	Biotrituratori	R225D-H390	Biotrituratore R225 D motore Honda GX 390cc dischi	\N	3100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-a122c83e-aef6-44be-b8ef-ef59f7eaa609	NEGRI	Biotrituratori	R225B-K	Biotrituratore R225 B motore Kawasaki 400cc lame	\N	3400.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-a0da3a1e-f393-4d74-9983-170e04c63b66	NEGRI	Biotrituratori	R225D-K	Biotrituratore R225 D motore Kawasaki 400cc dischi	\N	3400.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-7f05545a-8220-4673-98d0-e4cb8b36bbc1	NEGRI	Biotrituratori	R70E-2200	Biotrituratore R70 E elettrico 2200W lame	\N	490.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-5876a1a7-1d76-4040-ae4b-5935a76736de	NEGRI	Biotrituratori	R95E-2800	Biotrituratore R95 E elettrico 2800W lame	\N	750.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-7d79dc5f-bf14-4f3c-a72d-ec22068ca968	NEGRI	Biotrituratori	R95E-3000D	Biotrituratore R95 E elettrico 3000W dischi	\N	800.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-943af521-d6e0-466a-a85d-f2fd0201d743	TORO	Zero Turning	75742	TimeCutter 42" 452cc 107cm	\N	2700.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-ba5edd3c-674a-4354-b73c-f412cafe1c1c	TORO	Zero Turning	75750	TimeCutter 50" 452cc 127cm	\N	3100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-eead992f-fb8d-4d59-a5d9-7afe55268074	TORO	Zero Turning	75760	TimeCutter 60" 452cc 152cm	\N	3500.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-09cfa663-1391-49e2-a95d-b19f8f4cc3e1	TORO	Zero Turning	74959	MyRide 48" Kawasaki 726cc 122cm	\N	5200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-9da0cb56-9ddd-4112-a1f4-d2f742348892	TORO	Zero Turning	74960	MyRide 54" Kawasaki 726cc 137cm	\N	5600.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-1ad5ca61-efa2-4bfb-a3fa-fcfc75d4b623	TORO	Zero Turning	74961	MyRide 60" Kawasaki 726cc 152cm	\N	6200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-7522696f-b716-4bd8-bf87-eb5b99ba5183	TORO	Rasaerba	20340	Recycler 21" 140cc spinta 53cm	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-20759eba-bd38-4515-bb71-e78f968da6df	TORO	Rasaerba	20332	Recycler 21" 140cc 1vel. 53cm	\N	430.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-dbb1a9f4-bab4-4c28-aa1f-19c41c5924c3	TORO	Rasaerba	20333	Recycler 21" 140cc Varia 53cm	\N	520.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-b259888c-42af-48e5-a868-e7a402eb48b6	TORO	Rasaerba	21357	Recycler 21" 60V Flex-Force spinta 53cm	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-4c8bf89d-d9ce-49e9-919a-9045a9989633	TORO	Rasaerba	21358	Recycler 21" 60V Flex-Force Varia 53cm	\N	580.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-f11cf483-ff50-46c9-89be-46d5837fa49d	TORO	Decespugliatori	51836	Decespugliatore 60V Flex-Force 38cm	\N	210.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-e0db7160-1948-44bc-a4b6-f1cd0acbae54	TORO	Soffiatori	51821	Soffiatore 60V Flex-Force	\N	180.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-44d7a8de-472f-484b-837b-a73a71b0c70e	TORO	Batterie	88650	Batteria 2,5Ah 60V Flex-Force	\N	80.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-70c84418-2a55-4e20-9687-c795637bbae8	TORO	Batterie	88675	Batteria 7,5Ah 60V Flex-Force	\N	180.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-d5166f48-e34e-4152-abfb-8cbd3535a2f2	TORO	Batterie	88690	Caricabatterie standard 60V	\N	60.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-2feff61f-fc46-4013-9334-3b7772d49095	BI-VI	Motopompe	BV-MP25-H	Motopompa acque chiare 25mm Honda GX 50cc	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-1d8609dc-b6b4-44e8-9da4-9b0e08744251	BI-VI	Motopompe	BV-MP40-H	Motopompa acque chiare 40mm Honda GX 120cc	\N	620.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-085763b1-7d55-4782-9e22-c466867cd7ac	BI-VI	Motopompe	BV-MP50-H	Motopompa acque chiare 50mm Honda GX 160cc	\N	750.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-ad6de56a-ce35-476a-b1b9-accbd82c9719	BI-VI	Motopompe	BV-MP80-H	Motopompa acque chiare 80mm Honda GX 200cc	\N	950.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-8a0fdbf6-51ca-4c88-9fae-4b1b08e49950	BI-VI	Motopompe	BV-MPS50-H	Motopompa acque sporche 50mm Honda GX 160cc	\N	920.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-29f55418-83df-4ee2-9c7f-2cbe75b975c0	BI-VI	Motopompe	BV-MPS80-H	Motopompa acque sporche 80mm Honda GX 200cc	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-5ed175d9-c2ab-488d-88c0-498745e50469	BI-VI	Motopompe	BV-EP25	Elettropompa 25mm 0,5HP	\N	180.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-2ff721e1-e5ae-4a34-9d05-7baac77961b2	BI-VI	Motopompe	BV-EP40	Elettropompa 40mm 1HP	\N	250.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-9502bbdb-5707-4cda-bb74-45a51fca6bba	BI-VI	Motopompe	BV-EP50	Elettropompa 50mm 2HP	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-feebbbd5-034c-45bf-91d1-360152fd38e1	BI-VI	Irrorazione	BV-CI100-H	Carrello irrorazione 100L motore Honda GX 120cc	\N	1200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-a584a8d2-d50a-404a-9921-cb530e98789e	BI-VI	Irrorazione	BV-CI200-H	Carrello irrorazione 200L motore Honda GX 160cc	\N	1600.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-a72d7e75-1f78-4cd9-bad0-45bd864f2181	BI-VI	Irrorazione	BV-CI300-H	Carrello irrorazione 300L motore Honda GX 200cc	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-a9685d46-d3f3-4bfc-8410-4acd9c4985db	BI-VI	Irrorazione	BV-CI400-H	Carrello irrorazione 400L motore Honda GX 270cc	\N	2700.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-783d2017-2a71-4b71-9f53-b8f3d133f1fa	BI-VI	Irrorazione	BV-CIE100	Carrello irrorazione 100L elettrico 220V	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-0bda6182-2b6d-48d1-93f3-8bd9a104e2bc	BI-VI	Irrorazione	BV-CIE200	Carrello irrorazione 200L elettrico 220V	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-c3578bbd-8c2d-48be-b70c-c73355e6e60f	BI-VI	Irrorazione	BV-BI600-H	Botte irrorazione 600L Honda GX 200cc	\N	3200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-55403240-f75f-4eaf-a686-700685b05554	BI-VI	Irrorazione	BV-BI800-H	Botte irrorazione 800L Honda GX 270cc	\N	3900.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-042713e8-4e3f-471b-ba2e-ed81d1d5f46b	BI-VI	Irrorazione	BV-BI1000-H	Botte irrorazione 1000L Honda GX 390cc	\N	4600.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N
-0a638aa5-65ea-41b5-a83a-5b35457d82ca	VOLPI	Potatori	V8015	Forbice potatura batteria V8015 30mm 2Ah	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-9c762aac-6e5c-4577-9cd0-3ed90a473c42	VOLPI	Potatori	V8016	Forbice potatura batteria V8016 32mm 2,5Ah	\N	430.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-9c6a654d-0262-4e1c-a017-799bbe144b58	VOLPI	Potatori	V8025	Forbice potatura batteria V8025 35mm 2Ah	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-1c999c64-0fc4-4381-bae3-027051fe0e6c	VOLPI	Potatori	V8030	Forbice potatura batteria V8030 40mm 2,5Ah	\N	550.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-ec277643-7cde-499b-832c-6ea1afd2e3e9	VOLPI	Potatori	V8045	Forbice potatura batteria V8045 45mm 2,5Ah	\N	650.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-3d2d83cb-4724-4822-8ff7-ee2c85d09eb6	VOLPI	Potatori	VPX30	Potatore ad asta VPX30 batteria 30mm	\N	750.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-3e647c7c-4625-4497-8a7a-34683d17a21b	VOLPI	Batterie	BATT-V8-2AH	Batteria 2Ah Volpi serie V8	\N	90.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-e95cc225-a77e-4408-a47b-b0402ffdcd4e	VOLPI	Batterie	BATT-V8-25AH	Batteria 2,5Ah Volpi serie V8	\N	110.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-c96d31b8-b3aa-4918-ad84-8d4f8e39d01d	VOLPI	Batterie	CARICA-V8	Caricabatterie Volpi serie V8	\N	55.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-753d01ec-9284-4b40-88d2-45a38aea80e4	ARCHMAN	Svettatoi	AM-SV30	Svettatoio Archman 30cc 30cm asta 2,5m	\N	890.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-85e33238-2771-4574-9ad3-c23452299f73	ARCHMAN	Svettatoi	AM-SV43	Svettatoio Archman 43cc 25cm asta 3m	\N	1050.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-e8fb42fc-4a0a-4a88-85af-af803a6642cb	ARCHMAN	Svettatoi	AM-SV43L	Svettatoio Archman 43cc 30cm asta 3,5m	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-be4b68bc-8cd2-4bb7-b11e-482d8666efd4	ARCHMAN	Svettatoi	AM-SVTS	Svettatoio telescopico Archman 43cc 25cm asta 2-3,5m	\N	1250.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-d1c29dcf-b964-491b-ab7b-a68ecb65f631	BLUE BIRD	Carrier	BB-CARRY250-H	Carrier/Dumper BB 250kg Honda GX 160cc	\N	2800.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-23210498-b6b9-4a8e-988c-be3bb8ac6aa5	BLUE BIRD	Carrier	BB-CARRY350-H	Carrier/Dumper BB 350kg Honda GX 200cc	\N	3400.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-bef26db4-180a-45e5-8e96-cfa10aed098a	BLUE BIRD	Carrier	BB-CARRY500-H	Carrier/Dumper BB 500kg Honda GX 270cc	\N	4200.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-543341b4-6107-41ff-af17-a912664342dc	BLUE BIRD	Carrier	BB-CARRY500-4WD	Carrier/Dumper BB 500kg 4WD Honda GX 390cc	\N	5500.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-5b6baae1-9783-438a-8038-ed3139ad821d	BLUE BIRD	Carrier	BB-CARRY750-H	Carrier/Dumper BB 750kg Honda GX 390cc	\N	5800.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-22d0315f-3115-4422-a759-6489bab4d4fc	BLUE BIRD	Trivelle	BB-TR150-H	Trivella 1 operatore Honda GX 50cc punta 150mm	\N	680.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-9c3f373c-5687-4b3d-bddd-7db18f8c4ea1	BLUE BIRD	Trivelle	BB-TR200-H	Trivella 1 operatore Honda GX 120cc punta 200mm	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-0b119e7a-c202-4587-9980-81bc8d06ea26	BLUE BIRD	Trivelle	BB-TR200-2OP	Trivella 2 operatori Honda GX 160cc punta 200mm	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-23bea31d-deaa-4506-bab0-78430553cf90	BLUE BIRD	Trivelle	BB-TR300-2OP	Trivella 2 operatori Honda GX 200cc punta 300mm	\N	1400.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-39c5aa29-2816-4437-9859-e21053634c70	BLUE BIRD	Accessori trivelle	BB-PUNTA-100	Punta trivella 100mm	\N	60.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-0f8389d4-863f-4407-ba17-2cb0e8deb75e	BLUE BIRD	Accessori trivelle	BB-PUNTA-150	Punta trivella 150mm	\N	70.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-571ad551-8094-41e6-a045-05006ef152df	BLUE BIRD	Accessori trivelle	BB-PUNTA-200	Punta trivella 200mm	\N	85.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-3b879657-0718-418d-9c46-4ea31ad6ef23	BLUE BIRD	Accessori trivelle	BB-PUNTA-300	Punta trivella 300mm	\N	110.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-9d77350b-d7f8-44d0-b645-e9cd30e2e395	BLUE BIRD	Accessori trivelle	BB-PROLUNGA-1M	Prolunga trivella 1m	\N	75.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-e5f3ac83-c9fe-4ef6-822e-1b4b993d7d1b	WORTEX	Atomizzatori	WX-AT16-H	Atomizzatore a zaino 16L Honda GX 25cc	\N	620.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-43d650b3-1313-4d81-aeae-0ee04952662e	WORTEX	Atomizzatori	WX-AT20-H	Atomizzatore a zaino 20L Honda GX 35cc	\N	720.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-c7b0a4d7-f88f-4bc6-ae5b-261d5d05abe1	WORTEX	Atomizzatori	WX-AT16-E	Atomizzatore elettrico a zaino 16L batteria	\N	350.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-d5f2f06e-ff86-43de-abbb-22906df2a936	WORTEX	Atomizzatori	WX-AT20-E	Atomizzatore elettrico a zaino 20L batteria	\N	420.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-b167ddf6-42b2-43c7-ac66-66d3d1f60fd0	WORTEX	Atomizzatori	WX-AT600-H	Atomizzatore su ruote 600L Honda GX 390cc 4WD	\N	3800.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-24440be6-d674-4f93-b974-ea8875ca592d	WORTEX	Spandiconcime	WX-SC12	Spandiconcime manuale a spalla 12L	\N	45.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-459dcf7a-e221-4ab0-85e1-e6fc5b1b5c86	WORTEX	Spandiconcime	WX-SC15	Spandiconcime elettrico a spalla 15L batteria	\N	120.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-73967cfd-dbaf-4cc9-972a-591fca8bacd7	WORTEX	Spandiconcime	WX-SC80-2R	Spandiconcime trainabile 80L 2 ruote	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-ce324ce5-a8ef-4b98-b058-77cf65f60d10	WORTEX	Spandiconcime	WX-SC100-4R	Spandiconcime trainabile 100L 4 ruote	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-39df8d35-32ff-476c-b7c2-3018fb38a3de	WORTEX	Spandiconcime	WX-SC200	Spandiconcime trainabile 200L con cardano	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-725b005b-14de-43ff-9421-4858c4e0b9ee	WORTEX	Compressori	WX-CP6-1500	Compressore 6L 1500W 8bar	\N	120.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-cc85c183-4b31-43f4-9529-9cf00dcd30f9	WORTEX	Compressori	WX-CP24-2000	Compressore 24L 2000W 8bar	\N	200.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-56f779ef-a9ad-4cc9-bb56-fa430d50ef54	WORTEX	Compressori	WX-CP50-3000	Compressore 50L 3000W 10bar	\N	350.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-6148cd1e-9de9-426d-9fb5-061fe93f202c	WORTEX	Compressori	WX-CP100-3000	Compressore 100L 3000W 10bar	\N	520.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-eb8e6ae8-437f-4d3b-bdc6-4d0404dc54a7	WORTEX	Compressori	WX-CP200-K	Compressore 200L motore Kohler 6HP 10bar	\N	1200.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N
-269af647-0c90-458f-831a-c2f4a76cfe22	STIHL	Olii	0781-516-1004	Olio catena StihlOil Plus 1L	1L	8.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-8d59791c-6767-44c0-98ef-69ce1f95d5f3	STIHL	Olii	0781-516-4004	Olio catena StihlOil Plus 4L	4L	28.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-4018360d-be2c-4d12-9876-18756bf356f2	STIHL	Olii	0781-319-8012	Olio motore HP Ultra 1L miscela 2T	1L	13.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-d5af5bb6-728a-458a-8f09-3b4f2cfd0d26	STIHL	Olii	0781-319-8013	Olio motore HP Ultra 100ml miscela 2T	100ml	3.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-5050808f-c1d8-4165-b1fe-655a4b12d17c	STIHL	Olii	0781-319-8012-4	Olio motore HP Ultra 4L miscela 2T	4L	48.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-0d6aafa8-b44c-47d9-8ed9-b5b5066c9978	STIHL	Olii	0781-120-1109	Olio motore 4T SAE 30 1L	1L	7.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-da40a78a-d6bb-4761-9a44-4c27eabe923f	BRIGGS	Olii	100005E	Olio motore B&S SAE 30 600ml	600ml	7.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-90a246b1-bc3e-4a81-8830-a0770ab7b36f	BRIGGS	Olii	100028E	Olio motore B&S SAE 30 5L	5L	38.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-0006ebef-5ad3-4984-86bf-54ce5f250e9f	BRIGGS	Olii	100005E-10W30	Olio motore B&S 10W-30 600ml	600ml	7.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-af71dd55-000d-455b-bb32-c4bc29b54321	BRIGGS	Olii	100006E	Olio motore B&S Platinum 4T 5L	5L	42.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-39009193-dcfd-4a51-abdb-11ee91411d2d	CASTROL	Olii	CAST-2T-1L	Olio 2T Castrol Power1 Racing 1L	1L	14.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-40d2b2f0-d51a-42ee-b7a8-77799904beca	CASTROL	Olii	CAST-4T-1L	Olio 4T Castrol Power1 10W-40 1L	1L	12.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-d7bc69b3-a038-4723-a5fe-c2a91f46faf8	CASTROL	Olii	CAST-4T-4L	Olio 4T Castrol Power1 10W-40 4L	4L	40.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-f4cc2ba5-ced0-4a88-81a4-3efe18190d4e	TECNOGARDEN	Olii	TG-2T-1L	Olio miscela 2T Tecnogarden 1L	1L	9.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-f6636270-e217-4012-9c8b-23b3e20857b3	TECNOGARDEN	Olii	TG-2T-5L	Olio miscela 2T Tecnogarden 5L	5L	38.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-211e8230-aa95-4f16-aca9-01db4035a784	TECNOGARDEN	Olii	TG-4T-1L	Olio motore 4T SAE 30 Tecnogarden 1L	1L	7.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-3d8cbed3-49d2-4633-b72a-48c80456292a	TECNOGARDEN	Olii	TG-4T-5L	Olio motore 4T SAE 30 Tecnogarden 5L	5L	28.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-638df77c-6e98-45c8-a8ad-39e5342c55ef	TECNOGARDEN	Olii	TG-CATENA-1L	Olio catena Tecnogarden 1L	1L	6.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-effad0a3-aaec-4bb3-b74a-2864516f0e0b	TECNOGARDEN	Olii	TG-CATENA-5L	Olio catena Tecnogarden 5L	5L	24.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-d7976be3-f6d8-4af4-a9e6-306d28f14a50	FOREST	Spaccalegna	L7TON-H	Spaccalegna orizzontale 7T Honda GX 120cc	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-3072e7fa-e333-4ea4-81d6-6350f770fe6c	FOREST	Spaccalegna	L10TON-H	Spaccalegna orizzontale 10T Honda GX 160cc	\N	1400.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-a2772f87-329f-4060-a1e2-643a6f131c16	FOREST	Spaccalegna	LV16TON-H	Spaccalegna verticale/orizzontale 16T Honda GX 270cc	\N	2200.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-7a40843a-3828-4730-9dd9-1062c5bf8946	FOREST	Spaccalegna	LV22TON-H	Spaccalegna verticale/orizzontale 22T Honda GX 390cc	\N	2900.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-5e2db7f9-f908-4c63-9258-ea7f8181f3a9	FOREST	Spaccalegna	LV30TON-H	Spaccalegna verticale/orizzontale 30T Honda GX 690cc	\N	4200.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-8cfb4dcf-e3f2-4247-a791-6a423da64536	FOREST	Spaccalegna	LE7TON	Spaccalegna orizzontale 7T elettrico 2200W	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-9da4265d-755c-4020-a69f-8f01783bfc63	FOREST	Spaccalegna	LE10TON	Spaccalegna orizzontale 10T elettrico 3000W	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-2f120667-5c93-4a2b-9a05-4b3e316f97f3	BLUE BIRD	Spaccalegna	BB-SP7-E	Spaccalegna 7T Blue Bird elettrico 2200W	\N	800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-358fa1e9-6077-4cb2-8dd5-12701c99d3b7	BLUE BIRD	Spaccalegna	BB-SP10-H	Spaccalegna 10T Blue Bird Honda GX 160cc	\N	1350.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-234fa706-20ed-43f8-9cb2-681a107ab6a0	BLUE BIRD	Spaccalegna	BB-SP16-H	Spaccalegna 16T Blue Bird Honda GX 270cc V/O	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-a69db3d8-17ff-4c58-996b-068e80624db3	BLUE BIRD	Spaccalegna	BB-SP22-H	Spaccalegna 22T Blue Bird Honda GX 390cc V/O	\N	2800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-ba2936d8-5a8b-49cd-9a98-cd0ea4e7a0a9	CARRIOLE	Carriole	CAR-55L	Carriola acciaio 55L ruota PVC	\N	55.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-23eccbdf-7494-484c-9b00-8d1de4b44c94	CARRIOLE	Carriole	CAR-65L	Carriola acciaio 65L ruota PVC	\N	65.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-c0e8715e-1460-4ec3-9fb0-c53011d2ae12	CARRIOLE	Carriole	CAR-80L	Carriola acciaio 80L ruota gonfiabile	\N	80.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-972f17d0-3517-481b-af6e-bf710e27aba3	CARRIOLE	Carriole	CAR-100L	Carriola acciaio 100L ruota gonfiabile	\N	95.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-fa109c38-37b4-4a29-a060-f5447cc5ffd8	CARRIOLE	Carriole	CAR-POLY-65	Carriola polietilene 65L ruota gonfiabile	\N	90.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-d2a66a93-6c75-43d4-8812-f8692e0a3766	E-POWERBARROW	Carriole	EPB-BASIC	E-PowerBarrow Basic 80L 250W batteria	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-b30c9ecc-d972-49dc-94a8-f184c91b21ae	E-POWERBARROW	Carriole	EPB-PRO	E-PowerBarrow Pro 100L 350W batteria	\N	650.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-4e97c8ac-c9be-466a-8c53-6e50e52f7de9	E-POWERBARROW	Carriole	EPB-4WD	E-PowerBarrow 4WD 100L 500W batteria	\N	950.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-66666181-cda3-4cfe-bb39-d5e616eedd2c	F&S	Carriole	FS-CAR-70	Carriola F&S 70L acciaio rinforzato	\N	75.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-ba4164df-121d-41ca-9c29-2db8cdbbf3d9	F&S	Carriole	FS-CAR-85	Carriola F&S 85L acciaio rinforzato ruota larga	\N	95.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-1c429322-0261-4bd3-863c-3c4027a25a44	TURBO-TURF	Idrosemina	TT-HS-50	Idroseminatrice Turbo-Turf HS-50 190L Honda GX 160cc	\N	3200.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-d359fff9-5daa-48c5-9be0-fc3de19268cc	TURBO-TURF	Idrosemina	TT-HS-100	Idroseminatrice Turbo-Turf HS-100 380L Honda GX 200cc	\N	4800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-4f5bbfe2-14e4-4cd8-a3eb-7c2bd3d910d4	TURBO-TURF	Idrosemina	TT-HS-100T	Idroseminatrice Turbo-Turf HS-100T 380L trainabile Honda	\N	5500.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-ddc818db-fd26-4cdb-82e7-e58241aa9f5e	TURBO-TURF	Idrosemina	TT-HS-200T	Idroseminatrice Turbo-Turf HS-200T 760L trainabile Honda	\N	7800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-b1244952-5c16-4c78-8e16-a100e49df445	TURBO-TURF	Materiali idrosemina	TT-FIBER-20	Fibra cellulosica Turbo-Turf 20kg	20kg	85.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-33d50404-63d0-4e17-b686-c856ff7bfd47	TURBO-TURF	Materiali idrosemina	TT-FIBER-50	Fibra cellulosica Turbo-Turf 50kg sacco	50kg	190.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-693a5744-1fd0-48b1-b7ae-db5742e8913d	TURBO-TURF	Materiali idrosemina	TT-COLLANTE-5	Collante idrosemina 5kg	5kg	45.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-56bd3525-13c0-4c19-9d5d-f558f6d1ee23	TURBO-TURF	Materiali idrosemina	TT-COLLANTE-25	Collante idrosemina 25kg	25kg	180.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-bc47efe6-9735-4515-9502-d41eb9172cc0	TURBO-TURF	Materiali idrosemina	TT-COLORANTE	Colorante verde idrosemina 1kg	1kg	18.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-f97c327b-7aca-40a1-8873-a166a7889798	TURBO-TURF	Materiali idrosemina	TT-KIT-BASE	Kit base idrosemina (fibra 20kg + collante 5kg + colorante)	\N	140.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N
-e5e25637-23ef-4168-a0d2-f6284d0989d9	Echo	\N	ECMPPAAHHD	Potatore accessorio Attacco tagliasiepi	\N	522.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-beca29e4-4d60-4f50-ad30-1a539c63d413	Echo	\N	ECM99946400023	Potatore accessorio Attacco estensone 1.2 mt	\N	210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-e4e126dd-0b5c-4d8b-84d0-e8db5a4e979c	Echo	\N	ECMSRM520ESU/A	Decespugliatore X Series - SRM 520 ESU (Impugnatura a U + accensione facilitata ES Start)	\N	1100.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-025b9000-765e-4fbc-88c3-328981c64802	Echo	\N	ECARMAM520ES	Asta decespugliatore RM520ES (Asta, coppia conica, flessibile. Non compresi: parasassi, testina, manubri, ecc...)	\N	240.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-a3ffa2a4-d004-430e-a37d-19d755f3f22d	Echo	\N	ECMPRS231M	Attacco reciprocatore per SRM222 fino a SRM420 (compreso inserti per attacchi quadro o mille righe)	\N	410.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-21f8f437-ec5a-4132-a74f-4d7ebf069d98	Echo	\N	ECMHCAA2403A	Attacco Tagliasiepi 2403A	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-250fdc36-0502-44cc-8e57-5a39e36e1714	Echo	\N	ECMHCAA2403ALW	Attacco Tagliasiepi 2403A LW (Low Weight)	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-f82dcf26-d6ec-4b4d-a651-139e8bd70a83	Echo	\N	ECM28350250	Attacco Tagliasiepi 28350250	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-dc23bd0a-b96d-4120-b7d8-d9bf10742e69	Echo	\N	ECMMTAAHSHD	Attacco multifunzione MTA AHS HD - Tagliasiepi asta corta HD (Hard Duty 3 lame 3 lati)	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-ccb8df8d-ddbd-4507-ba98-104857b07313	Echo	\N	ECMMTAAHHD	Attacco multifunzione MTA AH HD - Tagliasiepi asta lunga HD (Hard Duty 3 lame 3 lati)	\N	515.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-2cd8c78c-adca-418c-89da-568a93510c01	Echo	\N	ECMMTADAH	Attacco multifunzione MTA DAH - Tagliasiepi asta lunga	\N	485.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-f826f820-ba77-4de8-9b00-64038d522816	Echo	\N	ECMMTALE/E	Attacco multifunzione MTA LE E - Tagliabordi	\N	210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-b3624ee9-1ba0-493a-89b8-ca685cfa8feb	Echo	\N	ECMMTAPB	Attacco multifunzione MTA PB - Soffiatore	\N	195.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-981c66a4-e6c1-4a28-9cd6-25790952726d	Echo	\N	ECMMTADPP	Attacco multifunzione MTA DPP - Potatore	\N	312.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-689169f7-d25a-4a7c-bdc9-ce5389ee9ad1	Echo	\N	ECMMTAPS	Attacco multifunzione MTA PS - Spazzolatrice	\N	560.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-d2a13118-4027-41ed-9483-ecc1801be6f6	Echo	\N	ECMMTADTB	Attacco multifunzione MTA DTB - Testina a filo	\N	185.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-e3f1544f-2610-41d9-a9c6-4ca1bf7a5653	Echo	\N	ECMMTATC	Attacco multifunzione MTA TC - Zappetta	\N	390.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-dcb131cb-2a9d-435f-8fb0-7795fe359dc4	Echo	\N	ECMMTA3EXT	Attacco multifunzione MTA 3EXT - Estensione	\N	79.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-97ad55b5-dc73-492e-a510-0683d3c84cba	Echo	\N	ECAMBAD5810	Kit polveri	\N	115.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-9f2979bf-b719-4021-8abf-9f53f208fb55	Echo	\N	ECACWT7410	Carrello per mototroncatrice	\N	1220.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-a46efe18-21ab-48e1-82dd-1e740f3f0b6d	Echo	\N	OFF253001	Kit Potatore manuale a batteria 56V - DHS 3006 con 1x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	570.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-e42b31bd-f009-48f2-877f-572d4399d597	Echo	\N	OFF233012	Kit energia 56eForce 56V con 1x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	360.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-9bf67c77-c112-41d8-81fc-2a65e63bc1c5	Echo	\N	OFF233014	Kit energia 56eForce 56V con 1x Batteria 56V 5Ah 226Wh + 1x Caricabatteria	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-eb574004-5cd7-475e-84e2-49ade5ec2f9d	Echo	\N	OFF233013	Kit energia 56eForce 56V con 2x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	595.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-431dfc4e-76cd-4937-bf08-91a31fb53c1a	Echo	\N	OFF233015	Kit energia 56eForce 56V con 2x Batteria 56V 5Ah 226Wh + 1x Caricabatteria	\N	795.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-f5a8bdf9-ec76-4f39-8290-f84527189d84	Echo	\N	ECAKIT40V2AH	Kit energia Garden+ 40V con 1x Batteria 40V 2Ah 72Wh + 1x Caricabatteria	\N	192.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-b05d76ff-b1e1-4481-935d-8b8d57031b20	Echo	\N	ECAKIT40V4AH	Kit energia Garden+ 40V con 1x Batteria 40V 4Ah 144Wh + 1x Caricabatteria	\N	246.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-96715574-10aa-4716-88ac-84bce9a8116b	Weibang	\N	WBAWBGTRC	Radiocomando per WBGT6813TE	\N	1500.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-d5cb5a83-e3ad-43cb-a6c0-05bc9742b8ca	Weibang	\N	WBA4510104015	Tappo Mulching X WB454HB/SB, WB455HCOP	\N	18.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-6e639e2d-796b-4ad9-a72b-23523785edb3	Weibang	\N	WBA4560104010	Tappo Mulching X WB454HB/A-SB/A,WB455HC, WB455SC, WB455SC3, WB456SCVE3	\N	15.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-627e03fe-af17-4185-9284-b45484bdebc3	Weibang	\N	WBA5010105050	Tappo Mulching X WB506HB	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-03f12f4e-d9ce-4755-9333-783b66861428	Weibang	\N	WBA5040104010	Tappo Mulching X WB506SB/A-SK/A, WB506SC, WB506SC3, WB507SCV3, WB506HC, WB506HB	\N	18.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-64e8eebd-de1e-43ca-ae8e-87ae521027e6	Weibang	\N	WBA5020124010	Tappo Mulching X WB507SCV3	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-c4402e0d-976a-46e5-8457-cad8f3407b42	Weibang	\N	WBA5330113010	Tappo Mulching X WB536SK/536SB, WB537SCV3B	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-56e3eed1-c226-423a-938c-49988bf0b8ff	Weibang	\N	WBA5360115010	Tappo Mulching X WB536SB/A-SK/A, WB537SC, WB537SCV3	\N	24.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-d4cb1f3c-3b18-4a3c-8bfa-740fd43220bf	Weibang	\N	WBA5340122010	Tappo Mulching X WB536SKAL/SBALV	\N	20.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-a17aaf7a-0b0d-4402-981b-b57ad7dcf153	Weibang	\N	WBA5380107010	Tappo Mulching X WB537SCVAL, WB537SCVAL, WB537SCVALB	\N	24.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-2118730a-bb52-4792-9210-ce4b9d04d6a3	Weibang	\N	WBR4520300000	Tappo Mulching X WB452HE, WB452SE3	\N	10.11	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-8a83862e-909c-4f8b-a817-25bcab1df669	Weibang	\N	WBAPIVOT53	Ruote piroettanti x 537SCV3	\N	165.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-0bfc2bc1-4d76-4bc5-8161-1b052dc06cd0	Weibang	\N	WBABAT120	Batteria Litio 120V - 4AH	\N	499.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-7b9530d8-ca80-471b-b7ce-48e0024d4ee7	Weibang	\N	WBACBAT120	Caricabatteria Litio 120V - 4AH	\N	219.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-87ffc078-d7a1-4922-9d50-67fc53cfd805	Weibang	\N	WBA13720001	Filo 4,5X660mm WBLT56HLC/SLC (Confezione da 12pz)	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-9a52e7c0-2f95-450f-be5c-622e4b907ac5	Weibang	\N	WBA13430001	Kit filtro aria snorkel WBBC537SCV	\N	29.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-40a7e203-03e7-4ac2-b601-76ed8e841d5a	Weibang	\N	WBA12010012	Kit spazzola 48cm Rasaerba a rullo	\N	150.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-0fa12d36-e3fd-435a-b42b-b5a41ee7a174	Weibang	\N	WBA12110012	Kit spazzola 56cm Rasaerba a rullo	\N	175.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-e4248da2-1de5-4ecb-9e04-ecef34e70ff1	Weibang	\N	WBA150406WM1	Olio 10W-30 MOTION 4T 600ml (Confezione da 24PZ)	\N	7.50	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N
-6921d2cf-407a-4ff9-8635-595a7e5eaae8	Echo	\N	ECMACS2200	Motosega elettrica ACS 2200 - 2200W	\N	175.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e126d285-f5eb-4e81-8497-77feed2dfcd9	Echo	\N	ECMCS2511TES	Motosega potatura X Series - CS 2511 TES	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e668b697-c247-4410-96db-6598ffbf06bb	Echo	\N	ECMCS2511TESC	Motosega potatura X Series - CS 2511 TESC (Barra Carving)	\N	509.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-38fc20ec-51e5-44a0-8780-2cb76eabafc9	Echo	\N	ECMCS280TES	Motosega potatura CS 280 TES	\N	349.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-0e20f711-182e-425d-a7e1-e7824e9b9976	Echo	\N	ECMCS280TESC	Motosega potatura CS 280 TESC (Barra Carving)	\N	399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-86db108c-9147-49cf-956d-2816272ad5ef	Echo	\N	ECMCS362TES-30	Motosega potatura CS 362 TES - 30 (Barra 30cm)	\N	419.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5734384c-e91f-4661-8c04-6b45605d954e	Weibang	\N	WBMWB537SCVMLV	Tagliaerba Mulching semovente 53cm - 196cc Low Vib.	\N	1089.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e6c79f43-a895-49c6-a5c9-c0e8cfd4c112	Weibang	\N	WBMWB536SKVM	Tagliaerba Mulching semovente 53cm - 180cc Kawasaki	\N	1069.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-ac44599f-1af4-4899-b0de-7b4314625bcc	Weibang	\N	WBMWB537SCVAL	Tagliaerba semovente 53cm - 196cc Alluminio	\N	1069.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-d9ab6a23-be4c-49e3-8df5-0de2be6957d5	Echo	\N	ECMCS362TES-35	Motosega potatura CS 362 TES - 35 (Barra 35cm)	\N	439.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-485779a0-1814-4d66-abed-db5ba11b072a	Echo	\N	ECMCS2511WES	Motosega multiuso X Series - CS 2511 WES	\N	509.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-55277d27-90fe-479a-83f9-9ad0f56ffc55	Echo	\N	ECMCS362WES	Motosega multiuso CS 362 WES	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a7613a9a-0d8e-4067-b5da-fda0e4e366dc	Echo	\N	ECMCS310ES	Motosega multiuso CS 310 ES	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a58f48d7-c3db-4601-a029-bbd79ccc4e8f	Echo	\N	ECMCS3410ES	Motosega multiuso CS 3410 ES	\N	309.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-6e2a578b-cb9e-4f3f-bc5d-a90418047d8f	Echo	\N	ECMCS3510ES	Motosega multiuso CS 3510 ES	\N	339.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-70789eca-992f-458a-a944-192aec1d435a	Echo	\N	ECMCS3510AC	Motosega multiuso CS 3510 AC	\N	389.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a2b6bb32-078c-4a8d-b6ea-b8c579ade090	Echo	\N	ECMCS4010ES	Motosega multiuso CS 4010 ES	\N	489.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-7f9fe018-6cf8-4de8-a6c7-d75b52b6ae33	Echo	\N	ECMCS4310SX	Motosega multiuso X Series - CS 4310 SX	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-7bcfd244-f604-472a-98fe-0167c330d318	Echo	\N	ECMCS4510ES	Motosega multiuso CS 4510 ES	\N	529.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5edf5d56-8704-444c-99ad-0421322c0838	Echo	\N	ECMCS4920ES	Motosega multiuso CS 4920 ES	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-54155e9f-af4e-4cfe-8ddf-9d7f116e31c5	Echo	\N	ECMCS501SX	Motosega multiuso X Series - CS 501 SX	\N	779.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-26dfeadc-b035-4271-bc07-dfea8d689dcf	Echo	\N	ECMCS621SX	Motosega forestale X Series - CS 621 SX	\N	929.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a81940f0-0e34-469a-b50e-0b21f8e32671	Echo	\N	ECMCS7310-20	Motosega forestale X Series - CS 7310 SX (Barra 20")	\N	1199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-05bf1b92-65e0-4041-8c1e-4c068ea6bdab	Echo	\N	ECMCS7310-24	Motosega forestale X Series - CS 7310 SX (Barra 24")	\N	1219.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-2a9e380a-d6c6-4c2b-85a4-17f7651d7c67	Echo	\N	ECMPPF236ES	Potatore asta fissa PPF 236 ES	\N	519.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-d15fcdc6-874c-4d73-8c9e-8efa0e3179e9	Echo	\N	ECMPPT236ES	Potatore telescopico PPT 236 ES	\N	629.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-353f67bd-fe56-4b95-b1ea-d53dbe74f582	Echo	\N	ECMPPT2620ES	Potatore telescopico X Series - PPT 2620 ES	\N	769.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-36f17c3e-2daf-4a2b-bc57-4ba5b178aa14	Echo	\N	ECMEGT350	Bordatore elettrico EGT350 - 350W	\N	89.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-948b635b-ddec-4864-9ebf-0caa786df64e	Echo	\N	ECMSRM222ESL	Decespugliatore SRM 222 ESL	\N	219.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-3a742117-88f7-403b-aec0-739640b0be20	Echo	\N	ECMSRM237TESL	Decespugliatore SRM 237 TESL	\N	395.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-ef12a7b3-a1d6-43eb-893d-5b6f722a49d7	Echo	\N	ECMSRM267L	Decespugliatore SRM 267 L	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c831c573-bc82-4461-8156-c2762b2acebc	Echo	\N	ECMSRM2621TESL	Decespugliatore X Series - SRM 2621 TESL	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-9c7fcdff-3290-43c8-999e-9eddcaa18297	Echo	\N	ECMSRM301TESL	Decespugliatore SRM 301 TESL	\N	319.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c99d20b9-b5df-4880-ad3f-dbabffb27883	Echo	\N	ECMSRM3021TESL	Decespugliatore X Series - SRM 3021 TESL	\N	559.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-b5c47059-4fa0-48a5-bfa4-c7d1fcac7ef6	Echo	\N	ECMSRM3021TESU	Decespugliatore X Series - SRM 3021 TESU	\N	649.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-8387b45c-7fcd-43d0-8c5f-d71fb6ed9dbb	Echo	\N	ECMSRM3611TL	Decespugliatore X Series - SRM 3611 TL	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-054870aa-aec1-4291-95a2-1a8a9c3b9b67	Echo	\N	ECMSRM3611TU	Decespugliatore X Series - SRM 3611 TU	\N	719.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-829520ab-4e2b-4db3-80ad-d81e863f6a7f	Echo	\N	ECMSRM420ESLW	Decespugliatore SRM 420 ESLW	\N	519.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-45e9bc07-648c-44c4-a39a-a581fcecc9df	Echo	\N	ECMSRM420TESL	Decespugliatore X Series - SRM 420 TESL	\N	785.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-fab0280e-f993-4c72-ae79-2bc0b58eea7b	Echo	\N	ECMSRM420TESU	Decespugliatore X Series - SRM 420 TESU	\N	859.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-b5c622de-cea5-4349-82ce-43afab970881	Echo	\N	ECMSRM520ESU	Decespugliatore X Series - SRM 520 ESU	\N	969.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-0050117e-00b9-4247-9a44-9fbe9a284cad	Echo	\N	ECMCLS520ESU	Decespugliatore X Series - CLS 520 ESU	\N	1055.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a4dda727-97fc-4cdc-95f0-b7a70bb9b89f	Echo	\N	ECMRM3020T	Decespugliatore Zaino X Series - RM 3020 T	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-df00ca01-b24e-4e05-83be-5dd8beb1bc09	Echo	\N	ECMRM520ES	Decespugliatore Zaino X Series - RM 520 ES	\N	909.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-81934a47-ac5d-47cc-b9f5-6f2d8dcccc36	Echo	\N	ECMHCAS236ESLW	Tagliasiepi ad asta corta HCAS 236 ESLW	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-ad26d937-28e6-425d-8a99-96cb26f32e08	Echo	\N	ECMHCAS2620ESHD	Tagliasiepi ad asta corta X Series - HCAS 2620 ESHD	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-8ebc0b43-08b7-4dea-b015-14f7928c1204	Echo	\N	ECMHCA236ESLW	Tagliasiepi ad asta lunga HCA 236 ESLW	\N	615.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e213dd5d-8db3-49e0-a175-70921225b1bc	Echo	\N	ECMHCA2620ESHD	Tagliasiepi ad asta lunga X Series - HCA 2620 ESHD	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-d052d11d-6e50-4544-920a-2086075ca83c	Echo	\N	ECMHC2020R	Tagliasiepi HC 2020R	\N	329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-34824e3b-136f-4718-9823-a1b4e769c68c	Echo	\N	ECMHC2320	Tagliasiepi HC 2320	\N	435.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-360413a6-21b2-4486-8ccd-c1f5705fa67c	Echo	\N	ECMHCR165ES	Tagliasiepi HCR 165ES	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-1026b58e-e74b-4cd6-9dda-0bc745e07eab	Echo	\N	ECMHCR185ES	Tagliasiepi HCR 185ES	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a2f7dcf6-2efb-4189-a984-e81c48315713	Echo	\N	ECMHC2810ESR	Tagliasiepi X Series - HC 2810ESR	\N	620.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5b8c822d-b36f-4a44-82f7-cabdbbee7d45	Echo	\N	ECMHCS2810ES	Tagliasiepi X Series - HCS 2810ES	\N	620.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a4b2a061-bdbb-4960-a1e2-45140f2e970d	Echo	\N	ECMHCS3210ES	Tagliasiepi X Series - HCS 3210ES	\N	649.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-fad346ae-4ca5-43c1-8cf8-f5f9cab9196e	Echo	\N	ECMHCS3810ES	Tagliasiepi X Series - HCS 3810ES	\N	679.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-7541fedc-57c9-4e12-96dd-00817185db37	Echo	\N	ECMHC560	Tagliasiepi elettrico HC 560 - 500W	\N	175.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-f3eed3d6-b483-428d-84c6-61f8c821cd8d	Echo	\N	ECMHCR610	Tagliasiepi elettrico HC 610 - 700W	\N	199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-02724ee2-c9a3-49e4-9cb1-a1e73235c4c3	Echo	\N	ECMES250ES	Soffiatore e aspiratore ES 250ES	\N	329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a327f1f7-ea77-42b9-8acd-0f7069d7049a	Echo	\N	ECMES255ES	Soffiatore e aspiratore ES 255ES	\N	379.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-f9c34999-0a9f-4cb2-aeb9-4474166e232a	Echo	\N	ECMPB2520	Soffiatore PB 2520	\N	249.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5652e9a2-3dc2-48e2-b4b8-55dea0abc8f3	Echo	\N	ECMPB2620	Soffiatore X Series - PB 2620	\N	369.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-2e062ccb-2e56-44e4-b3e8-c084ecadf6c8	Echo	\N	ECMPB580	Soffiatore a zaino PB 580	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-37a82683-d1ae-4e75-85a0-04a0c4a09f28	Echo	\N	ECMPB5810T	Soffiatore a zaino PB 5810 T	\N	639.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-433cfd78-63a5-4957-831c-0598d3e9561f	Echo	\N	ECMPB770	Soffiatore a zaino X Series - PB 770	\N	715.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-26fa65d0-8348-4008-be22-19c12d020530	Echo	\N	ECMPB7910T	Soffiatore a zaino PB 7910 T	\N	829.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-3ae5f567-8f9c-4d0b-b3a0-ee77d8407afa	Echo	\N	ECMPB8010	Soffiatore a zaino X Series - PB 8010	\N	875.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-ff7ce441-60be-43cc-8b77-197f09200a49	Echo	\N	ECMPB9010T	Soffiatore a zaino PB 9010 T	\N	949.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-8e3febe8-9cee-446d-8e88-03d7675df269	Echo	\N	ECMPAS2620ES	Multifunzione X Series - PAS 2620 ES	\N	449.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-1302cf82-5491-43a2-bc88-8f145a271ae4	Echo	\N	ECMMB5810	Atomizzatore spalleggiato MB5810	\N	855.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-69b12634-38f8-4d55-bd58-3d52d876b29b	Echo	\N	ECMCSG7410ES	Mototroncatrice CSG 7410 ES	\N	1365.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-8179f1ee-8ef0-4ba2-92ad-4ee4d2b8b066	Echo	\N	ECMDPB310	Soffiatore a batteria 40V - DPB 310	\N	99.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c3432221-bcc2-42bc-b0a0-a36881bf3d35	Echo	\N	ECMDCS310	Motosega a batteria 40V - DCS 310	\N	199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-3b8232c3-d93a-4a1c-9994-d100591eab72	Echo	\N	ECMDSRM310L	Decespugliatore a batteria 40V - DSRM 310	\N	149.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-0d9a3144-93e4-4e86-bb09-b32d362e3f1c	Echo	\N	ECMDHC310	Tagliasiepi a batteria 40V - DHC 310	\N	109.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-41b09b80-12ee-4bbb-a6ec-0791c46fd274	Echo	\N	ECMDPPF310	Potatore a batteria 40V - DPPF 310	\N	145.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-f57c691f-cbf1-4c52-92a9-c752c377f68a	Echo	\N	ECMDHCA310	Tagliasiepi ad asta a batteria 40V - DHCA 310	\N	145.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c53af04d-5781-4611-84fd-61bfc9001c82	Echo	\N	ECMDLM310/35P	Tagliaerba a batteria 40V - DLM 310 35P	\N	189.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-fd778ce3-aee5-4cd6-90ba-71921b6367c0	Echo	\N	ECMDLM310/46P	Tagliaerba a batteria 40V - DLM 310 46P	\N	299.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c36d0b41-9a61-4037-a8a7-7a9c2f73a17e	Echo	\N	ECMDLM310/46SP	Tagliaerba a batteria 40V - DLM 310 46SP semovente	\N	399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-022fc96f-a406-4ea9-a3d1-5703703fe332	Echo	\N	ECALBP3680	Batteria Garden+ 40V 72Wh	\N	99.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-2166eabc-5dde-4b32-9c23-666b3328236b	Echo	\N	ECALBP36150	Batteria Garden+ 40V 144Wh	\N	139.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-9172637c-db58-4ac6-98dd-be119d2ec8af	Echo	\N	ECALC3604	Caricabatterie Garden+ Rapido 40V	\N	59.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c3c1c6c9-883a-4722-8bce-556dce08dd9e	Echo	\N	ECMDCS2500	Motosega a batteria 56V - DCS 2500	\N	415.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-806067f5-e448-4cf5-84fc-f0c5ac0f3641	Echo	\N	ECMDCS2500T	Motosega a batteria 56V - DCS 2500 T Barra Carving	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-2f3271e3-7ef2-40a3-8644-89421579d2ea	Echo	\N	ECMDCS2500W	Motosega a batteria 56V - DCS 2500 W	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-eb8cb62d-29f4-4a52-82e9-f3c3b490edef	Echo	\N	ECMDCS3000T	Motosega a batteria 56V - DCS 3000T	\N	279.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-33824063-ec4a-414e-9f97-a7bd927b422f	Echo	\N	ECMDCS3500	Motosega a batteria 56V - DCS 3500	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-2daa59cf-a7df-4195-8bb7-5f087734d753	Echo	\N	ECMDCS3500T	Motosega a batteria 56V - DCS 3500T	\N	589.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-d3719865-f36e-48b5-84fd-20438ecd7f0e	Echo	\N	ECMDHS3006	Potatore manuale a batteria 56V - DHS 3006	\N	169.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-7deeed42-abc8-426c-8332-4aba69d9a06e	Echo	\N	ECMDHCAS2600HD	Tagliasiepi asta corta a batteria 56V - DHCAS 2600HD	\N	635.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-7fa9b5b0-8c56-41af-a1a4-998373bf9df6	Echo	\N	ECMDHCA2600HD	Tagliasiepi asta a batteria 56V - DHCA 2600HD	\N	659.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-11196f5b-44d0-4d5b-a69e-834b8937a47d	Echo	\N	ECMDHC2200R	Tagliasiepi a batteria 56V - DHC 2200 R	\N	469.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-070e6f48-dab9-47a0-be41-650111eda370	Echo	\N	ECMDHC2800R	Tagliasiepi a batteria 56V - DHC 2800 R	\N	549.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-26ad6055-edc6-4b89-9556-decfa1e61225	Echo	\N	ECMDHCS2800	Tagliasiepi a batteria 56V - DHCS 2800	\N	659.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-0d8bc11d-5d75-48d8-bf25-cb4c16e8a522	Echo	\N	ECMDLM5100SP	Tagliaerba a batteria MID Series 56V - DLM 5100 SP	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-d3a3f697-1789-4e13-a029-52aee03f6372	Echo	\N	ECMDPAS2600	Multifunzione a batteria 56V - DPAS 2600	\N	369.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5b47e2ce-fd87-4ded-a2b9-e573f145b68d	Echo	\N	ECMDPAS300	Multifunzione a batteria 56V - DPAS 300	\N	249.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-9fc6ce76-9919-4d74-88df-7853ca555a53	Echo	\N	ECMDPB2500	Soffiatore a batteria MidSeries 56V - DPB 2500	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-bcb9390c-9636-4166-8424-cd97e2ca5819	Echo	\N	ECMDPB2600	Soffiatore a batteria 56V - DPB 2600	\N	429.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-2df5eed2-24bc-4690-bb77-e341f09d1725	Echo	\N	ECMDPPT2600LW	Potatore telescopico a batteria 56V - DPPT 2600LW	\N	765.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-87dc34a2-23e4-4794-8873-2dbd9feadb4e	Echo	\N	ECMDSRM2400L	Decespugliatore a batteria MID Series 56V - DSRM 2400 L	\N	289.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-37b3585a-f534-4a59-9d86-9b0abb94c55c	Echo	\N	ECMDSRM2600L	Decespugliatore a batteria X Series 56V - DSRM 2600 L	\N	429.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-32517063-1c42-4ac4-b071-fb66964a4f28	Echo	\N	ECMDSRM2600U	Decespugliatore a batteria X Series 56V - DSRM 2600 U	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-65a6d704-1460-4ca6-a436-306ef50d5d9f	Echo	\N	ECMDSRM3500L	Decespugliatore a batteria X Series 56V - DSRM 3500 L	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-f7cd02f9-da29-42fb-b3e6-5f5724a10775	Echo	\N	ECMDSRM3500U	Decespugliatore a batteria X Series 56V - DSRM 3500 U	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-3afa3e66-64fd-485e-923f-e71617f1319b	Echo	\N	ECMDTT2100	Decespugliatore a batteria X Series 56V - DTT 2100	\N	689.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-041dc3ed-a8bf-49de-aef5-3b3397bd5df3	Echo	\N	ECADBC560	Caricabatterie 56eForce Rapido 56V	\N	109.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5fe70745-a161-4513-8c49-8af136670525	Echo	\N	ECADBC560RC	Caricabatterie 56eForce UltraRapido 56V	\N	169.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-7e2d664f-3c4c-43a5-a409-cf129990e043	Echo	\N	ECALBP56V125	Batteria 56eForce 56V 126Wh 2.5AH	\N	209.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-02b7176d-5d85-4abc-85e4-487168949232	Echo	\N	ECALBP56V250	Batteria 56eForce 56V 252Wh 5AH	\N	295.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-65910c2b-1274-4257-a970-1a79d6f44a26	Weibang	\N	WBMWB455HCOP	Tagliaerba a spinta 45cm - 139cc	\N	259.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-040cb028-915e-42e7-800d-b626b1c0c4f8	Weibang	\N	WBMWB455HC	Tagliaerba a spinta 45cm - 139cc con raccolta	\N	359.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-cafdaa2b-46d4-487e-a28d-75692bb73012	Weibang	\N	WBMWB455SCOP	Tagliaerba semovente 45cm - 139cc	\N	319.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-f0aac836-b83b-4219-92b5-5118e8ee65cf	Weibang	\N	WBMWB455SC	Tagliaerba semovente 45cm - 139cc con raccolta	\N	445.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a8f00a9b-abeb-43c2-bfe7-18538b45976f	Weibang	\N	WBMWB455SC3	Tagliaerba semovente 3x1 45cm - 139cc	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-4aa31fa8-2c1f-4ca7-944d-f454d9a2ce3b	Weibang	\N	WBMWB456SCVE3	Tagliaerba semovente 3x1 45cm - 166cc	\N	709.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-af948981-f3be-4598-803d-7064e087f5c9	Weibang	\N	WBMWB506SC	Tagliaerba semovente 50cm - 166cc	\N	469.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-d48c02c4-18fa-4bbf-9424-c4bf5cd8831c	Weibang	\N	WBMWB506SC3	Tagliaerba semovente 3x1 50cm - 166cc	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-460a7e5d-fdbc-46e3-9c64-d806cb0c1b6b	Weibang	\N	WBMWB537SC	Tagliaerba semovente 53cm - 196cc	\N	569.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-8a151d51-2885-48a2-9326-0caf9035f87a	Weibang	\N	WBMWB537SC3	Tagliaerba semovente 3x1 53cm - 196cc	\N	709.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-24947323-3e86-48a2-96db-99ef5d4bc640	Weibang	\N	WBMWB466HCM	Tagliaerba Mulching a spinta 46cm - 166cc	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-aaf97097-41b1-4dfe-82b3-02a3559b3b0f	Weibang	\N	WBMWB466SCM	Tagliaerba Mulching semovente 46cm - 166cc	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-3328010c-6a0b-4723-bf9b-b753f3afca47	Weibang	\N	WBMWB537SCM	Tagliaerba Mulching semovente 53cm - 196cc	\N	859.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-dcb33285-0901-49ef-9893-49c0dfab0ab0	Weibang	\N	WBMWB507SCV3	Tagliaerba semovente 3x1 50cm - 196cc Cardanica 3v	\N	835.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e634aa28-ccb2-492f-a0bd-bffa0ee91cc5	Weibang	\N	WBMWB537SCV3	Tagliaerba semovente 3x1 53cm - 196cc Cardanica 3v	\N	925.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-445b4ecc-14a6-430e-9f2e-b686f75b941d	Weibang	\N	WBMWB537SCV3LV	Tagliaerba semovente 3x1 53cm - 196cc Low Vibration	\N	1039.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-f260bc32-8a20-429b-93ac-45670e63c430	Weibang	\N	WBMWB537SCV3B	Tagliaerba semovente 3x1 53cm - 196cc Freno lama	\N	1199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-1b4c8826-e39e-4d26-a546-1145dd2aa383	Weibang	\N	WBMWB537SCVM	Tagliaerba Mulching semovente 53cm - 196cc Mecc. 3v	\N	959.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a718a739-c7f4-49ff-b915-f83d5f6242f1	Weibang	\N	WBMWB537SCVALB	Tagliaerba semovente 53cm - 196cc Allum. Freno lama	\N	1355.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e9ffd558-4cb5-40b7-8c31-6f900d47568d	Weibang	\N	WBMWB778SCV3	Tagliaerba bilama semovente 3x1 77cm - 300cc	\N	2789.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-b96f313b-0d8e-4fa2-80d3-a194a2cb7b28	Weibang	\N	WBMWB778SCV3P	Tagliaerba bilama semovente 3x1 77cm - 300cc Ruote Piv.	\N	2989.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-da33f692-df5e-4f41-9053-34faa8a7de5f	Weibang	\N	WBMWB486SKVRB	Tagliaerba a rullo semovente 48cm - 179cc	\N	1799.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-dcccedd8-cb5f-47a7-8a42-fb1372ff718c	Weibang	\N	WBMWB567SKVRB	Tagliaerba a rullo semovente 56cm - 196cc	\N	2099.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-b8bdb773-0dc0-4b94-a99f-2c19b6046f35	Weibang	\N	WBMWB384RC	Arieggiatore a coltelli 38cm - 163cc Lama flottante	\N	869.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-44df9616-e19d-44b6-bc71-6893805acad9	Weibang	\N	WBMWB486CRC	Arieggiatore a coltelli 48cm - 163cc Lama flottante	\N	1189.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-b5078a73-d3ce-408c-a690-62ee6eb18424	Weibang	\N	WBMWBLV506C	Aspirafoglie a ruote 80cm - 163cc Sacco 240L	\N	1619.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-014a45c3-cc9d-4e1b-91a1-bad090582734	Weibang	\N	WBMWBLV50K	Aspirafoglie da sponda - 180cc Kawasaki	\N	1499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-9268f8a4-8215-47d8-9512-5e5637818e29	Weibang	\N	WBMWBTR126H	Catenaria 163cc	\N	4199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e9b640ba-fd3c-45f6-90a5-ab2a387f4e4c	Weibang	\N	WBMWBSH4003E	Biotrituratore elettrico 2400W - Diametro 40mm	\N	845.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-c56599a2-d919-4808-a02f-fa78b6b1f3d6	Weibang	\N	WBMWBCH507LC	Cippatore compatto 196cc - Diametro 50mm	\N	1329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-5a6a4546-226e-4597-b1cc-5db31fa1775a	Weibang	\N	WBMWBCH1013LCD	Cippatore professionale 400cc - Diametro 100mm	\N	3399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-deb6e938-2868-417d-84a8-7423924a49fc	Weibang	\N	WBMWBLT567HLC	Decespugliatore a ruote a spinta 56cm - 196cc	\N	765.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-e16a6f41-32be-40d7-9461-704378b64bed	Weibang	\N	WBMWBLT567SLC	Decespugliatore a ruote semovente 56cm - 196cc	\N	1099.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-6879a57d-08cf-48d9-a201-9d923d484a76	Weibang	\N	WBMWBBC537SCV	Falciatrice professionale 53cm - 196cc	\N	1425.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-973feb2a-8e30-4a23-9f74-adaf4b0fddcf	Weibang	\N	WBMWBBC538SCV	Falciatrice professionale 53cm - 224cc	\N	1715.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-156140de-becf-484b-a5b5-46ab99e3a6c8	Weibang	\N	WBMWBBC7623LC	Falciatrice professionale 76cm - 764cc	\N	4599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-943cd8b2-8add-4ae2-8276-a78796ea791b	Weibang	\N	WBMWBGT6813	Trinciasermenti a ruote 68cm - 392cc CVT	\N	4499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
-a57d3386-4708-4414-abfc-af5bbf7b5b1e	Weibang	\N	WBMWBGT6813TE	Trinciasermenti cingolato 68cm - 392cc	\N	6599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N
+COPY public.listini (id, brand, categoria, codice, descrizione, confezione, prezzo_a, prezzo_b, prezzo_c, prezzo_d, iva, data_aggiornamento, prezzo_promo, promo_dal, promo_al, note_promo, note) FROM stdin;
+06b6ad77-92a8-420f-94fc-141629901991	DIMA	H35	H35/15S	DIMA H35 1500mm senza bordo	\N	168.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	168.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+35aecafc-bac3-4ad7-824e-56f8c58f7965	DIMA	H35	H35/20S	DIMA H35 2000mm senza bordo	\N	221.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	221.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+978e3c72-cbd0-49bd-8675-ccd418337945	DIMA	H35	H35/25S	DIMA H35 2500mm senza bordo	\N	269.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	269.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+4e0f1c41-8f07-4494-abbe-6cfa02f52db1	DIMA	H35	H35/30S	DIMA H35 3000mm senza bordo	\N	336.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	336.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+7d1aac14-f596-41bd-aa3b-caec7ddae7b2	DIMA	H35	H35/35S	DIMA H35 3500mm senza bordo	\N	386.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	386.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+2cbc9890-ef37-4dd1-be3f-8277dbfc004e	DIMA	H35	H35/15SP	DIMA H35 1500mm senza bordo pieghevole	\N	336.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	336.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+804d4a09-126e-4237-ac88-4898bab53eb2	DIMA	H35	H35/20SP	DIMA H35 2000mm senza bordo pieghevole	\N	389.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	389.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+87169f5b-33c0-405a-abb5-5f74eaf38ac9	DIMA	H35	H35/25SP	DIMA H35 2500mm senza bordo pieghevole	\N	437.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	437.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+a910fbb4-09ad-48f9-a245-37bb3b97cb4b	DIMA	H35	H35/30SP	DIMA H35 3000mm senza bordo pieghevole	\N	504.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	504.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+03ae79db-af3c-4517-b8d4-517904c7d0c9	DIMA	H35	H35/35SP	DIMA H35 3500mm senza bordo pieghevole	\N	555.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	555.00	\N	\N	Vendita a listino (+IVA)	Portata serie fino a 1535 kg
+2760d577-ce77-45f5-be32-ef474446c3a5	DIMA	H60	H60/15S	DIMA H60 1500mm senza bordo	\N	336.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	312.48	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+6446e209-7e2e-443d-af0f-642809513f85	DIMA	H60	H60/20S	DIMA H60 2000mm senza bordo	\N	454.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	422.22	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+8364c1d0-1405-4cdf-ae8b-fee490d7a5c6	DIMA	H60	H60/25S	DIMA H60 2500mm senza bordo	\N	550.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	511.50	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+f205aa79-4bba-489c-b027-d6dc1e020649	DIMA	H60	H60/30S	DIMA H60 3000mm senza bordo	\N	663.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	616.59	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+5a41e23b-23e6-44a6-bbc0-cdea33453b36	DIMA	H60	H60/35S	DIMA H60 3500mm senza bordo	\N	777.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	722.61	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+aa49ffc3-0db5-4ff4-900f-3bffd94878d6	DIMA	H60	H60/15SP	DIMA H60 1500mm senza bordo pieghevole	\N	525.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	488.25	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+764959f0-74f9-4155-aa61-477536757df2	DIMA	H60	H60/20SP	DIMA H60 2000mm senza bordo pieghevole	\N	643.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	597.99	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+c4870f03-39b3-4d4e-98d7-eac8da76bbf8	DIMA	H60	H60/25SP	DIMA H60 2500mm senza bordo pieghevole	\N	740.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	688.20	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+8c5601d1-f582-4788-b569-50fda7fb0f9e	DIMA	H60	H60/30SP	DIMA H60 3000mm senza bordo pieghevole	\N	852.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	792.36	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+7d627739-084c-45b3-acb4-9c694322be62	DIMA	H60	H60/35SP	DIMA H60 3500mm senza bordo pieghevole	\N	966.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	898.38	\N	\N	Sconto max 7% (prezzi IVA escl.)	Portata serie fino a 1750 kg
+894dab4e-18d9-4e5d-9aa8-2b62fdad5225	DIMA	H50	H50/15S	DIMA H50 1500mm senza bordo	\N	303.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	293.91	\N	\N	Sconto max 3% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+5e3dcdaa-e24e-4a5b-abaa-ad5dc2e231d9	DIMA	H50	H50/20S	DIMA H50 2000mm senza bordo	\N	404.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	391.88	\N	\N	Sconto max 3% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+5273ea32-1a49-447a-8bbb-eb6904d78371	DIMA	H50	H50/25S	DIMA H50 2500mm senza bordo	\N	492.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	477.24	\N	\N	Sconto max 3% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+517ded80-92e2-44c7-8c27-fbdad196d243	DIMA	H50	H50/30S	DIMA H50 3000mm senza bordo	\N	590.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	572.30	\N	\N	Sconto max 3% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+a4fcf64f-846b-44d7-9586-fbd61497820d	DIMA	H50	H50/35S	DIMA H50 3500mm senza bordo	\N	672.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	651.84	\N	\N	Sconto max 3% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+61515bf6-8723-4347-bea8-49c15c3922b6	DIMA	H65	H65/15S	DIMA H65 1500mm senza bordo	\N	336.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	319.20	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+f6532fa8-6f00-42e9-b8d1-ca33a1dd2eb8	DIMA	H65	H65/20S	DIMA H65 2000mm senza bordo	\N	437.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	415.15	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+d2c242fc-63fe-4839-a379-7ed230c9d959	DIMA	H65	H65/25S	DIMA H65 2500mm senza bordo	\N	524.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	497.80	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+cb0dca77-1c94-4ccd-b93f-647a43e6de46	DIMA	H65	H65/30S	DIMA H65 3000mm senza bordo	\N	623.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	591.85	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+9e706bf3-a726-4817-b99b-258fd2ff8da6	DIMA	H65	H65/35S	DIMA H65 3500mm senza bordo	\N	703.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	667.85	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+d5f34d32-5da3-49be-aa43-ceeb545639d8	DIMA	H65	H65/15B	DIMA H65 1500mm con bordo	\N	336.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	319.20	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+8312d174-4bd9-4b2b-9351-80d9b97c15c2	DIMA	H65	H65/20B	DIMA H65 2000mm con bordo	\N	437.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	415.15	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+64aec6f7-26a8-4e7d-a9a4-add01f156ad9	DIMA	H65	H65/25B	DIMA H65 2500mm con bordo	\N	524.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	497.80	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+d8da3c56-045f-4512-8b8a-0a466b4950d5	DIMA	H65	H65/30B	DIMA H65 3000mm con bordo	\N	623.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	591.85	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+f02dd799-78e5-4b88-98c8-929535e0e718	DIMA	H65	H65/35B	DIMA H65 3500mm con bordo	\N	703.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	667.85	\N	\N	Sconto max 5% (prezzi IVA escl.)	Portata serie fino a 2000 kg
+9f151ec8-642c-48c3-8111-af1038e0767a	DIMA	H72	H72/15S	DIMA H72 1500mm senza bordo	\N	315.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	283.50	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+b76ecd0d-2263-46d0-8705-2613303b3b9a	DIMA	H72	H72/20S	DIMA H72 2000mm senza bordo	\N	403.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	362.70	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+4445499e-81aa-4722-a2ae-e2afb563553e	DIMA	H72	H72/25S	DIMA H72 2500mm senza bordo	\N	462.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	415.80	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+c4b82b0d-1bfd-41eb-8460-bc2499f49ed9	DIMA	H72	H72/30S	DIMA H72 3000mm senza bordo	\N	560.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	504.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+43dfd2e4-9a61-4fa9-9ce3-9f4e87cd0c8c	DIMA	H72	H72/35S	DIMA H72 3500mm senza bordo	\N	630.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	567.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+ced8172b-19f1-4f95-a4db-7aaca801b509	DIMA	H72	H72/15SL	DIMA H72 1500mm senza bordo larga	\N	470.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	423.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+657beebc-0558-406d-ab70-76e35bcfd688	DIMA	H72	H72/20SL	DIMA H72 2000mm senza bordo larga	\N	565.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	508.50	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+be6de745-8e4a-47d1-86db-85d77dfc7bfe	DIMA	H72	H72/25SL	DIMA H72 2500mm senza bordo larga	\N	710.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	639.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+d1a206f1-d923-46ff-a05b-00c325582b81	DIMA	H72	H72/30SL	DIMA H72 3000mm senza bordo larga	\N	828.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	745.20	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+622d0a58-b643-40ac-b093-76b8e3783e5d	DIMA	H72	H72/35SL	DIMA H72 3500mm senza bordo larga	\N	939.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	845.10	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+ed02a46d-fa17-43fe-87e7-752e75173276	DIMA	H72	H72/15B	DIMA H72 1500mm con bordo	\N	315.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	283.50	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+9c02ba42-74bd-42cd-9b0c-15de8058581d	DIMA	H72	H72/20B	DIMA H72 2000mm con bordo	\N	403.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	362.70	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+336c7bec-5fe7-4ad5-8105-20528c1db43e	DIMA	H72	H72/25B	DIMA H72 2500mm con bordo	\N	462.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	415.80	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+c2f2b60b-97ad-4a56-b9c0-edd3f95551b0	DIMA	H72	H72/30B	DIMA H72 3000mm con bordo	\N	561.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	504.90	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+2efb55a9-16fe-4259-9a8a-0fe067b76b67	DIMA	H72	H72/35B	DIMA H72 3500mm con bordo	\N	630.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	567.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+cf417e76-517d-4393-b5bc-856a870f637a	DIMA	H72	H72/15BL	DIMA H72 1500mm con bordo larga	\N	470.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	423.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+8b4aa9a0-10e6-4f28-92b3-b8220a91f33f	DIMA	H72	H72/20BL	DIMA H72 2000mm con bordo larga	\N	565.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	508.50	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+2153b5c2-b946-443a-ab3f-50e21f3b97fc	DIMA	H72	H72/25BL	DIMA H72 2500mm con bordo larga	\N	710.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	639.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+5c920c48-23f9-4ff7-91b8-7dec63887821	DIMA	H72	H72/30BL	DIMA H72 3000mm con bordo larga	\N	828.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	745.20	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+1a692637-17a3-4a08-aa9a-b6b51fb95b04	DIMA	H72	H72/35BL	DIMA H72 3500mm con bordo larga	\N	939.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	845.10	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 1685 kg
+abbfe512-927a-45c1-baf1-7da5b75859e0	DIMA	H75	H75/15S	DIMA H75 1500mm senza bordo	\N	342.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	307.80	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 2900 kg
+91af1c72-61a8-42e2-85fe-8b6a8563220c	DIMA	H75	H75/20S	DIMA H75 2000mm senza bordo	\N	456.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	410.40	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 2900 kg
+2ed837dc-44e2-4ed5-8733-127a87688642	DIMA	H75	H75/25S	DIMA H75 2500mm senza bordo	\N	536.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	482.40	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 2900 kg
+4cbd990e-45d2-441c-b1fd-6d08b7337a29	DIMA	H75	H75/30S	DIMA H75 3000mm senza bordo	\N	662.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	595.80	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 2900 kg
+16677e12-4f59-4116-b2fb-d7637d5fc85e	DIMA	H75	H75/35S	DIMA H75 3500mm senza bordo	\N	732.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	658.80	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 2900 kg
+6d579d1f-6a38-42ac-9fcb-b87f2fdd00df	DIMA	H85	H85/15S	DIMA H85 1500mm senza bordo	\N	358.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	322.20	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 3000 kg
+eb45aca6-9fad-42b5-a833-aef61827e88b	DIMA	H85	H85/20S	DIMA H85 2000mm senza bordo	\N	470.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	423.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 3000 kg
+cab5d5a3-53ae-4c8b-9f38-bb990818ea3e	DIMA	H85	H85/25S	DIMA H85 2500mm senza bordo	\N	567.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	510.30	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 3000 kg
+9182dc9d-ad98-45f0-af32-22f88f6c4b8b	DIMA	H85	H85/30S	DIMA H85 3000mm senza bordo	\N	690.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	621.00	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 3000 kg
+3fdd2100-aedd-42c1-b8c7-d5d6c5dad3f5	DIMA	H85	H85/35S	DIMA H85 3500mm senza bordo	\N	778.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	700.20	\N	\N	Sconto max 10% (prezzi IVA escl.)	Portata serie fino a 3000 kg
+8324e546-21b1-43a4-99f4-53f29140057f	DIMA	H100	H100/25S	DIMA H100 2500mm senza bordo	\N	607.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	534.16	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+7211972b-175f-47b3-9e55-f222cf048746	DIMA	H100	H100/30S	DIMA H100 3000mm senza bordo	\N	700.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	616.00	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+7d38112b-7539-49db-8ce2-d7cf26fbefc7	DIMA	H100	H100/32S	DIMA H100 3200mm senza bordo	\N	730.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	642.40	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+7436c6f9-0810-498a-8222-15394cee180b	DIMA	H100	H100/35S	DIMA H100 3500mm senza bordo	\N	797.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	701.36	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+f55c7e8f-4484-4a2d-a622-84d9a912f3bf	DIMA	H100	H100/40S	DIMA H100 4000mm senza bordo	\N	919.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	808.72	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+302c5cc5-6e85-47dc-8005-c0d2db5c7a51	DIMA	H100	H100/25B	DIMA H100 2500mm con bordo	\N	607.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	534.16	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+c1d4da0f-799f-4240-be55-c287695699b6	DIMA	H100	H100/30B	DIMA H100 3000mm con bordo	\N	700.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	616.00	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+7a0525f7-6828-4d3d-9da4-7f1cd33fb4c1	DIMA	H100	H100/32B	DIMA H100 3200mm con bordo	\N	730.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	642.40	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+54de8dd1-0b1e-4c23-a9e6-3acd5b892915	DIMA	H100	H100/35B	DIMA H100 3500mm con bordo	\N	797.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	701.36	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+8183eebe-c562-4608-a5a1-3e50424abb3e	DIMA	H100	H100/40B	DIMA H100 4000mm con bordo	\N	919.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	808.72	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3600 kg
+911fb3ac-9983-4021-babb-9a4e3cd2d578	DIMA	H110	H110/25S	DIMA H110 2500mm senza bordo	\N	662.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	582.56	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+d0653433-c7ea-48b1-a7ca-8cba89b8c99c	DIMA	H110	H110/30S	DIMA H110 3000mm senza bordo	\N	784.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	689.92	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+83335519-2eb2-4770-a339-2474c6647353	DIMA	H110	H110/32S	DIMA H110 3200mm senza bordo	\N	809.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	711.92	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+10b2d0d4-be1b-49d7-981b-0c9ba9f5f544	DIMA	H110	H110/35S	DIMA H110 3500mm senza bordo	\N	870.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	765.60	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+b60e6a29-8418-48a6-b436-c5caeaf64b47	DIMA	H110	H110/40S	DIMA H110 4000mm senza bordo	\N	958.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	843.04	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+ce7b42e4-126a-4f71-804d-9cec6e2484e7	DIMA	H110	H110/25B	DIMA H110 2500mm con bordo	\N	662.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	582.56	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+6b0f5564-7c6f-46b8-8e52-7872c0ac3c9f	DIMA	H110	H110/30B	DIMA H110 3000mm con bordo	\N	784.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	689.92	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+1ec17f69-5c3b-432f-8963-d48fd65edb01	DIMA	H110	H110/32B	DIMA H110 3200mm con bordo	\N	809.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	711.92	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+e4ae5802-3602-401c-beab-0f702ac88710	GEOGREEN	Sementi	MICOTPWM01	Micosat F Tab Plus Wp Mini	gr.100	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+21f1f648-a751-498f-890f-19201f4d15f5	DIMA	H110	H110/35B	DIMA H110 3500mm con bordo	\N	870.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	765.60	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+36a3bae2-68b8-493b-9219-50ffbe6dc707	DIMA	H110	H110/40B	DIMA H110 4000mm con bordo	\N	958.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	843.04	\N	\N	Sconto max 12% (prezzi IVA escl.)	Portata serie fino a 3810 kg
+4e6b1308-2cd5-4405-8974-be698db9fe52	DIMA	H125	H125/25S	DIMA H125 2500mm senza bordo	\N	793.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	689.91	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+8be056de-1661-4d5a-a0c4-c0439abd922c	DIMA	H125	H125/30S	DIMA H125 3000mm senza bordo	\N	965.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	839.55	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+85139307-aa3c-4e4f-88e4-ec9a18bdb26a	DIMA	H125	H125/32S	DIMA H125 3200mm senza bordo	\N	1010.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	878.70	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+054ab910-a76e-4e12-a37d-50396d852b72	DIMA	H125	H125/35S	DIMA H125 3500mm senza bordo	\N	1066.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	927.42	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+c21a288e-647a-4a20-a0ee-277667ac8357	DIMA	H125	H125/40S	DIMA H125 4000mm senza bordo	\N	1239.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	1077.93	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+fe4c8b0f-2b5c-492e-ae08-389bdbeec289	DIMA	H125	H125/25B	DIMA H125 2500mm con bordo	\N	793.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	689.91	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+87a6cae7-8293-404e-9e75-329158ba8020	DIMA	H125	H125/30B	DIMA H125 3000mm con bordo	\N	965.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	839.55	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+c559dc0b-f6cf-4e7b-8a97-b499dfdc4d29	DIMA	H125	H125/32B	DIMA H125 3200mm con bordo	\N	1010.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	878.70	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+9a5a75cf-7422-45a7-918d-d51813ceafcf	DIMA	H125	H125/35B	DIMA H125 3500mm con bordo	\N	1066.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	927.42	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+1e469e84-37fc-4488-a04b-0938c9a66dc5	DIMA	H125	H125/40B	DIMA H125 4000mm con bordo	\N	1239.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	1077.93	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+ea170033-2f31-4f73-af42-7cf40bf57d47	DIMA	H125	H125/25SL	DIMA H125 2500mm senza bordo larga	\N	809.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	703.83	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+1771c627-3d7a-4db1-bb37-aaf704862998	DIMA	H125	H125/30SL	DIMA H125 3000mm senza bordo larga	\N	989.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	860.43	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+fec45f24-53df-418e-b546-c7dad2bd1556	DIMA	H125	H125/32SL	DIMA H125 3200mm senza bordo larga	\N	1034.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	899.58	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+5e9b21f9-b334-4596-8e0e-ee1de79b127f	DIMA	H125	H125/35SL	DIMA H125 3500mm senza bordo larga	\N	1098.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	955.26	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+c1fcf757-82fe-4021-8c08-eddc5db27528	DIMA	H125	H125/40SL	DIMA H125 4000mm senza bordo larga	\N	1255.00	\N	\N	\N	22.00	2026-06-22 08:03:09.829+00	1091.85	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+d6422671-c5d9-4679-a2fb-f650e8ab0a25	DIMA	LOGISTIC	L125/30B750	DIMA LOGISTIC 3000mm	\N	835.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+335e670a-1367-4582-9005-3773477cbd72	DIMA	LOGISTIC	L125/30B1000	DIMA LOGISTIC 3000mm	\N	940.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+fe3e35cc-2eb5-4f5e-8705-16409438026d	DIMA	LOGISTIC	L65/15B1000SG	DIMA LOGISTIC 1500mm	\N	551.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+e190eb5b-8793-445e-87bb-3345188c4cd7	DIMA	LOGISTIC	L65/20B1000SG	DIMA LOGISTIC 2000mm	\N	709.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+3b1da76f-521e-4d90-95e4-d382024b8aad	DIMA	LOGISTIC	L100/25B1000SG	DIMA LOGISTIC 2500mm	\N	939.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+0f59bcdf-1038-49d0-9c44-28ce3f7dc2d1	DIMA	LOGISTIC	L125/30B1000SG	DIMA LOGISTIC 3000mm	\N	1155.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+e2c26194-c954-4d38-a656-df6a1a98d8d6	DIMA	DISABILITY	L72/15B750	DIMA DISABILITY 1500mm	\N	294.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+27b7f817-9771-46b7-8dd9-80b84ca6104f	DIMA	DISABILITY	L72/15B1000	DIMA DISABILITY 1500mm	\N	363.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+5da0eaaf-1bfa-4987-8860-bf7f65cd9049	DIMA	DISABILITY	L72/20B750	DIMA DISABILITY 2000mm	\N	389.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+3919786c-20cf-4040-9914-d82c99210dcf	DIMA	DISABILITY	L72/20B1000	DIMA DISABILITY 2000mm	\N	489.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+1b34afe3-67a1-4247-b482-a87abff8d65b	DIMA	DISABILITY	L72/25B750	DIMA DISABILITY 2500mm	\N	520.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+3d5ffea0-1ac6-4f20-83e9-0da9da98a0a1	DIMA	DISABILITY	L72/25B1000	DIMA DISABILITY 2500mm	\N	599.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+81e51dc7-eb7c-4dd7-82a8-80e6e2a34228	DIMA	DISABILITY	L35/15/3S	DIMA DISABILITY 1500mm rampa disabili	\N	268.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+154fdfd8-6ac5-41be-b627-e36ca4fb4f0b	DIMA	DISABILITY	L35/15/4S	DIMA DISABILITY 1500mm rampa disabili	\N	363.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+b371f60d-ddab-4f0c-845f-30b86ea08c7b	DIMA	DISABILITY	L35/20/3S	DIMA DISABILITY 2000mm rampa disabili	\N	368.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+80beb652-5284-4036-a7a8-c584a1685c9e	DIMA	DISABILITY	L35/20/4S	DIMA DISABILITY 2000mm rampa disabili	\N	473.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+c3d0bd92-4e2d-4f6b-acbb-1d1e5f3cebd3	DIMA	DISABILITY	L35/25/3S	DIMA DISABILITY 2500mm rampa disabili	\N	583.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+e51d1c44-0b6e-44a5-ac08-efc0195411e2	DIMA	DISABILITY	L35/25/4S	DIMA DISABILITY 2500mm rampa disabili	\N	725.00	\N	\N	\N	22.00	2026-06-22 08:03:10.401+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+9fab9c38-47e1-49f1-abec-5300d1ea7c67	DIMA	DISABILITY	D35/15/4P	DIMA DISABILITY 1500mm rampa disabili	\N	399.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+c0e72495-8954-45e3-ba35-5d199b8cfee7	DIMA	DISABILITY	D35/20/4P	DIMA DISABILITY 2000mm rampa disabili	\N	483.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 450 kg
+979c0f04-17de-41b3-9e95-255733658487	DIMA	VAN	VANTL-65X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	3402.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+20f76a09-d1ed-46a2-8f62-9aaf9369422e	DIMA	VAN	VANTL-65X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	3469.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+6510eec2-5053-4a7c-9837-cbd8c963b359	DIMA	VAN	VANTL-65X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3551.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+175e2172-3d06-43b8-ad6c-1d5413ac6ecc	GEOGREEN	Sementi	MICOLWM01	Micosat F Len Wp Mini	gr.100	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+4b691356-73f8-4dc1-b8f3-3a344cd7b4fd	DIMA	H125	H125/25BL	DIMA H125 2500mm con bordo larga	\N	809.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	703.83	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+69dd94bd-8d29-4aa9-ba98-ba4dc871df3e	DIMA	H125	H125/30BL	DIMA H125 3000mm con bordo larga	\N	989.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	860.43	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+d6b05942-254f-49e5-a674-9b40bf6d1293	DIMA	H125	H125/32BL	DIMA H125 3200mm con bordo larga	\N	1034.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	899.58	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+fcd544d3-4147-4d0e-9a1e-0f1af97197a6	DIMA	H125	H125/35BL	DIMA H125 3500mm con bordo larga	\N	1098.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	955.26	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+cf9013f4-56eb-4ce8-8006-9634f6f2023c	DIMA	H125	H125/40BL	DIMA H125 4000mm con bordo larga	\N	1255.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1091.85	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 4110 kg
+bbc9453a-2908-4780-8d03-be201fe504f6	DIMA	H135	H135/25S	DIMA H135 2500mm senza bordo	\N	1064.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	925.68	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+52b30e9e-526f-4431-832f-e1301181ef36	DIMA	H135	H135/30S	DIMA H135 3000mm senza bordo	\N	1286.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1118.82	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+bda20119-1df7-485d-8c45-76b4e7aad131	DIMA	H135	H135/35S	DIMA H135 3500mm senza bordo	\N	1355.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1178.85	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+4b8b0f1b-375c-4f12-8910-0d88f6438857	DIMA	H135	H135/40S	DIMA H135 4000mm senza bordo	\N	1494.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1299.78	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+c4f1c1df-f17f-4a08-8266-842ece3bb6fe	DIMA	H135	H135/45S	DIMA H135 4500mm senza bordo	\N	1676.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1458.12	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+14e81d01-b65d-48c5-ba43-dd2f4063a592	DIMA	H135	H135/25SL	DIMA H135 2500mm senza bordo larga	\N	1151.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1001.37	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+1276f0e0-3729-4778-8359-a2166dfb6eb0	DIMA	H135	H135/30SL	DIMA H135 3000mm senza bordo larga	\N	1355.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1178.85	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+3c49a174-92f6-46b8-b844-10904bf0ffc5	DIMA	H135	H135/35SL	DIMA H135 3500mm senza bordo larga	\N	1412.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1228.44	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+39e45ac8-79e7-4133-b298-a7492e819016	DIMA	H135	H135/40SL	DIMA H135 4000mm senza bordo larga	\N	1581.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1375.47	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+8304a588-fd31-47b8-8609-1a1b029f5cbc	DIMA	H135	H135/45SL	DIMA H135 4500mm senza bordo larga	\N	1762.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1532.94	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+64a4526e-f8e2-4fe1-b8c4-00fb4319bd06	DIMA	H135	H135/25B	DIMA H135 2500mm con bordo	\N	1064.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	925.68	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+0cd951e6-8a01-4c2f-8b50-5aa2860b55f4	DIMA	H135	H135/30B	DIMA H135 3000mm con bordo	\N	1286.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1118.82	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+f6da991f-aa62-4cf8-ac10-adca81d9e190	DIMA	H135	H135/35B	DIMA H135 3500mm con bordo	\N	1355.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1178.85	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+f85c7b06-0360-4490-8833-5c990fcaf880	DIMA	H135	H135/40B	DIMA H135 4000mm con bordo	\N	1494.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1299.78	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+b42ac21e-c688-494d-959d-78d732942476	DIMA	H135	H135/45B	DIMA H135 4500mm con bordo	\N	1676.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1458.12	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+c062d42e-f919-4b51-bfc5-06d91b5d6ef3	DIMA	H135	H135/25BL	DIMA H135 2500mm con bordo larga	\N	1151.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1001.37	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+26a6993e-0863-4011-aaca-0c851768e56b	DIMA	H135	H135/30BL	DIMA H135 3000mm con bordo larga	\N	1355.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1178.85	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+fd5fe409-5c9d-4950-977c-abad61c4c063	DIMA	H135	H135/35BL	DIMA H135 3500mm con bordo larga	\N	1412.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1228.44	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+d335f78d-219a-4eac-9ea4-955ee07e9983	DIMA	H135	H135/40BL	DIMA H135 4000mm con bordo larga	\N	1581.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1375.47	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+baeebd69-a007-4984-bbd5-6f6b25f2b783	DIMA	H135	H135/45BL	DIMA H135 4500mm con bordo larga	\N	1762.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	1532.94	\N	\N	Sconto max 13% (prezzi IVA escl.)	Portata serie fino a 6200 kg
+3982c5f6-dd08-4776-acee-a4c3d96c40d1	DIMA	H175	H175/35S	DIMA H175 3500mm senza bordo	\N	1596.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+516a2a0f-5013-4921-b924-48acec92698e	DIMA	H175	H175/40S	DIMA H175 4000mm senza bordo	\N	1853.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+e3551661-c8d3-4af3-8d2c-66f6adefa93f	DIMA	H175	H175/45S	DIMA H175 4500mm senza bordo	\N	2012.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+acfc8b83-ce76-4404-8250-2d7672d51be0	DIMA	H175	H175/50S	DIMA H175 5000mm senza bordo	\N	2216.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+6cc7a4dc-c6cc-495f-a352-28e0fa48a544	GEOGREEN	Sementi	SHUR701	Hurricane 7	10 kg	108.90	104.00	98.80	89.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+07750d08-1f29-4846-a980-da59cba44781	GEOGREEN	Sementi	SHUR005	Hurricane (Sole+Ombra)	5 kg	54.45	52.00	50.00	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+1f7813eb-b0af-4ea9-b873-5314fa95967c	GEOGREEN	Sementi	SHUR001	Hurricane	1 kg	13.75	\N	\N	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+543382db-15a8-4c95-8c08-3df93fab1fde	GEOGREEN	Sementi	SBLI01	Blizzard	10 kg	97.90	93.00	88.50	80.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+da866150-4b98-48ee-a690-572f834739c6	GEOGREEN	Sementi	SBLI005	Blizzard (Sole+Ombra)	5 kg	54.45	52.00	50.00	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+0dbaf61b-f535-4e7d-839e-94dba6f19670	GEOGREEN	Sementi	SSTR01	Strong	10 kg	85.80	81.50	77.50	70.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+88b6ebd0-c7d0-403c-a864-c4c3e539aadb	GEOGREEN	Sementi	SSTR005	Strong (Sole+Ombra)	5 kg	46.75	44.50	42.30	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+2d91a3e4-ba9c-4a01-a1a8-4d03eba9bbb7	GEOGREEN	Sementi	SNOS01	No-sun	10 kg	85.80	81.50	77.50	69.80	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+18320cf8-a746-46be-adc8-23063e1f42af	GEOGREEN	Sementi	SNOS005	No-sun (Ombra)	5 kg	46.75	44.50	42.30	\N	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+5f2b1c20-79e5-4224-a90b-12cbcaa66546	GEOGREEN	Sementi	SREN01-SP	Renovate Sport (Rigenerazione)	10 kg	99.00	94.00	89.30	80.40	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+261f0479-17d7-4d12-8eae-19a50ce49dea	GEOGREEN	Sementi	STWI01	Twister (calpestio sole+ombra)	10 kg	119.90	114.00	108.30	97.50	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+2c547d22-5407-484c-8701-5de735f0fd44	GEOGREEN	Sementi	STOR01	Tornado	10 kg	101.75	96.70	91.90	82.80	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+48d1aa4c-bc31-4e3f-8ce0-58bbbaf29a5f	GEOGREEN	Sementi	SECO01	Ecograss	10 kg	71.50	68.00	64.60	58.20	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+209268cb-fb6d-4215-a74e-057f6848c0d0	GEOGREEN	Sementi	SWIN01	Winter Sport	10 kg	73.70	70.00	66.50	60.00	10.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+47049ffd-f6b7-4c28-b520-9a3a20e3cf7f	GEOGREEN	Sementi	MICOPG1	Micosat F prati & giardini	1 kg	31.20	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+9bb0f6e3-3165-4fb0-bddd-fdbb55aa1a0d	GEOGREEN	Sementi	MICOTP1	Micosat F Tab Plus	1 kg	49.82	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+eee61504-985c-4b05-b0e9-ded5bc5fbb1d	GEOGREEN	Sementi	MICOL1	Micosat F Len	1 kg	54.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+766e5fa4-e29d-4d2b-98ee-aeb8888770f3	GEOGREEN	Sementi	MICOU02	Micosat F Uno	gr.200	10.00	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+77165f2a-6a8e-4ce5-beb4-7ac394bae484	GEOGREEN	Sementi	MICOMO5	Micosat F MO	5 kg	140.40	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+3ecc2fcf-45dd-4e72-b1b7-24e92299d4dc	GEOGREEN	Sementi	METAGEGR1	Meta-Ge Granular	1 kg	24.90	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+b2d843fc-01e5-4fb2-8c40-20cd3fc0f23b	GEOGREEN	Sementi	METAGE1	Meta-Ge	1 lt	71.80	\N	\N	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+127cc287-2668-4814-83a0-48686edd05be	GEOGREEN	Concimi	G7025	Green 7	25 kg	47.70	45.30	43.00	38.70	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+eebb5349-d7a7-44c8-a1a0-15ff8ede26be	GEOGREEN	Concimi	G8025	Albatros Green 8 Kg 25	25 kg	60.80	57.70	54.80	49.30	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+9a19616d-14c6-41c0-af7e-ce1e11baa006	GEOGREEN	Concimi	VA025	Albatros Vigor Active Kg 25	25 kg	53.10	50.40	47.90	43.00	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+da257617-2ad7-40f6-a5ea-51893329a908	GEOGREEN	Concimi	MGP010	Universal Top	20 kg	62.50	59.40	56.50	52.60	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+788c8598-a378-4a10-bc49-0249625af6c2	GEOGREEN	Concimi	MGP080	AllRound	20 kg	64.50	61.30	58.30	54.20	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+cb8f5584-b9af-407b-9698-5cb46f326dfa	GEOGREEN	Concimi	MGE080	Pro Starter	20 kg	76.00	72.20	68.60	63.80	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+c0d2abf7-a5b4-4259-a17f-be37b6769626	GEOGREEN	Concimi	MGE110	Pro Slow	20 kg	75.00	71.30	67.80	63.00	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+e97b7f24-cf1d-4db4-9fc5-c68cbad6b11b	GEOGREEN	Concimi	MGS010	Granustar	20 kg	74.00	70.30	66.80	62.20	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+aa8fdd07-1354-488c-b56a-bb9f5071eaf9	GEOGREEN	Concimi	MGR040	Iron Power	20 kg	68.70	65.30	62.00	57.70	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+1059b0bb-f43f-4854-b8e5-0372eb3cdb28	GEOGREEN	Concimi	PAL001	Alga Park 1Kg	1 kg	38.70	32.90	29.60	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+d03b058d-7b22-4761-bbd5-477c804d2e4c	GEOGREEN	Concimi	PAL005	Alga Park 5Kg	5 kg	165.10	140.00	126.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+9a421827-e4a5-4082-8f6f-ef73c0bdec84	GEOGREEN	Concimi	PAM001	Amino K 1 Kg	1 kg	17.60	15.00	13.50	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+8b6f64ea-064e-4988-9bf9-0fff479616d5	GEOGREEN	Concimi	PAM005	Amino K 5 Kg	5 kg	66.80	56.80	51.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+426fd548-de06-4a8d-a950-b32fd743a630	GEOGREEN	Concimi	PAM025	Amino K 25 Kg	25 kg	264.00	224.00	200.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+4e2524b8-0fa1-493a-93b4-16e0eb89cc33	GEOGREEN	Concimi	PFE001	Fe Ulk 1 Kg	1 kg	32.30	27.40	24.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+b05de636-08d2-4ab2-a07b-718bcf129a06	GEOGREEN	Concimi	PFE010	Fe Ulk 10 Kg	10 kg	238.00	200.00	180.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+4152b636-2d1d-4a22-ba51-f53cd607a3c9	GEOGREEN	Concimi	TNK005	NPK Enduring 5 kg	5 kg	48.10	41.00	36.90	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+7b1479e7-350a-415b-bf11-332a41fbbac8	GEOGREEN	Concimi	PLK005	Leokare 5 kg	5 kg	72.60	62.00	55.80	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+060382c4-30a5-498d-a5f0-b7ed4444c6b1	GEOGREEN	Concimi	PSK001	Sevenkare 1 kg	1 kg	20.60	17.50	15.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+2d0b18fb-27ea-4725-be5d-c084fa767d1b	GEOGREEN	Concimi	PHU005	Humifitos 5 Kg	5 kg	40.30	34.20	30.80	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+d59ac738-1910-4727-adcc-c8bc86a00702	GEOGREEN	Concimi	PHU025	Humifitos 25 Kg	25 kg	135.20	115.00	103.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+72b1a232-9bd8-4860-a3ba-2e5403522d7f	GEOGREEN	Concimi	PRO005	Root Speed 5 Kg	5 kg	57.80	49.00	44.10	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+50aa3ad5-26fb-4753-af04-6ae3acc83644	GEOGREEN	Concimi	PDV001	Decal Vyro 1 Kg	1 kg	13.40	11.40	10.30	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+0383b50d-c3cb-405a-9380-382eab037630	GEOGREEN	Concimi	PATU005	Paint Turf	0,5 kg	73.80	\N	\N	\N	22.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+088c197c-daca-4775-9356-050ff8a986de	GEOGREEN	Concimi	WETU01	Wet Turf	LT.1	73.20	65.90	62.60	\N	22.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+64fcd43a-2783-439a-8e43-90bae6d0e734	GEOGREEN	Concimi	WETU05	Wet Turf	LT.5	256.20	230.60	219.00	\N	22.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+2be0c17b-4785-455c-8f28-0a8abe88a902	GEOGREEN	Concimi	ED7C05	Eden 7	5 kg	15.70	14.90	14.20	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+1874a51a-ebcf-468e-8581-e6c126a5f990	GEOGREEN	Concimi	ED8C05	Eden 8	5 kg	18.20	17.30	16.50	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+c26c5924-7ea3-46ca-a261-c6d9be36b061	GEOGREEN	Concimi	EMUC05	Eden Multi	3,5 kg	19.00	18.10	17.20	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+abd1fdc8-0664-45a0-a0a1-a1e9e8f586e7	GEOGREEN	Concimi	VAC05	Vigor Active	5 kg	14.50	13.80	13.10	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+a189b45e-798c-4847-9c79-dbc4096823c1	GEOGREEN	Concimi	EIN01	Sustenium Eden Integramix	0,25 kg	8.00	7.60	7.20	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+45e6ce40-10ee-4e22-bb8b-1def00caf0fa	GEOGREEN	Concimi	EPR01	Sustenium Eden Prevent	0,25 kg	8.50	8.10	7.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+950a591c-250e-4ad9-a31b-c14baa06e2de	GEOGREEN	Concimi	EFO01	Sustenium Eden Force	0,5 kg	13.00	12.30	11.70	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+253e2c1e-f5e9-4a82-a491-57e21de6c760	GEOGREEN	Concimi	ENB01	Sustenium Eden Nutribio	0,25 kg	10.00	9.50	9.00	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+202af68d-e3d9-4a0a-8dfa-c638e296bc7c	GEOGREEN	Concimi	EFB01	Sustenium Eden Ferro G Bio	0,25 kg	13.00	11.40	10.80	\N	4.00	2026-02-24 20:41:32.671+00	\N	\N	\N	\N	\N
+2c56c5c0-5427-4069-94a7-34ed5b5275b8	DIMA	H175	H175/35SL	DIMA H175 3500mm senza bordo larga	\N	1752.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+1fbbfabd-04ca-4165-b1ea-c2f159376818	DIMA	H175	H175/40SL	DIMA H175 4000mm senza bordo larga	\N	2016.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+043c2914-f4af-4f49-94c0-d9be6863d6d2	DIMA	H175	H175/45SL	DIMA H175 4500mm senza bordo larga	\N	2163.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+89aa0030-e345-418a-97ae-c52463b11764	DIMA	H175	H175/50SL	DIMA H175 5000mm senza bordo larga	\N	2409.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+c6c2c2ad-f30d-4cc4-accf-0e13a95f2044	DIMA	H175	H175/35B	DIMA H175 3500mm con bordo	\N	1596.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+50472ddf-522b-4261-9aad-1637513467f7	DIMA	H175	H175/40B	DIMA H175 4000mm con bordo	\N	1853.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+d49d7230-0018-45d7-8ce7-f4a53b6cf324	DIMA	H175	H175/45B	DIMA H175 4500mm con bordo	\N	2012.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+4fa49fc1-e500-466d-b4d7-cae23facee91	DIMA	H175	H175/50B	DIMA H175 5000mm con bordo	\N	2216.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+8129b03b-0870-4138-9176-3d4c64204e10	DIMA	H175	H175/35BL	DIMA H175 3500mm con bordo larga	\N	1752.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+9d74deac-8778-4a35-8359-62c495d4c28b	DIMA	H175	H175/40BL	DIMA H175 4000mm con bordo larga	\N	2016.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+6fc31594-7bbe-41c6-86d7-117b78ed458d	HONDA	MACCHINE A BATTERIA	HRG416XBPESPINTA	IZY ON HRG 416 XB  PE                                SPINTA 41 CM	\N	500.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+39cacbba-835c-4590-bdd9-a1ff53131822	HONDA	MACCHINE A BATTERIA	HRG416XBPE	HRG 416 XB  PE + BATT. 6 Ah + CARICA            350 MT/q 41 CM	\N	720.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+96dfae4e-5961-4074-a8e2-203fd2d3b78d	HONDA	MACCHINE A BATTERIA	HRX_476_XB_400_MT/Q_46_CM	HRX 476 XB                                                       400 MT/q 46 CM	\N	1050.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+2c029bf4-52ff-474c-a89e-12449f98b7c1	HONDA	MACCHINE A BATTERIA	HRX476XB	HRX 476 XB   + BATT. 6 Ah + CARICA                400 MT/q 46 CM	\N	1270.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+b232e231-05dc-473c-92a0-c278bf3a25d7	HONDA	MACCHINE A BATTERIA	HHB36AXB	SOFFIATORE HHB36AXB E	\N	220.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+9de707d1-a7dd-4cc8-a08d-fa1941ba6c5b	HONDA	MACCHINE A BATTERIA	HHH36AXB	TAGLIASIEPE HHH36AXB E6	\N	220.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+bd1ecb39-18e3-4ceb-a814-2d8891063dd1	HONDA	MACCHINE A BATTERIA	HHT36AXB	DECESP. HHT36AXB E	\N	220.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+a91ef021-6d71-410d-a680-40a3be3f5ed3	HONDA	MACCHINE A BATTERIA	HHC36BXB	MOTOSEGA HHC36BXB 35 CM	\N	260.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+14462204-7eea-4ee2-9736-51dfb8b321e4	HONDA	MACCHINE A BATTERIA	DP3620XA	BATTERIA DP3620XA 2 Ah	\N	90.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+24481633-40d4-4753-b103-d11fa2f1dd95	HONDA	MACCHINE A BATTERIA	DP3640XA	BATTERIA DP3640XA 4 Ah	\N	149.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+c90db7bc-3837-41e5-a703-ed9042c785b2	HONDA	MACCHINE A BATTERIA	DP3660XA	BATTERIA DP3660XA 6 Ah	\N	180.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+8119e03a-b573-4db2-ad23-c579fa06ef4e	HONDA	MACCHINE A BATTERIA	CV3620XA	CARICA BATTERIA CV3620XA	\N	39.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+73c30abd-0a21-430f-adc6-7d55abb9eefd	HONDA	MACCHINE A BATTERIA	CV3680XA	CARICA BATTERIA CV3680XA VELOCE	\N	69.00	\N	\N	\N	22.00	2026-02-25 07:20:59.786+00	\N	\N	\N	\N	\N
+4ed127b1-9822-46e6-b035-e63919c39a53	STOCKER	Nebulizzatori	ST-00-29	Geyser Nebulizzatore Mini 2,5 bar 2 Lt.	2 Lt.	40.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+2d3acd47-ef87-4234-bdd2-d87652fe78f4	STOCKER	Nebulizzatori	ST-00-126	Geyser Nebulizzatore Verde 5 bar 4 Lt.	4 Lt.	170.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+20fc6abe-2433-44b0-b0af-e87976372ce4	STOCKER	Nebulizzatori	ST-00-167	Geyser Nebulizzatore Arancio 5 bar 12 Lt.	12 Lt.	225.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+0fe7baca-97ef-41e0-b550-530fd8838bc9	STOCKER	Nebulizzatori	ST-00-172	Geyser Nebulizzatore Verde 5 bar 12 Lt.	12 Lt.	232.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+736f0957-a80e-4dd8-98fa-1283a9e8bd8c	STOCKER	Nebulizzatori	ST-00-180	Geyser Nebulizzatore E-25 MI Arancio 5 bar 25 Lt.	25 Lt.	240.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+5f350c59-4107-4d2d-a865-0419c3b674fc	STOCKER	Nebulizzatori	ST-00-189	Geyser Nebulizzatore E-25 MI Verde 5 bar 25 Lt.	25 Lt.	250.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+04379c57-b419-4220-a0f4-bbb7a0cfc501	STOCKER	Nebulizzatori	ST-0-1190	Geyser Pro Nebulizzatore a 2 prodotti 12 bar	\N	1590.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+9dca011a-677c-404b-9f2c-0a506ab49741	STOCKER	Kit nebulizzazione	ST-00-12	Kit balcone Geyser 3 ugelli - mt. 10	mt. 10	18.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+b14af5f6-2bc0-44d8-ac67-9546c4e0f0ba	STOCKER	Kit nebulizzazione	ST-00-26	Kit balcone Geyser 10 ugelli - mt. 25	mt. 25	39.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+d375fa64-f519-428d-a360-7ab8bed78164	STOCKER	Kit nebulizzazione	ST-00-96	Kit balcone Geyser 40 ugelli mt. 100	mt. 100	139.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+09623127-4c22-49c7-9661-75a755f118e2	STOCKER	Accessori Geyser	ST-00-6.30	Cappuccio protettivo per Geyser lt. 25	\N	9.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+cff3cb4c-c893-4a8f-b507-5f35499b7964	STOCKER	Accessori Geyser	ST-00-43.2	Treppiede in alluminio Geyser	\N	58.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+aaf44a83-3008-4e0d-9e98-26227ec76fe4	STOCKER	Accessori Geyser	ST-00-2.90	Tappi di chiusura Geyser	\N	4.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+73f4040b-e4c0-47e0-bb79-79f71e0f4ae9	STOCKER	Accessori Geyser	ST-00-49	Batteria 21V - 2,6 Ah Geyser	\N	66.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+35002712-0c62-4297-a525-d4a70001025c	STOCKER	Accessori Geyser	ST-00-18	Caricabatterie doppio 21V Geyser	\N	25.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+28c97d9e-dc40-4868-940b-8e56ffe9cccc	STOCKER	Accessori Geyser	ST-00-92	Alimentatore Geyser Pro AC 220V - DC 21V	\N	124.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+7fc944c1-7a77-4cc2-a7db-7e3b6a0f70f5	STOCKER	Insetticidi	ST-00-27	Nebuzan repellente flacone da 1 litro	1 Lt.	39.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+a73db504-da6a-4955-af74-aab5f3d5d097	STOCKER	Insetticidi	ST-00-104	Nebuzan repellente tanica da 5 litri	5 Lt.	140.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+6e6f3427-5b86-42a1-a281-af28c6afafbf	STOCKER	Insetticidi	ST-00-11-FL	Florifens larvicida zanzare 50 ml.	50 ml.	14.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+7b0008cf-c81f-4829-b971-914efafd868e	STOCKER	Insetticidi	ST-00-137	Etokraft zanzaricida anti-zanzare PMC 5 litri	5 Lt.	185.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+63c9222e-54e2-4e2e-ae2f-bf177f965c6c	STOCKER	Insetticidi	ST-00-30	Pirekraft insetticida concentrato PMC 500 ml.	500 ml.	42.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+ded2c30a-8778-48ee-bda4-8a3f81b5584a	STOCKER	Raccorderia	ST-00-2.2	Ugelli anti-gocciolamento Ø 6 mm	\N	3.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+dd36a636-2aa9-4da3-a042-aa7646f047c8	STOCKER	Raccorderia	ST-00-3.8	Ugelli anti-gocciolamento 135° Ø 6 mm	\N	5.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+3a6f5e8e-81ab-4874-bc69-7723478ce8b1	STOCKER	Raccorderia	ST-00-0.69	Raccordo a T Ø 6-6-6 mm	\N	1.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+840be04d-9f55-4d37-bfcc-b7c2bfd6c0d8	STOCKER	Raccorderia	ST-00-0.63	Raccordo a 90° Ø 8 mm	\N	1.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+3cecc61e-d51c-42fe-89a1-595a58f14330	STOCKER	Raccorderia	ST-00-0.89A	Raccordo a T Ø 8-8-8 mm	\N	1.80	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+7a0f2430-8ecd-47fd-b4ee-34ed92dc247b	STOCKER	Raccorderia	ST-00-0.92	Raccordo a T Ø 6-8-6 mm	\N	1.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+d56d96e4-df82-41ac-9275-d68b1c841d0f	STOCKER	Raccorderia	ST-00-0.89B	Raccordo a T Ø 8-6-8 mm	\N	1.80	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+a25e8c18-4845-4032-8ef3-fff53ef70019	STOCKER	Raccorderia	ST-00-1.22	Raccordo a 135° Ø 6 mm	\N	2.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+b35f7f14-7f47-4e35-a7b8-46162a0d1c4d	STOCKER	Raccorderia	ST-00-0.65	Raccordo dritto Ø 6-8 mm	\N	1.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+373dc051-47e3-4668-8390-cdafb2b5a3d5	STOCKER	Raccorderia	ST-00-13.9	Palo prolunga ugello 100 cm con tubo e raccordo	\N	21.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+32a37332-7a47-490c-a685-a1181138a211	STOCKER	Raccorderia	ST-00-0.43A	Aste di prolungamento 40 cm Ø 6 mm	\N	1.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+77a9025e-2e29-4063-8c53-7d980650b19b	STOCKER	Raccorderia	ST-00-4.51	Kit direzionamento ugelli Geyser 2 tubi flessibili cm 19	\N	6.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+7f7c53bd-835c-4934-9f1b-6b042ce96843	STOCKER	Raccorderia	ST-00-5.50	Tubo nero Ø 6 mm - mt. 10	mt. 10	8.40	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+201d69b7-c3a1-4f60-b084-0e4c9356c3bd	STOCKER	Raccorderia	ST-00-11-TB	Tubo nero Ø 6 mm - mt. 25	mt. 25	15.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+6e9c7e7c-f3d8-47c0-a69e-8a6577a867ef	STOCKER	Raccorderia	ST-00-35	Tubo nero Ø 6 mm - mt. 100	mt. 100	52.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+30c9d8bf-f010-455f-8ce7-d11b61338e0e	STOCKER	Raccorderia	ST-00-57	Tubo nero Ø 8 mm - mt. 100	mt. 100	90.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+fe88ab99-2937-4874-a956-b9ef0e72c812	STOCKER	Raccorderia	ST-00-2.57	Picchetti fissatubo 20 cm per Geyser - 10 pz	10 pz	3.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+29578d64-a91a-4634-ac5f-e6d5de33e5ec	STOCKER	Raccorderia	ST-00-0.36	Fissatubo a P sfuso Ø 6 mm - 25 pz.	25 pz	0.55	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+8ad2880d-eb3b-44ce-b0b4-53edc73d13da	STOCKER	Raccorderia	ST-00-0.43B	Fissatubo a P sfuso Ø 8 mm - 25 pz.	25 pz	0.65	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+fadb8aca-6669-4495-9595-5042cca2e7c9	STOCKER	Raccorderia	ST-00-4.5	Valvola di non ritorno Ø 8 mm	\N	6.80	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+4a5e3536-6229-4e07-963c-94c31f51f080	STOCKER	Raccorderia	ST-00-33	Tubo Eos Anti Torsion 5/8" - mt. 25	mt. 25	49.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+d2b8c61c-283f-467d-869c-48a1c24b87ce	STOCKER	Raccorderia	ST-00-5.10	Raccordo rubinetto 2 uscite 1" - 3/4"	\N	7.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+320f1fbb-8615-4d63-b277-84dbd41f1a3d	STOCKER	Raccorderia	ST-00-2.69	Raccordo portagomma 1/2" - 5/8" - 3/4"	\N	3.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+f374d361-7c85-42cf-95e3-eb1ff864bc54	GGP	Accessori trattorini	LC1500B	Rimorchio LC 1500B 122x87	\N	500.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+5dfba749-bcaf-44b6-89e9-6e7ca5f1d045	GGP	Zero Turning	ZTX105SD	Zero Turning ZTX 105SD scarico lat. B&S 20HP bic. 92cm	\N	5350.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+16527740-8832-4340-ad5b-1be6e3964422	GGP	Zero Turning	ZTX105RD	Zero Turning ZTX 105RD scar.post.+mulch B&S 20HP bic. 92cm	\N	5500.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+6a983fc9-94a7-4062-91e2-f844827dcc5d	GGP	Zero Turning	ZTX175SD	Zero Turning ZTX 175SD scarico lat. B&S 20HP bic. 107cm	\N	6200.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+ef4dd4c4-74e7-4c32-8e4c-218ab8a0f88a	GGP	Zero Turning	ZTX175RD	Zero Turning ZTX 175RD scar.post.+mulch B&S 20HP bic. 107cm	\N	6350.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+d63e0f32-6309-4fbe-974b-7ac27a5f0b03	GGP	Zero Turning	ZTX275SD	Zero Turning ZTX 275SD scarico lat. B&S 24HP bic. 122cm	\N	7330.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+913e50fb-2f95-4ea9-b5de-449b37df6837	FREEZANZ	Nebulizzatori	FZ-ZHALT-PORTABLE	Zhalt Portable Connect	\N	420.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+1cd5f7a0-5bba-456d-b08f-9aceb6b3dd90	FREEZANZ	Kit nebulizzazione	FZ-KIT-GARDEN-25	Kit Garden Extension mt. 25 - 6 ugelli	\N	169.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+d1d845f9-aef6-47b9-afa0-e5a02cd9d792	FREEZANZ	Nebulizzatori	FZ-ZHALT-EVO	Zhalt Evolution Connect + Kit 10 ugelli	\N	1400.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+850a5c47-d655-4c33-ae55-eb5984b84ee2	FREEZANZ	Kit nebulizzazione	FZ-KIT-EXPANDING	Kit Expanding 10 ugelli	\N	270.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+eb4c7813-5d25-4c9b-8bad-f22f4aa9234d	FREEZANZ	Raccorderia	FZ-TUBO-1/4	Tubazione 1/4 nero al mt.	al mt.	1.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+1b71ddfe-ec4a-4cc4-adcc-4656a85c7f70	FREEZANZ	Raccorderia	FZ-RACCORDO-USC	Raccordo speciale uscita	\N	12.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+986f13a0-1600-4b25-b8cb-159721368536	FREEZANZ	Accessori	FZ-TUBETTI-VERDE	Tubetti verdi di rialzo da cm. 150	\N	4.50	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+6c1eed0a-3fe9-427a-8f0a-842c12b0afa8	FREEZANZ	Insetticidi	FZ-TETRAPIU	Tetrapiù PMC (Reg. Min. Salute N. 11826) - Lt. 5	Lt. 5	23.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+a1eb2a53-af1c-45e4-9320-61114064d28d	FREEZANZ	Insetticidi	FZ-PRO-PMC	Freezanz Professional PMC (New) - Lt. 1	Lt. 1	54.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+9b841e39-da91-43ee-8720-591d63da1c96	FREEZANZ	Prodotti naturali	FZ-NAT-GREEN	Freezanz Natural Green - Lt. 1	Lt. 1	25.90	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+bbc537e4-f349-4955-ba2f-f36a700fdc3b	FREEZANZ	Prodotti naturali	FZ-NAT-GREEN+	Freezanz Natural Green+ - Lt. 5	Lt. 5	158.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+ee4868c1-43f2-4214-b5ac-6c42c8d4cc46	FREEZANZ	Raccorderia	F01RA1001	Raccordo giunzione intermedio diritto 1/4"	\N	4.70	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+774ebad7-ed9b-4a1d-821b-f53cde2360b2	FREEZANZ	Raccorderia	F01RA1011	Adattatore per ugello diritto 1/4"	\N	3.05	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+482040c4-38b2-4701-859c-2eec18622da0	FREEZANZ	Raccorderia	MQ300126	Raccordo inizio 1/4" tubo x 1/4" M	\N	5.10	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+de5d2c64-8192-4f0e-8df9-3b56457727e6	FREEZANZ	Raccorderia	MQ300109	Tappo fine linea 1/4" ad incastro	\N	2.30	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+36958b27-09b7-481b-b872-594fa2db9eae	FREEZANZ	Raccorderia	MQ400109	Valvola di intercettazione da 1/4"	\N	15.85	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+2ff8b003-32e0-47aa-86d5-9eb6b8ba87f7	FREEZANZ	Raccorderia	MQ300110	Adattatore per ugello 45° 1/4" x 10/24"	\N	5.10	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+9ed74ab2-2b24-4e26-8f1c-135f2185a9e8	FREEZANZ	Raccorderia	EC080007	Tappo esclusione ugello ottone nichelato 10/24"	\N	1.60	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+084d3896-9ef9-4243-b100-ea1645211428	FREEZANZ	Raccorderia	MQ300103	Raccordo giunzione tubo da 1/4"	\N	6.10	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+1528a987-2666-4752-8d93-293d9ebeec66	FREEZANZ	Raccorderia	MQ300105	Raccordo curva L 90° 1/4"	\N	7.65	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+bee2b78a-0a0f-46f2-a1fa-125f403f9193	FREEZANZ	Raccorderia	MQ300139	Raccordo tappo fine linea tubo 1/4"	\N	4.60	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+af3c985c-d4ac-41a3-94b6-719fbae3af32	FREEZANZ	Raccorderia	MQ400114	Tubo Mister Mosquito nero 1/4 - 40 bar 50 mt	50 mt	84.00	\N	\N	\N	22.00	2026-03-12 13:35:23.59584+00	\N	\N	\N	\N	\N
+2f1063ee-ae61-4e0d-bc50-536abbb91dbf	HONDA	Generatori	EU10IK1	Generatore insonorizzato EU 10 IK1 0,9 KVA 49cc	\N	1180.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+7f98778b-9485-4229-84aa-1ea579563e6f	HONDA	Generatori	EU22I	Generatore insonorizzato EU 22i 1,8 KVA 121cc	\N	1600.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+b270d90d-628e-48c4-a71e-c3c4e6f98b5a	HONDA	Generatori	EU32I	Generatore insonorizzato EU 32i 2,6 KVA 130cc	\N	3520.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+68cb3ecc-74d7-4309-acb3-5a2fc69e26bb	HONDA	Generatori	EU30IS	Generatore insonorizzato EU 30 IS 4 ruote 2,8 KVA 196cc	\N	2830.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+b69ae1a1-6be5-4b12-aabd-6e04301353ac	HONDA	Generatori	EU70ISTROLLEY	Generatore insonorizzato EU 70 IS IT Trolley 5,5 KVA 389cc	\N	4690.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+dcc0bbbb-f643-4915-8d8b-c1403dc7c5ac	HONDA	Generatori	ATS	Centralina ATS Honda	\N	690.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+803b275d-9d06-47c5-9dcf-d63692e00231	HONDA	Generatori	EG3600IT	Generatore a telaio EG 3600 IT 3,6 KVA 270cc	\N	1500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+5a20c2a3-0143-4a88-8119-a8c8dd8ce881	HONDA	Generatori	EG4500IT	Generatore a telaio EG 4500 IT 4,5 KVA 390cc	\N	1620.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+8fc581aa-9c56-4e3f-8819-74dbf451669a	HONDA	Generatori	EG5500IT	Generatore a telaio EG 5500 IT 5,5 KVA 390cc	\N	1880.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+f948b607-a093-4bfc-830a-439e5dd75142	HONDA	Generatori	TROLLEY-GEN	Trolley per generatore Honda	\N	175.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+8ee7258d-90c3-4d58-b704-2e846d5c602d	HONDA	Motopompe	WX10K1E1T	Motopompa acque pulite WX 10 K1 E1T 25mm 25cc	\N	500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+4cbd9c42-6e7f-455e-a7a7-5305eb7d6c24	HONDA	Motopompe	WX15E1R	Motopompa acque pulite WX 15 E 1R 40mm 49cc	\N	620.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+5ff240d5-652a-4cc5-b869-1538a82f5153	HONDA	Motopompe	WB20XTDRX	Motopompa acque pulite WB 20 XT DRX 50mm 3,5HP	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+9f4928d2-027f-47e0-9f3a-a4217fccde98	HONDA	Motopompe	WB30XTDRX	Motopompa acque pulite WB 30 XT DRX 80mm 4,8HP	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+5964d72b-419b-41c3-946a-05c033fe967d	HONDA	Motopompe	WH20XK1J	Motopompa acque pulite WH 20 XK1J DXE1 50mm 4,8HP	\N	920.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+bbc244e1-9870-4f95-9d43-a4a6441ade4f	HONDA	Motopompe	CARRELLO-POMP	Carrello trasporto motopompa Honda	\N	175.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+45aff72b-1b14-4859-9c84-9c74376c62ec	HONDA	Motopompe	WT20XK3DE	Motopompa acque sporche WT 20 XK3 DE 50mm 4,8HP	\N	1570.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+b6c3d9fa-aef8-4bba-9660-862351d1d77e	HONDA	Motopompe	WT30XK3DE	Motopompa acque sporche WT 30 XK3 DE 80mm 7,1HP	\N	2000.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+03ced4ae-8072-45ec-9a33-9b60f518dc64	HONDA	Motopompe	WT40XK2DE	Motopompa acque sporche WT 40 XK2 DE 100mm 9,5HP	\N	2950.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+a5c1c606-0c73-43d9-b6d2-ac3a22e91b29	HONDA	Motopompe	WMP20X1	Motopompa travaso liquidi corrosivi WMP 20 X1 50mm 4,8HP	\N	820.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+1ff688ab-3f17-45e4-9d51-47e5ccbd149a	HONDA	Motozappe	FG201DE	Motozappa FG 201 DE 30cm 49cc avv. strappo	\N	660.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+9c14e761-8c3e-4f87-9c5c-13cc64662b55	HONDA	Motozappe	FG205DE	Motozappa FG 205 DE 45cm 49cc avv. strappo	\N	810.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+8c4044b9-6857-4a3f-b446-decf30790b76	HONDA	Motozappe	F220GE	Motozappa F 220 GE 52cm 57cc avv. strappo	\N	1000.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+b2cce39f-2999-45c7-aeee-cf3c446ff152	HONDA	Motozappe	FG320	Motozappa FG 320 1+1 80cm 160cc	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+b735698e-c2f8-44ae-b540-f1032d9ea707	HONDA	Motozappe	FJ500SE	Motozappa FJ 500 SE 1+1 90cm 163cc	\N	1230.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+60f004e3-2f55-41ba-8bdf-fc70430d6803	HONDA	Motozappe	FJ500DE	Motozappa FJ 500 DE 2+1 90cm 163cc	\N	1500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+e43c0c13-e687-4844-81ac-db1303c6fee6	HONDA	Motozappe	F501K4GE	Motozappa F 501K4 GE 2+1 90cm 163cc	\N	1500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+f43b48a1-1efb-481a-a357-144876a4f391	HONDA	Motozappe	FF300DE	Motozappa anteriore FF 300 DE 3+1 45cm 57cc	\N	2350.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+090fe943-80f1-4545-89f5-a44fa3aa2ddc	HONDA	Motozappe	FF500DE	Motozappa anteriore FF 500 DE 3+1 55cm 160cc	\N	2800.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+9f4f0844-6c26-4840-a3ff-1c1f200a06ee	HONDA	Soffiatori	HHB25E	Soffiatore Honda HHB 25 E 4T 25cc	\N	449.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+5450c692-288f-4b30-85fd-4dc75f31b396	HONDA	Decespugliatori	UMS425ELE	Decespugliatore curvo 4T UMS 425 E LE 25cc	\N	320.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+6584afb0-3112-47ca-834a-54375da824ee	HONDA	Decespugliatori	UMK425ELE	Decespugliatore 4T UMK 425 E LE 25cc	\N	440.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+c64165ac-0432-45bc-8e81-72f60bcfa1b3	HONDA	Decespugliatori	UMK435ELE	Decespugliatore 4T UMK 435 E LE 36cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+d2374564-7180-4270-b66b-896e94b22294	HONDA	Decespugliatori	UMK450LEET	Decespugliatore 4T UMK 450 LE ET 50cc	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+221e029d-1047-46f1-9d9d-feecb46c2906	HONDA	Decespugliatori	UMR435T	Decespugliatore spalleggiato 4T UMR 435 T 36cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+7942adf6-e28a-4d3d-afdf-fee35872c9bc	HONDA	Accessori decespugliatori	ACC-TAGLIASIEPI-425	Accessorio tagliasiepi x 425/435	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+4844377a-134b-4c23-b4ce-533961945ac5	HONDA	Accessori decespugliatori	ACC-MOTOSEGA	Accessorio motosega Honda	\N	250.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+747b2f09-a3d4-493b-9486-c136532b1d4b	HONDA	Multifunzione	UMC425E	Multifunzione UMC 425 E 25cc	\N	360.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+717d2721-1a09-4643-b203-2833fd5f0826	HONDA	Multifunzione	UMC435E	Multifunzione UMC 435 E 35cc	\N	450.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+54da5428-0b9d-4078-8196-c03c24ece0b4	HONDA	Accessori multifunzione	ACC-ASTA-FILO	Asta filo BC Honda	\N	110.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+5cfd7672-694c-44bf-8dcb-f08018ee2f5d	HONDA	Accessori multifunzione	ACC-POTATORE	Potatore PP Honda	\N	260.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+fb41d6e6-838c-45ef-a4c3-85017b63b84d	HONDA	Accessori multifunzione	ACC-TS-CORTO	Tagliasiepi albero corto HH SE Honda	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+c9b52f64-081b-4810-935a-b88c8a872d86	HONDA	Accessori multifunzione	ACC-TS-LUNGO	Tagliasiepi albero lungo HF LE Honda	\N	310.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+8027c014-9abd-451d-b529-ed97854a059e	HONDA	Accessori multifunzione	ACC-SOFFIATORE	Soffiatore BL Honda	\N	135.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+85f148ef-e512-4ba4-8709-264c6adaa0c4	HONDA	Accessori multifunzione	ACC-FRESA	Fresa CL Honda	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+3e4f0771-7072-4471-83c8-919d5e7e9312	HONDA	Accessori multifunzione	ACC-PROL-50	Prolunga cm 50 ES SE Honda	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+3fada626-33a5-4861-83d5-0a0cd93d446b	HONDA	Accessori multifunzione	ACC-PROL-100	Prolunga cm 100 ES LE Honda	\N	110.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+4c27cb2b-ebea-4109-8b63-3d9d63007ff9	HONDA	Rasaerba	HRG416PKEHC1	Rasaerba IZY HRG 416 PK EH C1 spinta 41cm 145cc	\N	440.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+9f41361b-269f-4537-a886-b6b095e99f20	HONDA	Rasaerba	HRG416SKEHC1	Rasaerba IZY HRG 416 SK EH C1 1vel. 41cm 145cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+1fd8b1b0-2407-4ec2-a591-333b9cf27c52	HONDA	Rasaerba	HRG466PKEHC1	Rasaerba IZY HRG 466 PK EH C1 spinta 46cm 145cc	\N	540.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+e3dce1b5-8e5f-4781-b0d7-ecb3d4c3edaf	HONDA	Rasaerba	HRG466SKEHC1	Rasaerba IZY HRG 466 SK EH C1 1vel. 46cm 145cc	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+684b4075-dd3f-4300-a110-c50b2592fcf6	HONDA	Rasaerba	HRG466SKKEP	Rasaerba IZY HRG 466 SKK EP C1 Premium 1vel. 46cm 145cc	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+febb4d7e-c6ea-4e43-96d7-8ecb234926ac	HONDA	Rasaerba	HRN536CVK	Rasaerba HRN 536 C VK Varia 53cm 170cc	\N	890.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+27f2800b-23ba-474a-b83b-606cdd9709e9	HONDA	Rasaerba	HRN536CVY	Rasaerba HRN 536 C VY Frizione lama Varia 53cm 170cc	\N	1000.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+549f85b7-d50c-434e-a929-f4853621220a	HONDA	Rasaerba	HRX476C2VYEH	Rasaerba HRX 476 C2 VY EH Varia 47cm 170cc	\N	1120.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+9cea57a8-f4cc-4299-9cce-b78214bc9132	HONDA	Rasaerba	HRX476C2HYEH	Rasaerba HRX 476 C2 HY EH Idro 47cm 170cc	\N	1280.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+980235e4-8769-48b1-a928-d7817da4b8c1	HONDA	Rasaerba	HRX537C5VKEA	Rasaerba HRX 537 C5 VK EA Varia 53cm 200cc	\N	1100.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+cc2c0122-4b1c-4c1e-8c09-9633d28dc350	HONDA	Rasaerba	HRX537C5VYEA	Rasaerba HRX 537 C5 VY EA Varia 53cm 200cc	\N	1380.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+086718ed-8106-4ac4-87eb-7f60fd0d6131	HONDA	Rasaerba	HRX537C5HYEA	Rasaerba HRX 537 C5 HY EA Idro 53cm 200cc	\N	1520.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+6ec5d4ad-d20c-4089-ae03-59fb3f1ae1cd	HONDA	Rasaerba	HRX537C5HZEA	Rasaerba HRX 537 C5 HZ EA Avv.elett. Idro 53cm 200cc	\N	1780.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+7f8e510f-d577-4e24-af0a-ab5cf359d317	HONDA	Rasaerba	HRD536C3HXE	Rasaerba HRD 536 C3 HXE Idro 53cm 160cc	\N	1520.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+5844103e-fd41-49de-a409-9b0ee935fc8a	HONDA	Rasaerba	HRH536K4HXE	Rasaerba HRH 536 K4 HXE Prof. Idro 53cm 160cc	\N	2180.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+1b66bf67-049f-4ed0-9bf9-f82e7edbc7e5	HONDA	Rasaerba	UM536K3EE2	Rasaerba 3 ruote UM 536 K3 EE 2vel. 53cm 160cc	\N	2100.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+ade9ac54-b4a4-4da0-a781-1c33dbcee4d6	HONDA	Rasaerba	UM616K3EBE2	Rasaerba 3 ruote UM 616 K3 EB E2 Idro 53cm 160cc	\N	2650.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+010255ff-8c8a-4443-b5ed-83660807bf33	HONDA	Trattorini	HF2317HME	Trattorino HF 2317 HM E Idro 530cc 92cm	\N	4200.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+0d6a7fb2-a52f-4cd1-a58d-287dbf845a55	HONDA	Trattorini	HF2417K5HME	Trattorino HF 2417 K5 HM E Idro 530cc 102cm	\N	5300.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+c0845921-8a4b-477b-b1b3-683cfc7b9c7f	HONDA	Trattorini	HF2417K5HTE	Trattorino HF 2417 K5 HT E SC.El. Idro 530cc 102cm	\N	5650.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+97f0d20f-1fa1-4181-b4d4-e69b8d7c14ab	HONDA	Trattorini	HF2625HMEH	Trattorino HF 2625 HM EH Idro 690cc 122cm	\N	6350.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+f17c05c8-e9a9-4cb2-8dbc-e8f7b4c16d1c	HONDA	Trattorini	HF2625HTEH	Trattorino HF 2625 HT EH SC.El. Idro 690cc 122cm	\N	6500.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+83e9a53b-d7fc-457b-a400-9af294be1bd1	HONDA	Accessori trattorini	KIT-MULCH-HF2317	Kit Mulching HF 2317	\N	140.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+58467921-7025-4268-94c7-9795fb399538	HONDA	Accessori trattorini	DEFL-SCARICO	Deflettore scarico Honda	\N	70.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+e50ac679-32c0-4e4d-8280-25cf479e5d33	HONDA	Accessori trattorini	GANCIO-TRAINO	Gancio traino Honda	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:06:46.462164+00	\N	\N	\N	\N	\N
+180bea54-4fd3-42fe-941d-9d5b32074e05	GGP	Rasaerba	XP40	Rasaerba elettrica XP 40 spinta 1600W 38cm	\N	175.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+be6752f6-5fff-49ee-ad11-63bb42b8eefb	GGP	Rasaerba	XC43	Rasaerba XC 43 spinta 123cc OHV 41cm	\N	285.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+e87ee8a2-e2fb-4a9d-80ba-f4b7b8ca8cc0	GGP	Rasaerba	XC48	Rasaerba XC 48 spinta 123cc OHV 46cm	\N	310.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+b6d04120-a1af-4dbe-a47f-b302cc079bb0	GGP	Trattorini	RIDER-COMBI166HD	Rider Stiga Combi 166 HD Idro 8HP 66cm	\N	1900.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+b54d6b54-5085-4255-969c-f42e2200e6c0	GGP	Trattorini	XF135HD	Rider GGP XF 135 HD Stiga Idro 13HP 72cm	\N	2300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+21876c0a-4e8d-4f83-80bc-5474313c5f4b	GGP	Trattorini	XDC150HD	Trattorino GGP XDC 150 HD Idro 14,5HP 84cm	\N	2700.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+c69ee47d-8e9c-4b01-95b7-c8fada73fba6	GGP	Trattorini	XDC180HD	Trattorino GGP XDC 180 HD Idro 18HP bic. 98cm	\N	3500.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+13f45b29-789f-4013-88cb-d76408c5c793	GGP	Trattorini	PTX210HD	Trattorino GGP PTX 210 HD Idro 18HP bic. 102cm	\N	4300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+c61e2d4f-016d-4158-a4e4-ebe5e44dca5c	GGP	Accessori trattorini	KIT-MULCH-TAPPO	Kit Mulching solo tappo cm 72/84/92/102/122	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+9cf07208-1245-40f5-9482-f67f041b853f	GGP	Accessori trattorini	KIT-MULCH-LAME	Kit Mulching lame + tappo 72/84/92/102/122	\N	130.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+2fd76acd-35aa-47a4-a3a8-1ad24f3d0dee	GGP	Accessori trattorini	KIT-PARASASSI	Kit Parasassi cm 84/92/102/122	\N	140.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+cb075d98-f3e4-439a-a0cc-a7a0e208d010	GGP	Accessori trattorini	KIT-TRAINO-GGP	Kit traino GGP	\N	65.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+3ff4eb61-88c1-4228-8bec-7991c85f6118	GGP	Trattorini	XD150HD	Trattorino GGP XD 150 HD Idro 14HP 98cm scarico lat.	\N	2300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+e9d66e44-5ea4-4ba9-b17a-caf7d7f32f1d	GGP	Trattorini	XDL210HD	Trattorino GGP XDL 210 HD Idro 18HP bic. 108cm scarico lat.	\N	3100.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+6bf89149-0d5d-4cc9-9814-2696aab112c8	GGP	Accessori trattorini	TAPPO-MULCH-9898	Tappo Mulching 98/108	\N	60.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+2b429a7f-62b1-4b63-9d35-cb6a1907b949	GGP	Accessori trattorini	KIT-TRAINO-LAT	Kit traino scarico laterale	\N	60.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+182bd35b-6ae4-4120-a7b6-45062a5b2ac5	GGP	Trattorini	PARK500W	Trattorino Stiga Park 500 W Idro 18HP bic. 100cm frontale	\N	5300.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+2516ddb9-95f4-42cc-8efc-59e28138d397	GGP	Accessori trattorini	LDC1002	Rimorchio LDC1002 102x76	\N	400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+b2f0a726-35cd-4739-86be-65a4b0974a36	GGP	Zero Turning	ZTX275RD	Zero Turning ZTX 275RD scar.post.+mulch B&S 24HP bic. 122cm	\N	7400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+207e9bcd-48aa-4429-86f5-4c79f19c8380	GGP	Zero Turning	ZTX350	Zero Turning ZTX 350 scarico lat. B&S 27HP bic. 132cm	\N	8400.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+c96cd1dd-5345-4324-b712-78d39f517335	GGP	Accessori trattorini	KIT-MULCH-ZTX	Kit Mulching ZTX	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+43ea435f-32fa-42d6-a7d4-c9fe8c43610b	DIMA	H175	H175/45BL	DIMA H175 4500mm con bordo larga	\N	2163.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+64d73078-7302-45ac-bbf5-75fbd0f49733	DIMA	H175	H175/50BL	DIMA H175 5000mm con bordo larga	\N	2409.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 8719 kg
+71899647-6eda-4228-b25c-c5525787d78f	WORX	Soffiatori	WG505E	Soffiatore/aspiratore WG 505E 220V 3000W	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+7548979c-fc4a-4064-8f2d-8676a1b79bb2	WORX	Soffiatori	WG547E	Soffiatore WG 547E 1 batt. 2Ah	\N	139.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+c5eb530b-4055-44a6-a159-a15b187a21a4	WORX	Soffiatori	WG543E	Soffiatore WG 543E 1 batt. 4Ah	\N	210.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+8394ada0-f347-4ca9-98ab-16d04e897686	WORX	Motoseghe	WG894.9E	Seghetto a gattuccio WG894.9E	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+7eeecd81-41f5-4bf9-84e0-872a9c74ce34	WORX	Potatori	WG330E	Forbice WG330E 1 batt. 2Ah + carica	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+3d4b5551-300b-4aa0-8f95-830f11344e3e	WORX	Potatori	WG325E	Potatore a catena WG325E 1 batt. 2Ah + carica 20cm	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+1ad862f6-5e10-4791-92df-2c2adbb3958c	WORX	Potatori	WG349E	Potatore ad asta WG349E 1 batt. 2Ah + carica	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+9153d43d-f5c6-4f2d-a392-28770551a1a2	WORX	Tagliasiepi	WG252E	Tagliasiepe telescopico WG252E 1 batt. 2Ah + carica 45cm	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+fa179cf6-48a9-4af1-b343-190fd6dd6e01	WORX	Tagliasiepi	WG264E	Tagliasiepi WG264E 1 batt. 2Ah +/- 40 min.	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+8d984268-1455-48c7-a652-b9f050a122cb	WORX	Utensili	WX352	Trapano avvitatore WX352 2 batt. 2Ah + carica	\N	235.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+f3110b9d-3737-4fbe-930f-9205e4b36088	WORX	Utensili	WX352.9	Trapano avvitatore WX352.9	\N	140.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+97fcbe1c-1b17-42a7-9bd6-4713c6e0d1bb	WORX	Idropulitrici	HIDROSHOT	Lancia pressione Hidroshot	\N	160.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+8a086715-694b-4419-a2b6-744d5a7a8153	WORX	Decespugliatori	WG119E	Trimmer elettrico WG 119E 220V 550W	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+69d9c92b-c1bf-41ce-b2e7-49275eb07ca2	WORX	Decespugliatori	WG157E	Trimmer WG157E 1 batt. 2Ah 30 min.	\N	110.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+ab23fa29-f343-4c81-9222-c0d40e301c49	WORX	Decespugliatori	WG163E	Trimmer WG163E 2 batt. 2Ah 60 min.	\N	150.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+3c79e7bc-13f9-4fd5-b804-e72716c298f7	WORX	Batterie	KIT-POWER20	Kit Power 20 (1 batt. 2Ah + 1 carica)	\N	75.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+836fdb96-db42-4674-a0dd-0485f75c59fe	WORX	Batterie	BATT-2AH-20V	Batteria 2Ah 20V Worx	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+6b918d34-31d5-4ac2-89a0-5c9852685dd5	WORX	Batterie	BATT-4AH-20V	Batteria 4Ah 20V Worx	\N	80.00	\N	\N	\N	22.00	2026-03-12 14:07:05.091801+00	\N	\N	\N	\N	\N
+c64bf2ef-625d-4369-bc65-a74367156175	HONDA	Robot rasaerba	HRM1500	Robot rasaerba Honda Miimo HRM 1500 NEW 1500 m/q	1500 m/q	1300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+ba9ef082-03b4-404e-9f94-7b0bb1eed0e5	HONDA	Robot rasaerba	HRM1500EC	Robot rasaerba Honda Miimo HRM 1500 EC NEW 1500 m/q	1500 m/q	1700.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+63c27492-4515-401f-b143-a740f5034bf9	HONDA	Robot rasaerba	HRM2500EC	Robot rasaerba Honda Miimo HRM 2500 EC NEW 2500 m/q	2500 m/q	2560.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+5a5cc2f3-8ac8-426a-9966-215de327af88	HONDA	Accessori robot	COPERTURA-40-70	Copertura stazione Miimo 40/70	\N	167.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+07f93c28-15be-45c1-8847-d87e02da74ee	HONDA	Accessori robot	COPERTURA-310-520	Copertura stazione Miimo 310/520/3000	\N	240.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+831324d4-a3ad-444a-80bf-75547459ab1e	SEGWAY	Robot rasaerba	NAVIMOW-108J	Navimow 108 J + kit 4G 800 m/q 5,1Ah 18cm	800 m/q	1000.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+00a0dc99-50ad-41a8-a06d-b372f3a711a4	SEGWAY	Robot rasaerba	NAVIMOW-I210AWD	Navimow I210 AWD 1000 m/q 18cm	1000 m/q	1200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+7643514e-f21f-4334-abe2-3319774b4dbe	SEGWAY	Robot rasaerba	NAVIMOW-H1500E	Navimow H1500E + Vision Fence 1500 m/q 7,65Ah 21cm	1500 m/q	1900.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+0b5b72a4-ecb5-4c58-b593-9fa8e29f1a6f	SEGWAY	Robot rasaerba	NAVIMOW-H206E	Navimow H 206E 600 m/q	600 m/q	1700.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+87490a58-5166-49aa-8a63-61cba1caaa13	SEGWAY	Robot rasaerba	NAVIMOW-H210E	Navimow H 210E 1000 m/q	1000 m/q	1900.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+922fcc1a-fe71-4e2b-8130-dd492e912e5a	SEGWAY	Robot rasaerba	NAVIMOW-H215E	Navimow H 215E 1500 m/q	1500 m/q	2200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+dfbf376c-7a60-4b54-ae3b-ef4fe8a7ed2f	SEGWAY	Robot rasaerba	NAVIMOW-H230E	Navimow H 230E 3000 m/q	3000 m/q	2600.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+3f2e266c-8916-4cbf-b9a5-469791524361	SEGWAY	Robot rasaerba	NAVIMOW-X3-315E	Navimow X3 315E 1500 m/q 6Ah 23,7cm	1500 m/q	2300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+d78662ea-05ed-42d8-8920-9a613f8bc0b3	SEGWAY	Robot rasaerba	NAVIMOW-X3-330E	Navimow X3 330E 3000 m/q 8Ah 23,7cm	3000 m/q	2800.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+39c0173b-6ddb-4feb-b487-ea42163a80aa	SEGWAY	Robot rasaerba	NAVIMOW-X3-350E	Navimow X3 350E 5000 m/q 10,4Ah 23,7cm	5000 m/q	3300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+8197bdce-b221-47fa-891d-7d675773ab1f	SEGWAY	Robot rasaerba	NAVIMOW-X3-390E	Navimow X3 390E 10000 m/q 12,8Ah 23,7cm	10000 m/q	4200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+9c718f86-3abd-4cb8-a86f-7130bab2cb78	SEGWAY	Robot rasaerba	NAVIMOW-X420E	Navimow X420E AWD 2000 m/q	2000 m/q	2500.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+85ac699e-c11d-4103-a692-34c76737c938	SEGWAY	Robot rasaerba	NAVIMOW-X430E	Navimow X430E AWD 3000 m/q	3000 m/q	2800.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+9ccc1456-8a9e-4e72-b50f-3b42d0ed2e77	SEGWAY	Robot rasaerba	NAVIMOW-X450E	Navimow X450E AWD 5000 m/q	5000 m/q	3200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+21052d05-0bc8-41ec-85a4-c288e4f70365	SEGWAY	Robot rasaerba	TERRANOX-120M1	Navimow Terranox CM 120 M1 AWD 12000 m/q 43cm	12000 m/q	5500.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+3225dbe8-2b5f-4906-8309-350669453e7c	SEGWAY	Robot rasaerba	TERRANOX-240M1	Navimow Terranox CM 240 M1 AWD 24000 m/q 43cm	24000 m/q	7000.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+5841397e-3194-4784-a780-7233cdab7cd9	SEGWAY	Accessori robot	NAV-KIT-ANTENNA	Kit estensione antenna Navimow 754840	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+80dea37e-e75a-453a-81b0-e8f4f0a389e6	SEGWAY	Accessori robot	NAV-PROL-ANTENNA	Prolunga cavo antenna Navimow 754880	\N	30.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+73cc8911-7ab7-41dd-ac90-4cfd7148d1c9	SEGWAY	Accessori robot	NAV-VISION-FANCE	Kit Vision Fance Navimow 754920	\N	290.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+b4b33286-9154-4d5a-836c-42b60c3ccc67	SEGWAY	Accessori robot	NAV-KIT-USS	Kit sensori ultrasuoni Navimow 754860	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+1ed71ef6-0ca5-45c7-bfa7-8c937b640218	SEGWAY	Accessori robot	NAV-GARAGE-S	Garage S Navimow 755200	\N	150.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+5cec1f81-d77c-47b1-82b3-8abee067c776	SEGWAY	Accessori robot	NAV-GARAGE-M	Garage M Navimow 755210	\N	200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+b2612e50-0406-44c0-91f2-86564dca3676	SEGWAY	Accessori robot	NAV-GARAGE-L	Garage L X3 Navimow 755310	\N	250.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+2c98f7ac-c3ec-4e99-b235-fe51fe476921	SEGWAY	Accessori robot	NAV-KIT-TRIMMER-X3	Kit Trimmer X3 755390	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+d53f36c8-3c89-461a-90e7-fd32bc887b3a	SEGWAY	Accessori robot	NAV-ANTENNA-SEC-X3	Kit antenna secondaria X3 755380	\N	300.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+1ed215ae-e0ab-4926-a49d-022da95c8905	SEGWAY	Accessori robot	NAV-ADATT-ANT-X3	Adattatore trasformatore antenna X3 755330	\N	30.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+3e4ac52a-6180-48e5-b314-2f8a8a919dd3	SEGWAY	Accessori robot	NAV-EST-ANT-10M	Kit estensione antenna 10mt X3 755320	\N	30.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+cfdd349a-5bea-4a65-bed0-4bfbe333633a	SEGWAY	Accessori robot	NAV-KIT-MONT-ANT	Kit montaggio antenna 755340	\N	60.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+64cb2758-5dde-4760-8794-a39f0943178d	STIHL	Robot rasaerba	RMI422	Robot rasaerba Stihl iMOW RMI 422 800 m/q 20cm	800 m/q	700.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+7fb70acf-4dd7-4cde-8f5e-daa5bd2d2ce5	STIHL	Robot rasaerba	IMOW5	Robot rasaerba Stihl iMOW 5 1500 m/q 28cm	1500 m/q	1750.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+469f7541-dd79-4cc2-b0eb-ce46418c67d7	STIHL	Accessori robot	IMOW-TETTUCCIO	Tettuccio parasole ribaltabile iMOW	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+3dc5db8e-73b9-43bc-8e3b-1a363c7371e2	WORX	Robot rasaerba	WR147E1	Robot Landroid WR 147E1 L 1000 m/q 18cm	1000 m/q	890.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+ed62da0a-6099-4cf1-8263-cb2b985332af	WORX	Accessori robot	KIT-RUOTE-141	Kit ruote appesantite x 141/165/167	\N	90.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+9172417e-c1b8-4946-bf08-1f4ac822d5c3	WORX	Accessori robot	KIT-RUOTE-148	Kit ruote appesantite x 148/147/155	\N	130.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+04cd2adc-26a1-478a-b19f-40040b85e203	WORX	Accessori robot	KIT-USS-ACS	Kit sensori ultrasuoni ACS Landroid	\N	240.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+47a43941-4feb-4572-aa4d-6ae33846b2d2	WORX	Accessori robot	CAPPOTTINA-LAND	Cappottina apribile Landroid	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+c85ee23c-3493-4c5c-9e5d-4995a6e65732	WORX	Accessori robot	KIT-BASE-141	Kit base ricarica x 141/167/148/167	\N	210.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+b1021e75-7b0f-4c19-93a3-5dcf83156243	WORX	Accessori robot	KIT-BASE-143	Kit base ricarica x 143/147/155	\N	230.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+55507625-96e4-4e75-bcfc-a73084ac2527	WORX	Batterie	BATT-20V-4AH-PRO	Batteria 20V 4,0Ah PRO Landroid	\N	85.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+9102b382-8457-4db4-a9e8-617bcee83a73	SEGWAY	Robot rasaerba	YARBO-RASAERBA	Yarbo + modulo rasaerba 25.000 m/q 50cm	25000 m/q	7200.00	\N	\N	\N	22.00	2026-03-12 14:07:21.344265+00	\N	\N	\N	\N	\N
+e490d332-4ab0-446b-914a-692d4d14b227	GRILLO	Motocoltivatori	G45	Motocoltivatore G 45 contror. 50cm KH 5,5HP 1 marcia	\N	1671.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+049138dc-489e-470d-9aaf-1e88d318e188	GRILLO	Motocoltivatori	G46	Motocoltivatore G 46 contror. 50cm KH 5,5HP 1+1 marce	\N	2466.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+51bf137e-dd8f-4a54-a3be-4b9234b94fac	GRILLO	Motocoltivatori	G55	Motocoltivatore G 55 fresa 58cm R 5,0HP 2+2 marce	\N	2663.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+790d9dfd-2071-431c-98b1-30622270975b	GRILLO	Motocoltivatori	G85D-LONC-S	Motocoltivatore G 85d 58cm Loncin 300 9,3HP B 2+2 strappo	\N	3649.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+207e3768-d381-44ae-8fa7-1d296a134a51	GRILLO	Motocoltivatori	G85D-RATO-E	Motocoltivatore G 85d 58cm Rato 8,5HP B 2+2 elettrico	\N	4026.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+5ac4a9fa-57b7-484c-82ae-182b3ceb2e01	GRILLO	Motocoltivatori	G85D-L350-E	Motocoltivatore G 85d 58cm L 350cc Diesel 2+2 elettrico	\N	5590.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+2189a336-6239-4983-b13a-e6689713063f	GRILLO	Motocoltivatori	G107D-LONC-S	Motocoltivatore G 107d 58cm Loncin 300 9,3HP B 3+3 strappo	\N	3920.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+560580d2-539e-4a62-a247-96e2e4d87a52	GRILLO	Motocoltivatori	G107D-RATO-E	Motocoltivatore G 107d 68cm Rato 8,5HP B 3+3 elettrico	\N	4460.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+ceee56c0-7164-41eb-91da-08f8c8481df4	GRILLO	Motocoltivatori	G107D-L440-E	Motocoltivatore G 107d 68cm L 440cc Diesel 3+3 elettrico	\N	6500.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+9fd0549b-0f6e-46f0-985f-844de28b9882	GRILLO	Motocoltivatori	G131	Motocoltivatore G 131 68cm L 440cc Diesel 4+2 elettrico	\N	7000.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+8edfbe3a-0875-4fd7-a795-db8ca7f1ed62	GRILLO	Accessori motocoltivatori	FRESA-68-G85	Fresa controrottante registrabile G 85/107 da cm 68	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+b0a39887-1494-4ea3-ac41-b2ca2f8de64e	GRILLO	Accessori motocoltivatori	FRESA-68-G108	Fresa controrottante registrabile G 108/110 da cm 68	\N	50.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+6ea0be0d-dc64-4390-afb0-380eaf35a7c7	GRILLO	Accessori motocoltivatori	FRESA-DOPPIA-G85	Fresa doppia rotazione G 84/85d cm 60	\N	100.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+83ee09f5-db3f-4e10-ba8f-af2fc8439ef1	GRILLO	Motocoltivatori	MAX1	Motocoltivatore MAX 1 58cm Loncin 5,5HP B 2+2 strappo	\N	2380.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+90e18323-94ab-456a-8b91-12f1eae7b93e	GRILLO	Motocoltivatori	MAX2	Motocoltivatore MAX 2 dif. 58cm GD 349cc Diesel 2+2 elettrico	\N	3950.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+94890420-e965-4d20-a0e1-40792495f20a	GRILLO	Motocoltivatori	MAX3	Motocoltivatore MAX 3 dif. 68cm GD 440cc Diesel 2+2 elettrico	\N	4350.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+1ea2b904-f562-4576-b9dd-a4987d7667b0	GRILLO	Trimmer	HWT570	Trimmer HWT 570 Multiforce 140cc spinta	\N	1205.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+43a0d4cb-fb5a-473c-b630-b8a8d87b74fe	GRILLO	Accessori trimmer	KIT-SPAZ-350	Kit spazzola mm 350 x HWT 570	\N	464.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+3cb8f18d-524b-4bc4-8576-8adff67adf63	GRILLO	Trimmer	HWT600WD	Trimmer HWT 600 WD H 160cc 1 marcia	\N	1413.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+5acba464-d17b-45b2-9ced-e9829b22a564	GRILLO	Climber	CL7.15	Climber CL 7.15 85cm L15 Idro elettrico	\N	6250.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+800e615c-1234-416f-9eb5-2ea0e428bc9b	GRILLO	Climber	CL7.18	Climber CL 7.18 85cm B18 Idro elettrico	\N	7987.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+e06ed14a-9814-4ea6-ac98-0ca8fe0709e4	GRILLO	Climber	CL9.18	Climber CL 9.18 91cm B18 Idro elettrico	\N	10860.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+2f61d1f4-3a80-4a9c-b904-a3037baf5543	GRILLO	Climber	CL9.22	Climber CL 9.22 91cm B22 Idro elettrico	\N	11985.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+ba147987-aaaa-4990-80d3-0af04d0669cd	GRILLO	Climber	CL10AWD22	Climber 10 AWD 22 B22 Idro elettrico	\N	13634.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+a148e329-e353-47a4-beda-5ad1b823f4d0	GRILLO	Climber	CL10AWD27	Climber 10 AWD 27 B27 Idro elettrico	\N	15811.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+3565a8d6-60a0-4216-a45c-83de9e73c90d	GRILLO	Climber	FD220R-L15	FD 220 R L15 Idro elettrico	\N	6021.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+0dbed7da-4861-49f6-9da9-36dc9a92fe45	GRILLO	Climber	FD220R-B16	FD 220 R B16 Idro elettrico	\N	7421.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+d14ce3a3-da7a-476d-88ce-0fdac3e85c1e	GRILLO	Climber	FD280R-B16	FD 280 R B16 Idro elettrico	\N	9466.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+468babca-e25c-4401-abb3-772c43918536	GRILLO	Climber	FD450	FD 450 113cm Lt.450 B22 Idro elettrico	\N	12610.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+6c8ff67a-b3af-4cb3-ad4e-849c08548715	GRILLO	Climber	FD500	FD 500 113cm Lt.700 K20 Idro elettrico	\N	20280.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+3f1e51dc-4e63-4460-ba2c-4cb533228b98	GRILLO	Climber	FX27	FX 27 B27 Idro elettrico	\N	11636.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+13886f11-a5df-41f7-bbd7-0fdd34ac5118	PASQUALI	Motocoltivatori	SB28-H5.5	Motocoltivatore SB 28 Powersafe 52cm Honda 5,5HP	\N	2990.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+635e65c4-0070-479e-a00e-dee3ff8043a6	PASQUALI	Motocoltivatori	SB38-H9	Motocoltivatore SB 38 Powersafe 66cm Honda 9HP	\N	3900.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+845ae13b-9d54-4bec-81d6-5e082d10be94	PASQUALI	Motocoltivatori	SB38-H9AE	Motocoltivatore SB 38 Powersafe 66cm Honda 9HP AE	\N	4350.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+b2b3ad6f-370b-4d96-94e8-9ff923c91401	PASQUALI	Motocoltivatori	SB38-H11	Motocoltivatore SB 38 Powersafe 66cm Honda 11HP	\N	4100.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+be9ea809-ea06-4648-ba0f-628b1fed2094	PASQUALI	Motocoltivatori	SB38-KD8	Motocoltivatore SB 38 Powersafe 66cm Kohler Diesel 8HP	\N	4850.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+d64173d7-3b7f-4f3d-bf22-9bfdbcf8261b	PASQUALI	Motocoltivatori	SB38-KD8AE	Motocoltivatore SB 38 Powersafe 66cm Kohler Diesel 8HP AE	\N	5200.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+cfafa167-f71f-4e43-9ee8-66cd1e6e1e8b	PASQUALI	Accessori motocoltivatori	KIT-COFANO-SB38	Kit cofano motore SB 38	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+950c8956-1af4-44eb-bcf2-39a773a21b4f	PASQUALI	Motocoltivatori	XB40-H12	Motocoltivatore XB 40 Powersafe 80cm Honda 12HP	\N	4300.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+55de7ba6-331e-47f4-90f2-f3777fc9e436	PASQUALI	Motocoltivatori	XB40-H12AE	Motocoltivatore XB 40 Powersafe 80cm Honda 12HP AE	\N	4800.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+28d9788b-d052-4653-8332-f96d0411cd24	PASQUALI	Motocoltivatori	XB40-Y10	Motocoltivatore XB 40 Powersafe 80cm Yanmar 10HP	\N	4950.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+205c6e26-510c-4873-9d0e-bba306a4ccc7	PASQUALI	Motocoltivatori	XB40-Y10AE	Motocoltivatore XB 40 Powersafe 80cm Yanmar 10HP AE	\N	5450.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+0c27df23-fb2c-4a3e-87f2-4502382b349a	PASQUALI	Accessori motocoltivatori	KIT-COFANO-XB40	Kit cofano motore XB 40	\N	120.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+a57f9c31-bb1b-41a9-a94e-1b74cd96713c	PASQUALI	Accessori motocoltivatori	ATTACCO-RAPIDO	Attacco rapido Pasquali	\N	170.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+cad71d88-355e-4267-a6e4-a237235d4ae9	PASQUALI	Motocoltivatori	XB50-KD12AE	Motocoltivatore XB 50 Powersafe 85cm Kohler D440 12HP AE	\N	6750.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+eb6a01b1-37b9-4613-92af-0b705c0df5a4	PASQUALI	Motocoltivatori	XB80HY-H12	Motocoltivatore idrostatico XB 80 HY 80cm Honda 12HP	\N	5500.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+bab82e37-ff10-403d-b330-9ee1752122e3	PASQUALI	Motocoltivatori	XB80HY-H12AE	Motocoltivatore idrostatico XB 80 HY 80cm Honda 12HP AE	\N	6100.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+4ebb156f-8bd5-4c2e-a838-13a786b1004d	PASQUALI	Motocoltivatori	XB80HY-Y10AE	Motocoltivatore idrostatico XB 80 HY 80cm Yanmar 10HP AE	\N	6750.00	\N	\N	\N	22.00	2026-03-12 14:07:36.743139+00	\N	\N	\N	\N	\N
+d1402f67-d269-4583-b899-00d3e44e555d	STIHL	Motoseghe	MA04-011-5800	MSA 60.0 C-B 1/4"P	\N	199.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+5c19d988-ec2a-4194-b4fd-9f2e636035f4	STIHL	Motoseghe	MA04-011-5806	MSA 60.0 C-B 1/4"P SET BATTERIA/CARICA	\N	339.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+784cde8c-67a4-4c79-8f1e-7eef31d3f8da	STIHL	Motoseghe	MA04-011-5816	MSA 70.0 C-B 1/4"P	\N	239.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+8743fb88-a213-4351-98cb-968374f8b025	STIHL	Motoseghe	MA04-011-5822	MSA 70.0 C-B 1/4"P SET BATTERIA/CARICA	\N	409.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+d696df48-c4fa-4758-bb24-5867e614c8bd	STIHL	Motoseghe	MA04-011-5843	MSA 80.0 C-B 1/4"P	\N	389.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+78e08819-aa6a-4abd-984d-3ccc50ba09d8	STIHL	Motoseghe	MA04-011-5832	MSA 80.0 C-B 1/4"P SET BATTERIA/CARICA	\N	559.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+67be2e90-81f9-4b56-ba77-aed1f2ded491	STIHL	Motoseghe	MA03-200-0004	MSA 160.0 C-B Doppia impugnatura 30cm/12"	\N	350.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+406da2e9-647f-4a18-91d7-752d846c991d	STIHL	Motoseghe	1252-200-0043	MSA 161 T 25cm/10"	\N	400.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+87007a16-9b3e-4ae7-8fd7-4eac30c21ad8	STIHL	Motoseghe	1252-200-0044	MSA 161 T 30cm/12"	\N	410.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+b2f45a39-1f4c-40a6-84c1-57ddde9498a1	STIHL	Motoseghe	MA05-200-0000	MSA 190.0 T 30cm/12"	\N	350.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+a5ea0533-2788-43fe-a5a0-c8fb4bde4458	STIHL	Motoseghe	MA03-200-0010	MSA 200.0 C-B 30cm/12"	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+ebbd5424-1e9e-4249-9a57-e76061986b0d	STIHL	Motoseghe	MA01-200-0002	MSA 220.0 TC-O Livello olio 30cm/12"	\N	770.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+5bfed3f3-0bca-4cd8-8eb9-329348d7e13c	STIHL	Motoseghe	MA01-200-0003	MSA 220.0 TC-O Livello olio 35cm/14"	\N	780.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+71b022f1-3693-4dc5-97ff-07488c2b7a95	STIHL	Motoseghe	MA01-200-0021	MSA 220.0 T 30cm/12"	\N	560.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+ca7abb81-312b-4fa0-b282-39b22da8bc1a	STIHL	Motoseghe	MA01-200-0022	MSA 220.0 T 35cm/14"	\N	570.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+08abe05a-3632-478f-a587-dbff5cb7d073	STIHL	Motoseghe	MA03-200-0020	MSA 220.0 C-B 35cm/14"	\N	460.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c79717e1-ed81-4827-942a-26191b52173e	STIHL	Motoseghe	MA03-200-0021	MSA 220.0 C-B 40cm/16"	\N	470.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+8aa85b7a-f73c-4f8b-b83d-7dad6ddc0a25	STIHL	Motoseghe	MA03-200-0027	MSA 220.0 C-B Catena DURO 3 35cm/14"	\N	490.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+6cef6b80-016f-484b-80f3-4eeb74af53e0	STIHL	Motoseghe	MA02-200-0004	MSA 300.0 40cm/16"	\N	760.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+9b71f0ed-c1f8-4cd2-b019-01544f55ace0	STIHL	Motoseghe	MA02-200-0007	MSA 300.0 45cm/18"	\N	770.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+98960e29-fb96-483e-953d-a75aa0579a77	STIHL	Motoseghe	MA02-200-0082	MSA 300.1 C-O Livello olio 40cm/16"	\N	850.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+4bfad4a8-fdda-444f-a6a0-9fc834cf9586	STIHL	Motoseghe	MA02-200-0092	MSA 300.1 C-O Livello olio 45cm/18"	\N	860.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+6c540c9f-4d29-4fa0-9a87-5dc823858e0a	STIHL	Motoseghe	1208-200-0304	MSE 141 C-Q 30cm/12" 61PMM3	\N	180.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c08d4a0c-5e06-4b01-a699-eee17c63e713	STIHL	Motoseghe	1208-200-0332	MSE 141 C-Q 35cm/14" 61PMM3	\N	190.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+67fa2c57-1f05-4f58-a24b-8ab4444ab75a	STIHL	Motoseghe	1209-200-0154	MSE 170 C-Q 30cm/12" 61PMM3	\N	270.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+54713263-d206-4ab3-93e2-ae71751d3bf8	STIHL	Motoseghe	1209-200-0155	MSE 170 C-Q 35cm/14" 61PMM3	\N	280.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+000e2339-6dbd-4c82-b752-166d48c9dc47	STIHL	Motoseghe	1209-200-0157	MSE 190 C-Q 35cm/14" 63PM3	\N	320.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c218006c-8038-491d-a782-dcd082fcffb6	STIHL	Motoseghe	1209-200-0180	MSE 190 C-Q 40cm/16" 63PM3	\N	330.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+206b69e5-fc8a-40ab-b352-d9749aaeb982	STIHL	Motoseghe	1209-200-0160	MSE 210 C-BQ 35cm/14" 63PM3	\N	380.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+7b35be7c-d63a-4da0-9399-ab2137380d19	STIHL	Motoseghe	1209-200-0179	MSE 210 C-BQ 40cm/16" 63PM3	\N	390.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+43441b97-9473-4e75-84e5-1fd99159deb9	STIHL	Motoseghe	1148-200-0002	MS 162 61PMM3	\N	199.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+eee1ef3f-3efc-4220-a170-d02d39b76543	STIHL	Motoseghe	1148-200-0003	MS 162 C-BE 61PMM3	\N	240.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+36099197-731c-4118-902f-d555f1bda361	STIHL	Motoseghe	1148-200-0011	MS 172 35cm/14" 63PM3	\N	270.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+ba96b567-45ea-4b93-993e-30fcfd4aedff	STIHL	Motoseghe	1148-200-0014	MS 172 40cm/16" 63PM3	\N	280.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+83da1d1a-6303-4a7a-af99-f2b292f4b28c	STIHL	Motoseghe	1148-200-0033	MS 172 C-BE 35cm/14" 63PM3	\N	320.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+38fa7821-4d74-4ef1-9559-e2248df9d4ba	STIHL	Motoseghe	1148-200-0035	MS 172 C-BE 40cm/16" 63PM3	\N	330.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+f832aabc-fb54-48fe-9c31-75688265c271	STIHL	Motoseghe	1148-200-0064	MS 182 40cm/16" 63PM3	\N	370.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+07041881-8e1a-4243-bdf0-31514bd93d05	STIHL	Motoseghe	1148-200-0104	MS 182 C-BE 40cm/16" 63PM3	\N	420.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+9087494f-401d-4d4f-b0e4-af6a4a56c2b8	STIHL	Motoseghe	1146-200-0056	MS 151 TC-E 1/4"P 25cm	\N	420.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+8c07ff2d-ff35-446b-bd78-151e2c7b9734	STIHL	Motoseghe	1146-200-0057	MS 151 TC-E 1/4"P 30cm	\N	430.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+dd684010-ff43-4971-b2f3-88cc79f7d917	STIHL	Motoseghe	1146-200-0071	MS 151 TC-E ErgoStart 1/4"P 30cm	\N	560.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+584c1500-1f0e-4d91-9420-18698d7755e8	STIHL	Motoseghe	1146-200-0054	MS 151 C-E 1/4"P 25cm	\N	510.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c854dcf3-bae9-4894-a5dd-b4723e24e8c6	STIHL	Motoseghe	1146-200-0055	MS 151 C-E 1/4"P 30cm	\N	520.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+70a20dcb-3a00-43d8-a03e-138290013578	STIHL	Motoseghe	1146-200-0059	MS 151 C-E 1/4"P ErgoStart 30cm	\N	570.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+5d067119-ae24-4389-ad06-7b5631a2de45	STIHL	Motoseghe	1137-200-0312	MS 194 T 1/4"P 35cm/14"	\N	370.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+bb8d32ee-8cc9-461e-91f2-0439fc4cbf1d	STIHL	Motoseghe	1137-200-0314	MS 194 T 1/4"P 30cm/12" 71PM3	\N	360.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+a1b730e4-f5c4-4c02-9e25-72dfa4a3cdb4	STIHL	Motoseghe	1137-200-0322	MS 194 T 3/8"P 30cm/12"	\N	360.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+5adbce03-39f6-4120-a062-ab10663e3595	STIHL	Motoseghe	1137-200-0323	MS 194 T 3/8"P 35cm/14"	\N	370.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+b4ef9001-56f3-4965-ab77-ea54dc84cd72	STIHL	Motoseghe	1137-200-0324	MS 194 TC-E 3/8"P ErgoStart	\N	460.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+4d1628e7-bfe7-41ab-ba34-ed5efe428474	STIHL	Motoseghe	1137-200-0332	MS 194 C-E 30cm/12" 61PMM3	\N	450.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+57f31eb4-7942-41a2-b57f-230fabfa2a61	STIHL	Motoseghe	1137-200-0334	MS 194 C-E 1/4" ErgoStart	\N	490.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+7c5fc548-370c-42e4-98f4-3c0d9c3fc980	STIHL	Motoseghe	1137-200-0340	MS 194 T 1/4"P 30cm/12" 71PM3 ErgoStart	\N	480.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+f2ffddeb-2be2-448d-bb02-94e19fd0a38a	STIHL	Motoseghe	1137-200-0370	MS 194 TC-E 35cm/14" 61PMM3	\N	470.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c5994396-7b64-4734-9da5-92cbfe4b015c	STIHL	Motoseghe	1145-200-0263	MS 201 C-M 3/8"P Doppia impugnatura 35cm/14"	\N	890.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+ccd469c1-b001-4ccd-803b-c3f63362daed	STIHL	Motoseghe	1145-200-0264	MS 201 C-M 3/8"P Doppia impugnatura 40cm/16"	\N	900.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+0acf8ff3-aff9-451a-a177-3fc6d38a163a	STIHL	Motoseghe	1145-200-0267	MS 201 TC-M 3/8"P 35cm/14"	\N	900.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+6bd72b71-f965-4c62-b0d9-06cd5c58752e	STIHL	Motoseghe	1145-200-0270	MS 201 TC-M 3/8"P 30cm/12"	\N	890.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+9583fc05-4640-4f7b-98bd-0b33c528b836	STIHL	Motoseghe	1148-200-0139	MS 212 35cm/14" 63PM3	\N	440.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+cd894a55-8641-4655-ae90-f0852e87afda	STIHL	Motoseghe	1148-200-0144	MS 212 40cm/16" 63PM3	\N	450.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+5839942b-2ba1-4426-9eb0-07f6cf6dd3f2	STIHL	Motoseghe	1148-200-0179	MS 212 C-BE 35cm/14" 63PM3	\N	480.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+834ad20f-47fd-48a5-be8f-39647b530234	STIHL	Motoseghe	1148-200-0184	MS 212 C-BE 40cm/16" 63PM3	\N	490.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+27b5cb47-7181-4549-a737-667e6f8bb37a	STIHL	Motoseghe	1143-200-0684	MS 231 40cm/16" 23RMS	\N	510.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+f16d219e-2adb-4a68-b9f8-93b81e7a3f56	STIHL	Motoseghe	1143-200-0688	MS 231 C-BE 40cm/16" 23RMS	\N	550.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+e8f2d4ca-8644-41f5-9efa-73aee102c2ea	STIHL	Motoseghe	1143-200-0721	MS 231 45cm/18" 23RMS	\N	520.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+570b7c8a-d0d1-4ed2-8b56-01be1b7f92cb	STIHL	Motoseghe	1143-200-0722	MS 231 C-BE 45cm/18" 23RMS	\N	550.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+41cb45bb-5b14-4495-8bd7-bd3578728a5d	STIHL	Motoseghe	1143-200-0683	MS 251 40cm/16" 23RMS	\N	570.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+227a415e-7cde-4a1b-96dc-dda5b07124ff	STIHL	Motoseghe	1143-200-0686	MS 251 C-BE 40cm/16" 23RMS	\N	630.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+72894bf7-0f62-4cea-90c6-d0f7b7851de5	STIHL	Motoseghe	1143-200-0719	MS 251 45cm/18" 23RMS	\N	580.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+17a12215-89cc-47de-9bb8-dafaa0832e13	STIHL	Motoseghe	1143-200-0720	MS 251 C-BE 45cm/18" 23RMS	\N	640.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+bd8e8084-de32-476a-932a-6ed732f605d6	STIHL	Motoseghe	1141-200-0647	MS 261 C-M 40cm/16"	\N	1000.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c6c5ba7f-49a2-4d9e-a3e5-c2bdf25ca698	STIHL	Motoseghe	1141-200-0649	MS 261 C-BM 40cm/16"	\N	1030.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+d284786b-47e7-43b6-b642-7ab2813c0a3b	STIHL	Motoseghe	1141-200-0651	MS 261 C-M VW 40cm/16"	\N	1100.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+8d4faee1-d50b-40a7-b68a-06e6a53dbe84	STIHL	Motoseghe	1141-200-0652	MS 261 C-M 45cm/18"	\N	990.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+7b89b8c7-22c4-48dd-9ffd-f5dd5c2b2511	STIHL	Motoseghe	1141-200-0665	MS 261 C-BM 45cm/18"	\N	1040.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+4daf7a5a-abe2-4348-9fdd-ae6e3b424ac8	STIHL	Motoseghe	1141-200-0645	MS 271 40cm/16"	\N	690.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c6ce4e42-e4f5-4ba7-b3ba-17228088c59e	STIHL	Motoseghe	1141-200-0660	MS 271 45cm/18"	\N	700.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+717f5ec5-2e0d-4f12-b18d-3b8451806926	STIHL	Motoseghe	1141-200-0687	MS 291 40cm/16" 36RM	\N	740.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+5f7c860a-f923-431b-8dd4-f7e223184c58	STIHL	Motoseghe	1141-200-0690	MS 291 45cm/18" 36RM	\N	750.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+1bd57e8d-f53d-405d-9fe3-4618b3115490	STIHL	Motoseghe	1140-200-0777	MS 311 50cm/20" 36RM	\N	850.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+f6ba46a0-928b-473b-9fc0-68385fd15130	STIHL	Motoseghe	1140-200-0741	MS 391 50cm/20" 36RM	\N	910.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+289ab526-aeeb-4335-a6df-445a35c997dd	STIHL	Motoseghe	MB01-200-0008	MS 400.1 C-M 50cm/20" 36RS	\N	1360.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+ac139512-072c-46eb-9e0b-467db70e5be1	STIHL	Motoseghe	1142-200-0032	MS 462 C-M 50cm/20" 36RS3	\N	1400.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+44c94cff-94a6-40c2-a826-ac8399e7b8dc	STIHL	Motoseghe	1142-200-0033	MS 462 C-M 63cm/25" 36RS3	\N	1430.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+4fb27da2-5dff-4093-aa5d-777140de66a9	STIHL	Motoseghe	1147-200-0000	MS 500i 3/8"R 50cm/20" 36RS	\N	1700.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+91f5a8dd-65e5-448e-9a70-aca5aa9bb8c2	STIHL	Motoseghe	1147-200-0001	MS 500i 3/8"R 63cm/25" 36RS	\N	1720.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+1cfdee12-250e-4c0d-8ffd-bbf30c9cc772	STIHL	Motoseghe	1144-200-0319	MS 661 C-M 71cm/28" 36RS	\N	1630.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+2de24e24-a5fc-4e0a-ae8e-14d1f8532801	STIHL	Motoseghe	1144-200-0322	MS 661 C-M 63cm/25" 36RS	\N	1600.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+75d9cad5-4bcc-4ba4-b0fd-4f449ca6a89e	STIHL	Motoseghe	1124-200-0204	MS 881 90cm/36" 46RS	\N	1990.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+a3eb8d62-1fd7-4514-a644-1a5d3e108ebc	STIHL	Motoseghe	1124-200-0206	MS 881 105cm/41" 46RS	\N	2020.00	\N	\N	\N	22.00	2026-03-12 14:37:31.649478+00	\N	\N	\N	\N	\N
+c7e6e274-3e3c-454f-b7fd-53459889b3ea	NEGRI	Biotrituratori	R70B-B&S	Biotrituratore R70 B motore B&S 550e 140cc lame	\N	790.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+12c0760a-86f6-4c50-8f87-87813d3fc831	NEGRI	Biotrituratori	R70B-H	Biotrituratore R70 B motore Honda GCV 160cc lame	\N	890.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+8444c3fd-a528-4150-a448-aab6172cbbac	NEGRI	Biotrituratori	R70D-B&S	Biotrituratore R70 D motore B&S 550e 140cc dischi	\N	790.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+3b179d1a-c1a8-4cd9-9717-0e0cd94becee	NEGRI	Biotrituratori	R70D-H	Biotrituratore R70 D motore Honda GCV 160cc dischi	\N	890.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+0ed80835-c9f0-4778-ac65-99e8dceab5d3	NEGRI	Biotrituratori	R95B-H	Biotrituratore R95 B motore Honda GX 160cc lame	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+97033540-18a2-45c4-b502-318be7fcdd09	NEGRI	Biotrituratori	R95D-H	Biotrituratore R95 D motore Honda GX 160cc dischi	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+875f84fb-5fb1-40e7-9b36-1c3d35fadebe	NEGRI	Biotrituratori	R95B-H200	Biotrituratore R95 B motore Honda GX 200cc lame	\N	1250.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+e69a548a-cb37-4c5a-a5f5-12a9d035f017	NEGRI	Biotrituratori	R95D-H200	Biotrituratore R95 D motore Honda GX 200cc dischi	\N	1250.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+8170dfac-389d-469d-928c-94132bd696ae	NEGRI	Biotrituratori	R185B-H270	Biotrituratore R185 B motore Honda GX 270cc lame	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+522dc11a-ba69-4fe4-a092-0a943d615f13	NEGRI	Biotrituratori	R185D-H270	Biotrituratore R185 D motore Honda GX 270cc dischi	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+db79dc5a-8f53-4689-9d19-67b995215d33	NEGRI	Biotrituratori	R185B-H390	Biotrituratore R185 B motore Honda GX 390cc lame	\N	2350.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+ac5860a8-d8c4-4251-9765-6288e3c0b5b9	NEGRI	Biotrituratori	R185D-H390	Biotrituratore R185 D motore Honda GX 390cc dischi	\N	2350.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+183a2ea7-70ba-45d4-8204-b295f4186a3a	NEGRI	Biotrituratori	R225B-H390	Biotrituratore R225 B motore Honda GX 390cc lame	\N	3100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+ced3dbae-2279-4ff5-8861-06ce2ea4518a	NEGRI	Biotrituratori	R225D-H390	Biotrituratore R225 D motore Honda GX 390cc dischi	\N	3100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+a122c83e-aef6-44be-b8ef-ef59f7eaa609	NEGRI	Biotrituratori	R225B-K	Biotrituratore R225 B motore Kawasaki 400cc lame	\N	3400.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+a0da3a1e-f393-4d74-9983-170e04c63b66	NEGRI	Biotrituratori	R225D-K	Biotrituratore R225 D motore Kawasaki 400cc dischi	\N	3400.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+7f05545a-8220-4673-98d0-e4cb8b36bbc1	NEGRI	Biotrituratori	R70E-2200	Biotrituratore R70 E elettrico 2200W lame	\N	490.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+5876a1a7-1d76-4040-ae4b-5935a76736de	NEGRI	Biotrituratori	R95E-2800	Biotrituratore R95 E elettrico 2800W lame	\N	750.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+7d79dc5f-bf14-4f3c-a72d-ec22068ca968	NEGRI	Biotrituratori	R95E-3000D	Biotrituratore R95 E elettrico 3000W dischi	\N	800.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+943af521-d6e0-466a-a85d-f2fd0201d743	TORO	Zero Turning	75742	TimeCutter 42" 452cc 107cm	\N	2700.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+ba5edd3c-674a-4354-b73c-f412cafe1c1c	TORO	Zero Turning	75750	TimeCutter 50" 452cc 127cm	\N	3100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+eead992f-fb8d-4d59-a5d9-7afe55268074	TORO	Zero Turning	75760	TimeCutter 60" 452cc 152cm	\N	3500.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+09cfa663-1391-49e2-a95d-b19f8f4cc3e1	TORO	Zero Turning	74959	MyRide 48" Kawasaki 726cc 122cm	\N	5200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+9da0cb56-9ddd-4112-a1f4-d2f742348892	TORO	Zero Turning	74960	MyRide 54" Kawasaki 726cc 137cm	\N	5600.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+1ad5ca61-efa2-4bfb-a3fa-fcfc75d4b623	TORO	Zero Turning	74961	MyRide 60" Kawasaki 726cc 152cm	\N	6200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+7522696f-b716-4bd8-bf87-eb5b99ba5183	TORO	Rasaerba	20340	Recycler 21" 140cc spinta 53cm	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+20759eba-bd38-4515-bb71-e78f968da6df	TORO	Rasaerba	20332	Recycler 21" 140cc 1vel. 53cm	\N	430.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+dbb1a9f4-bab4-4c28-aa1f-19c41c5924c3	TORO	Rasaerba	20333	Recycler 21" 140cc Varia 53cm	\N	520.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+b259888c-42af-48e5-a868-e7a402eb48b6	TORO	Rasaerba	21357	Recycler 21" 60V Flex-Force spinta 53cm	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+4c8bf89d-d9ce-49e9-919a-9045a9989633	TORO	Rasaerba	21358	Recycler 21" 60V Flex-Force Varia 53cm	\N	580.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+f11cf483-ff50-46c9-89be-46d5837fa49d	TORO	Decespugliatori	51836	Decespugliatore 60V Flex-Force 38cm	\N	210.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+e0db7160-1948-44bc-a4b6-f1cd0acbae54	TORO	Soffiatori	51821	Soffiatore 60V Flex-Force	\N	180.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+44d7a8de-472f-484b-837b-a73a71b0c70e	TORO	Batterie	88650	Batteria 2,5Ah 60V Flex-Force	\N	80.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+70c84418-2a55-4e20-9687-c795637bbae8	TORO	Batterie	88675	Batteria 7,5Ah 60V Flex-Force	\N	180.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+d5166f48-e34e-4152-abfb-8cbd3535a2f2	TORO	Batterie	88690	Caricabatterie standard 60V	\N	60.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+2feff61f-fc46-4013-9334-3b7772d49095	BI-VI	Motopompe	BV-MP25-H	Motopompa acque chiare 25mm Honda GX 50cc	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+1d8609dc-b6b4-44e8-9da4-9b0e08744251	BI-VI	Motopompe	BV-MP40-H	Motopompa acque chiare 40mm Honda GX 120cc	\N	620.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+085763b1-7d55-4782-9e22-c466867cd7ac	BI-VI	Motopompe	BV-MP50-H	Motopompa acque chiare 50mm Honda GX 160cc	\N	750.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+ad6de56a-ce35-476a-b1b9-accbd82c9719	BI-VI	Motopompe	BV-MP80-H	Motopompa acque chiare 80mm Honda GX 200cc	\N	950.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+8a0fdbf6-51ca-4c88-9fae-4b1b08e49950	BI-VI	Motopompe	BV-MPS50-H	Motopompa acque sporche 50mm Honda GX 160cc	\N	920.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+29f55418-83df-4ee2-9c7f-2cbe75b975c0	BI-VI	Motopompe	BV-MPS80-H	Motopompa acque sporche 80mm Honda GX 200cc	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+5ed175d9-c2ab-488d-88c0-498745e50469	BI-VI	Motopompe	BV-EP25	Elettropompa 25mm 0,5HP	\N	180.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+2ff721e1-e5ae-4a34-9d05-7baac77961b2	BI-VI	Motopompe	BV-EP40	Elettropompa 40mm 1HP	\N	250.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+9502bbdb-5707-4cda-bb74-45a51fca6bba	BI-VI	Motopompe	BV-EP50	Elettropompa 50mm 2HP	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+feebbbd5-034c-45bf-91d1-360152fd38e1	BI-VI	Irrorazione	BV-CI100-H	Carrello irrorazione 100L motore Honda GX 120cc	\N	1200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+a584a8d2-d50a-404a-9921-cb530e98789e	BI-VI	Irrorazione	BV-CI200-H	Carrello irrorazione 200L motore Honda GX 160cc	\N	1600.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+a72d7e75-1f78-4cd9-bad0-45bd864f2181	BI-VI	Irrorazione	BV-CI300-H	Carrello irrorazione 300L motore Honda GX 200cc	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+a9685d46-d3f3-4bfc-8410-4acd9c4985db	BI-VI	Irrorazione	BV-CI400-H	Carrello irrorazione 400L motore Honda GX 270cc	\N	2700.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+783d2017-2a71-4b71-9f53-b8f3d133f1fa	BI-VI	Irrorazione	BV-CIE100	Carrello irrorazione 100L elettrico 220V	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+0bda6182-2b6d-48d1-93f3-8bd9a104e2bc	BI-VI	Irrorazione	BV-CIE200	Carrello irrorazione 200L elettrico 220V	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+c3578bbd-8c2d-48be-b70c-c73355e6e60f	BI-VI	Irrorazione	BV-BI600-H	Botte irrorazione 600L Honda GX 200cc	\N	3200.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+55403240-f75f-4eaf-a686-700685b05554	BI-VI	Irrorazione	BV-BI800-H	Botte irrorazione 800L Honda GX 270cc	\N	3900.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+042713e8-4e3f-471b-ba2e-ed81d1d5f46b	BI-VI	Irrorazione	BV-BI1000-H	Botte irrorazione 1000L Honda GX 390cc	\N	4600.00	\N	\N	\N	22.00	2026-03-12 15:41:57.961398+00	\N	\N	\N	\N	\N
+0a638aa5-65ea-41b5-a83a-5b35457d82ca	VOLPI	Potatori	V8015	Forbice potatura batteria V8015 30mm 2Ah	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+9c762aac-6e5c-4577-9cd0-3ed90a473c42	VOLPI	Potatori	V8016	Forbice potatura batteria V8016 32mm 2,5Ah	\N	430.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+9c6a654d-0262-4e1c-a017-799bbe144b58	VOLPI	Potatori	V8025	Forbice potatura batteria V8025 35mm 2Ah	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+1c999c64-0fc4-4381-bae3-027051fe0e6c	VOLPI	Potatori	V8030	Forbice potatura batteria V8030 40mm 2,5Ah	\N	550.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+ec277643-7cde-499b-832c-6ea1afd2e3e9	VOLPI	Potatori	V8045	Forbice potatura batteria V8045 45mm 2,5Ah	\N	650.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+3d2d83cb-4724-4822-8ff7-ee2c85d09eb6	VOLPI	Potatori	VPX30	Potatore ad asta VPX30 batteria 30mm	\N	750.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+3e647c7c-4625-4497-8a7a-34683d17a21b	VOLPI	Batterie	BATT-V8-2AH	Batteria 2Ah Volpi serie V8	\N	90.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+e95cc225-a77e-4408-a47b-b0402ffdcd4e	VOLPI	Batterie	BATT-V8-25AH	Batteria 2,5Ah Volpi serie V8	\N	110.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+c96d31b8-b3aa-4918-ad84-8d4f8e39d01d	VOLPI	Batterie	CARICA-V8	Caricabatterie Volpi serie V8	\N	55.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+753d01ec-9284-4b40-88d2-45a38aea80e4	ARCHMAN	Svettatoi	AM-SV30	Svettatoio Archman 30cc 30cm asta 2,5m	\N	890.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+85e33238-2771-4574-9ad3-c23452299f73	ARCHMAN	Svettatoi	AM-SV43	Svettatoio Archman 43cc 25cm asta 3m	\N	1050.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+e8fb42fc-4a0a-4a88-85af-af803a6642cb	ARCHMAN	Svettatoi	AM-SV43L	Svettatoio Archman 43cc 30cm asta 3,5m	\N	1150.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+be4b68bc-8cd2-4bb7-b11e-482d8666efd4	ARCHMAN	Svettatoi	AM-SVTS	Svettatoio telescopico Archman 43cc 25cm asta 2-3,5m	\N	1250.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+d1c29dcf-b964-491b-ab7b-a68ecb65f631	BLUE BIRD	Carrier	BB-CARRY250-H	Carrier/Dumper BB 250kg Honda GX 160cc	\N	2800.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+23210498-b6b9-4a8e-988c-be3bb8ac6aa5	BLUE BIRD	Carrier	BB-CARRY350-H	Carrier/Dumper BB 350kg Honda GX 200cc	\N	3400.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+bef26db4-180a-45e5-8e96-cfa10aed098a	BLUE BIRD	Carrier	BB-CARRY500-H	Carrier/Dumper BB 500kg Honda GX 270cc	\N	4200.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+543341b4-6107-41ff-af17-a912664342dc	BLUE BIRD	Carrier	BB-CARRY500-4WD	Carrier/Dumper BB 500kg 4WD Honda GX 390cc	\N	5500.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+5b6baae1-9783-438a-8038-ed3139ad821d	BLUE BIRD	Carrier	BB-CARRY750-H	Carrier/Dumper BB 750kg Honda GX 390cc	\N	5800.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+22d0315f-3115-4422-a759-6489bab4d4fc	BLUE BIRD	Trivelle	BB-TR150-H	Trivella 1 operatore Honda GX 50cc punta 150mm	\N	680.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+9c3f373c-5687-4b3d-bddd-7db18f8c4ea1	BLUE BIRD	Trivelle	BB-TR200-H	Trivella 1 operatore Honda GX 120cc punta 200mm	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+0b119e7a-c202-4587-9980-81bc8d06ea26	BLUE BIRD	Trivelle	BB-TR200-2OP	Trivella 2 operatori Honda GX 160cc punta 200mm	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+23bea31d-deaa-4506-bab0-78430553cf90	BLUE BIRD	Trivelle	BB-TR300-2OP	Trivella 2 operatori Honda GX 200cc punta 300mm	\N	1400.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+39c5aa29-2816-4437-9859-e21053634c70	BLUE BIRD	Accessori trivelle	BB-PUNTA-100	Punta trivella 100mm	\N	60.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+0f8389d4-863f-4407-ba17-2cb0e8deb75e	BLUE BIRD	Accessori trivelle	BB-PUNTA-150	Punta trivella 150mm	\N	70.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+571ad551-8094-41e6-a045-05006ef152df	BLUE BIRD	Accessori trivelle	BB-PUNTA-200	Punta trivella 200mm	\N	85.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+3b879657-0718-418d-9c46-4ea31ad6ef23	BLUE BIRD	Accessori trivelle	BB-PUNTA-300	Punta trivella 300mm	\N	110.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+9d77350b-d7f8-44d0-b645-e9cd30e2e395	BLUE BIRD	Accessori trivelle	BB-PROLUNGA-1M	Prolunga trivella 1m	\N	75.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+e5f3ac83-c9fe-4ef6-822e-1b4b993d7d1b	WORTEX	Atomizzatori	WX-AT16-H	Atomizzatore a zaino 16L Honda GX 25cc	\N	620.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+43d650b3-1313-4d81-aeae-0ee04952662e	WORTEX	Atomizzatori	WX-AT20-H	Atomizzatore a zaino 20L Honda GX 35cc	\N	720.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+c7b0a4d7-f88f-4bc6-ae5b-261d5d05abe1	WORTEX	Atomizzatori	WX-AT16-E	Atomizzatore elettrico a zaino 16L batteria	\N	350.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+d5f2f06e-ff86-43de-abbb-22906df2a936	WORTEX	Atomizzatori	WX-AT20-E	Atomizzatore elettrico a zaino 20L batteria	\N	420.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+b167ddf6-42b2-43c7-ac66-66d3d1f60fd0	WORTEX	Atomizzatori	WX-AT600-H	Atomizzatore su ruote 600L Honda GX 390cc 4WD	\N	3800.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+24440be6-d674-4f93-b974-ea8875ca592d	WORTEX	Spandiconcime	WX-SC12	Spandiconcime manuale a spalla 12L	\N	45.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+459dcf7a-e221-4ab0-85e1-e6fc5b1b5c86	WORTEX	Spandiconcime	WX-SC15	Spandiconcime elettrico a spalla 15L batteria	\N	120.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+73967cfd-dbaf-4cc9-972a-591fca8bacd7	WORTEX	Spandiconcime	WX-SC80-2R	Spandiconcime trainabile 80L 2 ruote	\N	380.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+ce324ce5-a8ef-4b98-b058-77cf65f60d10	WORTEX	Spandiconcime	WX-SC100-4R	Spandiconcime trainabile 100L 4 ruote	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+39df8d35-32ff-476c-b7c2-3018fb38a3de	WORTEX	Spandiconcime	WX-SC200	Spandiconcime trainabile 200L con cardano	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+725b005b-14de-43ff-9421-4858c4e0b9ee	WORTEX	Compressori	WX-CP6-1500	Compressore 6L 1500W 8bar	\N	120.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+cc85c183-4b31-43f4-9529-9cf00dcd30f9	WORTEX	Compressori	WX-CP24-2000	Compressore 24L 2000W 8bar	\N	200.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+56f779ef-a9ad-4cc9-bb56-fa430d50ef54	WORTEX	Compressori	WX-CP50-3000	Compressore 50L 3000W 10bar	\N	350.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+6148cd1e-9de9-426d-9fb5-061fe93f202c	WORTEX	Compressori	WX-CP100-3000	Compressore 100L 3000W 10bar	\N	520.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+eb8e6ae8-437f-4d3b-bdc6-4d0404dc54a7	WORTEX	Compressori	WX-CP200-K	Compressore 200L motore Kohler 6HP 10bar	\N	1200.00	\N	\N	\N	22.00	2026-03-12 15:42:10.192384+00	\N	\N	\N	\N	\N
+269af647-0c90-458f-831a-c2f4a76cfe22	STIHL	Olii	0781-516-1004	Olio catena StihlOil Plus 1L	1L	8.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+8d59791c-6767-44c0-98ef-69ce1f95d5f3	STIHL	Olii	0781-516-4004	Olio catena StihlOil Plus 4L	4L	28.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+4018360d-be2c-4d12-9876-18756bf356f2	STIHL	Olii	0781-319-8012	Olio motore HP Ultra 1L miscela 2T	1L	13.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+d5af5bb6-728a-458a-8f09-3b4f2cfd0d26	STIHL	Olii	0781-319-8013	Olio motore HP Ultra 100ml miscela 2T	100ml	3.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+5050808f-c1d8-4165-b1fe-655a4b12d17c	STIHL	Olii	0781-319-8012-4	Olio motore HP Ultra 4L miscela 2T	4L	48.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+0d6aafa8-b44c-47d9-8ed9-b5b5066c9978	STIHL	Olii	0781-120-1109	Olio motore 4T SAE 30 1L	1L	7.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+cea57bd8-29e7-40e5-b72e-fbe445a296c0	DIMA	H190	H190/35S	DIMA H190 3500mm senza bordo	\N	2058.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+1c9dd061-1738-4b70-bebf-129dfb2243cc	DIMA	H190	H190/40S	DIMA H190 4000mm senza bordo	\N	2403.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+8d7f0327-26df-459c-b196-68b254086611	DIMA	H190	H190/45S	DIMA H190 4500mm senza bordo	\N	2590.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+da40a78a-d6bb-4761-9a44-4c27eabe923f	BRIGGS	Olii	100005E	Olio motore B&S SAE 30 600ml	600ml	7.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+90a246b1-bc3e-4a81-8830-a0770ab7b36f	BRIGGS	Olii	100028E	Olio motore B&S SAE 30 5L	5L	38.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+0006ebef-5ad3-4984-86bf-54ce5f250e9f	BRIGGS	Olii	100005E-10W30	Olio motore B&S 10W-30 600ml	600ml	7.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+af71dd55-000d-455b-bb32-c4bc29b54321	BRIGGS	Olii	100006E	Olio motore B&S Platinum 4T 5L	5L	42.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+39009193-dcfd-4a51-abdb-11ee91411d2d	CASTROL	Olii	CAST-2T-1L	Olio 2T Castrol Power1 Racing 1L	1L	14.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+40d2b2f0-d51a-42ee-b7a8-77799904beca	CASTROL	Olii	CAST-4T-1L	Olio 4T Castrol Power1 10W-40 1L	1L	12.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+d7bc69b3-a038-4723-a5fe-c2a91f46faf8	CASTROL	Olii	CAST-4T-4L	Olio 4T Castrol Power1 10W-40 4L	4L	40.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+f4cc2ba5-ced0-4a88-81a4-3efe18190d4e	TECNOGARDEN	Olii	TG-2T-1L	Olio miscela 2T Tecnogarden 1L	1L	9.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+f6636270-e217-4012-9c8b-23b3e20857b3	TECNOGARDEN	Olii	TG-2T-5L	Olio miscela 2T Tecnogarden 5L	5L	38.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+211e8230-aa95-4f16-aca9-01db4035a784	TECNOGARDEN	Olii	TG-4T-1L	Olio motore 4T SAE 30 Tecnogarden 1L	1L	7.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+3d8cbed3-49d2-4633-b72a-48c80456292a	TECNOGARDEN	Olii	TG-4T-5L	Olio motore 4T SAE 30 Tecnogarden 5L	5L	28.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+638df77c-6e98-45c8-a8ad-39e5342c55ef	TECNOGARDEN	Olii	TG-CATENA-1L	Olio catena Tecnogarden 1L	1L	6.50	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+effad0a3-aaec-4bb3-b74a-2864516f0e0b	TECNOGARDEN	Olii	TG-CATENA-5L	Olio catena Tecnogarden 5L	5L	24.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+d7976be3-f6d8-4af4-a9e6-306d28f14a50	FOREST	Spaccalegna	L7TON-H	Spaccalegna orizzontale 7T Honda GX 120cc	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+3072e7fa-e333-4ea4-81d6-6350f770fe6c	FOREST	Spaccalegna	L10TON-H	Spaccalegna orizzontale 10T Honda GX 160cc	\N	1400.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+a2772f87-329f-4060-a1e2-643a6f131c16	FOREST	Spaccalegna	LV16TON-H	Spaccalegna verticale/orizzontale 16T Honda GX 270cc	\N	2200.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+7a40843a-3828-4730-9dd9-1062c5bf8946	FOREST	Spaccalegna	LV22TON-H	Spaccalegna verticale/orizzontale 22T Honda GX 390cc	\N	2900.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+5e2db7f9-f908-4c63-9258-ea7f8181f3a9	FOREST	Spaccalegna	LV30TON-H	Spaccalegna verticale/orizzontale 30T Honda GX 690cc	\N	4200.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+8cfb4dcf-e3f2-4247-a791-6a423da64536	FOREST	Spaccalegna	LE7TON	Spaccalegna orizzontale 7T elettrico 2200W	\N	850.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+9da4265d-755c-4020-a69f-8f01783bfc63	FOREST	Spaccalegna	LE10TON	Spaccalegna orizzontale 10T elettrico 3000W	\N	1100.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+2f120667-5c93-4a2b-9a05-4b3e316f97f3	BLUE BIRD	Spaccalegna	BB-SP7-E	Spaccalegna 7T Blue Bird elettrico 2200W	\N	800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+358fa1e9-6077-4cb2-8dd5-12701c99d3b7	BLUE BIRD	Spaccalegna	BB-SP10-H	Spaccalegna 10T Blue Bird Honda GX 160cc	\N	1350.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+234fa706-20ed-43f8-9cb2-681a107ab6a0	BLUE BIRD	Spaccalegna	BB-SP16-H	Spaccalegna 16T Blue Bird Honda GX 270cc V/O	\N	2100.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+a69db3d8-17ff-4c58-996b-068e80624db3	BLUE BIRD	Spaccalegna	BB-SP22-H	Spaccalegna 22T Blue Bird Honda GX 390cc V/O	\N	2800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+ba2936d8-5a8b-49cd-9a98-cd0ea4e7a0a9	CARRIOLE	Carriole	CAR-55L	Carriola acciaio 55L ruota PVC	\N	55.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+23eccbdf-7494-484c-9b00-8d1de4b44c94	CARRIOLE	Carriole	CAR-65L	Carriola acciaio 65L ruota PVC	\N	65.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+c0e8715e-1460-4ec3-9fb0-c53011d2ae12	CARRIOLE	Carriole	CAR-80L	Carriola acciaio 80L ruota gonfiabile	\N	80.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+972f17d0-3517-481b-af6e-bf710e27aba3	CARRIOLE	Carriole	CAR-100L	Carriola acciaio 100L ruota gonfiabile	\N	95.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+fa109c38-37b4-4a29-a060-f5447cc5ffd8	CARRIOLE	Carriole	CAR-POLY-65	Carriola polietilene 65L ruota gonfiabile	\N	90.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+d2a66a93-6c75-43d4-8812-f8692e0a3766	E-POWERBARROW	Carriole	EPB-BASIC	E-PowerBarrow Basic 80L 250W batteria	\N	480.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+b30c9ecc-d972-49dc-94a8-f184c91b21ae	E-POWERBARROW	Carriole	EPB-PRO	E-PowerBarrow Pro 100L 350W batteria	\N	650.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+4e97c8ac-c9be-466a-8c53-6e50e52f7de9	E-POWERBARROW	Carriole	EPB-4WD	E-PowerBarrow 4WD 100L 500W batteria	\N	950.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+66666181-cda3-4cfe-bb39-d5e616eedd2c	F&S	Carriole	FS-CAR-70	Carriola F&S 70L acciaio rinforzato	\N	75.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+ba4164df-121d-41ca-9c29-2db8cdbbf3d9	F&S	Carriole	FS-CAR-85	Carriola F&S 85L acciaio rinforzato ruota larga	\N	95.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+1c429322-0261-4bd3-863c-3c4027a25a44	TURBO-TURF	Idrosemina	TT-HS-50	Idroseminatrice Turbo-Turf HS-50 190L Honda GX 160cc	\N	3200.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+d359fff9-5daa-48c5-9be0-fc3de19268cc	TURBO-TURF	Idrosemina	TT-HS-100	Idroseminatrice Turbo-Turf HS-100 380L Honda GX 200cc	\N	4800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+4f5bbfe2-14e4-4cd8-a3eb-7c2bd3d910d4	TURBO-TURF	Idrosemina	TT-HS-100T	Idroseminatrice Turbo-Turf HS-100T 380L trainabile Honda	\N	5500.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+ddc818db-fd26-4cdb-82e7-e58241aa9f5e	TURBO-TURF	Idrosemina	TT-HS-200T	Idroseminatrice Turbo-Turf HS-200T 760L trainabile Honda	\N	7800.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+b1244952-5c16-4c78-8e16-a100e49df445	TURBO-TURF	Materiali idrosemina	TT-FIBER-20	Fibra cellulosica Turbo-Turf 20kg	20kg	85.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+33d50404-63d0-4e17-b686-c856ff7bfd47	TURBO-TURF	Materiali idrosemina	TT-FIBER-50	Fibra cellulosica Turbo-Turf 50kg sacco	50kg	190.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+693a5744-1fd0-48b1-b7ae-db5742e8913d	TURBO-TURF	Materiali idrosemina	TT-COLLANTE-5	Collante idrosemina 5kg	5kg	45.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+56bd3525-13c0-4c19-9d5d-f558f6d1ee23	TURBO-TURF	Materiali idrosemina	TT-COLLANTE-25	Collante idrosemina 25kg	25kg	180.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+bc47efe6-9735-4515-9502-d41eb9172cc0	TURBO-TURF	Materiali idrosemina	TT-COLORANTE	Colorante verde idrosemina 1kg	1kg	18.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+f97c327b-7aca-40a1-8873-a166a7889798	TURBO-TURF	Materiali idrosemina	TT-KIT-BASE	Kit base idrosemina (fibra 20kg + collante 5kg + colorante)	\N	140.00	\N	\N	\N	22.00	2026-03-12 15:42:21.900024+00	\N	\N	\N	\N	\N
+3d106e3e-9aaf-4f9b-9d51-1947cc2c64f0	DIMA	H190	H190/50S	DIMA H190 5000mm senza bordo	\N	2882.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+ec956f40-a428-460a-bfc9-046bc2a10684	DIMA	H190	H190/35B	DIMA H190 3500mm con bordo	\N	2058.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+e187a902-0f33-48cd-94e4-b21ee0ed7790	DIMA	H190	H190/40B	DIMA H190 4000mm con bordo	\N	2403.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+6cf376fb-b017-4d6c-8a27-218b588c711c	DIMA	H190	H190/45B	DIMA H190 4500mm con bordo	\N	2590.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+a4912840-6817-4c25-ac55-1ebf4f9ea634	DIMA	H190	H190/50B	DIMA H190 5000mm con bordo	\N	2882.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 10450 kg
+213387f8-6a9f-477c-9e2a-b972d9240c63	DIMA	H220	H220/40S	DIMA H220 4000mm senza bordo	\N	2520.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+f6c3c79b-b669-4841-867c-fc8c0ab99f14	DIMA	H220	H220/45S	DIMA H220 4500mm senza bordo	\N	2829.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+59381ab7-0bb1-4c83-8067-3b91b0f1953a	DIMA	H220	H220/50S	DIMA H220 5000mm senza bordo	\N	3129.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+e067b7a5-edcd-4100-b0cc-9054b4009c5f	DIMA	H220	H220/40B	DIMA H220 4000mm con bordo	\N	2436.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+7256786f-13f3-4195-b196-e96dbdb96f64	DIMA	H220	H220/45B	DIMA H220 4500mm con bordo	\N	2705.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+df4e4878-c520-4fb2-b777-57f3ce05397e	DIMA	H220	H220/50B	DIMA H220 5000mm con bordo	\N	3026.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+dec3a534-0317-40c6-a739-88c6c170b2a5	DIMA	H220	H220/40BL	DIMA H220 4000mm con bordo larga	\N	2541.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+649e6946-6806-4a9b-bca1-a6eba256c5c1	DIMA	H220	H220/45BL	DIMA H220 4500mm con bordo larga	\N	2802.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+337ef60c-a0be-4ba4-ab1a-5851c074813a	DIMA	H220	H220/50BL	DIMA H220 5000mm con bordo larga	\N	3098.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+0f15622c-97b6-42e7-bc30-9d5eb2e0a988	DIMA	HD	HD115/20S400	DIMA HD 2000mm	\N	1691.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+be5bc3b6-8534-4699-a553-1e5fa5d0bb33	DIMA	HD	HD115/25S400	DIMA HD 2500mm	\N	2093.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+877bdae3-0aee-428a-a475-8f6675b6be4c	DIMA	HD	HD115/30S400	DIMA HD 3000mm	\N	2438.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+39e788d4-5e3e-413f-9f4d-2d7fd744642f	DIMA	HD	HD115/32S400	DIMA HD 3200mm	\N	2587.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+ba6b3dad-205f-48b8-9a61-111b181f1824	DIMA	HD	HD115/35S400	DIMA HD 3500mm	\N	2667.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+c6053645-7bc7-4afc-a8e4-bad9d4be1bfc	DIMA	HD	HD115/40S400	DIMA HD 4000mm	\N	3024.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+3dfd8e31-703a-4f3e-98fb-81efa5c6b00b	DIMA	HD	HD115/20S450	DIMA HD 2000mm	\N	1974.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+bf67df20-6d99-4e64-b6df-8b7629d231f8	DIMA	HD	HD115/25S450	DIMA HD 2500mm	\N	2552.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+05e8eeec-c84f-4909-9e4a-ea96f7c5acfd	DIMA	HD	HD115/30S450	DIMA HD 3000mm	\N	2982.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+e5e25637-23ef-4168-a0d2-f6284d0989d9	Echo	\N	ECMPPAAHHD	Potatore accessorio Attacco tagliasiepi	\N	522.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+beca29e4-4d60-4f50-ad30-1a539c63d413	Echo	\N	ECM99946400023	Potatore accessorio Attacco estensone 1.2 mt	\N	210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+33ec531e-3493-4e47-aa3e-142fff24f85f	DIMA	HD	HD115/32S450	DIMA HD 3200mm	\N	3150.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+5d66b7ff-3230-4e98-9f1a-c1958376ee0c	DIMA	HD	HD115/35S450	DIMA HD 3500mm	\N	3423.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+1bfcb207-db30-46ed-b5e3-6cc227ce555b	DIMA	HD	HD115/40S450	DIMA HD 4000mm	\N	3891.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+c36b8659-2ecd-4659-91bf-834531fe1116	DIMA	HD	HD115/20S450TB	DIMA HD 2000mm	\N	1861.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+dbec40ea-a715-4a6f-9c26-cd83511dfc69	DIMA	HD	HD115/25S450TB	DIMA HD 2500mm	\N	2400.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+40db6fa1-7207-4982-b71c-4b0dcafebd09	DIMA	HD	HD115/30S450TB	DIMA HD 3000mm	\N	2875.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+e9156a7e-9c7b-4035-a94a-eecebab1e56a	DIMA	HD	HD115/32S450TB	DIMA HD 3200mm	\N	3002.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+bd49cb4b-3e24-4661-91ca-aba7f7a93fc8	DIMA	HD	HD115/35S450TB	DIMA HD 3500mm	\N	3330.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+e4e126dd-0b5c-4d8b-84d0-e8db5a4e979c	Echo	\N	ECMSRM520ESU/A	Decespugliatore X Series - SRM 520 ESU (Impugnatura a U + accensione facilitata ES Start)	\N	1100.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+025b9000-765e-4fbc-88c3-328981c64802	Echo	\N	ECARMAM520ES	Asta decespugliatore RM520ES (Asta, coppia conica, flessibile. Non compresi: parasassi, testina, manubri, ecc...)	\N	240.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+a3ffa2a4-d004-430e-a37d-19d755f3f22d	Echo	\N	ECMPRS231M	Attacco reciprocatore per SRM222 fino a SRM420 (compreso inserti per attacchi quadro o mille righe)	\N	410.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+5ceee43e-5e1c-464d-b203-854772721ccc	DIMA	HD	HD115/40S450TB	DIMA HD 4000mm	\N	3533.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+dc45ca0e-ab3c-41a0-8983-283ceb15af5c	DIMA	HD	HD115/20S600TB	DIMA HD 2000mm	\N	2545.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+89117f29-b818-49b1-996f-a002610340c7	DIMA	HD	HD115/25S600TB	DIMA HD 2500mm	\N	3145.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+b004a39e-118f-4de7-81df-5ce1ee764977	DIMA	HD	HD115/30S600TB	DIMA HD 3000mm	\N	3812.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+21f8f437-ec5a-4132-a74f-4d7ebf069d98	Echo	\N	ECMHCAA2403A	Attacco Tagliasiepi 2403A	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+250fdc36-0502-44cc-8e57-5a39e36e1714	Echo	\N	ECMHCAA2403ALW	Attacco Tagliasiepi 2403A LW (Low Weight)	\N	430.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+f82dcf26-d6ec-4b4d-a651-139e8bd70a83	Echo	\N	ECM28350250	Attacco Tagliasiepi 28350250	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+0174d79e-b24f-48bf-af73-2e91b500ef73	DIMA	HD	HD115/32S600TB	DIMA HD 3200mm	\N	4009.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+e08250ca-2407-478a-a97a-b428a75238f1	DIMA	HD	HD115/35S600TB	DIMA HD 3500mm	\N	4509.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+b755e35a-67de-4222-b6c2-ff1a5ad2d668	DIMA	HD	HD115/40S600TB	DIMA HD 4000mm	\N	4965.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 39000 kg
+39972c3b-cee5-46b2-8349-a529d2e8835d	DIMA	SINGLE	S35/15P	DIMA SINGLE 1500mm singola pieghevole	\N	210.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+ea20ce9f-fdef-46a6-a20d-4c0fc04323f8	DIMA	SINGLE	S35/20P	DIMA SINGLE 2000mm singola pieghevole	\N	226.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+0cd31503-162d-4feb-85e5-cea5584c2f19	DIMA	SINGLE	S35/25P	DIMA SINGLE 2500mm singola pieghevole	\N	252.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+777873c9-e6ee-413c-8bff-b7565be716fc	DIMA	SINGLE	S35/30P	DIMA SINGLE 3000mm singola pieghevole	\N	284.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+3015c8e2-d49c-4346-ae6b-dc72c807b92e	DIMA	SINGLE	S35/15C	DIMA SINGLE 1500mm singola curva	\N	132.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+2d90e77b-b171-4dca-891b-bb0203c2635b	DIMA	SINGLE	S35/20C	DIMA SINGLE 2000mm singola curva	\N	137.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+48ae4afe-7db4-43e8-9a01-d039658f320a	DIMA	SINGLE	S35/25C	DIMA SINGLE 2500mm singola curva	\N	168.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+7daa9909-d2d3-4321-8677-8b45e940c2e1	DIMA	SINGLE	S35/30C	DIMA SINGLE 3000mm singola curva	\N	221.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+8b51a54f-0fca-404b-b90d-0404a11c8a56	DIMA	SINGLE	S72/15B	DIMA SINGLE 1500mm con bordo	\N	147.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+29e7bbac-4c77-44ea-96db-a88c3b96c84c	DIMA	SINGLE	S72/20B	DIMA SINGLE 2000mm con bordo	\N	179.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+0890b78c-ec1a-4dfd-8ed2-58a51caeac44	DIMA	SINGLE	S72/25B	DIMA SINGLE 2500mm con bordo	\N	210.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+fc27b2cf-f209-42a6-bf2a-1b11e9ddd143	DIMA	SINGLE	S72/30B	DIMA SINGLE 3000mm con bordo	\N	258.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+69a92035-ade1-4e7a-8ea9-8d3594aab7bf	DIMA	LOGISTIC	L65/15B750	DIMA LOGISTIC 1500mm	\N	389.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+87a98d60-b482-405f-b7f9-3424aedb5de8	DIMA	LOGISTIC	L65/15B1000	DIMA LOGISTIC 1500mm	\N	437.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+81ab1532-954a-4110-af47-5084565a992d	DIMA	LOGISTIC	L65/20B750	DIMA LOGISTIC 2000mm	\N	473.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+22678947-896c-484c-a418-e7fdfd47f138	DIMA	LOGISTIC	L65/20B1000	DIMA LOGISTIC 2000mm	\N	559.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+bb158a84-8c09-4c90-9e83-6cb8e1f696b0	DIMA	LOGISTIC	L100/25B750	DIMA LOGISTIC 2500mm	\N	625.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+dc23bd0a-b96d-4120-b7d8-d9bf10742e69	Echo	\N	ECMMTAAHSHD	Attacco multifunzione MTA AHS HD - Tagliasiepi asta corta HD (Hard Duty 3 lame 3 lati)	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+ccb8df8d-ddbd-4507-ba98-104857b07313	Echo	\N	ECMMTAAHHD	Attacco multifunzione MTA AH HD - Tagliasiepi asta lunga HD (Hard Duty 3 lame 3 lati)	\N	515.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+2cd8c78c-adca-418c-89da-568a93510c01	Echo	\N	ECMMTADAH	Attacco multifunzione MTA DAH - Tagliasiepi asta lunga	\N	485.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+f826f820-ba77-4de8-9b00-64038d522816	Echo	\N	ECMMTALE/E	Attacco multifunzione MTA LE E - Tagliabordi	\N	210.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+b3624ee9-1ba0-493a-89b8-ca685cfa8feb	Echo	\N	ECMMTAPB	Attacco multifunzione MTA PB - Soffiatore	\N	195.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+981c66a4-e6c1-4a28-9cd6-25790952726d	Echo	\N	ECMMTADPP	Attacco multifunzione MTA DPP - Potatore	\N	312.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+689169f7-d25a-4a7c-bdc9-ce5389ee9ad1	Echo	\N	ECMMTAPS	Attacco multifunzione MTA PS - Spazzolatrice	\N	560.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+d2a13118-4027-41ed-9483-ecc1801be6f6	Echo	\N	ECMMTADTB	Attacco multifunzione MTA DTB - Testina a filo	\N	185.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+e3f1544f-2610-41d9-a9c6-4ca1bf7a5653	Echo	\N	ECMMTATC	Attacco multifunzione MTA TC - Zappetta	\N	390.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+dcb131cb-2a9d-435f-8fb0-7795fe359dc4	Echo	\N	ECMMTA3EXT	Attacco multifunzione MTA 3EXT - Estensione	\N	79.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+a2c1be85-75b1-4871-bd8f-62ccdd4a4275	DIMA	LOGISTIC	L100/25B1000	DIMA LOGISTIC 2500mm	\N	751.00	\N	\N	\N	22.00	2026-06-22 08:03:10.233+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 900 kg
+97ad55b5-dc73-492e-a510-0683d3c84cba	Echo	\N	ECAMBAD5810	Kit polveri	\N	115.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+9f2979bf-b719-4021-8abf-9f53f208fb55	Echo	\N	ECACWT7410	Carrello per mototroncatrice	\N	1220.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+a46efe18-21ab-48e1-82dd-1e740f3f0b6d	Echo	\N	OFF253001	Kit Potatore manuale a batteria 56V - DHS 3006 con 1x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	570.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+24886230-eeb3-4e96-91e3-afaa7e96006b	DIMA	VAN	VANTL-65X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	3633.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+31b22a63-4d0f-4737-90a0-101f3432afc4	DIMA	VAN	VANTL-65X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	3746.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+32ce5658-b80f-4fa1-bfb8-acce3a1212dc	DIMA	VAN	VANTL-83X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	3453.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+92962d97-8018-4815-8755-fb805f373ca4	DIMA	VAN	VANTL-83X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	3589.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+d133d64e-90e9-4e31-b161-3af5047f202a	DIMA	VAN	VANTL-83X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3672.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+40fd77d0-f525-43b2-a855-f911050fa3dd	DIMA	VAN	VANTL-83X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	3799.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+988454f4-870c-4514-a396-e7d1373b0c0d	DIMA	VAN	VANTL83X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	4003.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+4d1bebc0-1a5d-4f90-b144-42e159cfe8c7	DIMA	VAN	VANTL-86X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	3732.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+306f4e05-9a91-4665-a2ea-7a81deab09f0	DIMA	VAN	VANTL-86X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	3851.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+7102e1bc-32cb-4ca8-8ba2-0b6287852527	DIMA	VAN	VANTL-86X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3972.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+57918eaf-045d-44f0-84f8-27979f61f9a5	DIMA	VAN	VANTL-86X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	4069.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+3db8e3f3-8955-4976-acd4-43b67f3404c8	DIMA	VAN	VANTL86X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	4264.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+59d4516a-2294-49ee-9a0a-be525b3c8272	DIMA	VAN	VANTL-106X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	4122.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+f39669e0-6ae5-4844-8173-128130322e3e	DIMA	VAN	VANTL-106X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	4248.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+997e4f1d-69d9-497d-8a4f-a388326d790a	DIMA	VAN	VANTL-106X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	4302.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+e42b31bd-f009-48f2-877f-572d4399d597	Echo	\N	OFF233012	Kit energia 56eForce 56V con 1x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	360.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+9bf67c77-c112-41d8-81fc-2a65e63bc1c5	Echo	\N	OFF233014	Kit energia 56eForce 56V con 1x Batteria 56V 5Ah 226Wh + 1x Caricabatteria	\N	460.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+eb574004-5cd7-475e-84e2-49ade5ec2f9d	Echo	\N	OFF233013	Kit energia 56eForce 56V con 2x Batteria 56V 2,5Ah 113Wh + 1x Caricabatteria	\N	595.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+431dfc4e-76cd-4937-bf08-91a31fb53c1a	Echo	\N	OFF233015	Kit energia 56eForce 56V con 2x Batteria 56V 5Ah 226Wh + 1x Caricabatteria	\N	795.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+9e0ff3b3-447f-424c-ad1a-f13ef2e93047	DIMA	VAN	VANTL-106X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	4429.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+9364fbb1-0d5d-464b-aa70-e9bce6fbf634	DIMA	VAN	VANTL106X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	4264.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+2bc276cf-b1ee-49a1-9373-7e456b4ee4b3	DIMA	VAN	VANSL-65X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	2730.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+aaa9f73e-a24c-4138-bbbe-b34efd454ca8	DIMA	VAN	VANSL-65X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	2798.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+0cbe1815-3ce9-4f4d-9a79-02bd189c663e	DIMA	VAN	VANSL-65X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3045.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+7496c520-ca34-40b3-b931-7f61a07aadfc	DIMA	VAN	VANSL-65X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	3116.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+e20e04c3-3f66-44c3-a184-10f76fc95859	DIMA	VAN	VANSL-65X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	3251.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+a1c569ea-138a-48c7-a4a8-72eb690a77cd	DIMA	VAN	VANSL-83X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	2995.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+9eb40f6f-184a-49ca-8bc2-e0ddb01afb9b	DIMA	VAN	VANSL-83X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	3071.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+c53e9c94-0308-43c8-b094-934d621ada5a	DIMA	VAN	VANSL-83X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3197.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+15efccdb-620b-4133-8490-e91b13810040	DIMA	VAN	VANSL-83X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	3266.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+7e3b2eae-e896-4546-81e7-e9bce9416ab7	DIMA	VAN	VANSL83X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	3535.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+f5a8bdf9-ec76-4f39-8290-f84527189d84	Echo	\N	ECAKIT40V2AH	Kit energia Garden+ 40V con 1x Batteria 40V 2Ah 72Wh + 1x Caricabatteria	\N	192.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+b05d76ff-b1e1-4481-935d-8b8d57031b20	Echo	\N	ECAKIT40V4AH	Kit energia Garden+ 40V con 1x Batteria 40V 4Ah 144Wh + 1x Caricabatteria	\N	246.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+10b715b6-8fe1-47be-8457-95781a7ee6f6	DIMA	VAN	VANSL-86X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	3197.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+dcaa191c-1de6-4e77-a4b8-041a258d1b00	DIMA	VAN	VANSL-86X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	3360.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+4320a472-47ef-44ce-b3e0-efc9f5d59007	DIMA	VAN	VANSL-86X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3468.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+3cfcc61b-781f-4b55-8535-c2c6643e3a33	DIMA	VAN	VANSL-86X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	3551.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+0813ffab-2e09-4a28-bc15-cdf3df1469ec	DIMA	VAN	VANSL86X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	3778.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+43b8c1df-18d4-4646-8ae1-0321f2d5f338	DIMA	VAN	VANSL-106X2000	DIMA VAN 2000mm van ramp ribaltabile	\N	3612.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+64cca0b2-8b7e-47fc-bcff-caafce7b20c9	DIMA	VAN	VANSL-106X2250	DIMA VAN 2250mm van ramp ribaltabile	\N	3746.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+502404cc-d665-4c28-a6cb-8ebb1afa1713	DIMA	VAN	VANSL-106X2500	DIMA VAN 2500mm van ramp ribaltabile	\N	3799.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+55f1af0f-9714-4155-b7cb-65a01fa6dc4d	DIMA	VAN	VANSL-106X2700	DIMA VAN 2700mm van ramp ribaltabile	\N	3897.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+9a032e74-c459-4896-9b1e-16a8f90b7f0a	DIMA	VAN	VANSL106X3000	DIMA VAN 3000mm van ramp ribaltabile	\N	4095.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 600 kg
+5e1e46d8-7040-4097-ae95-ce09e3d7a434	DIMA	CONTAINER	H100/10SC	DIMA CONTAINER 1000mm per container	\N	309.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+b12530a2-954f-455f-9927-659937dbf51c	DIMA	CONTAINER	H100/15SC	DIMA CONTAINER 1500mm per container	\N	416.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+47c22713-404d-4fb4-9f64-8af64f2daace	DIMA	CONTAINER	H135/10SC	DIMA CONTAINER 1000mm per container	\N	534.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+4bb64837-cd95-42d7-bbfd-c0f8411e33f0	DIMA	CONTAINER	H135/15SC	DIMA CONTAINER 1500mm per container	\N	698.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+daf73748-eaa9-470f-9f1a-7fd9d095fc45	DIMA	CONTAINER	H175/10SC	DIMA CONTAINER 1000mm per container	\N	647.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+fbcfffee-302a-420f-aa44-6dac7b69629e	DIMA	CONTAINER	H175/15SC	DIMA CONTAINER 1500mm per container	\N	887.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+10fe11aa-66bf-43f1-be7b-c59446f13e60	DIMA	CONTAINER	H190/10SC	DIMA CONTAINER 1000mm per container	\N	754.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+9f851676-bdc3-4c1c-99ba-9f8052825b72	DIMA	CONTAINER	H190/15SC	DIMA CONTAINER 1500mm per container	\N	1045.00	\N	\N	\N	22.00	2026-06-22 08:03:10.402+00	\N	\N	\N	Sconto da concordare con direzione	Portata serie fino a 12000 kg
+96715574-10aa-4716-88ac-84bce9a8116b	Weibang	\N	WBAWBGTRC	Radiocomando per WBGT6813TE	\N	1500.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+d5cb5a83-e3ad-43cb-a6c0-05bc9742b8ca	Weibang	\N	WBA4510104015	Tappo Mulching X WB454HB/SB, WB455HCOP	\N	18.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+6e639e2d-796b-4ad9-a72b-23523785edb3	Weibang	\N	WBA4560104010	Tappo Mulching X WB454HB/A-SB/A,WB455HC, WB455SC, WB455SC3, WB456SCVE3	\N	15.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+627e03fe-af17-4185-9284-b45484bdebc3	Weibang	\N	WBA5010105050	Tappo Mulching X WB506HB	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+03f12f4e-d9ce-4755-9333-783b66861428	Weibang	\N	WBA5040104010	Tappo Mulching X WB506SB/A-SK/A, WB506SC, WB506SC3, WB507SCV3, WB506HC, WB506HB	\N	18.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+64e8eebd-de1e-43ca-ae8e-87ae521027e6	Weibang	\N	WBA5020124010	Tappo Mulching X WB507SCV3	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+c4402e0d-976a-46e5-8457-cad8f3407b42	Weibang	\N	WBA5330113010	Tappo Mulching X WB536SK/536SB, WB537SCV3B	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+56e3eed1-c226-423a-938c-49988bf0b8ff	Weibang	\N	WBA5360115010	Tappo Mulching X WB536SB/A-SK/A, WB537SC, WB537SCV3	\N	24.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+d4cb1f3c-3b18-4a3c-8bfa-740fd43220bf	Weibang	\N	WBA5340122010	Tappo Mulching X WB536SKAL/SBALV	\N	20.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+a17aaf7a-0b0d-4402-981b-b57ad7dcf153	Weibang	\N	WBA5380107010	Tappo Mulching X WB537SCVAL, WB537SCVAL, WB537SCVALB	\N	24.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+2118730a-bb52-4792-9210-ce4b9d04d6a3	Weibang	\N	WBR4520300000	Tappo Mulching X WB452HE, WB452SE3	\N	10.11	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+8a83862e-909c-4f8b-a817-25bcab1df669	Weibang	\N	WBAPIVOT53	Ruote piroettanti x 537SCV3	\N	165.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+0bfc2bc1-4d76-4bc5-8161-1b052dc06cd0	Weibang	\N	WBABAT120	Batteria Litio 120V - 4AH	\N	499.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+7b9530d8-ca80-471b-b7ce-48e0024d4ee7	Weibang	\N	WBACBAT120	Caricabatteria Litio 120V - 4AH	\N	219.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+87ffc078-d7a1-4922-9d50-67fc53cfd805	Weibang	\N	WBA13720001	Filo 4,5X660mm WBLT56HLC/SLC (Confezione da 12pz)	\N	16.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+9a52e7c0-2f95-450f-be5c-622e4b907ac5	Weibang	\N	WBA13430001	Kit filtro aria snorkel WBBC537SCV	\N	29.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+40a7e203-03e7-4ac2-b601-76ed8e841d5a	Weibang	\N	WBA12010012	Kit spazzola 48cm Rasaerba a rullo	\N	150.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+0fa12d36-e3fd-435a-b42b-b5a41ee7a174	Weibang	\N	WBA12110012	Kit spazzola 56cm Rasaerba a rullo	\N	175.00	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+e4248da2-1de5-4ecb-9e04-ecef34e70ff1	Weibang	\N	WBA150406WM1	Olio 10W-30 MOTION 4T 600ml (Confezione da 24PZ)	\N	7.50	\N	\N	\N	\N	2026-03-15 18:54:25.602262+00	\N	\N	\N	\N	\N
+6921d2cf-407a-4ff9-8635-595a7e5eaae8	Echo	\N	ECMACS2200	Motosega elettrica ACS 2200 - 2200W	\N	175.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e126d285-f5eb-4e81-8497-77feed2dfcd9	Echo	\N	ECMCS2511TES	Motosega potatura X Series - CS 2511 TES	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e668b697-c247-4410-96db-6598ffbf06bb	Echo	\N	ECMCS2511TESC	Motosega potatura X Series - CS 2511 TESC (Barra Carving)	\N	509.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+38fc20ec-51e5-44a0-8780-2cb76eabafc9	Echo	\N	ECMCS280TES	Motosega potatura CS 280 TES	\N	349.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+0e20f711-182e-425d-a7e1-e7824e9b9976	Echo	\N	ECMCS280TESC	Motosega potatura CS 280 TESC (Barra Carving)	\N	399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+86db108c-9147-49cf-956d-2816272ad5ef	Echo	\N	ECMCS362TES-30	Motosega potatura CS 362 TES - 30 (Barra 30cm)	\N	419.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5734384c-e91f-4661-8c04-6b45605d954e	Weibang	\N	WBMWB537SCVMLV	Tagliaerba Mulching semovente 53cm - 196cc Low Vib.	\N	1089.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e6c79f43-a895-49c6-a5c9-c0e8cfd4c112	Weibang	\N	WBMWB536SKVM	Tagliaerba Mulching semovente 53cm - 180cc Kawasaki	\N	1069.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+ac44599f-1af4-4899-b0de-7b4314625bcc	Weibang	\N	WBMWB537SCVAL	Tagliaerba semovente 53cm - 196cc Alluminio	\N	1069.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+d9ab6a23-be4c-49e3-8df5-0de2be6957d5	Echo	\N	ECMCS362TES-35	Motosega potatura CS 362 TES - 35 (Barra 35cm)	\N	439.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+485779a0-1814-4d66-abed-db5ba11b072a	Echo	\N	ECMCS2511WES	Motosega multiuso X Series - CS 2511 WES	\N	509.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+55277d27-90fe-479a-83f9-9ad0f56ffc55	Echo	\N	ECMCS362WES	Motosega multiuso CS 362 WES	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a7613a9a-0d8e-4067-b5da-fda0e4e366dc	Echo	\N	ECMCS310ES	Motosega multiuso CS 310 ES	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a58f48d7-c3db-4601-a029-bbd79ccc4e8f	Echo	\N	ECMCS3410ES	Motosega multiuso CS 3410 ES	\N	309.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+6e2a578b-cb9e-4f3f-bc5d-a90418047d8f	Echo	\N	ECMCS3510ES	Motosega multiuso CS 3510 ES	\N	339.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+70789eca-992f-458a-a944-192aec1d435a	Echo	\N	ECMCS3510AC	Motosega multiuso CS 3510 AC	\N	389.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a2b6bb32-078c-4a8d-b6ea-b8c579ade090	Echo	\N	ECMCS4010ES	Motosega multiuso CS 4010 ES	\N	489.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+7f9fe018-6cf8-4de8-a6c7-d75b52b6ae33	Echo	\N	ECMCS4310SX	Motosega multiuso X Series - CS 4310 SX	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+7bcfd244-f604-472a-98fe-0167c330d318	Echo	\N	ECMCS4510ES	Motosega multiuso CS 4510 ES	\N	529.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5edf5d56-8704-444c-99ad-0421322c0838	Echo	\N	ECMCS4920ES	Motosega multiuso CS 4920 ES	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+54155e9f-af4e-4cfe-8ddf-9d7f116e31c5	Echo	\N	ECMCS501SX	Motosega multiuso X Series - CS 501 SX	\N	779.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+26dfeadc-b035-4271-bc07-dfea8d689dcf	Echo	\N	ECMCS621SX	Motosega forestale X Series - CS 621 SX	\N	929.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a81940f0-0e34-469a-b50e-0b21f8e32671	Echo	\N	ECMCS7310-20	Motosega forestale X Series - CS 7310 SX (Barra 20")	\N	1199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+05bf1b92-65e0-4041-8c1e-4c068ea6bdab	Echo	\N	ECMCS7310-24	Motosega forestale X Series - CS 7310 SX (Barra 24")	\N	1219.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+2a9e380a-d6c6-4c2b-85a4-17f7651d7c67	Echo	\N	ECMPPF236ES	Potatore asta fissa PPF 236 ES	\N	519.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+d15fcdc6-874c-4d73-8c9e-8efa0e3179e9	Echo	\N	ECMPPT236ES	Potatore telescopico PPT 236 ES	\N	629.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+353f67bd-fe56-4b95-b1ea-d53dbe74f582	Echo	\N	ECMPPT2620ES	Potatore telescopico X Series - PPT 2620 ES	\N	769.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+36f17c3e-2daf-4a2b-bc57-4ba5b178aa14	Echo	\N	ECMEGT350	Bordatore elettrico EGT350 - 350W	\N	89.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+948b635b-ddec-4864-9ebf-0caa786df64e	Echo	\N	ECMSRM222ESL	Decespugliatore SRM 222 ESL	\N	219.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+3a742117-88f7-403b-aec0-739640b0be20	Echo	\N	ECMSRM237TESL	Decespugliatore SRM 237 TESL	\N	395.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+ef12a7b3-a1d6-43eb-893d-5b6f722a49d7	Echo	\N	ECMSRM267L	Decespugliatore SRM 267 L	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c831c573-bc82-4461-8156-c2762b2acebc	Echo	\N	ECMSRM2621TESL	Decespugliatore X Series - SRM 2621 TESL	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+9c7fcdff-3290-43c8-999e-9eddcaa18297	Echo	\N	ECMSRM301TESL	Decespugliatore SRM 301 TESL	\N	319.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c99d20b9-b5df-4880-ad3f-dbabffb27883	Echo	\N	ECMSRM3021TESL	Decespugliatore X Series - SRM 3021 TESL	\N	559.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+b5c47059-4fa0-48a5-bfa4-c7d1fcac7ef6	Echo	\N	ECMSRM3021TESU	Decespugliatore X Series - SRM 3021 TESU	\N	649.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+8387b45c-7fcd-43d0-8c5f-d71fb6ed9dbb	Echo	\N	ECMSRM3611TL	Decespugliatore X Series - SRM 3611 TL	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+054870aa-aec1-4291-95a2-1a8a9c3b9b67	Echo	\N	ECMSRM3611TU	Decespugliatore X Series - SRM 3611 TU	\N	719.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+829520ab-4e2b-4db3-80ad-d81e863f6a7f	Echo	\N	ECMSRM420ESLW	Decespugliatore SRM 420 ESLW	\N	519.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+45e9bc07-648c-44c4-a39a-a581fcecc9df	Echo	\N	ECMSRM420TESL	Decespugliatore X Series - SRM 420 TESL	\N	785.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+fab0280e-f993-4c72-ae79-2bc0b58eea7b	Echo	\N	ECMSRM420TESU	Decespugliatore X Series - SRM 420 TESU	\N	859.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+b5c622de-cea5-4349-82ce-43afab970881	Echo	\N	ECMSRM520ESU	Decespugliatore X Series - SRM 520 ESU	\N	969.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+0050117e-00b9-4247-9a44-9fbe9a284cad	Echo	\N	ECMCLS520ESU	Decespugliatore X Series - CLS 520 ESU	\N	1055.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a4dda727-97fc-4cdc-95f0-b7a70bb9b89f	Echo	\N	ECMRM3020T	Decespugliatore Zaino X Series - RM 3020 T	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+df00ca01-b24e-4e05-83be-5dd8beb1bc09	Echo	\N	ECMRM520ES	Decespugliatore Zaino X Series - RM 520 ES	\N	909.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+81934a47-ac5d-47cc-b9f5-6f2d8dcccc36	Echo	\N	ECMHCAS236ESLW	Tagliasiepi ad asta corta HCAS 236 ESLW	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+ad26d937-28e6-425d-8a99-96cb26f32e08	Echo	\N	ECMHCAS2620ESHD	Tagliasiepi ad asta corta X Series - HCAS 2620 ESHD	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+8ebc0b43-08b7-4dea-b015-14f7928c1204	Echo	\N	ECMHCA236ESLW	Tagliasiepi ad asta lunga HCA 236 ESLW	\N	615.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e213dd5d-8db3-49e0-a175-70921225b1bc	Echo	\N	ECMHCA2620ESHD	Tagliasiepi ad asta lunga X Series - HCA 2620 ESHD	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+d052d11d-6e50-4544-920a-2086075ca83c	Echo	\N	ECMHC2020R	Tagliasiepi HC 2020R	\N	329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+34824e3b-136f-4718-9823-a1b4e769c68c	Echo	\N	ECMHC2320	Tagliasiepi HC 2320	\N	435.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+360413a6-21b2-4486-8ccd-c1f5705fa67c	Echo	\N	ECMHCR165ES	Tagliasiepi HCR 165ES	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+1026b58e-e74b-4cd6-9dda-0bc745e07eab	Echo	\N	ECMHCR185ES	Tagliasiepi HCR 185ES	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a2f7dcf6-2efb-4189-a984-e81c48315713	Echo	\N	ECMHC2810ESR	Tagliasiepi X Series - HC 2810ESR	\N	620.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5b8c822d-b36f-4a44-82f7-cabdbbee7d45	Echo	\N	ECMHCS2810ES	Tagliasiepi X Series - HCS 2810ES	\N	620.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a4b2a061-bdbb-4960-a1e2-45140f2e970d	Echo	\N	ECMHCS3210ES	Tagliasiepi X Series - HCS 3210ES	\N	649.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+fad346ae-4ca5-43c1-8cf8-f5f9cab9196e	Echo	\N	ECMHCS3810ES	Tagliasiepi X Series - HCS 3810ES	\N	679.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+7541fedc-57c9-4e12-96dd-00817185db37	Echo	\N	ECMHC560	Tagliasiepi elettrico HC 560 - 500W	\N	175.00	\N	\N	\N	22.00	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+f3eed3d6-b483-428d-84c6-61f8c821cd8d	Echo	\N	ECMHCR610	Tagliasiepi elettrico HC 610 - 700W	\N	199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+02724ee2-c9a3-49e4-9cb1-a1e73235c4c3	Echo	\N	ECMES250ES	Soffiatore e aspiratore ES 250ES	\N	329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a327f1f7-ea77-42b9-8acd-0f7069d7049a	Echo	\N	ECMES255ES	Soffiatore e aspiratore ES 255ES	\N	379.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+f9c34999-0a9f-4cb2-aeb9-4474166e232a	Echo	\N	ECMPB2520	Soffiatore PB 2520	\N	249.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5652e9a2-3dc2-48e2-b4b8-55dea0abc8f3	Echo	\N	ECMPB2620	Soffiatore X Series - PB 2620	\N	369.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+2e062ccb-2e56-44e4-b3e8-c084ecadf6c8	Echo	\N	ECMPB580	Soffiatore a zaino PB 580	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+37a82683-d1ae-4e75-85a0-04a0c4a09f28	Echo	\N	ECMPB5810T	Soffiatore a zaino PB 5810 T	\N	639.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+433cfd78-63a5-4957-831c-0598d3e9561f	Echo	\N	ECMPB770	Soffiatore a zaino X Series - PB 770	\N	715.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+26fa65d0-8348-4008-be22-19c12d020530	Echo	\N	ECMPB7910T	Soffiatore a zaino PB 7910 T	\N	829.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+3ae5f567-8f9c-4d0b-b3a0-ee77d8407afa	Echo	\N	ECMPB8010	Soffiatore a zaino X Series - PB 8010	\N	875.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+ff7ce441-60be-43cc-8b77-197f09200a49	Echo	\N	ECMPB9010T	Soffiatore a zaino PB 9010 T	\N	949.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+8e3febe8-9cee-446d-8e88-03d7675df269	Echo	\N	ECMPAS2620ES	Multifunzione X Series - PAS 2620 ES	\N	449.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+1302cf82-5491-43a2-bc88-8f145a271ae4	Echo	\N	ECMMB5810	Atomizzatore spalleggiato MB5810	\N	855.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+69b12634-38f8-4d55-bd58-3d52d876b29b	Echo	\N	ECMCSG7410ES	Mototroncatrice CSG 7410 ES	\N	1365.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+8179f1ee-8ef0-4ba2-92ad-4ee4d2b8b066	Echo	\N	ECMDPB310	Soffiatore a batteria 40V - DPB 310	\N	99.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c3432221-bcc2-42bc-b0a0-a36881bf3d35	Echo	\N	ECMDCS310	Motosega a batteria 40V - DCS 310	\N	199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+3b8232c3-d93a-4a1c-9994-d100591eab72	Echo	\N	ECMDSRM310L	Decespugliatore a batteria 40V - DSRM 310	\N	149.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+0d9a3144-93e4-4e86-bb09-b32d362e3f1c	Echo	\N	ECMDHC310	Tagliasiepi a batteria 40V - DHC 310	\N	109.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+41b09b80-12ee-4bbb-a6ec-0791c46fd274	Echo	\N	ECMDPPF310	Potatore a batteria 40V - DPPF 310	\N	145.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+f57c691f-cbf1-4c52-92a9-c752c377f68a	Echo	\N	ECMDHCA310	Tagliasiepi ad asta a batteria 40V - DHCA 310	\N	145.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c53af04d-5781-4611-84fd-61bfc9001c82	Echo	\N	ECMDLM310/35P	Tagliaerba a batteria 40V - DLM 310 35P	\N	189.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+fd778ce3-aee5-4cd6-90ba-71921b6367c0	Echo	\N	ECMDLM310/46P	Tagliaerba a batteria 40V - DLM 310 46P	\N	299.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c36d0b41-9a61-4037-a8a7-7a9c2f73a17e	Echo	\N	ECMDLM310/46SP	Tagliaerba a batteria 40V - DLM 310 46SP semovente	\N	399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+022fc96f-a406-4ea9-a3d1-5703703fe332	Echo	\N	ECALBP3680	Batteria Garden+ 40V 72Wh	\N	99.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+2166eabc-5dde-4b32-9c23-666b3328236b	Echo	\N	ECALBP36150	Batteria Garden+ 40V 144Wh	\N	139.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+9172637c-db58-4ac6-98dd-be119d2ec8af	Echo	\N	ECALC3604	Caricabatterie Garden+ Rapido 40V	\N	59.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c3c1c6c9-883a-4722-8bce-556dce08dd9e	Echo	\N	ECMDCS2500	Motosega a batteria 56V - DCS 2500	\N	415.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+806067f5-e448-4cf5-84fc-f0c5ac0f3641	Echo	\N	ECMDCS2500T	Motosega a batteria 56V - DCS 2500 T Barra Carving	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+2f3271e3-7ef2-40a3-8644-89421579d2ea	Echo	\N	ECMDCS2500W	Motosega a batteria 56V - DCS 2500 W	\N	459.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+eb8cb62d-29f4-4a52-82e9-f3c3b490edef	Echo	\N	ECMDCS3000T	Motosega a batteria 56V - DCS 3000T	\N	279.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+33824063-ec4a-414e-9f97-a7bd927b422f	Echo	\N	ECMDCS3500	Motosega a batteria 56V - DCS 3500	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+2daa59cf-a7df-4195-8bb7-5f087734d753	Echo	\N	ECMDCS3500T	Motosega a batteria 56V - DCS 3500T	\N	589.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+d3719865-f36e-48b5-84fd-20438ecd7f0e	Echo	\N	ECMDHS3006	Potatore manuale a batteria 56V - DHS 3006	\N	169.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+7deeed42-abc8-426c-8332-4aba69d9a06e	Echo	\N	ECMDHCAS2600HD	Tagliasiepi asta corta a batteria 56V - DHCAS 2600HD	\N	635.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+7fa9b5b0-8c56-41af-a1a4-998373bf9df6	Echo	\N	ECMDHCA2600HD	Tagliasiepi asta a batteria 56V - DHCA 2600HD	\N	659.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+11196f5b-44d0-4d5b-a69e-834b8937a47d	Echo	\N	ECMDHC2200R	Tagliasiepi a batteria 56V - DHC 2200 R	\N	469.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+070e6f48-dab9-47a0-be41-650111eda370	Echo	\N	ECMDHC2800R	Tagliasiepi a batteria 56V - DHC 2800 R	\N	549.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+26ad6055-edc6-4b89-9556-decfa1e61225	Echo	\N	ECMDHCS2800	Tagliasiepi a batteria 56V - DHCS 2800	\N	659.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+0d8bc11d-5d75-48d8-bf25-cb4c16e8a522	Echo	\N	ECMDLM5100SP	Tagliaerba a batteria MID Series 56V - DLM 5100 SP	\N	579.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+d3a3f697-1789-4e13-a029-52aee03f6372	Echo	\N	ECMDPAS2600	Multifunzione a batteria 56V - DPAS 2600	\N	369.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5b47e2ce-fd87-4ded-a2b9-e573f145b68d	Echo	\N	ECMDPAS300	Multifunzione a batteria 56V - DPAS 300	\N	249.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+9fc6ce76-9919-4d74-88df-7853ca555a53	Echo	\N	ECMDPB2500	Soffiatore a batteria MidSeries 56V - DPB 2500	\N	269.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+bcb9390c-9636-4166-8424-cd97e2ca5819	Echo	\N	ECMDPB2600	Soffiatore a batteria 56V - DPB 2600	\N	429.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+2df5eed2-24bc-4690-bb77-e341f09d1725	Echo	\N	ECMDPPT2600LW	Potatore telescopico a batteria 56V - DPPT 2600LW	\N	765.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+87dc34a2-23e4-4794-8873-2dbd9feadb4e	Echo	\N	ECMDSRM2400L	Decespugliatore a batteria MID Series 56V - DSRM 2400 L	\N	289.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+37b3585a-f534-4a59-9d86-9b0abb94c55c	Echo	\N	ECMDSRM2600L	Decespugliatore a batteria X Series 56V - DSRM 2600 L	\N	429.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+32517063-1c42-4ac4-b071-fb66964a4f28	Echo	\N	ECMDSRM2600U	Decespugliatore a batteria X Series 56V - DSRM 2600 U	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+65a6d704-1460-4ca6-a436-306ef50d5d9f	Echo	\N	ECMDSRM3500L	Decespugliatore a batteria X Series 56V - DSRM 3500 L	\N	669.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+f7cd02f9-da29-42fb-b3e6-5f5724a10775	Echo	\N	ECMDSRM3500U	Decespugliatore a batteria X Series 56V - DSRM 3500 U	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+3afa3e66-64fd-485e-923f-e71617f1319b	Echo	\N	ECMDTT2100	Decespugliatore a batteria X Series 56V - DTT 2100	\N	689.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+041dc3ed-a8bf-49de-aef5-3b3397bd5df3	Echo	\N	ECADBC560	Caricabatterie 56eForce Rapido 56V	\N	109.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5fe70745-a161-4513-8c49-8af136670525	Echo	\N	ECADBC560RC	Caricabatterie 56eForce UltraRapido 56V	\N	169.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+7e2d664f-3c4c-43a5-a409-cf129990e043	Echo	\N	ECALBP56V125	Batteria 56eForce 56V 126Wh 2.5AH	\N	209.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+02b7176d-5d85-4abc-85e4-487168949232	Echo	\N	ECALBP56V250	Batteria 56eForce 56V 252Wh 5AH	\N	295.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+65910c2b-1274-4257-a970-1a79d6f44a26	Weibang	\N	WBMWB455HCOP	Tagliaerba a spinta 45cm - 139cc	\N	259.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+040cb028-915e-42e7-800d-b626b1c0c4f8	Weibang	\N	WBMWB455HC	Tagliaerba a spinta 45cm - 139cc con raccolta	\N	359.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+cafdaa2b-46d4-487e-a28d-75692bb73012	Weibang	\N	WBMWB455SCOP	Tagliaerba semovente 45cm - 139cc	\N	319.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+f0aac836-b83b-4219-92b5-5118e8ee65cf	Weibang	\N	WBMWB455SC	Tagliaerba semovente 45cm - 139cc con raccolta	\N	445.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a8f00a9b-abeb-43c2-bfe7-18538b45976f	Weibang	\N	WBMWB455SC3	Tagliaerba semovente 3x1 45cm - 139cc	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+4aa31fa8-2c1f-4ca7-944d-f454d9a2ce3b	Weibang	\N	WBMWB456SCVE3	Tagliaerba semovente 3x1 45cm - 166cc	\N	709.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+af948981-f3be-4598-803d-7064e087f5c9	Weibang	\N	WBMWB506SC	Tagliaerba semovente 50cm - 166cc	\N	469.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+d48c02c4-18fa-4bbf-9424-c4bf5cd8831c	Weibang	\N	WBMWB506SC3	Tagliaerba semovente 3x1 50cm - 166cc	\N	599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+460a7e5d-fdbc-46e3-9c64-d806cb0c1b6b	Weibang	\N	WBMWB537SC	Tagliaerba semovente 53cm - 196cc	\N	569.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+8a151d51-2885-48a2-9326-0caf9035f87a	Weibang	\N	WBMWB537SC3	Tagliaerba semovente 3x1 53cm - 196cc	\N	709.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+24947323-3e86-48a2-96db-99ef5d4bc640	Weibang	\N	WBMWB466HCM	Tagliaerba Mulching a spinta 46cm - 166cc	\N	499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+aaf97097-41b1-4dfe-82b3-02a3559b3b0f	Weibang	\N	WBMWB466SCM	Tagliaerba Mulching semovente 46cm - 166cc	\N	699.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+3328010c-6a0b-4723-bf9b-b753f3afca47	Weibang	\N	WBMWB537SCM	Tagliaerba Mulching semovente 53cm - 196cc	\N	859.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+dcb33285-0901-49ef-9893-49c0dfab0ab0	Weibang	\N	WBMWB507SCV3	Tagliaerba semovente 3x1 50cm - 196cc Cardanica 3v	\N	835.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e634aa28-ccb2-492f-a0bd-bffa0ee91cc5	Weibang	\N	WBMWB537SCV3	Tagliaerba semovente 3x1 53cm - 196cc Cardanica 3v	\N	925.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+445b4ecc-14a6-430e-9f2e-b686f75b941d	Weibang	\N	WBMWB537SCV3LV	Tagliaerba semovente 3x1 53cm - 196cc Low Vibration	\N	1039.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+f260bc32-8a20-429b-93ac-45670e63c430	Weibang	\N	WBMWB537SCV3B	Tagliaerba semovente 3x1 53cm - 196cc Freno lama	\N	1199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+1b4c8826-e39e-4d26-a546-1145dd2aa383	Weibang	\N	WBMWB537SCVM	Tagliaerba Mulching semovente 53cm - 196cc Mecc. 3v	\N	959.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a718a739-c7f4-49ff-b915-f83d5f6242f1	Weibang	\N	WBMWB537SCVALB	Tagliaerba semovente 53cm - 196cc Allum. Freno lama	\N	1355.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e9ffd558-4cb5-40b7-8c31-6f900d47568d	Weibang	\N	WBMWB778SCV3	Tagliaerba bilama semovente 3x1 77cm - 300cc	\N	2789.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+b96f313b-0d8e-4fa2-80d3-a194a2cb7b28	Weibang	\N	WBMWB778SCV3P	Tagliaerba bilama semovente 3x1 77cm - 300cc Ruote Piv.	\N	2989.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+da33f692-df5e-4f41-9053-34faa8a7de5f	Weibang	\N	WBMWB486SKVRB	Tagliaerba a rullo semovente 48cm - 179cc	\N	1799.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+dcccedd8-cb5f-47a7-8a42-fb1372ff718c	Weibang	\N	WBMWB567SKVRB	Tagliaerba a rullo semovente 56cm - 196cc	\N	2099.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+b8bdb773-0dc0-4b94-a99f-2c19b6046f35	Weibang	\N	WBMWB384RC	Arieggiatore a coltelli 38cm - 163cc Lama flottante	\N	869.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+44df9616-e19d-44b6-bc71-6893805acad9	Weibang	\N	WBMWB486CRC	Arieggiatore a coltelli 48cm - 163cc Lama flottante	\N	1189.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+b5078a73-d3ce-408c-a690-62ee6eb18424	Weibang	\N	WBMWBLV506C	Aspirafoglie a ruote 80cm - 163cc Sacco 240L	\N	1619.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+014a45c3-cc9d-4e1b-91a1-bad090582734	Weibang	\N	WBMWBLV50K	Aspirafoglie da sponda - 180cc Kawasaki	\N	1499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+9268f8a4-8215-47d8-9512-5e5637818e29	Weibang	\N	WBMWBTR126H	Catenaria 163cc	\N	4199.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e9b640ba-fd3c-45f6-90a5-ab2a387f4e4c	Weibang	\N	WBMWBSH4003E	Biotrituratore elettrico 2400W - Diametro 40mm	\N	845.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+c56599a2-d919-4808-a02f-fa78b6b1f3d6	Weibang	\N	WBMWBCH507LC	Cippatore compatto 196cc - Diametro 50mm	\N	1329.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+5a6a4546-226e-4597-b1cc-5db31fa1775a	Weibang	\N	WBMWBCH1013LCD	Cippatore professionale 400cc - Diametro 100mm	\N	3399.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+deb6e938-2868-417d-84a8-7423924a49fc	Weibang	\N	WBMWBLT567HLC	Decespugliatore a ruote a spinta 56cm - 196cc	\N	765.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+e16a6f41-32be-40d7-9461-704378b64bed	Weibang	\N	WBMWBLT567SLC	Decespugliatore a ruote semovente 56cm - 196cc	\N	1099.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+6879a57d-08cf-48d9-a201-9d923d484a76	Weibang	\N	WBMWBBC537SCV	Falciatrice professionale 53cm - 196cc	\N	1425.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+973feb2a-8e30-4a23-9f74-adaf4b0fddcf	Weibang	\N	WBMWBBC538SCV	Falciatrice professionale 53cm - 224cc	\N	1715.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+156140de-becf-484b-a5b5-46ab99e3a6c8	Weibang	\N	WBMWBBC7623LC	Falciatrice professionale 76cm - 764cc	\N	4599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+943cd8b2-8add-4ae2-8276-a78796ea791b	Weibang	\N	WBMWBGT6813	Trinciasermenti a ruote 68cm - 392cc CVT	\N	4499.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+a57d3386-4708-4414-abfc-af5bbf7b5b1e	Weibang	\N	WBMWBGT6813TE	Trinciasermenti cingolato 68cm - 392cc	\N	6599.00	\N	\N	\N	\N	2026-03-16 00:00:00+00	\N	2026-03-16	2026-06-21	\N	\N
+4cafb52f-4089-41fc-8ebc-7f4588991cf0	HONDA	Import_listini	HRM1000E	HRM 1000 E	\N	699.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+293539e9-5ab8-4f4d-b0c9-4e141ea69508	HONDA	Import_listini	0-1690	HRM 1500	\N	799.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+fb879db7-9ee6-4a55-bc55-69a92ee6092b	HONDA	Import_listini	HRM2500	HRM 2500	\N	2200.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+0331fc19-f968-45a8-b12a-10a709d505e1	HONDA	Import_listini	0-1930	HRM 1500 EC	\N	960.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+82b590c3-cd06-4b01-ac22-eb98bb1e6cf5	HONDA	Import_listini	0-2345	HRM 2500 EC	\N	2560.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+5b722c6b-348a-4e46-9a32-1ca85b9d14db	HONDA	Import_listini	HRM4000EC	HRM 4000 EC	\N	3100.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+616b550d-ef86-435d-a079-0443a0fcb197	HONDA	Import_listini	COP-STAZ-40-70	Copertura stazione 40/70	\N	167.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+d5fb74b3-44c8-4078-b703-c306e6a58430	HONDA	Import_listini	COP-STAZ-310-520-3000	Copertura stazione 310/520/3000	\N	240.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+88c3ddc5-c9a5-4653-8afb-d3f42aa75b34	HONDA	Import_listini	00-842	Navimow 108 J + kit 4G	\N	1100.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+df8bbd50-a5e0-41a7-8eda-302a5536c2a8	HONDA	Import_listini	00-922	Navimow I210 AWD	\N	1200.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+b6823be2-413d-45bf-bd71-8fc5dbf2b226	HONDA	Import_listini	00-113	Garage S x J108	\N	150.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+8898a870-7062-4b87-8d6c-a510b3cab71c	HONDA	Import_listini	0-1280	Navimow H 206E	\N	1700.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+da22ba1c-d20c-4305-8a3a-077679ad2034	HONDA	Import_listini	0-1430	Navimow H 210E	\N	1900.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+c5e9d182-d0b2-43fe-9a16-4d6ebe17bd50	HONDA	Import_listini	0-1660	Navimow H 215E	\N	2200.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+b21ec24d-9d8c-4833-afa5-b77e716a1c63	HONDA	Import_listini	0-1965	Navimow H 230E	\N	2600.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+b201a1de-4e23-42e6-a7ff-6978baa97ad5	HONDA	Import_listini	00-140	Garage M x serie H	\N	200.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+5d3d560f-4c90-44c2-82f3-4dbe1f4f2c2d	HONDA	Import_listini	0-1720	Navimow X3 - 315E	\N	2100.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+e3d22d74-ff52-430d-a716-a95a8d98fbff	HONDA	Import_listini	0-2075	Navimow X3 - 330E	\N	2500.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+c23078bc-c278-4c63-944b-8dc1c1894591	HONDA	Import_listini	0-2480	Navimow X3 - 350E	\N	2900.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+b8a0673a-d80d-40ee-ae74-bcda9034b299	HONDA	Import_listini	00-180	Garage L - X3	\N	250.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+289d7c92-3e48-4404-a720-f9f1c49e5b00	HONDA	Import_listini	754840	Kit estensione antenna	\N	50.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+12d45f5a-25b9-4ec4-a637-b4490bfcf9e1	HONDA	Import_listini	754880	Prolunga cavo antenna	\N	30.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+213b470a-314e-4465-b216-297d78976d6e	HONDA	Import_listini	754920	Kit Vision Fence	\N	290.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+de14e7bf-8d2b-4ec6-83d4-8e38736f19b9	HONDA	Import_listini	754860	Kit sensori ultrasuoni	\N	190.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+9e4b1a40-aa2c-4a2a-a417-1d10496cb471	HONDA	Import_listini	00-216	Kit trimmer X3	\N	300.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+151c2b5d-feef-46af-9074-58f42bbaa998	HONDA	Import_listini	755380	Kit antenna secondaria X3	\N	300.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+0e7f1b6d-5c58-4464-88e5-77d0258859b3	HONDA	Import_listini	755330	Adattatore trasform. antenna X3	\N	30.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+13912b50-8f36-436d-8515-fe3bfc662172	HONDA	Import_listini	755320	Kit estensione antenna 10 mt. X3	\N	30.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+1ba83c7e-9a24-439a-8689-38d9b2782a6d	HONDA	Import_listini	755340	Kit montaggio antenna	\N	60.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+76430249-37cf-4321-9ddf-b55b14f1a63d	HONDA	Import_listini	0-1852	Navimow X420E AWD	\N	2500.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+6bdc2dec-c8ad-42aa-8002-0e76fd54beb0	HONDA	Import_listini	0-2075B	Navimow X430E AWD	\N	2800.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+1aa86806-d596-4698-b06c-41e87cf711b3	HONDA	Import_listini	0-2373	Navimow X450E AWD	\N	3200.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+9b90ad14-a5fe-483a-8aea-b3c2d9bf839d	HONDA	Import_listini	0-4073	Navimow Terranox CM 120 M1 AWD	\N	5500.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+36cbd11f-30ed-4800-8e96-ad5d7ca075f8	HONDA	Import_listini	0-5200	Navimow Terranox CM 240 M1 AWD	\N	7000.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+1c0e70b6-b274-422f-9f7c-831f0968f00d	HONDA	Import_listini	00-200	Garage X4 - Terranox	\N	270.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+887336a6-8aa5-46d6-a8e2-706a9e9859b7	HONDA	Import_listini	00-800	RMI 422	\N	700.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+c4682d3d-87af-4acb-ab2a-a58df1cbf3f8	HONDA	Import_listini	IMOW5	iMOW 5	\N	1750.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+734c7b4b-50e1-47cd-9d6f-5c0b045c2cc3	HONDA	Import_listini	TETTUCCIO-PARASOLE	Tettuccio parasole ribaltabile	\N	180.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
+e630c75c-3930-4b28-9704-a89033efea0b	HONDA	Import_listini	0-5420	Yarbo + modulo rasaerba	\N	7200.00	\N	\N	\N	\N	2026-06-23 04:47:03.575+00	\N	\N	\N	\N	\N
 \.
 
 
@@ -6796,6 +7549,8 @@ COPY public.listini_log (id, nome_file, brand, n_prodotti, caricato_da, caricato
 e7aa42a8-6c60-415d-a54b-86377f60bdea	2026 ECHO - Listino WEB 2026-1 - 2026.02.16 - 2026.03.15.pdf	ECHO	129	Simone	2026-02-24 20:40:04.887286+00	\N
 968b5537-f806-40cf-bfd5-9153d211a67c	Copia di Listino_Geogreen_Dinamico_2026_no_iva.xlsx	GEOGREEN	58	Simone	2026-02-24 20:41:34.050844+00	\N
 932f5a26-4d8f-4ab9-b45b-2f966a89ceae	HONDA BATTERIA-2026.xlsx	HONDA	13	Simone	2026-02-25 07:21:00.078929+00	2026/2
+3cf11607-efb2-46bb-a8de-e70ece9b288a	Listino_DIMA_2026_import.xlsx	DIMA	268	Admin	2026-06-22 08:03:10.835303+00	\N
+04e33455-8474-4737-bb03-6c8572fba766	Listino_Robot_2026_import.xlsx	HONDA	39	Admin	2026-06-23 04:47:08.162776+00	\N
 \.
 
 
@@ -10379,62 +11134,73 @@ fba316ab-4be3-417e-8a15-81d80e8479fc	Honda	Rasaerba HRG466C1	1	2026-06-16 08:04:
 cb8536da-2403-491c-b1d0-31b1be46af0f	Echo	Decespugliatore DSRM-2400/L	1	2026-06-19 13:08:56.065549+00	2026-06-19 13:08:56.065549+00
 6ce32a22-9a9a-4607-986c-ecd1b0b893b1	Stihl	Decespugliatore FS 235 R	1	2026-06-20 06:45:56.305899+00	2026-06-20 06:45:56.305899+00
 0a1adc67-798f-4d79-ac34-06a010063d09	Stihl	 RME 339.0	1	2026-06-20 08:46:59.654515+00	2026-06-20 08:46:59.654515+00
+8a0cc224-1def-442c-a118-ef3e4f8f3e8b	Zanzero	Fornitura e montaggio di una centralina ZA150 completo di raccorderia, tubazioni ed ugelli.	1	2026-06-25 04:52:58.269579+00	2026-06-25 04:52:58.269579+00
+70d81b49-ab3d-4029-b1d4-226bfdbd5ef3	Stihl	Motosega MS 172 3/8"P	1	2026-06-25 08:33:19.551911+00	2026-06-25 08:33:19.551911+00
+02173f2c-5c24-4b3d-ab7a-2fc5693925aa	Echo	Motosega CS501SX	1	2026-06-27 08:48:14.545531+00	2026-06-27 08:48:14.545531+00
+e28e51bb-7826-4f0a-8b05-d1c5e7a8170f	Stihl	RM 655.0 V	1	2026-06-27 09:43:43.411767+00	2026-06-27 09:43:43.411767+00
+bd3061cc-542a-4fd9-aca4-e87c72674533	WORX	Decespugliatore WG157E	1	2026-06-27 09:58:41.400379+00	2026-06-27 09:58:41.400379+00
+a0818f1c-8803-497b-96db-1120d182bbff	WORX	Batteria WA3551.I	1	2026-06-27 09:59:13.608311+00	2026-06-27 09:59:13.608311+00
+4bc0d820-557a-4f11-88f7-dd5b4c765642	Stihl	Motosega MSE 170 C	1	2026-06-30 08:21:41.349848+00	2026-06-30 08:21:41.349848+00
+b65dd8f6-dfaa-45c3-8a2d-304842b7689e	Stihl	Motosega MS 261 C	1	2026-07-03 15:17:48.759102+00	2026-07-03 15:17:48.759102+00
+da49d955-6ee9-469c-a4c6-0f8e15e68d19	Yarbo	Modulo rasaerba Pro	1	2026-07-04 06:41:55.228999+00	2026-07-04 06:41:55.228999+00
+bf588a7a-d3ad-4bbe-8d16-c079ead5f1ae	Stihl	Soffiatore BG 56	1	2026-07-04 09:16:05.678263+00	2026-07-04 09:16:05.678263+00
+8f1c648c-e0b4-4b2c-835b-d85e239e520b	Stihl	Decespugliatore FS 94 RC-E	1	2026-07-06 15:28:16.342312+00	2026-07-06 15:28:16.342312+00
 \.
 
 
 --
--- Data for Name: messages_2026_06_18; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_03; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_18 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_03 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_19; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_04; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_19 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_04 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_20; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_05; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_20 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_05 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_21; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_06; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_21 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_06 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_22; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_07; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_22 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_07 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_23; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_08; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_23 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_08 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_06_24; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_07_09; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_06_24 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_07_09 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
@@ -10518,6 +11284,9 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 20260603120000	2026-06-04 05:01:18
 20260605120000	2026-06-16 08:03:18
 20260606110000	2026-06-16 08:03:18
+20260616120000	2026-06-25 02:45:05
+20260624120000	2026-06-25 02:45:05
+20260626120000	2026-07-02 08:47:22
 \.
 
 
@@ -10673,7 +11442,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 678, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 724, true);
 
 
 --
@@ -10701,7 +11470,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 327, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 9622, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 10328, true);
 
 
 --
@@ -11345,59 +12114,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_06_18 messages_2026_06_18_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_07_03 messages_2026_07_03_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_18
-    ADD CONSTRAINT messages_2026_06_18_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_06_19 messages_2026_06_19_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_06_19
-    ADD CONSTRAINT messages_2026_06_19_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_07_03
+    ADD CONSTRAINT messages_2026_07_03_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_06_20 messages_2026_06_20_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_07_04 messages_2026_07_04_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_20
-    ADD CONSTRAINT messages_2026_06_20_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_06_21 messages_2026_06_21_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_06_21
-    ADD CONSTRAINT messages_2026_06_21_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_07_04
+    ADD CONSTRAINT messages_2026_07_04_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_06_22 messages_2026_06_22_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_07_05 messages_2026_07_05_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_22
-    ADD CONSTRAINT messages_2026_06_22_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_06_23 messages_2026_06_23_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_06_23
-    ADD CONSTRAINT messages_2026_06_23_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_07_05
+    ADD CONSTRAINT messages_2026_07_05_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_06_24 messages_2026_06_24_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_07_06 messages_2026_07_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_06_24
-    ADD CONSTRAINT messages_2026_06_24_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_07_06
+    ADD CONSTRAINT messages_2026_07_06_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_07_07 messages_2026_07_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_07_07
+    ADD CONSTRAINT messages_2026_07_07_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_07_08 messages_2026_07_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_07_08
+    ADD CONSTRAINT messages_2026_07_08_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_07_09 messages_2026_07_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_07_09
+    ADD CONSTRAINT messages_2026_07_09_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -12001,6 +12770,13 @@ CREATE INDEX idx_commissioni_status ON public.commissioni USING btree (status);
 
 
 --
+-- Name: idx_listini_descrizione_lower; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_listini_descrizione_lower ON public.listini USING btree (lower(TRIM(BOTH FROM descrizione)));
+
+
+--
 -- Name: idx_pv_interventi_piano; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -12106,52 +12882,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_06_18_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_07_03_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_18_inserted_at_topic_idx ON realtime.messages_2026_06_18 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_06_19_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_06_19_inserted_at_topic_idx ON realtime.messages_2026_06_19 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_07_03_inserted_at_topic_idx ON realtime.messages_2026_07_03 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_06_20_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_07_04_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_20_inserted_at_topic_idx ON realtime.messages_2026_06_20 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_06_21_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_06_21_inserted_at_topic_idx ON realtime.messages_2026_06_21 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_07_04_inserted_at_topic_idx ON realtime.messages_2026_07_04 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_06_22_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_07_05_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_22_inserted_at_topic_idx ON realtime.messages_2026_06_22 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_06_23_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_06_23_inserted_at_topic_idx ON realtime.messages_2026_06_23 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_07_05_inserted_at_topic_idx ON realtime.messages_2026_07_05 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_06_24_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_07_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_06_24_inserted_at_topic_idx ON realtime.messages_2026_06_24 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_07_06_inserted_at_topic_idx ON realtime.messages_2026_07_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_07_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_07_07_inserted_at_topic_idx ON realtime.messages_2026_07_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_07_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_07_08_inserted_at_topic_idx ON realtime.messages_2026_07_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_07_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_07_09_inserted_at_topic_idx ON realtime.messages_2026_07_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -12218,101 +12994,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_06_18_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_03_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_18_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_18_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_18_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_03_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_19_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_03_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_19_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_19_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_19_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_03_pkey;
 
 
 --
--- Name: messages_2026_06_20_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_04_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_20_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_20_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_20_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_04_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_21_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_04_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_21_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_21_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_21_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_04_pkey;
 
 
 --
--- Name: messages_2026_06_22_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_05_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_22_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_22_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_22_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_05_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_23_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_05_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_23_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_06_23_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_23_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_05_pkey;
 
 
 --
--- Name: messages_2026_06_24_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_06_24_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_06_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_06_24_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_07_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_06_24_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_06_pkey;
+
+
+--
+-- Name: messages_2026_07_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_07_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_07_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_07_pkey;
+
+
+--
+-- Name: messages_2026_07_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_08_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_07_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_08_pkey;
+
+
+--
+-- Name: messages_2026_07_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_09_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_07_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_09_pkey;
 
 
 --
@@ -13486,5 +14262,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict U8kJOdFmh9cPLHnNpbMqvyykbJoZepD4t5ZeQHoX2mYXY04GLaTnhoz985bQ7eC
+\unrestrict gQGzQ8xPWOdL6CTcRM4d3O3S4xCtCOPmdA1YFFfQ82udHEKEUDQ4FKDrT19YyKL
 

@@ -302,27 +302,30 @@ export default function Giacenze({ onNavigate }) {
 
   // EXPORT CSV
   const exportCSV = () => {
-    const headers = ['Data Carico', 'Brand', 'Modello', 'Matricola', 'Stato', 'Operatore'];
-    
+    const headers = ['Data Carico', 'Brand', 'Modello', 'Matricola', 'Stato', 'Operatore', 'Magazzino', 'Postazione'];
+
     const rows = filteredInventory.map(item => {
       const date = new Date(item.dateAdded || item.timestamp);
+      const loc = parseLocation(item.location);
       return [
         date.toLocaleDateString('it-IT'),
         item.brand || '',
         item.model || '',
         item.serialNumber || '',
         item.status === 'available' ? 'Disponibile' : 'Venduta',
-        item.user || ''
+        item.user || '',
+        loc.magazzino,
+        loc.postazione
       ];
     });
-    
+
     rows.push([]);
-    rows.push(['TOTALE:', filteredInventory.length + ' articoli', '', '', '', '']);
-    
+    rows.push(['TOTALE:', filteredInventory.length + ' articoli', '', '', '', '', '', '']);
+
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${cell}"`).join(';'))
       .join('\n');
-    
+
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     downloadFile(blob, `giacenze_ompra_${formatDateForFilename()}.csv`);
     setShowExportMenu(false);
@@ -355,6 +358,8 @@ export default function Giacenze({ onNavigate }) {
             <th>Matricola</th>
             <th>Stato</th>
             <th>Operatore</th>
+            <th>Magazzino</th>
+            <th>Postazione</th>
           </tr>
         </thead>
         <tbody>
@@ -363,6 +368,7 @@ export default function Giacenze({ onNavigate }) {
     filteredInventory.forEach(item => {
       const date = new Date(item.dateAdded || item.timestamp);
       const statusClass = item.status === 'available' ? 'disponibile' : 'venduta';
+      const loc = parseLocation(item.location);
       html += `
         <tr>
           <td>${date.toLocaleDateString('it-IT')}</td>
@@ -371,14 +377,16 @@ export default function Giacenze({ onNavigate }) {
           <td>${item.serialNumber || ''}</td>
           <td class="${statusClass}">${item.status === 'available' ? 'Disponibile' : 'Venduta'}</td>
           <td>${item.user || ''}</td>
+          <td>${loc.magazzino}</td>
+          <td>${loc.postazione}</td>
         </tr>
       `;
     });
-    
+
     html += `
         <tr class="totale">
           <td><strong>TOTALE</strong></td>
-          <td colspan="5"><strong>${filteredInventory.length} articoli</strong></td>
+          <td colspan="7"><strong>${filteredInventory.length} articoli</strong></td>
         </tr>
         </tbody>
       </table>

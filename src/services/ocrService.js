@@ -184,7 +184,7 @@ Estrai le seguenti informazioni se presenti:
 3. MATRICOLA/SERIAL NUMBER - codice identificativo univoco
 
 REGOLE MATRICOLA PER MARCA:
-- Honda: ESATTAMENTE 4 lettere maiuscole + 6 o 7 cifre, nessuno spazio (es: GCARK1234567, GJNAK567890). NON aggiungere caratteri extra.
+- Honda: SEMPRE 4 lettere maiuscole + 7 cifre (es: GCAK1234567). La matricola COMPLETA si trova SOTTO IL CODICE A BARRE nella parte ALTA dell'etichetta. I 7 grandi numeri nella parte BASSA a destra dell'etichetta NON sono la matricola completa, ignorali. Se riesci a leggere solo numeri senza le 4 lettere iniziali, rispondi ILLEGGIBILE.
 - Stihl: MASSIMO 9 caratteri alfanumerici, di solito solo numeri (es: 450163072). Se vedi più di 9 caratteri, prendi solo i primi 9.
 - Echo/Yamabiko: mix lettere e numeri, max 12 caratteri
 - Grillo: può avere prefissi con lettere, max 12 caratteri
@@ -227,7 +227,8 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
     let brand = null;
     let modello = null;
     let matricola = null;
-    
+    let matricolaIncompleta = false;
+
     for (const line of lines) {
       const upperLine = line.toUpperCase();
       if (upperLine.startsWith('BRAND:')) {
@@ -243,10 +244,13 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
 
           // Validazione per marca
           if (brand && brand.toUpperCase() === 'HONDA') {
-            // Honda: deve essere 4 lettere + 6-7 cifre
-            const hondaMatch = m.match(/^([A-Z]{4}\d{6,7})/);
-            if (hondaMatch) {
-              m = hondaMatch[1]; // prende solo la parte valida
+            // Honda: esattamente 4 lettere + 7 cifre sotto il codice a barre
+            const hondaFull = m.match(/([A-Z]{4}\d{7})/);
+            if (hondaFull) {
+              m = hondaFull[1];
+            } else {
+              // Solo numeri o formato incompleto: segnala all'utente
+              matricolaIncompleta = true;
             }
           } else if (brand && brand.toUpperCase() === 'STIHL') {
             // Stihl: max 9 caratteri alfanumerici
@@ -279,7 +283,8 @@ Se non riesci a leggere un campo, usa SCONOSCIUTO o ILLEGGIBILE.
       brand: brand,
       modello: modello,
       matricola: matricola,
-      confidence: 90,
+      matricolaIncompleta: matricolaIncompleta,
+      confidence: matricolaIncompleta ? 30 : 90,
       responseTime: responseTime,
       rawText: text
     };

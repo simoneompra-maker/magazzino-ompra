@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Package, CheckCircle, XCircle, Trash2, AlertTriangle, Download, FileSpreadsheet, Filter, X, ChevronUp, ChevronDown, CheckSquare, Square } from 'lucide-react';
+import { ArrowLeft, Search, Package, CheckCircle, XCircle, Trash2, AlertTriangle, Download, FileSpreadsheet, Filter, X, ChevronUp, ChevronDown, CheckSquare, Square, Edit2 } from 'lucide-react';
 import useStore from '../store';
 
 export default function Giacenze({ onNavigate }) {
@@ -9,6 +9,7 @@ export default function Giacenze({ onNavigate }) {
   const clearInventory = useStore((state) => state.clearInventory);
   const deleteMultipleItems = useStore((state) => state.deleteMultipleItems);
   const markAsSold = useStore((state) => state.markAsSold);
+  const updateInventoryItem = useStore((state) => state.updateInventoryItem);
   
   // Filtri
   const [filters, setFilters] = useState({
@@ -37,6 +38,11 @@ export default function Giacenze({ onNavigate }) {
   // Stato per segna come venduta
   const [markSoldItem, setMarkSoldItem] = useState(null);
   const [markingSold, setMarkingSold] = useState(false);
+
+  // Stato per modifica articolo
+  const [editItem, setEditItem] = useState(null);
+  const [editForm, setEditForm] = useState({ brand: '', model: '', serialNumber: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -202,6 +208,32 @@ export default function Giacenze({ onNavigate }) {
       setSelectedItems([]);
       setSelectMode(false);
       setShowDeleteMultipleModal(false);
+    }
+  };
+
+  // Salva modifiche articolo
+  const handleEditSave = async () => {
+    if (!editItem) return;
+    if (!editForm.brand.trim() || !editForm.model.trim() || !editForm.serialNumber.trim()) {
+      alert('Tutti i campi sono obbligatori');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const result = await updateInventoryItem(editItem.id, {
+        brand: editForm.brand.trim(),
+        model: editForm.model.trim(),
+        serialNumber: editForm.serialNumber.trim().toUpperCase()
+      });
+      if (result.success) {
+        setEditItem(null);
+      } else {
+        alert('Errore: ' + (result.error || 'impossibile salvare'));
+      }
+    } catch (e) {
+      alert('Errore: ' + e.message);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -639,6 +671,16 @@ export default function Giacenze({ onNavigate }) {
                           </button>
                         )}
                         <button
+                          onClick={() => {
+                            setEditItem(item);
+                            setEditForm({ brand: item.brand || '', model: item.model || '', serialNumber: item.serialNumber || '' });
+                          }}
+                          className="text-blue-400 hover:text-blue-600 p-1"
+                          title="Modifica"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteClick(item)}
                           className="text-red-400 hover:text-red-600 p-1"
                         >
@@ -820,6 +862,73 @@ export default function Giacenze({ onNavigate }) {
                 className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold"
               >
                 Elimina {selectedItems.length}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifica Articolo */}
+      {editItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">✏️ Modifica Articolo</h3>
+              <button onClick={() => setEditItem(null)}>
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500">Brand *</label>
+                <input
+                  type="text"
+                  list="edit-brand-list"
+                  className="w-full p-3 border rounded-lg mt-1"
+                  value={editForm.brand}
+                  onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                />
+                <datalist id="edit-brand-list">
+                  {brands.filter(b => b !== 'Altro').map(b => (
+                    <option key={b} value={b} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Modello *</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border rounded-lg mt-1"
+                  value={editForm.model}
+                  onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Matricola *</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border rounded-lg mt-1 font-mono"
+                  value={editForm.serialNumber}
+                  onChange={(e) => setEditForm({ ...editForm, serialNumber: e.target.value.toUpperCase() })}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setEditItem(null)}
+                className="flex-1 py-3 bg-gray-200 rounded-lg font-semibold"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleEditSave}
+                disabled={savingEdit || !editForm.brand.trim() || !editForm.model.trim() || !editForm.serialNumber.trim()}
+                className="flex-1 py-3 text-white rounded-lg font-semibold disabled:opacity-50"
+                style={{ backgroundColor: '#006B3F' }}
+              >
+                {savingEdit ? '⏳...' : '✓ Salva'}
               </button>
             </div>
           </div>

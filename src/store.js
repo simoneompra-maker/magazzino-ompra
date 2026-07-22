@@ -918,6 +918,32 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // MODIFICA CAMPI DI UN ARTICOLO IN MAGAZZINO
+  updateInventoryItem: async (itemId, updates) => {
+    set({ syncStatus: 'syncing' });
+    try {
+      const dbUpdates = {};
+      if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
+      if (updates.model !== undefined) dbUpdates.model = updates.model;
+      if (updates.serialNumber !== undefined) dbUpdates.serialNumber = updates.serialNumber;
+
+      const { error } = await supabase
+        .from('inventory')
+        .update(dbUpdates)
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      await get().fetchInventory();
+      set({ syncStatus: 'success' });
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Update inventory item error:', error);
+      set({ syncStatus: 'error' });
+      return { success: false, error: error.message };
+    }
+  },
+
   // ELIMINA SINGOLO PRODOTTO
   deleteItem: async (serialNumber) => {
     set({ syncStatus: 'syncing' });

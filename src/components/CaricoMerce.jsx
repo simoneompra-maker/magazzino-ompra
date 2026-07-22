@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Camera, Plus, Trash2, Package, CheckCircle, X, Edit2, Image, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Camera, Plus, Trash2, Package, CheckCircle, X, Edit2, Image, AlertCircle, AlertTriangle } from 'lucide-react';
 import useStore from '../store';
 import { scanMatricola, checkRateLimitStatus } from '../services/ocrService';
 
@@ -45,6 +45,7 @@ export default function CaricoMerce({ onNavigate }) {
   // Modal inserimento
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('manual'); // 'manual' | 'ocr' | 'preview'
+  const [editingProductId, setEditingProductId] = useState(null);
   
   // Campi form
   const [formBrand, setFormBrand] = useState('');
@@ -94,11 +95,12 @@ export default function CaricoMerce({ onNavigate }) {
       setRateLimitInfo(info);
       
       if (result.success || result.matricola) {
-        // Mostra anteprima con dati pre-compilati
         setFormBrand(result.brand || '');
         setFormModel(result.modello || '');
         setFormSerial(result.matricola || '');
-        // Il tipo resta vuoto, l'utente lo seleziona
+        if (result.matricolaIncompleta) {
+          setOcrError('⚠️ Honda: trovati solo i numeri finali. Cerca la matricola completa (4 lettere + 7 cifre) sotto il codice a barre in alto sull\'etichetta.');
+        }
         setModalMode('preview');
       } else {
         setOcrError(result.error || 'Non riesco a leggere. Inserisci manualmente.');
@@ -143,9 +145,9 @@ export default function CaricoMerce({ onNavigate }) {
       return;
     }
 
-    // Controlla duplicati
+    // Controlla duplicati (escludi l'articolo in modifica)
     const serialNorm = formSerial.trim().toUpperCase();
-    if (prodotti.find(p => p.serialNumber === serialNorm)) {
+    if (prodotti.find(p => p.serialNumber === serialNorm && p.id !== editingProductId)) {
       alert('Matricola già presente nella lista!');
       return;
     }
@@ -164,20 +166,26 @@ export default function CaricoMerce({ onNavigate }) {
       setAllBrands(prev => [...new Set([...prev, brandNorm])].sort());
     }
 
-    setProdotti([...prodotti, {
-      id: Date.now(),
+    const updatedProduct = {
+      id: editingProductId || Date.now(),
       brand: brandNorm,
       model: `${getTipoFinale()} ${formModel.trim()}`,
       serialNumber: serialNorm,
       tipo: getTipoFinale()
-    }]);
+    };
 
-    // Chiudi modal: torna alla schermata principale con OCR e Manuale pronti
+    if (editingProductId) {
+      setProdotti(prodotti.map(p => p.id === editingProductId ? updatedProduct : p));
+    } else {
+      setProdotti([...prodotti, updatedProduct]);
+    }
+
     setShowModal(false);
-    setFormModel("");
-    setFormSerial("");
-    setFormTipo("");
-    setFormTipoAltro("");
+    setEditingProductId(null);
+    setFormModel('');
+    setFormSerial('');
+    setFormTipo('');
+    setFormTipoAltro('');
     setScanPreview(null);
     setOcrError(null);
     // Il brand NON viene resettato: rimane per inserimenti multipli dello stesso marchio
@@ -225,6 +233,7 @@ export default function CaricoMerce({ onNavigate }) {
   const handleCloseModal = () => {
     setShowModal(false);
     setModalMode('manual');
+    setEditingProductId(null);
     setFormBrand('');
     setFormTipo('');
     setFormTipoAltro('');
@@ -234,15 +243,37 @@ export default function CaricoMerce({ onNavigate }) {
     setOcrError(null);
   };
 
-  // Apri modal
+  // Apri modal (nuovo inserimento)
   const openModal = (mode) => {
     setShowModal(true);
     setModalMode(mode);
+    setEditingProductId(null);
     setFormBrand('');
     setFormTipo('');
     setFormTipoAltro('');
     setFormModel('');
     setFormSerial('');
+    setScanPreview(null);
+    setOcrError(null);
+  };
+
+  // Apri modal in modalità modifica (articolo già in lista)
+  const openModalForEdit = (prod) => {
+    const tiposStandard = TIPI_PRODOTTO.filter(t => t !== 'Altro');
+    const tipoIsStandard = tiposStandard.includes(prod.tipo);
+    const tipoPrefix = prod.tipo ? prod.tipo + ' ' : '';
+    const modelWithoutTipo = prod.model.startsWith(tipoPrefix)
+      ? prod.model.slice(tipoPrefix.length)
+      : prod.model;
+
+    setShowModal(true);
+    setModalMode('manual');
+    setEditingProductId(prod.id);
+    setFormBrand(prod.brand);
+    setFormTipo(tipoIsStandard ? prod.tipo : (prod.tipo ? 'Altro' : ''));
+    setFormTipoAltro(tipoIsStandard ? '' : (prod.tipo || ''));
+    setFormModel(modelWithoutTipo);
+    setFormSerial(prod.serialNumber);
     setScanPreview(null);
     setOcrError(null);
   };
@@ -389,8 +420,14 @@ export default function CaricoMerce({ onNavigate }) {
                     {prod.serialNumber}
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 mr-3">#{index + 1}</span>
-                <button 
+                <span className="text-xs text-gray-400 mr-1">#{index + 1}</span>
+                <button
+                  onClick={() => openModalForEdit(prod)}
+                  className="p-2 text-blue-500"
+                >
+                  <Edit2 className="w-5 h-5" />
+                </button>
+                <button
                   onClick={() => handleRemove(prod.id)}
                   className="p-2 text-red-500"
                 >
@@ -423,8 +460,9 @@ export default function CaricoMerce({ onNavigate }) {
             {/* Header modal */}
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-bold text-lg">
-                {modalMode === 'preview' ? '📷 Verifica e Conferma' : 
-                 modalMode === 'ocr' ? '📷 Scansione OCR' : 
+                {modalMode === 'preview' ? '📷 Verifica e Conferma' :
+                 modalMode === 'ocr' ? '📷 Scansione OCR' :
+                 editingProductId ? '✏️ Modifica Articolo' :
                  '✏️ Inserimento Manuale'}
               </h3>
               <button onClick={handleCloseModal}>
@@ -491,9 +529,16 @@ export default function CaricoMerce({ onNavigate }) {
                     />
                   )}
                   
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                    ✏️ Verifica i dati riconosciuti e correggi se necessario
-                  </div>
+                  {ocrError ? (
+                    <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-sm text-yellow-800 flex items-start gap-2">
+                      <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <span>{ocrError}</span>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                      ✏️ Verifica i dati riconosciuti e correggi se necessario
+                    </div>
+                  )}
                   
                   {/* Campo Brand */}
                   <div>
@@ -610,7 +655,7 @@ export default function CaricoMerce({ onNavigate }) {
                     className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-50"
                     style={{ backgroundColor: '#006B3F' }}
                   >
-                    ✓ AGGIUNGI ALLA LISTA
+                    {editingProductId ? '✓ SALVA MODIFICHE' : '✓ AGGIUNGI ALLA LISTA'}
                   </button>
                   
                   {modalMode === 'preview' && (

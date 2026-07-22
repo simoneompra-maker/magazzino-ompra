@@ -9,6 +9,7 @@ import useAgroListino, { FASCE_CLIENTE, suggerisciNoleggio } from '../hooks/useA
 import WidgetConsegna from './WidgetConsegna';
 import { supabase } from '../store';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as XLSX from 'xlsx';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
@@ -982,6 +983,98 @@ function TabNoleggio({ form, sopralluogoId, onSalvato }) {
   );
 }
 
+// ── Export Excel 3 fogli ─────────────────────────────────────
+function esportaExcel(form, interventiNutrizione, interventiPrevTerreno, risolviProdotto, operatore) {
+  const superficie = parseFloat(form.superficie) || 0;
+  const wb = XLSX.utils.book_new();
+
+  // ── Foglio 1: Piano ──────────────────────────────────────
+  const pianoRows = [
+    ['Cliente', form.cliente || '—', '', 'Data', form.data_sopralluogo || '—'],
+    ['Tecnico', operatore, '', 'Superficie', superficie ? superficie + ' m²' : '—'],
+    [],
+    ['#', 'Prodotto', 'Categoria', 'Periodo', 'Dose g/m²', 'kg totali', 'Note'],
+  ];
+  let n = 1;
+  const appendInterventi = (lista, cat) => lista.forEach(i => pianoRows.push([
+    n++,
+    i.label || '',
+    cat,
+    i.timing || '',
+    i.dose_effettiva || '',
+    i.dose_effettiva && superficie ? +((i.dose_effettiva * superficie) / 1000).toFixed(2) : '',
+    i.nota || '',
+  ]));
+  appendInterventi(interventiNutrizione, 'Nutrizione');
+  appendInterventi(interventiPrevTerreno, 'Prevenzione terreno');
+  const wsPiano = XLSX.utils.aoa_to_sheet(pianoRows);
+  wsPiano['!cols'] = [{ wch: 4 }, { wch: 28 }, { wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsPiano, 'Piano');
+
+  // ── Foglio 2: Quantità ───────────────────────────────────
+  const quantRows = [
+    ['Cliente', form.cliente || '—', '', '', 'Superficie', superficie ? superficie + ' m²' : '—'],
+    [],
+    ['Prodotto', 'kg/anno', 'Formato', 'SKU', 'N° conf', '€ Privato', '€ Giardiniere', '€ Fidelizzato', '€ Speciale'],
+  ];
+  let totA = 0, totB = 0, totC = 0, totD = 0;
+  if (superficie > 0) {
+    const prodMap = {};
+    [...interventiNutrizione, ...interventiPrevTerreno].forEach(i => {
+      if (!i.dose_effettiva || !i.label) return;
+      if (!prodMap[i.label]) prodMap[i.label] = { label: i.label, dose_totale: 0 };
+      prodMap[i.label].dose_totale += i.dose_effettiva;
+    });
+    Object.values(prodMap).filter(p => p.dose_totale > 0).forEach(p => {
+      const kgTot = +(p.dose_totale * superficie / 1000).toFixed(2);
+      const pA = risolviProdotto(p.label, kgTot, 'privato');
+      const pB = risolviProdotto(p.label, kgTot, 'giardiniere');
+      const pC = risolviProdotto(p.label, kgTot, 'fidelizzato');
+      const pD = risolviProdotto(p.label, kgTot, 'speciale');
+      totA += pA?.prezzoTot || 0;
+      totB += pB?.prezzoTot || 0;
+      totC += pC?.prezzoTot || 0;
+      totD += pD?.prezzoTot || 0;
+      quantRows.push([
+        p.label, kgTot,
+        pA?.formato || '—', pA?.sku || '—', pA?.nConfezioni || '—',
+        pA?.prezzoTot ?? '—', pB?.prezzoTot ?? '—',
+        pC?.prezzoTot ?? '—', pD?.prezzoTot ?? '—',
+      ]);
+    });
+    quantRows.push([]);
+    quantRows.push(['TOTALE', '', '', '', '',
+      +totA.toFixed(2), +totB.toFixed(2), +totC.toFixed(2), +totD.toFixed(2)]);
+    quantRows.push([]);
+    quantRows.push(['Prezzi netti IVA esclusa · arrotonda per eccesso negli ordini']);
+  } else {
+    quantRows.push(['Inserire la superficie per calcolare le quantità.']);
+  }
+  const wsQuant = XLSX.utils.aoa_to_sheet(quantRows);
+  wsQuant['!cols'] = [{ wch: 28 }, { wch: 9 }, { wch: 16 }, { wch: 14 }, { wch: 7 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, wsQuant, 'Quantità');
+
+  // ── Foglio 3: Noleggio ───────────────────────────────────
+  const noleggi = suggerisciNoleggio(form.compattamento, form.drenaggio, form.stato_vegetativo);
+  const nolRows = [
+    ['Cliente', form.cliente || '—'],
+    [],
+    ['Macchina', 'Motivo consiglio'],
+  ];
+  if (noleggi.length > 0) {
+    noleggi.forEach(m => nolRows.push([m.nome, m.motivo]));
+  } else {
+    nolRows.push(['Nessuna macchina suggerita per le condizioni rilevate.', '']);
+  }
+  const wsNol = XLSX.utils.aoa_to_sheet(nolRows);
+  wsNol['!cols'] = [{ wch: 45 }, { wch: 55 }];
+  XLSX.utils.book_append_sheet(wb, wsNol, 'Noleggio');
+
+  // Download
+  const slug = (form.cliente || 'cliente').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  XLSX.writeFile(wb, `sopralluogo_${slug}_${form.data_sopralluogo || new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
 // ════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPALE
 // ════════════════════════════════════════════════════════════
@@ -989,6 +1082,7 @@ export default function Sopralluogo({ onNavigate }) {
   const operatore = (() => {
     try { return localStorage.getItem(OPERATORE_KEY) || 'Tecnico'; } catch { return 'Tecnico'; }
   })();
+  const { risolviProdotto } = useAgroListino();
 
   const [vista, setVista] = useState('home');   // home | wizard | risultato | archivio
   const [step, setStep]   = useState(1);         // 1-4
@@ -1468,6 +1562,9 @@ export default function Sopralluogo({ onNavigate }) {
           <div className="flex gap-2 max-w-lg mx-auto">
             <Btn color="gray" onClick={() => stampaPDF(form, relazione, pianiScelti, interventiNutrizione, operatore)} fullWidth>
               🖨️ PDF
+            </Btn>
+            <Btn color="gray" onClick={() => esportaExcel(form, interventiNutrizione, interventiPrevTerreno, risolviProdotto, operatore)} fullWidth>
+              📊 Excel
             </Btn>
             {relazione && archivioRecord && (
               <Btn onClick={handleAggiornaRelazione} fullWidth>💾 Aggiorna</Btn>

@@ -2,6 +2,29 @@ import { useState, useMemo } from 'react';
 import { ArrowLeft, Search, Package, CheckCircle, XCircle, Trash2, AlertTriangle, Download, FileSpreadsheet, Filter, X, ChevronUp, ChevronDown, CheckSquare, Square, Edit2 } from 'lucide-react';
 import useStore from '../store';
 
+const MAGAZZINI_DEFAULT = ['Sede', 'Coz'];
+const CUSTOM_LOCATIONS_KEY = 'ompra_custom_locations';
+
+function getCustomLocations() {
+  try {
+    const stored = localStorage.getItem(CUSTOM_LOCATIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+}
+
+function parseLocation(loc) {
+  if (!loc || loc === 'main') return { magazzino: '', postazione: '' };
+  const parts = loc.split(' | ');
+  return { magazzino: parts[0] || '', postazione: parts[1] || '' };
+}
+
+function formatLocation(magazzino, postazione) {
+  const mag = magazzino.trim();
+  const pos = postazione.trim();
+  if (!mag) return '';
+  return pos ? `${mag} | ${pos}` : mag;
+}
+
 export default function Giacenze({ onNavigate }) {
   const inventory = useStore((state) => state.inventory);
   const brands = useStore((state) => state.brands);
@@ -19,7 +42,8 @@ export default function Giacenze({ onNavigate }) {
     modello: '',
     matricola: '',
     stato: 'all',
-    operatore: ''
+    operatore: '',
+    magazzino: ''
   });
   
   const [showFilters, setShowFilters] = useState(false);
@@ -41,8 +65,12 @@ export default function Giacenze({ onNavigate }) {
 
   // Stato per modifica articolo
   const [editItem, setEditItem] = useState(null);
-  const [editForm, setEditForm] = useState({ brand: '', model: '', serialNumber: '' });
+  const [editForm, setEditForm] = useState({ brand: '', model: '', serialNumber: '', magazzino: 'Sede', magazzinoCustom: '', postazione: '' });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [allMagazzini, setAllMagazzini] = useState(() => {
+    const custom = getCustomLocations();
+    return [...new Set([...MAGAZZINI_DEFAULT, ...custom])].sort();
+  });
 
   // Operatori unici
   const operators = useMemo(() => {
@@ -81,6 +109,9 @@ export default function Giacenze({ onNavigate }) {
     }
     if (filters.operatore) {
       result = result.filter(i => i.user === filters.operatore);
+    }
+    if (filters.magazzino) {
+      result = result.filter(i => parseLocation(i.location).magazzino === filters.magazzino);
     }
     
     // Ordina
@@ -125,6 +156,7 @@ export default function Giacenze({ onNavigate }) {
     if (filters.matricola) count++;
     if (filters.stato !== 'all') count++;
     if (filters.operatore) count++;
+    if (filters.magazzino) count++;
     return count;
   }, [filters]);
 
@@ -137,7 +169,8 @@ export default function Giacenze({ onNavigate }) {
       modello: '',
       matricola: '',
       stato: 'all',
-      operatore: ''
+      operatore: '',
+      magazzino: ''
     });
   };
 
@@ -218,14 +251,26 @@ export default function Giacenze({ onNavigate }) {
       alert('Tutti i campi sono obbligatori');
       return;
     }
+    const magFinale = editForm.magazzino === 'altro' ? editForm.magazzinoCustom.trim() : editForm.magazzino.trim();
     setSavingEdit(true);
     try {
       const result = await updateInventoryItem(editItem.id, {
         brand: editForm.brand.trim(),
         model: editForm.model.trim(),
-        serialNumber: editForm.serialNumber.trim().toUpperCase()
+        serialNumber: editForm.serialNumber.trim().toUpperCase(),
+        location: formatLocation(magFinale, editForm.postazione)
       });
       if (result.success) {
+        // Aggiorna lista magazzini se nuovo
+        if (magFinale && !allMagazzini.includes(magFinale)) {
+          const custom = getCustomLocations();
+          if (!MAGAZZINI_DEFAULT.includes(magFinale) && !custom.includes(magFinale)) {
+            custom.push(magFinale);
+            custom.sort();
+            localStorage.setItem(CUSTOM_LOCATIONS_KEY, JSON.stringify(custom));
+          }
+          setAllMagazzini(prev => [...new Set([...prev, magFinale])].sort());
+        }
         setEditItem(null);
       } else {
         alert('Errore: ' + (result.error || 'impossibile salvare'));
@@ -547,6 +592,21 @@ export default function Giacenze({ onNavigate }) {
             </select>
           </div>
           
+          {/* Magazzino */}
+          <div>
+            <label className="text-xs text-gray-500">Magazzino</label>
+            <select
+              className="input-field text-sm py-2"
+              value={filters.magazzino}
+              onChange={(e) => setFilters({...filters, magazzino: e.target.value})}
+            >
+              <option value="">Tutti</option>
+              {allMagazzini.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Operatore */}
           {operators.length > 0 && (
             <div>
@@ -672,8 +732,17 @@ export default function Giacenze({ onNavigate }) {
                         )}
                         <button
                           onClick={() => {
+                            const loc = parseLocation(item.location);
+                            const magIsKnown = allMagazzini.includes(loc.magazzino);
                             setEditItem(item);
-                            setEditForm({ brand: item.brand || '', model: item.model || '', serialNumber: item.serialNumber || '' });
+                            setEditForm({
+                              brand: item.brand || '',
+                              model: item.model || '',
+                              serialNumber: item.serialNumber || '',
+                              magazzino: magIsKnown ? loc.magazzino : (loc.magazzino ? 'altro' : 'Sede'),
+                              magazzinoCustom: magIsKnown ? '' : loc.magazzino,
+                              postazione: loc.postazione
+                            });
                           }}
                           className="text-blue-400 hover:text-blue-600 p-1"
                           title="Modifica"
@@ -693,8 +762,15 @@ export default function Giacenze({ onNavigate }) {
                 
                 {/* Riga extra info */}
                 <div className="flex justify-between mt-1 text-xs text-gray-400">
-                  <span>Op: {item.user || 'N/D'}</span>
-                  <span 
+                  <span className="flex items-center gap-2">
+                    <span>Op: {item.user || 'N/D'}</span>
+                    {item.location && item.location !== 'main' && (
+                      <span className="font-medium" style={{ color: '#006B3F' }}>
+                        📍 {item.location}
+                      </span>
+                    )}
+                  </span>
+                  <span
                     className="font-medium"
                     style={item.status === 'available' ? { color: '#006B3F' } : {}}
                   >
@@ -911,6 +987,36 @@ export default function Giacenze({ onNavigate }) {
                   className="w-full p-3 border rounded-lg mt-1 font-mono"
                   value={editForm.serialNumber}
                   onChange={(e) => setEditForm({ ...editForm, serialNumber: e.target.value.toUpperCase() })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Magazzino</label>
+                <select
+                  className="w-full p-3 border rounded-lg mt-1"
+                  value={editForm.magazzino}
+                  onChange={(e) => setEditForm({ ...editForm, magazzino: e.target.value, magazzinoCustom: '' })}
+                >
+                  {allMagazzini.map(m => <option key={m} value={m}>{m}</option>)}
+                  <option value="altro">+ Nuovo magazzino...</option>
+                </select>
+                {editForm.magazzino === 'altro' && (
+                  <input
+                    type="text"
+                    placeholder="Nome magazzino..."
+                    className="w-full p-3 border rounded-lg mt-2"
+                    value={editForm.magazzinoCustom}
+                    onChange={(e) => setEditForm({ ...editForm, magazzinoCustom: e.target.value })}
+                  />
+                )}
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Postazione (opzionale)</label>
+                <input
+                  type="text"
+                  placeholder="Es: Scaffale A3, Zona esterna..."
+                  className="w-full p-3 border rounded-lg mt-1"
+                  value={editForm.postazione}
+                  onChange={(e) => setEditForm({ ...editForm, postazione: e.target.value })}
                 />
               </div>
             </div>

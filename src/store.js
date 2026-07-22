@@ -260,7 +260,7 @@ const useStore = create((set, get) => ({
         totale: null,
         status: 'available',
         user: get().user,
-        location: get().location
+        location: product.location || get().location
       }));
       
       const { error } = await supabase
@@ -926,6 +926,7 @@ const useStore = create((set, get) => ({
       if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
       if (updates.model !== undefined) dbUpdates.model = updates.model;
       if (updates.serialNumber !== undefined) dbUpdates.serialNumber = updates.serialNumber;
+      if (updates.location !== undefined) dbUpdates.location = updates.location;
 
       const { error } = await supabase
         .from('inventory')

@@ -16,6 +16,40 @@ const TIPI_PRODOTTO = [
 // Gestione brand personalizzati
 const CUSTOM_BRANDS_KEY = 'ompra_custom_brands';
 
+// Magazzini
+const MAGAZZINI_DEFAULT = ['Sede', 'Coz'];
+const CUSTOM_LOCATIONS_KEY = 'ompra_custom_locations';
+
+function getCustomLocations() {
+  try {
+    const stored = localStorage.getItem(CUSTOM_LOCATIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+}
+
+function saveCustomLocation(mag) {
+  const custom = getCustomLocations();
+  const norm = mag.trim();
+  if (norm && !MAGAZZINI_DEFAULT.includes(norm) && !custom.includes(norm)) {
+    custom.push(norm);
+    custom.sort();
+    localStorage.setItem(CUSTOM_LOCATIONS_KEY, JSON.stringify(custom));
+  }
+}
+
+function parseLocation(loc) {
+  if (!loc || loc === 'main') return { magazzino: '', postazione: '' };
+  const parts = loc.split(' | ');
+  return { magazzino: parts[0] || '', postazione: parts[1] || '' };
+}
+
+function formatLocation(magazzino, postazione) {
+  const mag = magazzino.trim();
+  const pos = postazione.trim();
+  if (!mag) return '';
+  return pos ? `${mag} | ${pos}` : mag;
+}
+
 function getCustomBrands() {
   try {
     const stored = localStorage.getItem(CUSTOM_BRANDS_KEY);
@@ -53,17 +87,26 @@ export default function CaricoMerce({ onNavigate }) {
   const [formTipoAltro, setFormTipoAltro] = useState('');
   const [formModel, setFormModel] = useState('');
   const [formSerial, setFormSerial] = useState('');
-  
+  const [formMagazzino, setFormMagazzino] = useState('Sede');
+  const [formMagazzinoCustom, setFormMagazzinoCustom] = useState('');
+  const [formPostazione, setFormPostazione] = useState('');
+
   // Lista brand combinata (standard + custom)
   const [allBrands, setAllBrands] = useState([]);
-  
-  // Carica brand all'avvio
+  const [allMagazzini, setAllMagazzini] = useState([...MAGAZZINI_DEFAULT]);
+
+  // Carica brand e magazzini all'avvio
   useEffect(() => {
     const customBrands = getCustomBrands();
     const standardBrands = brands.filter(b => b !== 'Altro');
     const combined = [...new Set([...standardBrands, ...customBrands])].sort();
     setAllBrands(combined);
   }, [brands]);
+
+  useEffect(() => {
+    const custom = getCustomLocations();
+    setAllMagazzini([...new Set([...MAGAZZINI_DEFAULT, ...custom])].sort());
+  }, []);
   
   // OCR
   const [scanning, setScanning] = useState(false);
@@ -122,6 +165,12 @@ export default function CaricoMerce({ onNavigate }) {
     return formTipo || null;
   };
 
+  // Ottieni il magazzino finale (dalla selezione o dal campo custom)
+  const getMagazzinoFinale = () => {
+    if (formMagazzino === 'altro') return formMagazzinoCustom.trim() || null;
+    return formMagazzino.trim() || null;
+  };
+
   // Conferma e aggiungi alla lista
   const handleConfirmAdd = () => {
     if (!formBrand.trim()) {
@@ -166,12 +215,20 @@ export default function CaricoMerce({ onNavigate }) {
       setAllBrands(prev => [...new Set([...prev, brandNorm])].sort());
     }
 
+    // Salva magazzino custom se nuovo
+    const magFinale = getMagazzinoFinale();
+    if (magFinale && !MAGAZZINI_DEFAULT.includes(magFinale)) {
+      saveCustomLocation(magFinale);
+      setAllMagazzini(prev => [...new Set([...prev, magFinale])].sort());
+    }
+
     const updatedProduct = {
       id: editingProductId || Date.now(),
       brand: brandNorm,
       model: `${getTipoFinale()} ${formModel.trim()}`,
       serialNumber: serialNorm,
-      tipo: getTipoFinale()
+      tipo: getTipoFinale(),
+      location: formatLocation(magFinale || '', formPostazione)
     };
 
     if (editingProductId) {
@@ -239,6 +296,9 @@ export default function CaricoMerce({ onNavigate }) {
     setFormTipoAltro('');
     setFormModel('');
     setFormSerial('');
+    setFormMagazzino('Sede');
+    setFormMagazzinoCustom('');
+    setFormPostazione('');
     setScanPreview(null);
     setOcrError(null);
   };
@@ -266,6 +326,9 @@ export default function CaricoMerce({ onNavigate }) {
       ? prod.model.slice(tipoPrefix.length)
       : prod.model;
 
+    const loc = parseLocation(prod.location);
+    const magIsKnown = allMagazzini.includes(loc.magazzino);
+
     setShowModal(true);
     setModalMode('manual');
     setEditingProductId(prod.id);
@@ -274,11 +337,52 @@ export default function CaricoMerce({ onNavigate }) {
     setFormTipoAltro(tipoIsStandard ? '' : (prod.tipo || ''));
     setFormModel(modelWithoutTipo);
     setFormSerial(prod.serialNumber);
+    setFormMagazzino(magIsKnown ? loc.magazzino : (loc.magazzino ? 'altro' : 'Sede'));
+    setFormMagazzinoCustom(magIsKnown ? '' : loc.magazzino);
+    setFormPostazione(loc.postazione);
     setScanPreview(null);
     setOcrError(null);
   };
 
-  // Componente campo Brand (input semplice con suggerimenti)
+  // Campo Magazzino + Postazione
+  const MagazzinoField = () => (
+    <div className="space-y-2">
+      <div>
+        <label className="text-xs text-gray-500">Magazzino</label>
+        <select
+          className="w-full p-3 border rounded-lg mt-1"
+          value={formMagazzino}
+          onChange={(e) => {
+            setFormMagazzino(e.target.value);
+            if (e.target.value !== 'altro') setFormMagazzinoCustom('');
+          }}
+        >
+          {allMagazzini.map(m => <option key={m} value={m}>{m}</option>)}
+          <option value="altro">+ Nuovo magazzino...</option>
+        </select>
+        {formMagazzino === 'altro' && (
+          <input
+            type="text"
+            placeholder="Nome magazzino..."
+            className="w-full p-3 border rounded-lg mt-2"
+            value={formMagazzinoCustom}
+            onChange={(e) => setFormMagazzinoCustom(e.target.value)}
+          />
+        )}
+      </div>
+      <div>
+        <label className="text-xs text-gray-500">Postazione (opzionale)</label>
+        <input
+          type="text"
+          placeholder="Es: Scaffale A3, Zona esterna..."
+          className="w-full p-3 border rounded-lg mt-1"
+          value={formPostazione}
+          onChange={(e) => setFormPostazione(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+
   // Componente campo Tipo (riutilizzabile per preview e manual)
   const TipoField = () => (
     <div className="space-y-2">
@@ -419,6 +523,11 @@ export default function CaricoMerce({ onNavigate }) {
                   <div className="text-sm text-gray-500 font-mono">
                     {prod.serialNumber}
                   </div>
+                  {prod.location && (
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      📍 {prod.location}
+                    </div>
+                  )}
                 </div>
                 <span className="text-xs text-gray-400 mr-1">#{index + 1}</span>
                 <button
@@ -560,7 +669,7 @@ export default function CaricoMerce({ onNavigate }) {
                   
                   {/* Campo Tipo */}
                   <TipoField />
-                  
+
                   <div>
                     <label className="text-xs text-gray-500">Modello *</label>
                     <input
@@ -571,7 +680,7 @@ export default function CaricoMerce({ onNavigate }) {
                       onChange={(e) => setFormModel(e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-xs text-gray-500">Matricola *</label>
                     <input
@@ -582,9 +691,12 @@ export default function CaricoMerce({ onNavigate }) {
                       onChange={(e) => setFormSerial(e.target.value.toUpperCase())}
                     />
                   </div>
+
+                  {/* Campo Magazzino + Postazione */}
+                  <MagazzinoField />
                 </div>
               )}
-              
+
               {/* INSERIMENTO MANUALE */}
               {modalMode === 'manual' && !scanning && (
                 <div className="space-y-4">
@@ -594,7 +706,7 @@ export default function CaricoMerce({ onNavigate }) {
                       <span>{ocrError}</span>
                     </div>
                   )}
-                  
+
                   {/* Campo Brand */}
                   <div>
                     <label className="text-xs text-gray-500">Brand *</label>
@@ -612,10 +724,10 @@ export default function CaricoMerce({ onNavigate }) {
                       ))}
                     </datalist>
                   </div>
-                  
+
                   {/* Campo Tipo */}
                   <TipoField />
-                  
+
                   <div>
                     <label className="text-xs text-gray-500">Modello *</label>
                     <input
@@ -626,7 +738,7 @@ export default function CaricoMerce({ onNavigate }) {
                       onChange={(e) => setFormModel(e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-xs text-gray-500">Matricola *</label>
                     <input
@@ -637,9 +749,12 @@ export default function CaricoMerce({ onNavigate }) {
                       onChange={(e) => setFormSerial(e.target.value.toUpperCase())}
                     />
                   </div>
-                  
+
+                  {/* Campo Magazzino + Postazione */}
+                  <MagazzinoField />
+
                   <p className="text-xs text-gray-400">
-                    💡 Dopo aver aggiunto, i campi si svuotano per inserimento rapido (Brand resta)
+                    💡 Dopo aver aggiunto, i campi si svuotano per inserimento rapido (Brand e Magazzino restano)
                   </p>
                 </div>
               )}

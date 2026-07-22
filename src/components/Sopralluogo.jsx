@@ -10,6 +10,7 @@ import WidgetConsegna from './WidgetConsegna';
 import { supabase } from '../store';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as XLSX from 'xlsx';
+import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
 
@@ -128,7 +129,9 @@ Spiega al cliente cosa può aspettarsi adottando questo approccio. Sii concreto:
 6. IN SINTESI
 Tre o quattro punti chiave per il cliente: cosa fare subito, cosa aspettarsi, perché questo approccio è diverso dal semplice "buttare prodotti" sul prato. Tono incoraggiante ma onesto.
 
-Lunghezza target: 800-1000 parole. Prima persona come tecnico. Stile discorsivo: preferisci i paragrafi agli elenchi puntati. Non inventare dati non forniti e non moltiplicare elementi menzionati al singolare nelle note.`;
+Lunghezza target: 800-1000 parole. Prima persona come tecnico. Stile discorsivo: preferisci i paragrafi agli elenchi puntati. Non inventare dati non forniti e non moltiplicare elementi menzionati al singolare nelle note.
+
+FORMATO OUTPUT: testo semplice, senza markdown. Non usare asterischi per il grassetto, non usare hashtag per i titoli, non usare trattini per elenchi puntati. Scrivi solo testo piano con le 6 sezioni numerate come indicato sopra.`;
 
   return await geminiText(prompt);
 }
@@ -1075,6 +1078,85 @@ function esportaExcel(form, interventiNutrizione, interventiPrevTerreno, risolvi
   XLSX.writeFile(wb, `sopralluogo_${slug}_${form.data_sopralluogo || new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
+async function esportaDocx(form, relazione, operatore) {
+  const slug = (form.cliente || 'cliente').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  const date = form.data_sopralluogo || new Date().toISOString().slice(0, 10);
+
+  // Pulizia markdown residuo (asterischi, hashtag, etc.)
+  const clean = (t) => t.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '').trim();
+
+  const children = [
+    new Paragraph({
+      text: 'Relazione tecnica di sopralluogo',
+      heading: HeadingLevel.HEADING_1,
+      spacing: { after: 200 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: 'Data: ', bold: true }), new TextRun(form.data_sopralluogo || '—'), new TextRun('   '),
+        new TextRun({ text: 'Tecnico: ', bold: true }), new TextRun(operatore || '—'),
+      ],
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: 'Cliente: ', bold: true }), new TextRun(form.cliente || '—'),
+      ],
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: 'Luogo: ', bold: true }), new TextRun(form.luogo || '—'), new TextRun('   '),
+        new TextRun({ text: 'Superficie: ', bold: true }), new TextRun(form.superficie ? `${form.superficie} m²` : '—'),
+      ],
+      spacing: { after: 300 },
+    }),
+  ];
+
+  const lines = relazione.split('\n');
+  for (const raw of lines) {
+    const line = clean(raw);
+    if (!line) {
+      children.push(new Paragraph({ text: '', spacing: { after: 80 } }));
+      continue;
+    }
+    // Intestazioni di sezione numerate: "1. TITOLO" o "1. Titolo"
+    if (/^\d+\.\s+[A-ZÀÈÉÌÒÙ]/.test(line)) {
+      children.push(new Paragraph({
+        text: line,
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 280, after: 120 },
+      }));
+    } else {
+      children.push(new Paragraph({
+        text: line,
+        spacing: { after: 160 },
+      }));
+    }
+  }
+
+  children.push(
+    new Paragraph({ text: '', spacing: { after: 400 } }),
+    new Paragraph({
+      children: [new TextRun({ text: 'OMPRA Srl', italics: true })],
+      alignment: AlignmentType.RIGHT,
+    }),
+  );
+
+  const doc = new Document({
+    sections: [{ properties: {}, children }],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `relazione_${slug}_${date}.docx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
 // ════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPALE
 // ════════════════════════════════════════════════════════════
@@ -1563,6 +1645,11 @@ export default function Sopralluogo({ onNavigate }) {
             <Btn color="gray" onClick={() => stampaPDF(form, relazione, pianiScelti, interventiNutrizione, operatore)} fullWidth>
               🖨️ PDF
             </Btn>
+            {relazione && (
+              <Btn color="gray" onClick={() => esportaDocx(form, relazione, operatore)} fullWidth>
+                📄 Word
+              </Btn>
+            )}
             <Btn color="gray" onClick={() => esportaExcel(form, interventiNutrizione, interventiPrevTerreno, risolviProdotto, operatore)} fullWidth>
               📊 Excel
             </Btn>

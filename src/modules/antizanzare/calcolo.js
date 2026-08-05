@@ -1,12 +1,23 @@
 /**
  * Motore di calcolo impianti antizanzare — funzione pura.
  *
- * Porting fedele di calc() + buildBOM() da Calcolatore_Impianto_Antizanzare.html.
+ * Deriva da calc() + buildBOM() di Calcolatore_Impianto_Antizanzare.html.
  * Nessuna dipendenza dal DOM: input -> output, testabile.
  *
- * UNICA differenza funzionale rispetto all'originale: i metodi di montaggio
- * arrivano dalle singole linee invece che da 5 caselle globali. Le 5 quantita'
- * vengono sommate dalle linee prima del calcolo, quindi i numeri restano identici.
+ * DIFFERENZE rispetto al calcolatore originale, entrambe volute:
+ *
+ * 1. I metodi di montaggio sono per linea, non globali. Ogni linea puo'
+ *    ripartire i suoi ugelli su piu' metodi. Le quantita' globali che
+ *    servono al calcolo sono la somma di quelle delle linee.
+ *
+ * 2. Ogni categoria di materiale e' una LISTA di voci con quantita', non
+ *    un articolo unico. Si possono usare due tipi di tubo o due di ugello
+ *    sullo stesso impianto. Le quantita' suggerite dalla geometria sono
+ *    calcolate e restituite in `suggeriti`: l'interfaccia le precompila,
+ *    l'utente puo' derogare e il motore segnala lo scostamento.
+ *
+ * Con le quantita' suggerite i risultati coincidono al centesimo con il
+ * calcolatore originale: lo verifica __verifica__/confronto.mjs.
  */
 
 import { C, UNIVERSAL, DEFAULTS } from './catalogo.js';
@@ -18,8 +29,66 @@ const nz = (v, d = 0) => {
   return Number.isFinite(n) ? n : d;
 };
 
-const findByCode = (arr, code) =>
-  (arr || []).find((x) => x.code === code) || null;
+const findByCode = (arr, code) => (arr || []).find((x) => x.code === code) || null;
+
+/**
+ * Arrotondamento stabile al centesimo, half-up.
+ * Math.round(x*100)/100 sbaglia sui valori che cadono esatti sul mezzo
+ * centesimo: 6496.175 in virgola mobile puo' valere 6496.17499999999 e
+ * arrotondare per difetto. toPrecision(12) ricompatta l'errore prima del round.
+ * Il motore lavora sui valori pieni; questa serve a visualizzare e salvare.
+ */
+export const arrotonda = (n, decimali = 2) => {
+  const f = 10 ** decimali;
+  const v = (n || 0) * f;
+  return Math.round(Number(v.toPrecision(12))) / f;
+};
+
+/** Categorie di materiale, nell'ordine in cui compaiono in distinta. */
+export const CATEGORIE = [
+  { id: 'macchine', label: 'Centralina', um: 'pz', fonte: 'machines' },
+  { id: 'tubiLinea', label: 'Tubo linea', um: 'm', fonte: 'tubo' },
+  { id: 'tubiTronco', label: 'Tubo tronco', um: 'm', fonte: 'tubo' },
+  { id: 'ugelli', label: 'Ugelli', um: 'pz', fonte: 'ugello' },
+  { id: 'portaDritti', label: 'Portaugelli dritti', um: 'pz', fonte: 'porta:d' },
+  { id: 'porta90', label: 'Portaugelli angolati', um: 'pz', fonte: 'porta:a' },
+  { id: 'inLinea', label: 'Raccordi in linea', um: 'pz', fonte: 'inline' },
+  { id: 'raccordiT', label: 'Raccordi a T', um: 'pz', fonte: 'tsel' },
+  { id: 'tappi', label: 'Tappi fine linea', um: 'pz', fonte: 'tappo' },
+  { id: 'accessori', label: 'Accessori', um: 'pz', fonte: 'accessori' },
+];
+
+/** Articoli disponibili per una categoria, dato il brand. */
+export function articoliCategoria(brandId, categoriaId) {
+  const brand = C.brands[brandId];
+  if (!brand) return [];
+  const s = C.sys[brand.sys];
+  const cat = CATEGORIE.find((c) => c.id === categoriaId);
+  if (!cat) return [];
+
+  switch (cat.fonte) {
+    case 'machines':
+      return C.machines[brandId] || [];
+    case 'tubo':
+      return s.tubo || [];
+    case 'ugello':
+      return s.ugello || [];
+    case 'porta:d':
+      return (s.porta || []).filter((p) => p.kind === 'd');
+    case 'porta:a':
+      return (s.porta || []).filter((p) => p.kind === 'a');
+    case 'inline':
+      return s.inline ? [s.inline] : [];
+    case 'tsel':
+      return s.tsel || [];
+    case 'tappo':
+      return s.tappo ? [s.tappo] : [];
+    case 'accessori':
+      return [...(s.accessori || []), ...UNIVERSAL];
+    default:
+      return [];
+  }
+}
 
 /* ─────────────────── prezzi ─────────────────── */
 
@@ -28,256 +97,260 @@ export const unitPrice = (it) => (it ? it.priceRaw / (it.div || 1) : 0);
 
 /**
  * Costo unitario.
- * Se esiste costRaw (Geyser) è il costo reale; altrimenti listino − sconto d'acquisto.
+ * Se esiste costRaw (Geyser) e' il costo reale; altrimenti listino − sconto.
  * @param {number} sconto percentuale 0-100
  */
 export const unitCost = (it, sconto) => {
   if (!it) return 0;
-  if (it.costRaw !== null && it.costRaw !== undefined) {
-    return it.costRaw / (it.div || 1);
-  }
+  if (it.costRaw !== null && it.costRaw !== undefined) return it.costRaw / (it.div || 1);
   const d = Math.max(0, Math.min(100, nz(sconto))) / 100;
   return unitPrice(it) * (1 - d);
 };
 
+/* ─────────────────── geometria ─────────────────── */
+
+const METODI_ID = ['m1d', 'm1a', 'm2q', 'm3d', 'm3a'];
+
+/** Ugelli previsti su una linea: metri / passo, arrotondato per eccesso. */
+export function ugelliLinea(linea) {
+  const m = Math.max(0, nz(linea?.metri));
+  const p = Math.max(0.5, nz(linea?.passo, DEFAULTS.passo));
+  return m > 0 ? Math.ceil(m / p) : 0;
+}
+
+/** Somma dei metodi dichiarati su una linea. */
+export function montatiLinea(linea) {
+  const met = linea?.metodi || {};
+  return METODI_ID.reduce((a, k) => a + Math.max(0, parseInt(met[k], 10) || 0), 0);
+}
+
+/**
+ * Quantita' suggerite dalla geometria. L'interfaccia le usa per precompilare
+ * le caselle; restano modificabili.
+ */
+export function suggerimenti(input) {
+  const linee = input?.linee || [];
+  const attive = linee.filter((l) => nz(l.metri) > 0);
+  const metriTot = attive.reduce((a, l) => a + nz(l.metri), 0);
+
+  const q = { m1d: 0, m1a: 0, m2q: 0, m3d: 0, m3a: 0 };
+  linee.forEach((l) => {
+    const met = l.metodi || {};
+    METODI_ID.forEach((k) => {
+      q[k] += Math.max(0, parseInt(met[k], 10) || 0);
+    });
+  });
+
+  const riserM = Math.max(0, nz(input?.riserM, DEFAULTS.riserM));
+  const riserMetri = (q.m3d + q.m3a) * riserM;
+
+  let mTronco = Math.max(0, nz(input?.mTronco, DEFAULTS.mTronco));
+  if (mTronco > metriTot) mTronco = metriTot;
+
+  return {
+    macchine: attive.length > 0 || linee.length > 0 ? 1 : 0,
+    tubiLinea: Math.max(0, metriTot - mTronco) + riserMetri,
+    tubiTronco: mTronco,
+    ugelli: q.m1d + q.m1a + q.m2q + q.m3d + q.m3a,
+    portaDritti: q.m1d + q.m3d,
+    porta90: q.m1a + q.m3a,
+    inLinea: q.m2q,
+    raccordiT: q.m1d + q.m1a + q.m3d + q.m3a,
+    tappi: attive.length,
+    accessori: null, // nessun suggerimento: sono scelte discrezionali
+    _metodi: q,
+    _metriTot: metriTot,
+    _riserMetri: riserMetri,
+    _mTronco: mTronco,
+    _ugelliPrevisti: linee.reduce((a, l) => a + ugelliLinea(l), 0),
+    _nLinee: attive.length,
+  };
+}
+
 /* ─────────────────── calcolo ─────────────────── */
 
 /**
- * @typedef {Object} Linea
- * @property {string} [etichetta]
- * @property {number} metri
- * @property {number} passo
- * @property {string} metodo  m1d | m1a | m2q | m3d | m3a
- */
-
-/**
  * @param {Object} input
- * @param {string} input.brand            geyser | pro | smart | gardheaven
- * @param {string} input.macchinaCode
- * @param {Linea[]} input.linee
- * @param {string} input.tuboCode         tubo linea
- * @param {string} [input.tuboTroncoCode] tubo tronco (default = tubo linea)
- * @param {string} input.ugelloCode
- * @param {string} [input.portaDCode]     portaugello dritto
- * @param {string} [input.porta9Code]     portaugello angolato
- * @param {string} input.tselCode         raccordo a T
- * @param {boolean} [input.usaTappo]
- * @param {number} [input.mTronco]        metri di tubo tronco
- * @param {number} [input.riserM]         metri di prolunga per ugello, metodo 3
- * @param {Array<{code:string,q:number}>} [input.accessori]
- * @param {Array<{desc:string,q:number,costo:number,prezzo:number}>} [input.extra]
- * @param {number} [input.scontoAcq]      % sconto d'acquisto
- * @param {number} [input.margine]        % ricarico sul materiale
- * @param {string} [input.manoMode]       det | perUg | manual
- * @param {number} [input.manoMac]
- * @param {number} [input.manoRate]
+ * @param {string} input.brand
+ * @param {Array<{etichetta?:string, metri:number, passo:number, metodi:Object}>} input.linee
+ * @param {Object<string, Array<{code:string,q:number}>>} input.voci per categoria
+ * @param {Array} [input.extra] voci fuori listino
+ * @param {number} [input.mTronco] metri di tubo tronco
+ * @param {number} [input.riserM]  metri di prolunga per ugello, metodo 3
+ * @param {number} [input.scontoAcq] %
+ * @param {number} [input.margine]   % di ricarico sul materiale
+ * @param {string} [input.manoMode]  det | perUg | manual
  */
 export function calcolaImpianto(input) {
   const brandId = input.brand;
   const brand = C.brands[brandId];
   if (!brand) throw new Error(`Brand sconosciuto: ${brandId}`);
 
-  const s = C.sys[brand.sys];
-  const mac = findByCode(C.machines[brandId], input.macchinaCode);
-  if (!mac) throw new Error(`Centralina sconosciuta: ${input.macchinaCode}`);
-
   const sconto = input.scontoAcq ?? brand.disc;
   const uc = (it) => unitCost(it, sconto);
   const up = (it) => unitPrice(it);
 
-  /* ── linee e ugelli ─────────────────────────── */
-  const linee = (input.linee || []).map((l) => ({
-    etichetta: l.etichetta || '',
-    metri: Math.max(0, nz(l.metri)),
-    passo: Math.max(0.5, nz(l.passo, DEFAULTS.passo)),
-    metodo: l.metodo || DEFAULTS.metodo,
-  }));
-
-  const perLineaN = linee.map((l) => (l.metri > 0 ? Math.ceil(l.metri / l.passo) : 0));
-  const attive = linee.filter((l) => l.metri > 0);
-  const nZone = attive.length;
-  const metriTot = attive.reduce((a, l) => a + l.metri, 0);
-  const N = perLineaN.reduce((a, b) => a + b, 0);
-
-  /* ── ripartizione sui 5 metodi, sommata dalle linee ── */
-  const q = { m1d: 0, m1a: 0, m2q: 0, m3d: 0, m3a: 0 };
-  linee.forEach((l, i) => {
-    if (perLineaN[i] > 0 && q[l.metodo] !== undefined) q[l.metodo] += perLineaN[i];
-  });
-
-  const inline = s.inline;
+  const sugg = suggerimenti(input);
+  const voci = input.voci || {};
   const avvisi = [];
-  if (!inline && q.m2q > 0) {
-    avvisi.push(
-      `${brand.label} non ha il raccordo in linea: le linee con Metodo 2 non producono ugelli montati.`
-    );
-    q.m2q = 0; // stesso comportamento del calcolatore originale
-  }
 
-  const riserM = Math.max(0, nz(input.riserM, DEFAULTS.riserM));
-  const riserMeters = (q.m3d + q.m3a) * riserM;
+  /* ── righe di distinta, categoria per categoria ── */
+  const bom = [];
+  const totali = {}; // per categoria: {q, costo, prezzo}
 
-  const drittoN = q.m1d + q.m3d;
-  const noveN = q.m1a + q.m3a;
-  const inlineN = q.m2q;
-  const Tn = q.m1d + q.m1a + q.m3d + q.m3a; // metodi 1 e 3 usano il T
-  const ugN = q.m1d + q.m1a + q.m2q + q.m3d + q.m3a;
+  CATEGORIE.forEach((cat) => {
+    const disponibili = articoliCategoria(brandId, cat.id);
+    let q = 0;
+    let costo = 0;
+    let prezzo = 0;
 
-  /* ── materiali selezionati ──────────────────── */
-  const tubo = findByCode(s.tubo, input.tuboCode) || s.tubo[0];
-  const tuboTr = findByCode(s.tubo, input.tuboTroncoCode) || tubo;
-  const ug = findByCode(s.ugello, input.ugelloCode) || s.ugello[0];
-  const paD = findByCode(s.porta, input.portaDCode);
-  const pa9 = findByCode(s.porta, input.porta9Code);
-  const t = findByCode(s.tsel, input.tselCode) || s.tsel[0];
-  const usaTappo = input.usaTappo ?? DEFAULTS.usaTappo;
-  const tappo = usaTappo ? s.tappo : null;
+    (voci[cat.id] || []).forEach((v) => {
+      const art = findByCode(disponibili, v.code);
+      const n = Math.max(0, nz(v.q));
+      if (!art || n <= 0) return;
+      const c = uc(art);
+      const p = up(art);
+      q += n;
+      costo += c * n;
+      prezzo += p * n;
+      bom.push({
+        categoria: cat.id,
+        code: art.code,
+        desc: `${cat.label} — ${art.label}`,
+        q: n,
+        um: cat.um,
+        uC: c,
+        uP: p,
+        tC: c * n,
+        tP: p * n,
+      });
+    });
 
-  /* ── tubo: tronco (Ø8) + linea (Ø6 + riser) ─── */
-  let mTr = Math.max(0, nz(input.mTronco, DEFAULTS.mTronco));
-  if (mTr > metriTot) mTr = metriTot;
-  const mPerim = Math.max(0, metriTot - mTr);
-  const mLine = mPerim + riserMeters;
-
-  const tuboC = mLine * uc(tubo) + mTr * uc(tuboTr);
-  const tuboP = mLine * up(tubo) + mTr * up(tuboTr);
-
-  /* ── materiale ──────────────────────────────── */
-  const nTappo = tappo ? nZone : 0;
-  const portaC = drittoN * uc(paD) + noveN * uc(pa9) + inlineN * uc(inline);
-  const portaP = drittoN * up(paD) + noveN * up(pa9) + inlineN * up(inline);
-
-  const matC = tuboC + Tn * uc(t) + ugN * uc(ug) + portaC + nTappo * uc(tappo);
-  const matP = tuboP + Tn * up(t) + ugN * up(ug) + portaP + nTappo * up(tappo);
-
-  /* ── accessori ──────────────────────────────── */
-  const tuttiAcc = [...(s.accessori || []), ...UNIVERSAL];
-  let accC = 0;
-  let accP = 0;
-  const accBOM = [];
-  (input.accessori || []).forEach(({ code, q: qty }) => {
-    const a = findByCode(tuttiAcc, code);
-    const n = Math.max(0, parseInt(qty, 10) || 0);
-    if (!a || n <= 0) return;
-    accC += uc(a) * n;
-    accP += up(a) * n;
-    accBOM.push({ code: a.code, label: a.label, q: n, um: 'pz', uC: uc(a), uP: up(a) });
+    totali[cat.id] = { q, costo, prezzo, suggerito: sugg[cat.id] };
   });
 
-  /* ── voci extra fuori listino ───────────────── */
+  /* ── voci extra fuori listino ── */
   let extraC = 0;
   let extraP = 0;
-  const exBOM = [];
   (input.extra || []).forEach((e) => {
     const n = Math.max(0, parseInt(e.q, 10) || 0);
     const c = Math.max(0, nz(e.costo));
     const p = Math.max(0, nz(e.prezzo));
-    if (n > 0 && (c > 0 || p > 0)) {
-      extraC += c * n;
-      extraP += p * n;
-      exBOM.push({
-        code: e.codice || '—',
-        label: (e.desc || '').trim() || 'Voce extra',
-        q: n,
-        um: 'pz',
-        uC: c,
-        uP: p,
-      });
-    }
+    if (n <= 0 || (c <= 0 && p <= 0)) return;
+    extraC += c * n;
+    extraP += p * n;
+    bom.push({
+      categoria: 'extra',
+      code: e.codice || '—',
+      desc: (e.desc || '').trim() || 'Voce extra',
+      q: n,
+      um: 'pz',
+      uC: c,
+      uP: p,
+      tC: c * n,
+      tP: p * n,
+    });
   });
 
-  /* ── manodopera ─────────────────────────────── */
+  const materialeC = CATEGORIE.reduce((a, c) => a + totali[c.id].costo, 0);
+  const materialeP = CATEGORIE.reduce((a, c) => a + totali[c.id].prezzo, 0);
+
+  /* ── manodopera: sugli ugelli effettivamente montati ── */
+  const N = sugg.ugelli;
   const manoMode = input.manoMode || DEFAULTS.manoMode;
   const manoMac = Math.max(0, nz(input.manoMac, DEFAULTS.manoMac));
   const manoRate = Math.max(0, nz(input.manoRate, DEFAULTS.manoRate));
   let mano = 0;
   if (manoMode === 'det') mano = manoMac + N * manoRate;
   else if (manoMode === 'perUg') mano = manoRate * N;
-  else mano = manoRate; // importo manuale
+  else mano = manoRate;
 
-  /* ── totali ─────────────────────────────────── */
-  const macC = uc(mac);
-  const macP = up(mac);
+  /* ── totali ── */
   const ricarico = Math.max(0, nz(input.margine, DEFAULTS.margine)) / 100;
-
-  const costoTot = macC + matC + accC + extraC;
-  const venditaMat = (macP + matP + accP + extraP) * (1 + ricarico);
+  const costoTot = materialeC + extraC;
+  const venditaMat = (materialeP + extraP) * (1 + ricarico);
   const prezzoTot = venditaMat + mano;
   const margine = venditaMat - costoTot;
   const marginePct = venditaMat > 0 ? (margine / venditaMat) * 100 : 0;
 
-  /* ── controlli capacita' centralina ─────────── */
-  const perLine = mac.perLine || 0;
-  const lines = mac.lines || 1;
+  /* ── controlli ── */
+  const linee = input.linee || [];
+
+  linee.forEach((l, i) => {
+    const prev = ugelliLinea(l);
+    const mont = montatiLinea(l);
+    if (prev !== mont) {
+      const nome = l.etichetta?.trim() || `Linea ${i + 1}`;
+      avvisi.push(`${nome}: ${mont} ugelli ripartiti sui metodi, ${prev} previsti dai metri.`);
+    }
+  });
+
+  if (!C.sys[brand.sys].inline && sugg._metodi.m2q > 0) {
+    avvisi.push(`${brand.label} non ha il raccordo in linea: il Metodo 2 non è utilizzabile.`);
+  }
+
+  CATEGORIE.forEach((cat) => {
+    const t = totali[cat.id];
+    if (t.suggerito == null) return;
+    const scarto = Math.abs(t.q - t.suggerito);
+    if (scarto > 0.005) {
+      avvisi.push(
+        `${cat.label}: inseriti ${t.q} ${cat.um}, il calcolo ne suggerisce ${t.suggerito}.`
+      );
+    }
+  });
+
+  /* ── capacita' della centralina ── */
+  const macSelezionate = (voci.macchine || [])
+    .map((v) => findByCode(C.machines[brandId], v.code))
+    .filter(Boolean);
+  const mac = macSelezionate[0] || null;
+  const perLine = mac?.perLine || 0;
+  const lines = macSelezionate.reduce((a, m) => a + (m.lines || 1), 0) || 0;
   const maxTot = perLine * lines;
-  const overLinea = linee.some((l, i) => l.metri > 0 && perLine && perLineaN[i] > perLine);
-  const overNumLinee = nZone > lines;
-  const overTot = Boolean(perLine) && N > maxTot;
+
+  const overLinea = linee.some((l) => perLine && ugelliLinea(l) > perLine);
+  const overNumLinee = lines > 0 && sugg._nLinee > lines;
+  const overTot = Boolean(maxTot) && sugg._ugelliPrevisti > maxTot;
 
   if (perLine && overLinea) avvisi.push(`Una linea supera ${perLine} ugelli.`);
   if (overNumLinee)
-    avvisi.push(`${nZone} linee attive ma la centralina ne gestisce ${lines}.`);
+    avvisi.push(`${sugg._nLinee} linee attive ma le centraline ne gestiscono ${lines}.`);
   if (overTot && !overLinea && !overNumLinee)
-    avvisi.push(`${N} ugelli oltre il massimo di ${maxTot}.`);
-  if (ugN !== N)
-    avvisi.push(`Ugelli montati ${ugN} su ${N} previsti.`);
+    avvisi.push(`${sugg._ugelliPrevisti} ugelli oltre il massimo di ${maxTot}.`);
 
-  /* ── distinta materiali ─────────────────────── */
-  const bom = [];
-  const add = (code, desc, qty, um, uCost, uPrice) => {
-    if (qty > 0)
-      bom.push({
-        code,
-        desc,
-        q: qty,
-        um,
-        uC: uCost,
-        uP: uPrice,
-        tC: uCost * qty,
-        tP: uPrice * qty,
-      });
-  };
-
-  add(mac.code, `Centralina ${mac.label}`, 1, 'pz', macC, macP);
-  if (mLine > 0) add(tubo.code, `Tubo linea — ${tubo.label}`, mLine, 'm', uc(tubo), up(tubo));
-  if (mTr > 0) add(tuboTr.code, `Tubo tronco — ${tuboTr.label}`, mTr, 'm', uc(tuboTr), up(tuboTr));
-  add(ug.code, `Ugello — ${ug.label}`, ugN, 'pz', uc(ug), up(ug));
-  if (paD) add(paD.code, `Portaugello dritto — ${paD.label}`, drittoN, 'pz', uc(paD), up(paD));
-  if (pa9) add(pa9.code, `Portaugello 90° — ${pa9.label}`, noveN, 'pz', uc(pa9), up(pa9));
-  if (inline)
-    add(inline.code, `Raccordo in linea — ${inline.label}`, inlineN, 'pz', uc(inline), up(inline));
-  add(t.code, `Raccordo a T — ${t.label}`, Tn, 'pz', uc(t), up(t));
-  if (tappo) add(tappo.code, `Tappo fine linea — ${tappo.label}`, nTappo, 'pz', uc(tappo), up(tappo));
-  accBOM.forEach((a) => add(a.code, a.label, a.q, a.um, a.uC, a.uP));
-  exBOM.forEach((a) => add(a.code, a.label, a.q, a.um, a.uC, a.uP));
-
-  /* ── risultato ──────────────────────────────── */
   return {
     brand: brand.label,
     brandId,
-    macchina: { code: mac.code, label: mac.label, perLine, lines, maxTot },
+    macchina: mac
+      ? { code: mac.code, label: mac.label, perLine, lines, maxTot }
+      : { code: null, label: '—', perLine: 0, lines: 0, maxTot: 0 },
 
-    linee: linee.map((l, i) => ({ ...l, ugelli: perLineaN[i] })),
-    nZone,
-    metriTot,
-    N,
-    ugelliMontati: ugN,
+    linee: linee.map((l, i) => ({
+      ...l,
+      ugelliPrevisti: ugelliLinea(l),
+      ugelliMontati: montatiLinea(l),
+      _i: i,
+    })),
+    nLinee: sugg._nLinee,
+    metriTot: sugg._metriTot,
+    N: sugg._ugelliPrevisti,
+    ugelliMontati: sugg.ugelli,
 
-    tubo: { linea: mLine, tronco: mTr, perimetro: mPerim, riser: riserMeters },
-    pezzi: { dritti: drittoN, novanta: noveN, inLinea: inlineN, T: Tn, tappi: nTappo },
-    metodi: { ...q },
-
-    costi: {
-      macchina: macC,
-      materiale: matC,
-      accessori: accC,
-      extra: extraC,
-      totale: costoTot,
+    tubo: {
+      linea: totali.tubiLinea.q,
+      tronco: totali.tubiTronco.q,
+      riser: sugg._riserMetri,
+      perimetro: Math.max(0, sugg._metriTot - sugg._mTronco),
     },
+    metodi: { ...sugg._metodi },
+
+    suggeriti: sugg,
+    totali,
+
+    costi: { materiale: materialeC, extra: extraC, totale: costoTot },
     prezzi: {
-      macchina: macP,
-      materiale: matP,
-      accessori: accP,
+      materiale: materialeP,
       extra: extraP,
       venditaMateriale: venditaMat,
       manodopera: mano,

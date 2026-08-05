@@ -1,102 +1,95 @@
 /**
  * Confronto motore originale vs calcolo.js.
  * Uso:  node src/modules/antizanzare/__verifica__/confronto.mjs
+ *
+ * L'oracolo esegue il calc() vero preso dal Calcolatore_Impianto_Antizanzare.html
+ * dentro un DOM finto. Non e' una riscrittura: e' il codice in uso.
+ *
+ * I casi sono definiti per LINEE, ognuna con la sua ripartizione per metodo.
+ * Da li' ricavo sia le zone e le 5 quantita' globali che servono all'originale,
+ * sia le voci con quantita' suggerite che servono al motore nuovo.
  */
 
 import { eseguiOriginale } from './oracolo.mjs';
-import { calcolaImpianto } from '../calcolo.js';
-import { C, UNIVERSAL } from '../catalogo.js';
+import { calcolaImpianto, suggerimenti } from '../calcolo.js';
+import { C } from '../catalogo.js';
 
 const HTML =
   process.env.AZ_HTML ||
   '/sessions/youthful-peaceful-faraday/mnt/ANTIZANZARE/Calcolatore_Impianto_Antizanzare.html';
 
-const r2 = (n) => Math.round((n || 0) * 100) / 100;
-const eur = (n) => r2(n).toFixed(2).padStart(11);
-
-/** Dato un brand e gli indici usati dall'originale, ricava i codici per il motore nuovo. */
-function codici(brand, idx) {
-  const s = C.sys[C.brands[brand].sys];
-  return {
-    macchinaCode: C.machines[brand][idx.macchina].code,
-    tuboCode: s.tubo[idx.tubo].code,
-    tuboTroncoCode: s.tubo[idx.tuboTronco].code,
-    ugelloCode: s.ugello[idx.ugello].code,
-    portaDCode: s.porta[idx.portaD]?.code,
-    porta9Code: s.porta[idx.porta9]?.code,
-    tselCode: s.tsel[idx.tsel].code,
-  };
-}
+const fmt = (n) => (n || 0).toFixed(2).padStart(11);
 
 /**
- * Costruisce un caso di prova partendo dalle LINEE, come fa l'app.
- * Da quelle derivo poi le zone e le 5 quantita' globali che serve
- * dare in pasto al calcolatore originale.
+ * I due motori sommano gli stessi addendi in ordine diverso, quindi possono
+ * discostarsi di ~1e-12. Confronto i valori GREZZI con tolleranza relativa:
+ * arrotondare prima del confronto farebbe scattare falsi allarmi da 1 centesimo
+ * sui valori che cadono esatti sul mezzo centesimo (es. 6496,175).
  */
+const TOLLERANZA = 1e-6;
+const uguali = (a, b) => Math.abs((a || 0) - (b || 0)) <= TOLLERANZA * Math.max(1, Math.abs(a || 0));
+
 function scenario(nome, brand, linee, idx, opz = {}) {
   return { nome, brand, linee, idx, ...opz };
 }
 
 const CASI = [
-  // ── Di Lenardo: Gardheaven Comfort02, 250 + 230 m ──────────
   scenario(
     'Di Lenardo — Gardheaven Comfort02, 250+230 m',
     'gardheaven',
     [
-      { etichetta: 'Insetticida', metri: 250, passo: 4, metodo: 'm1d' },
-      { etichetta: 'Repellente', metri: 230, passo: 4, metodo: 'm1d' },
+      { etichetta: 'Insetticida', metri: 250, passo: 4, metodi: { m1d: 63 } },
+      { etichetta: 'Repellente', metri: 230, passo: 4, metodi: { m1d: 58 } },
     ],
     { macchina: 1, tubo: 0, tuboTronco: 2, ugello: 0, portaD: 0, porta9: 1, tsel: 0 },
-    { scontoAcq: 50, extra: 0, mTronco: 15, riserM: 2, manoMode: 'det', manoMac: 200, manoRate: 9 }
+    { scontoAcq: 50, margine: 0, mTronco: 15, riserM: 2, manoMode: 'det', manoMac: 200, manoRate: 9 }
   ),
 
-  // ── Geyser Pro Dual, 3 linee, passi diversi ────────────────
   scenario(
     'Geyser Pro Dual — 3 linee 120/90/60 m, passi 4/3/5',
     'geyser',
     [
-      { metri: 120, passo: 4, metodo: 'm1d' },
-      { metri: 90, passo: 3, metodo: 'm1d' },
-      { metri: 60, passo: 5, metodo: 'm1d' },
+      { metri: 120, passo: 4, metodi: { m1d: 30 } },
+      { metri: 90, passo: 3, metodi: { m1d: 30 } },
+      { metri: 60, passo: 5, metodi: { m1d: 12 } },
     ],
     { macchina: 1, tubo: 0, tuboTronco: 3, ugello: 1, portaD: 0, porta9: 1, tsel: 1 },
-    { scontoAcq: 0, extra: 10, mTronco: 25, riserM: 2, manoMode: 'perUg', manoRate: 12 }
+    { scontoAcq: 0, margine: 10, mTronco: 25, riserM: 2, manoMode: 'perUg', manoRate: 12 }
   ),
 
-  // ── Zanzero PRO: metodi misti 1-dritto / 2 in linea / 3 riser ──
+  // Metodi MISTI SULLA STESSA LINEA — la novita' rispetto al calcolatore
   scenario(
-    'Zanzero PRO ZA200 Dual — metodi misti 1/2/3',
+    'Zanzero PRO ZA200 Dual — metodi misti dentro la stessa linea',
     'pro',
     [
-      { etichetta: 'Recinzione', metri: 140, passo: 3.5, metodo: 'm1d' },
-      { etichetta: 'Pergolato', metri: 52.5, passo: 3.5, metodo: 'm2q' },
-      { etichetta: 'Aiuola', metri: 52.5, passo: 3.5, metodo: 'm3d' },
+      // 140 m / 3.5 = 40 ugelli: 25 su T+dritto, 10 su riser, 5 in linea
+      { etichetta: 'Recinzione', metri: 140, passo: 3.5, metodi: { m1d: 25, m3d: 10, m2q: 5 } },
+      // 105 m / 3.5 = 30 ugelli: 20 a 90 gradi, 10 su riser a 90
+      { etichetta: 'Siepe', metri: 105, passo: 3.5, metodi: { m1a: 20, m3a: 10 } },
     ],
     { macchina: 10, tubo: 0, tuboTronco: 0, ugello: 1, portaD: 0, porta9: 2, tsel: 0 },
-    { scontoAcq: 30, extra: 15, mTronco: 0, riserM: 1.5, manoMode: 'det', manoMac: 250, manoRate: 8 }
+    { scontoAcq: 30, margine: 15, mTronco: 0, riserM: 1.5, manoMode: 'det', manoMac: 250, manoRate: 8 }
   ),
 
-  // ── Gardheaven: portaugelli 90° + riser (esercita noveN e riserMeters) ──
   scenario(
     'Gardheaven Comfort01 — 90° e riser su paletti',
     'gardheaven',
     [
-      { etichetta: 'Siepe', metri: 100, passo: 4, metodo: 'm1a' },
-      { etichetta: 'Paletti', metri: 60, passo: 3, metodo: 'm3a' },
+      { etichetta: 'Siepe', metri: 100, passo: 4, metodi: { m1a: 25 } },
+      { etichetta: 'Paletti', metri: 60, passo: 3, metodi: { m3a: 20 } },
     ],
     { macchina: 0, tubo: 1, tuboTronco: 2, ugello: 5, portaD: 0, porta9: 1, tsel: 1 },
-    { scontoAcq: 50, extra: 25, mTronco: 20, riserM: 1.5, manoMode: 'det', manoMac: 200, manoRate: 12 }
+    { scontoAcq: 50, margine: 25, mTronco: 20, riserM: 1.5, manoMode: 'det', manoMac: 200, manoRate: 12 }
   ),
 
-  // ── Zanzero SMART con accessori e voci extra ───────────────
   scenario(
     'Zanzero SMART ZA18 — con accessori e voci extra',
     'smart',
-    [{ metri: 60, passo: 3, metodo: 'm1d' }],
+    [{ metri: 60, passo: 3, metodi: { m1d: 20 } }],
     { macchina: 1, tubo: 0, tuboTronco: 0, ugello: 0, portaD: 0, porta9: 1, tsel: 0 },
     {
       scontoAcq: 30,
-      extra: 20,
+      margine: 20,
       mTronco: 0,
       riserM: 2,
       manoMode: 'manual',
@@ -116,16 +109,15 @@ for (const caso of CASI) {
   const { brand, linee, idx } = caso;
   const s = C.sys[C.brands[brand].sys];
 
-  // Dalle linee derivo cio' che serve al calcolatore originale:
-  // le zone (metri + passo) e le 5 quantita' globali per metodo.
+  /* ---- input per l'originale: zone + 5 quantita' globali ---- */
   const zones = linee.map((l) => ({ m: l.metri, passo: l.passo }));
   const metodi = { m1d: 0, m1a: 0, m2q: 0, m3d: 0, m3a: 0 };
-  linee.forEach((l) => {
-    const n = l.metri > 0 ? Math.ceil(l.metri / l.passo) : 0;
-    metodi[l.metodo] += n;
-  });
+  linee.forEach((l) =>
+    Object.entries(l.metodi).forEach(([k, v]) => {
+      metodi[k] += v;
+    })
+  );
 
-  /* ---- originale ---- */
   const campi = {
     brand,
     macchina: idx.macchina,
@@ -139,15 +131,11 @@ for (const caso of CASI) {
     mTronco: caso.mTronco,
     riserM: caso.riserM,
     scontoAcq: caso.scontoAcq,
-    extra: caso.extra,
+    extra: caso.margine,
     manoMode: caso.manoMode,
     manoMac: caso.manoMac ?? 200,
     manoRate: caso.manoRate,
-    m1d: metodi.m1d,
-    m1a: metodi.m1a,
-    m2q: metodi.m2q,
-    m3d: metodi.m3d,
-    m3a: metodi.m3a,
+    ...metodi,
   };
 
   const old = eseguiOriginale(HTML, {
@@ -157,59 +145,66 @@ for (const caso of CASI) {
     extra: caso.vociExtra,
   });
 
-  /* ---- motore nuovo: riceve direttamente le linee ---- */
-  const tuttiAcc = [...s.accessori, ...UNIVERSAL];
+  /* ---- input per il motore nuovo: voci con quantita' suggerite ---- */
+  const base = { linee, mTronco: caso.mTronco, riserM: caso.riserM };
+  const sugg = suggerimenti(base);
+  const tuttiAcc = [...s.accessori, ...(await import('../catalogo.js')).UNIVERSAL];
+
+  const voci = {
+    macchine: [{ code: C.machines[brand][idx.macchina].code, q: 1 }],
+    tubiLinea: [{ code: s.tubo[idx.tubo].code, q: sugg.tubiLinea }],
+    tubiTronco: [{ code: s.tubo[idx.tuboTronco].code, q: sugg.tubiTronco }],
+    ugelli: [{ code: s.ugello[idx.ugello].code, q: sugg.ugelli }],
+    // idx.portaD e idx.porta9 sono indici assoluti in s.porta, come nell'originale
+    portaDritti: [{ code: s.porta[idx.portaD]?.code, q: sugg.portaDritti }],
+    porta90: [{ code: s.porta[idx.porta9]?.code, q: sugg.porta90 }],
+    inLinea: s.inline ? [{ code: s.inline.code, q: sugg.inLinea }] : [],
+    raccordiT: [{ code: s.tsel[idx.tsel].code, q: sugg.raccordiT }],
+    tappi: s.tappo ? [{ code: s.tappo.code, q: sugg.tappi }] : [],
+    accessori: (caso.accessori || []).map((a) => ({ code: tuttiAcc[a.i].code, q: a.q })),
+  };
+
   const nuovo = calcolaImpianto({
+    ...base,
     brand,
-    ...codici(brand, idx),
-    linee,
-    usaTappo: true,
-    mTronco: caso.mTronco,
-    riserM: caso.riserM,
+    voci,
+    extra: (caso.vociExtra || []).map((e) => ({ desc: e.desc, q: e.q, costo: e.c, prezzo: e.p })),
     scontoAcq: caso.scontoAcq,
-    margine: caso.extra,
+    margine: caso.margine,
     manoMode: caso.manoMode,
     manoMac: caso.manoMac ?? 200,
     manoRate: caso.manoRate,
-    accessori: (caso.accessori || []).map((a) => ({ code: tuttiAcc[a.i].code, q: a.q })),
-    extra: (caso.vociExtra || []).map((e) => ({
-      desc: e.desc,
-      q: e.q,
-      costo: e.c,
-      prezzo: e.p,
-    })),
   });
 
   /* ---- confronto ---- */
   const confronti = [
-    ['Ugelli totali', old.N, nuovo.N],
+    ['Ugelli montati', old.ugN, nuovo.ugelliMontati],
     ['Metri totali', old.metriTot, nuovo.metriTot],
     ['Tubo linea (m)', old.mLine, nuovo.tubo.linea],
     ['Tubo tronco (m)', old.mTr, nuovo.tubo.tronco],
-    ['Raccordi T', old.Tn, nuovo.pezzi.T],
-    ['Portaugelli dritti', old.drittoN, nuovo.pezzi.dritti],
-    ['Portaugelli 90°', old.noveN, nuovo.pezzi.novanta],
-    ['Tappi', old.nTappo, nuovo.pezzi.tappi],
-    ['Costo totale', r2(old.costoTot), r2(nuovo.costi.totale)],
-    ['Vendita materiali', r2(old.venditaMat), r2(nuovo.prezzi.venditaMateriale)],
-    ['Manodopera', r2(old.mano), r2(nuovo.prezzi.manodopera)],
-    ['Prezzo totale', r2(old.prezzoTot), r2(nuovo.prezzi.totale)],
-    ['Margine €', r2(old.margine), r2(nuovo.margine)],
-    ['Margine %', r2(old.margPct), r2(nuovo.marginePct)],
+    ['Raccordi T', old.Tn, nuovo.totali.raccordiT.q],
+    ['Portaugelli dritti', old.drittoN, nuovo.totali.portaDritti.q],
+    ['Portaugelli 90°', old.noveN, nuovo.totali.porta90.q],
+    ['Raccordi in linea', old.inlineN, nuovo.totali.inLinea.q],
+    ['Tappi', old.nTappo, nuovo.totali.tappi.q],
+    ['Costo totale', old.costoTot, nuovo.costi.totale],
+    ['Vendita materiali', old.venditaMat, nuovo.prezzi.venditaMateriale],
+    ['Manodopera', old.mano, nuovo.prezzi.manodopera],
+    ['Prezzo totale', old.prezzoTot, nuovo.prezzi.totale],
+    ['Margine €', old.margine, nuovo.margine],
+    ['Margine %', old.margPct, nuovo.marginePct],
   ];
 
-  const ko = confronti.filter(([, a, b]) => Math.abs((a || 0) - (b || 0)) > 0.005);
+  const ko = confronti.filter(([, a, b]) => !uguali(a, b));
   falliti += ko.length;
 
   console.log(`\n${ko.length === 0 ? '✅' : '❌'} ${caso.nome}`);
-  const righe = ko.length ? ko : confronti;
-  righe.forEach(([et, a, b]) => {
-    const ok = Math.abs((a || 0) - (b || 0)) <= 0.005;
-    console.log(`   ${ok ? ' ' : '✗'} ${et.padEnd(20)} orig ${eur(a)}   nuovo ${eur(b)}`);
+  (ko.length ? ko : confronti).forEach(([et, a, b]) => {
+    console.log(`   ${uguali(a, b) ? ' ' : '✗'} ${et.padEnd(20)} orig ${fmt(a)}   nuovo ${fmt(b)}`);
   });
 }
 
 console.log(
-  `\n${'─'.repeat(60)}\n${falliti === 0 ? '✅ TUTTI I CASI COINCIDONO' : `❌ ${falliti} differenze`}\n`
+  `\n${'─'.repeat(62)}\n${falliti === 0 ? '✅ TUTTI I CASI COINCIDONO' : `❌ ${falliti} differenze`}\n`
 );
 process.exit(falliti === 0 ? 0 : 1);

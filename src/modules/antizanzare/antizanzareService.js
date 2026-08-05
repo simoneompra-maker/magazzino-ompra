@@ -117,17 +117,25 @@ async function salvaLinee(progettoId, linee) {
 
   const righe = (linee || [])
     .filter((l) => Number(l.metri) > 0 || (l.etichetta || '').trim())
-    .map((l, i) => ({
-      progetto_id: progettoId,
-      ordine: i,
-      etichetta: l.etichetta || null,
-      metri: Number(l.metri) || 0,
-      passo: Number(l.passo) || 4,
-      metodo: l.metodo || 'm1d',
-      ugelli: Number(l.metri) > 0 ? Math.ceil(Number(l.metri) / (Number(l.passo) || 4)) : 0,
-      polilinea: l.polilinea || null,
-      note: l.note || null,
-    }));
+    .map((l, i) => {
+      // Solo i metodi con quantita' positiva, come interi
+      const metodi = Object.fromEntries(
+        Object.entries(l.metodi || {})
+          .map(([k, v]) => [k, Math.max(0, parseInt(v, 10) || 0)])
+          .filter(([, v]) => v > 0)
+      );
+      return {
+        progetto_id: progettoId,
+        ordine: i,
+        etichetta: l.etichetta || null,
+        metri: Number(l.metri) || 0,
+        passo: Number(l.passo) || 4,
+        metodi,
+        ugelli: Number(l.metri) > 0 ? Math.ceil(Number(l.metri) / (Number(l.passo) || 4)) : 0,
+        polilinea: l.polilinea || null,
+        note: l.note || null,
+      };
+    });
 
   if (righe.length === 0) return;
   const { error } = await supabase.from('az_linee').insert(righe);

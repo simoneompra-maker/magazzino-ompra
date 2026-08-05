@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ArrowLeft, Save, Camera, Image as ImageIcon, Trash2, AlertTriangle, ClipboardList, Loader2,
 } from 'lucide-react';
-import { calcolaImpianto } from './calcolo';
-import { C, DEFAULTS, FISSAGGI, macchinePerBrand, sysPerBrand, portaPerTipo } from './catalogo';
+import { calcolaImpianto, CATEGORIE, articoliCategoria, arrotonda } from './calcolo';
+import { C, DEFAULTS, FISSAGGI } from './catalogo';
 import LineeEditor from './LineeEditor';
 import ConfigImpianto from './ConfigImpianto';
 import Consuntivo from './Consuntivo';
@@ -22,17 +22,10 @@ const inputCls =
 
 /** Configurazione di partenza per un progetto nuovo. */
 function configIniziale(brand = 'gardheaven') {
-  const s = sysPerBrand(brand);
   return {
     brand,
-    macchinaCode: macchinePerBrand(brand)[0]?.code,
-    tuboCode: s.tubo[0]?.code,
-    tuboTroncoCode: s.tubo[s.tubo.length - 1]?.code,
-    ugelloCode: s.ugello[0]?.code,
-    portaDCode: portaPerTipo(brand, 'd')[0]?.code,
-    porta9Code: portaPerTipo(brand, 'a')[0]?.code,
-    tselCode: s.tsel[0]?.code,
-    usaTappo: DEFAULTS.usaTappo,
+    voci: {}, // per categoria: [{code, q}] — riempite dai suggerimenti
+    auto: {}, // categoria -> false quando l'utente forza le quantita'
     mTronco: DEFAULTS.mTronco,
     riserM: DEFAULTS.riserM,
     scontoAcq: C.brands[brand].disc,
@@ -41,9 +34,69 @@ function configIniziale(brand = 'gardheaven') {
     manoMac: DEFAULTS.manoMac,
     manoFix: DEFAULTS.manoFix,
     manoRate: DEFAULTS.manoRate,
-    accessori: [],
     extra: [],
   };
+}
+
+/**
+ * Riporta le quantita' delle categorie "automatiche" in linea con i
+ * suggerimenti del calcolo. Restituisce null se non serve toccare nulla,
+ * cosi' l'effetto che la richiama non entra in ciclo.
+ */
+function allineaVociAuto(cfg, suggeriti) {
+  if (!suggeriti) return null;
+  const voci = cfg.voci || {};
+  const auto = cfg.auto || {};
+  const nuove = { ...voci };
+  let cambiato = false;
+
+  CATEGORIE.forEach((cat) => {
+    if (auto[cat.id] === false) return; // categoria forzata a mano
+    const sugg = suggeriti[cat.id];
+    if (sugg == null) return; // accessori: nessun suggerimento
+
+    // Confronto contro il valore GIA' arrotondato: se confrontassi con il
+    // suggerimento grezzo, un valore come 465,33 m non risulterebbe mai
+    // allineato e l'effetto si riscriverebbe all'infinito.
+    const q = cat.um === 'm' ? arrotonda(sugg, 2) : Math.round(sugg);
+
+    const attuali = voci[cat.id] || [];
+    const totale = attuali.reduce((a, v) => a + (Number(v.q) || 0), 0);
+    if (Math.abs(totale - q) < 0.005) return;
+
+    if (q <= 0) {
+      if (attuali.length > 0) {
+        nuove[cat.id] = [];
+        cambiato = true;
+      }
+      return;
+    }
+
+    if (attuali.length <= 1) {
+      const code = attuali[0]?.code || articoliCategoria(cfg.brand, cat.id)[0]?.code;
+      if (!code) return;
+      nuove[cat.id] = [{ code, q }];
+      cambiato = true;
+      return;
+    }
+
+    // Piu' varianti in uso: ridistribuisco in proporzione
+    const tot = attuali.reduce((a, v) => a + (Number(v.q) || 0), 0) || 1;
+    let residuo = q;
+    nuove[cat.id] = attuali
+      .map((v, i) => {
+        if (i === attuali.length - 1) return { ...v, q: Math.max(0, arrotonda(residuo, 2)) };
+        const parte = cat.um === 'm'
+          ? arrotonda(((Number(v.q) || 0) / tot) * q, 2)
+          : Math.round(((Number(v.q) || 0) / tot) * q);
+        residuo = arrotonda(residuo - parte, 2);
+        return { ...v, q: parte };
+      })
+      .filter((v) => v.q > 0);
+    cambiato = true;
+  });
+
+  return cambiato ? nuove : null;
 }
 
 export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
@@ -115,7 +168,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
             etichetta: l.etichetta || '',
             metri: l.metri,
             passo: l.passo,
-            metodo: l.metodo,
+            metodi: l.metodi || {},
           }))
         );
       } catch (e) {
@@ -138,6 +191,13 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     }
   }, [cfg, linee]);
 
+  /* Le categorie non forzate a mano seguono i suggerimenti del calcolo */
+  useEffect(() => {
+    if (soloLettura || risultato?.errore) return;
+    const nuove = allineaVociAuto(cfg, risultato.suggeriti);
+    if (nuove) setCfg((c) => ({ ...c, voci: nuove }));
+  }, [risultato, cfg, soloLettura]);
+
   /* ── salvataggio ── */
   const salva = useCallback(
     async (silenzioso = false) => {
@@ -156,7 +216,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
             prezzo_cliente: testata.prezzo_cliente === '' ? null : Number(testata.prezzo_cliente),
             operatore: operatore?.nome,
             brand: cfg.brand,
-            macchina_code: cfg.macchinaCode,
+            macchina_code: (cfg.voci?.macchine || [])[0]?.code || null,
             config: cfg,
             risultato: risultato?.errore ? null : risultato,
           },
@@ -491,7 +551,13 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
 
         {/* ── IMPIANTO ── */}
         {!soloLettura && (
-          <ConfigImpianto cfg={cfg} soloLettura={soloLettura} mostraPrezzi={mostraPrezzi} onChange={tocca(setCfg)} />
+          <ConfigImpianto
+            cfg={cfg}
+            risultato={risultato}
+            soloLettura={soloLettura}
+            mostraPrezzi={mostraPrezzi}
+            onChange={tocca(setCfg)}
+          />
         )}
 
         {/* ── MANODOPERA E MARGINE ── */}
@@ -557,19 +623,6 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                   step="0.5"
                   value={cfg.manoRate ?? DEFAULTS.manoRate}
                   onChange={(e) => tocca(setCfg)({ ...cfg, manoRate: e.target.value })}
-                  className={inputCls}
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-xs text-gray-500">Sconto d'acquisto %</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={cfg.scontoAcq ?? 0}
-                  onChange={(e) => tocca(setCfg)({ ...cfg, scontoAcq: e.target.value })}
                   className={inputCls}
                 />
               </label>

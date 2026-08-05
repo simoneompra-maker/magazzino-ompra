@@ -1,35 +1,64 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Wand2 } from 'lucide-react';
 import { METODI, DEFAULTS, supportaInline } from './catalogo';
+import { ugelliLinea, montatiLinea } from './calcolo';
+
+const VERDE = '#006B3F';
 
 /**
  * Righe-linea del progetto: una per ogni percorso disegnato su Google Earth.
- * La lunghezza affidabile e' quella dell'etichetta di Google Earth.
+ * Ogni linea ripartisce i suoi ugelli su piu' metodi di montaggio: la stessa
+ * linea puo' avere una parte su T+dritto e una parte su riser.
  */
 export default function LineeEditor({ linee, brand, soloLettura, onChange, risultato }) {
   const inlineOk = supportaInline(brand);
+  const metodiUsabili = METODI.filter((m) => m.id !== 'm2q' || inlineOk);
 
-  const aggiorna = (i, campo, valore) => {
-    const nuove = linee.map((l, k) => (k === i ? { ...l, [campo]: valore } : l));
-    onChange(nuove);
+  const aggiorna = (i, patch) => onChange(linee.map((l, k) => (k === i ? { ...l, ...patch } : l)));
+
+  const setMetodo = (i, metodoId, valore) => {
+    const l = linee[i];
+    const n = Math.max(0, parseInt(valore, 10) || 0);
+    const metodi = { ...(l.metodi || {}) };
+    if (n > 0) metodi[metodoId] = n;
+    else delete metodi[metodoId];
+    aggiorna(i, { metodi });
+  };
+
+  /** Mette tutti gli ugelli previsti sul primo metodo gia' usato. */
+  const allinea = (i) => {
+    const l = linee[i];
+    const previsti = ugelliLinea(l);
+    const usati = Object.keys(l.metodi || {}).filter((k) => (l.metodi[k] || 0) > 0);
+    const target = usati[0] || DEFAULTS.metodo;
+
+    if (usati.length <= 1) {
+      aggiorna(i, { metodi: previsti > 0 ? { [target]: previsti } : {} });
+      return;
+    }
+    // Piu' metodi in uso: ridistribuisco in proporzione
+    const tot = usati.reduce((a, k) => a + l.metodi[k], 0) || 1;
+    const metodi = {};
+    let residuo = previsti;
+    usati.forEach((k, idx) => {
+      const q = idx === usati.length - 1 ? residuo : Math.round((l.metodi[k] / tot) * previsti);
+      residuo -= q;
+      if (q > 0) metodi[k] = q;
+    });
+    aggiorna(i, { metodi });
   };
 
   const aggiungi = () =>
     onChange([
       ...linee,
-      { etichetta: '', metri: '', passo: DEFAULTS.passo, metodo: DEFAULTS.metodo },
+      { etichetta: '', metri: '', passo: DEFAULTS.passo, metodi: {} },
     ]);
 
   const rimuovi = (i) => onChange(linee.filter((_, k) => k !== i));
 
-  const ugelliDi = (l) => {
-    const m = parseFloat(l.metri);
-    const p = parseFloat(l.passo) || DEFAULTS.passo;
-    return m > 0 ? Math.ceil(m / p) : 0;
-  };
-
   const maxLinea = risultato?.macchina?.perLine || 0;
   const totMetri = linee.reduce((a, l) => a + (parseFloat(l.metri) || 0), 0);
-  const totUgelli = linee.reduce((a, l) => a + ugelliDi(l), 0);
+  const totPrevisti = linee.reduce((a, l) => a + ugelliLinea(l), 0);
+  const totMontati = linee.reduce((a, l) => a + montatiLinea(l), 0);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -39,7 +68,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
           <button
             onClick={aggiungi}
             className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-white"
-            style={{ backgroundColor: '#006B3F' }}
+            style={{ backgroundColor: VERDE }}
           >
             <Plus className="w-3.5 h-3.5" /> Linea
           </button>
@@ -52,18 +81,22 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
         </p>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {linee.map((l, i) => {
-          const ug = ugelliDi(l);
-          const oltre = maxLinea > 0 && ug > maxLinea;
+          const previsti = ugelliLinea(l);
+          const montati = montatiLinea(l);
+          const coincide = previsti === montati;
+          const oltre = maxLinea > 0 && previsti > maxLinea;
+
           return (
             <div key={i} className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/60">
+              {/* Etichetta e riepilogo */}
               <div className="flex items-center gap-2 mb-2">
                 <input
                   value={l.etichetta || ''}
-                  onChange={(e) => aggiorna(i, 'etichetta', e.target.value)}
+                  onChange={(e) => aggiorna(i, { etichetta: e.target.value })}
                   disabled={soloLettura}
-                  placeholder={`Etichetta (es. Insetticida)`}
+                  placeholder="Etichetta (es. Insetticida)"
                   className="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <span
@@ -72,7 +105,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                   }`}
                   title={oltre ? `Oltre il massimo di ${maxLinea} ugelli per linea` : ''}
                 >
-                  {ug} ug.
+                  {previsti} ug.
                 </span>
                 {!soloLettura && (
                   <button
@@ -94,7 +127,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                     min="0"
                     step="1"
                     value={l.metri ?? ''}
-                    onChange={(e) => aggiorna(i, 'metri', e.target.value)}
+                    onChange={(e) => aggiorna(i, { metri: e.target.value })}
                     disabled={soloLettura}
                     className="w-full border rounded-lg px-2 py-1.5 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
@@ -107,29 +140,68 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                     min="0.5"
                     step="0.5"
                     value={l.passo ?? DEFAULTS.passo}
-                    onChange={(e) => aggiorna(i, 'passo', e.target.value)}
+                    onChange={(e) => aggiorna(i, { passo: e.target.value })}
                     disabled={soloLettura}
                     className="w-full border rounded-lg px-2 py-1.5 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </label>
               </div>
 
-              <label className="block mt-2">
-                <span className="text-xs text-gray-500">Montaggio</span>
-                <select
-                  value={l.metodo || DEFAULTS.metodo}
-                  onChange={(e) => aggiorna(i, 'metodo', e.target.value)}
-                  disabled={soloLettura}
-                  className="w-full border rounded-lg px-2 py-1.5 text-sm bg-white disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  {METODI.map((m) => (
-                    <option key={m.id} value={m.id} disabled={m.id === 'm2q' && !inlineOk}>
-                      {m.label}
-                      {m.id === 'm2q' && !inlineOk ? ' — non disponibile per questo brand' : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {/* Ripartizione sui metodi di montaggio */}
+              <div className="mt-2.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">Montaggio</span>
+                  <span
+                    className={`text-xs font-semibold ${coincide ? 'text-green-700' : 'text-amber-600'}`}
+                  >
+                    {montati} / {previsti}
+                    {!coincide && !soloLettura && (
+                      <button
+                        onClick={() => allinea(i)}
+                        className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white"
+                        style={{ backgroundColor: VERDE }}
+                      >
+                        <Wand2 className="w-3 h-3" /> allinea
+                      </button>
+                    )}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  {metodiUsabili.map((m) => {
+                    const q = l.metodi?.[m.id] ?? '';
+                    const attivo = Number(q) > 0;
+                    return (
+                      <div
+                        key={m.id}
+                        className={`flex items-center gap-2 px-2 py-1 rounded border ${
+                          attivo ? 'border-green-300 bg-green-50' : 'border-gray-100 bg-white'
+                        }`}
+                      >
+                        <span className="flex-1 min-w-0 text-xs text-gray-700 truncate">{m.label}</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          step="1"
+                          value={q}
+                          placeholder="0"
+                          onChange={(e) => setMetodo(i, m.id, e.target.value)}
+                          disabled={soloLettura}
+                          className="w-14 border rounded px-1 py-1 text-xs text-center tabular-nums disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          aria-label={`Ugelli con ${m.label}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {!inlineOk && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Il montaggio in linea senza T non è disponibile per questo brand.
+                  </p>
+                )}
+              </div>
             </div>
           );
         })}
@@ -137,15 +209,18 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
 
       {linee.length > 0 && (
         <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
-          Totale <b>{totMetri.toLocaleString('it-IT')} m</b> · <b>{totUgelli}</b> ugelli
+          Totale <b>{totMetri.toLocaleString('it-IT')} m</b> · <b>{totPrevisti}</b> ugelli previsti ·{' '}
+          <b className={totMontati === totPrevisti ? 'text-green-700' : 'text-amber-600'}>
+            {totMontati}
+          </b>{' '}
+          ripartiti
           {risultato?.macchina?.maxTot > 0 && (
             <>
               {' '}
               / max{' '}
-              <b className={totUgelli > risultato.macchina.maxTot ? 'text-red-600' : 'text-green-700'}>
+              <b className={totPrevisti > risultato.macchina.maxTot ? 'text-red-600' : 'text-green-700'}>
                 {risultato.macchina.maxTot}
               </b>
-              {risultato.macchina.lines > 1 && ` (${risultato.macchina.perLine}/linea × ${risultato.macchina.lines})`}
             </>
           )}
         </p>

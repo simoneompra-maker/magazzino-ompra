@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import {
-  C,
-  DEFAULTS,
-  brandList,
-  macchinePerBrand,
-  sysPerBrand,
-  portaPerTipo,
-  accessoriPerBrand,
-} from './catalogo';
+import { C, DEFAULTS, brandList } from './catalogo';
+import { CATEGORIE, articoliCategoria } from './calcolo';
+import SelettoreVoci from './SelettoreVoci';
 
 const input =
   'w-full border rounded-lg px-2 py-1.5 text-sm bg-white disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500';
@@ -22,44 +16,40 @@ const Campo = ({ label, children, hint }) => (
 );
 
 /**
- * Configurazione impianto: brand, centralina, materiali, accessori, voci extra.
- * `cfg` e' l'oggetto config del progetto; ogni modifica risale con onChange.
+ * Configurazione impianto.
+ * Ogni categoria di materiale — centralina compresa — e' un elenco di articoli
+ * con la quantita' a fianco: si possono usare piu' varianti insieme.
+ * Le quantita' sono precompilate dal calcolo e restano modificabili.
  */
-export default function ConfigImpianto({ cfg, soloLettura, onChange, mostraPrezzi }) {
-  const [apriAcc, setApriAcc] = useState(false);
+export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrezzi, onChange }) {
   const [apriExtra, setApriExtra] = useState(false);
 
   const brand = cfg.brand || 'geyser';
-  const s = sysPerBrand(brand);
-  const macchine = macchinePerBrand(brand);
-  const accessori = accessoriPerBrand(brand);
+  const voci = cfg.voci || {};
+  const sugg = risultato?.suggeriti || {};
 
   const set = (patch) => onChange({ ...cfg, ...patch });
 
-  /** Cambio brand: azzero le scelte legate al vecchio catalogo. */
+  /**
+   * `auto[catId] === false` significa che l'utente ha messo mano alle quantita'
+   * di quella categoria: da quel momento il ricalcolo automatico la lascia
+   * stare, finche' non preme "Allinea".
+   */
+  const setVoci = (catId, lista, opz = {}) =>
+    set({
+      voci: { ...voci, [catId]: lista },
+      auto: { ...(cfg.auto || {}), [catId]: opz.auto !== false },
+    });
+
+  /** Cambio brand: i codici del vecchio catalogo non esistono piu'. */
   const cambiaBrand = (nuovo) => {
-    const ns = sysPerBrand(nuovo);
     onChange({
       ...cfg,
       brand: nuovo,
-      macchinaCode: macchinePerBrand(nuovo)[0]?.code,
-      tuboCode: ns.tubo[0]?.code,
-      tuboTroncoCode: ns.tubo[ns.tubo.length - 1]?.code,
-      ugelloCode: ns.ugello[0]?.code,
-      portaDCode: portaPerTipo(nuovo, 'd')[0]?.code,
-      porta9Code: portaPerTipo(nuovo, 'a')[0]?.code,
-      tselCode: ns.tsel[0]?.code,
       scontoAcq: C.brands[nuovo].disc,
-      accessori: [],
+      voci: {}, // svuoto: le quantita' vengono riproposte dai suggerimenti
+      auto: {}, // e tutte le categorie tornano automatiche
     });
-  };
-
-  const accSelezionati = cfg.accessori || [];
-  const qtaAcc = (code) => accSelezionati.find((a) => a.code === code)?.q ?? 0;
-  const setQtaAcc = (code, q) => {
-    const n = Math.max(0, parseInt(q, 10) || 0);
-    const altri = accSelezionati.filter((a) => a.code !== code);
-    set({ accessori: n > 0 ? [...altri, { code, q: n }] : altri });
   };
 
   const extra = cfg.extra || [];
@@ -80,50 +70,17 @@ export default function ConfigImpianto({ cfg, soloLettura, onChange, mostraPrezz
             ))}
           </select>
         </Campo>
-        <Campo label="Centralina">
-          <select
-            value={cfg.macchinaCode || ''}
-            onChange={(e) => set({ macchinaCode: e.target.value })}
+        <Campo label="Sconto d'acquisto %">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            value={cfg.scontoAcq ?? C.brands[brand].disc}
+            onChange={(e) => set({ scontoAcq: e.target.value })}
             disabled={soloLettura}
             className={input}
-          >
-            {macchine.map((m) => (
-              <option key={m.code} value={m.code}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </Campo>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Campo label="Tubo linea">
-          <select
-            value={cfg.tuboCode || ''}
-            onChange={(e) => set({ tuboCode: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          >
-            {s.tubo.map((t) => (
-              <option key={t.code} value={t.code}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </Campo>
-        <Campo label="Tubo tronco">
-          <select
-            value={cfg.tuboTroncoCode || ''}
-            onChange={(e) => set({ tuboTroncoCode: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          >
-            {s.tubo.map((t) => (
-              <option key={t.code} value={t.code}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+          />
         </Campo>
       </div>
 
@@ -140,7 +97,7 @@ export default function ConfigImpianto({ cfg, soloLettura, onChange, mostraPrezz
             className={input}
           />
         </Campo>
-        <Campo label="Metri riser per ugello" hint="Solo per il montaggio con prolunga">
+        <Campo label="Metri riser per ugello" hint="Prolunga usata dai metodi con riser">
           <input
             type="number"
             inputMode="decimal"
@@ -154,131 +111,28 @@ export default function ConfigImpianto({ cfg, soloLettura, onChange, mostraPrezz
         </Campo>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <Campo label="Ugello">
-          <select
-            value={cfg.ugelloCode || ''}
-            onChange={(e) => set({ ugelloCode: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          >
-            {s.ugello.map((u) => (
-              <option key={u.code} value={u.code}>
-                {u.label}
-              </option>
-            ))}
-          </select>
-        </Campo>
-        <Campo label="Raccordo a T">
-          <select
-            value={cfg.tselCode || ''}
-            onChange={(e) => set({ tselCode: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          >
-            {s.tsel.map((t) => (
-              <option key={t.code} value={t.code}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </Campo>
+      {/* ── Materiali: una lista per categoria ── */}
+      <div className="space-y-1.5 pt-1">
+        {CATEGORIE.map((cat) => {
+          const articoli = articoliCategoria(brand, cat.id);
+          if (articoli.length === 0) return null;
+          return (
+            <SelettoreVoci
+              key={cat.id}
+              titolo={cat.label}
+              um={cat.um}
+              articoli={articoli}
+              valori={voci[cat.id] || []}
+              suggerito={sugg[cat.id] ?? null}
+              soloLettura={soloLettura}
+              mostraPrezzi={mostraPrezzi}
+              onChange={(lista, opz) => setVoci(cat.id, lista, opz)}
+            />
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <Campo label="Portaugello dritto">
-          <select
-            value={cfg.portaDCode || ''}
-            onChange={(e) => set({ portaDCode: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          >
-            {portaPerTipo(brand, 'd').map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </Campo>
-        <Campo label="Portaugello 90°">
-          <select
-            value={cfg.porta9Code || ''}
-            onChange={(e) => set({ porta9Code: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          >
-            {portaPerTipo(brand, 'a').map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </Campo>
-      </div>
-
-      <label className="flex items-center gap-2 text-sm text-gray-700">
-        <input
-          type="checkbox"
-          checked={cfg.usaTappo ?? DEFAULTS.usaTappo}
-          onChange={(e) => set({ usaTappo: e.target.checked })}
-          disabled={soloLettura}
-          className="w-4 h-4 accent-green-700"
-        />
-        Tappo fine linea (uno per linea)
-      </label>
-
-      {/* ── Accessori ── */}
-      <div className="border-t pt-3">
-        <button
-          onClick={() => setApriAcc(!apriAcc)}
-          className="w-full flex items-center justify-between text-sm font-semibold text-gray-700"
-        >
-          <span>
-            Accessori{' '}
-            <span className="text-gray-400 font-normal">
-              ({accSelezionati.length} su {accessori.length})
-            </span>
-          </span>
-          {apriAcc ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-
-        {apriAcc && (
-          <div className="mt-2 max-h-72 overflow-y-auto space-y-1 pr-1">
-            {accessori.map((a) => {
-              const q = qtaAcc(a.code);
-              return (
-                <div
-                  key={a.code}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border ${
-                    q > 0 ? 'border-green-300 bg-green-50' : 'border-gray-100'
-                  }`}
-                >
-                  <span className="flex-1 min-w-0 text-xs text-gray-700 truncate" title={a.label}>
-                    {a.label}
-                  </span>
-                  {mostraPrezzi && (
-                    <span className="text-xs text-gray-400 flex-shrink-0">
-                      {(a.priceRaw / (a.div || 1)).toFixed(2)} €
-                    </span>
-                  )}
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={q || ''}
-                    placeholder="0"
-                    onChange={(e) => setQtaAcc(a.code, e.target.value)}
-                    disabled={soloLettura}
-                    className="w-14 border rounded px-1 py-1 text-xs text-center disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Voci extra ── */}
+      {/* ── Voci extra fuori listino ── */}
       <div className="border-t pt-3">
         <button
           onClick={() => setApriExtra(!apriExtra)}

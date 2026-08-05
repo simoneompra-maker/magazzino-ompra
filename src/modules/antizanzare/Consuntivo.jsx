@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Loader2, CheckCheck } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Loader2, CheckCheck, FileSpreadsheet } from 'lucide-react';
 import { caricaConsuntivo, inizializzaConsuntivo, salvaConsuntivo } from './antizanzareService';
+import { scaricaNotaCarico } from './export/exportNotaCarico';
 
 const VERDE = '#006B3F';
 const inputCls =
@@ -11,7 +12,17 @@ const inputCls =
  * Le quantita' previste arrivano dalla distinta; il tecnico segna quelle
  * realmente usate e puo' aggiungere righe libere per il materiale non previsto.
  */
-export default function Consuntivo({ operatore, progettoId, titolo, numero, bom, onIndietro }) {
+export default function Consuntivo({
+  operatore,
+  progettoId,
+  titolo,
+  numero,
+  bom,
+  progetto,
+  linee,
+  risultato,
+  onIndietro,
+}) {
   const [righe, setRighe] = useState([]);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -62,6 +73,31 @@ export default function Consuntivo({ operatore, progettoId, titolo, numero, bom,
     setRighe((r) => r.map((x) => (x.extra ? x : { ...x, q_usata: x.q_prevista })));
   };
 
+  /**
+   * Esporta la nota di carico in Excel. Usa le righe a schermo, cosi' il file
+   * contiene anche il materiale extra aggiunto in cantiere e le quantita' gia'
+   * segnate, senza bisogno di salvare prima.
+   */
+  const esporta = () => {
+    setErrore('');
+    try {
+      const righeExport = righe.map((x) => ({
+        code: x.codice || '',
+        desc: x.descrizione,
+        um: x.um || 'pz',
+        q: x.q_prevista ?? '',
+      }));
+      scaricaNotaCarico({
+        progetto: { numero, cliente_nome: titolo, ...(progetto || {}) },
+        bom: righeExport.length > 0 ? righeExport : bom,
+        linee: linee || [],
+        risultato,
+      });
+    } catch (e) {
+      setErrore('Export non riuscito: ' + (e.message || e));
+    }
+  };
+
   const salva = async () => {
     setSalvando(true);
     setErrore('');
@@ -95,6 +131,14 @@ export default function Consuntivo({ operatore, progettoId, titolo, numero, bom,
             {numero} · {titolo}
           </p>
         </div>
+        <button
+          onClick={esporta}
+          className="p-2 rounded-lg bg-white/20 hover:bg-white/30"
+          title="Scarica la nota di carico in Excel"
+          aria-label="Scarica in Excel"
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+        </button>
         <button
           onClick={salva}
           disabled={salvando}

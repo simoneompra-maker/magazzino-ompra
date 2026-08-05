@@ -63,6 +63,7 @@ export const C = {
         {code:"4224", label:"Ø6 marrone 100 m", priceRaw:47.38, costRaw:34.68, div:100},
         {code:"4223", label:"Ø6 bianco 100 m",  priceRaw:48.11, costRaw:35.22, div:100},
         {code:"4248", label:"Ø8 nero 100 m",    priceRaw:75.66, costRaw:55.38, div:100},
+        {code:"4271", label:"Ø8 nero 25 m",     priceRaw:19.80, costRaw:14.49, div:25},
       ],
       ugello:[
         {code:"4219", label:"Anti-gocc. standard", priceRaw:2.75, costRaw:2.01, div:1},
@@ -76,6 +77,7 @@ export const C = {
       tsel:[
         {code:"4222", label:"T Ø6",           priceRaw:0.86, costRaw:0.63, div:1},
         {code:"4245", label:"T Ø8-6-8 riduz.", priceRaw:1.15, costRaw:0.84, div:1},
+        {code:"4240", label:"T Ø8",            priceRaw:1.15, costRaw:0.84, div:1},
       ],
       tappo:{code:"4207", label:"Chiusura fine linea Ø6", priceRaw:0.96, costRaw:0.70, div:1},
       inline:null,
@@ -92,6 +94,11 @@ export const C = {
         {code:"4205", label:"Asta prolungamento 40 cm (5 pz)", priceRaw:9.47, costRaw:6.93, div:1},
         {code:"4237", label:"Asta prolungamento 40 cm (sfuso)", priceRaw:0.53, costRaw:0.39, div:1},
         {code:"4218", label:"Raccordo 135° Ø6", priceRaw:8.77, costRaw:6.42, div:1},
+        {code:"4239", label:"Raccordo 90° Ø8 (sfuso)",   priceRaw:0.78, costRaw:0.57, div:1},
+        {code:"4243", label:"Raccordo 90° Ø6-8 (sfuso)", priceRaw:0.94, costRaw:0.69, div:1},
+        {code:"4241", label:"Raccordo dritto Ø8 (sfuso)",   priceRaw:0.74, costRaw:0.54, div:1},
+        {code:"4244", label:"Raccordo dritto Ø6-8 (sfuso)", priceRaw:0.82, costRaw:0.60, div:1},
+        {code:"4261", label:"Valvola non ritorno Ø8 (5 pz)", priceRaw:29.55, costRaw:21.63, div:1},
         {code:"4215", label:"Tappi chiusura Ø6 (5 pz)", priceRaw:3.65, costRaw:2.67, div:1},
         {code:"4246", label:"Fissatubo a P Ø6 (sfuso)", priceRaw:0.45, costRaw:0.33, div:1},
         {code:"4250", label:"Fissatubo a P Ø8 (sfuso)", priceRaw:0.53, costRaw:0.39, div:1},
@@ -110,6 +117,8 @@ export const C = {
       tubo:[
         {code:"AI14100N", label:"Tubo 1/4\" nero (m)",   priceRaw:1.0,  costRaw:null, div:1},
         {code:"AI14100V", label:"Tubo 1/4\" verde (m)",  priceRaw:1.04, costRaw:null, div:1},
+        {code:"AI38100N", label:"Tubo 3/8\" nero (m)",   priceRaw:3.95, costRaw:null, div:1},
+        {code:"AI38100T", label:"Tubo 3/8\" aspirazione acqua (m)", priceRaw:2.9, costRaw:null, div:1},
       ],
       ugello:[
         {code:"AI040302", label:"Ugello standard",   priceRaw:5.1, costRaw:null, div:1},
@@ -123,8 +132,12 @@ export const C = {
       ],
       tsel:[
         {code:"AI191414", label:"Raccordo T 1/4\"", priceRaw:5.75, costRaw:null, div:1},
+        {code:"AI193838", label:"Raccordo T 3/8\"", priceRaw:10.5, costRaw:null, div:1},
       ],
       tappo:{code:"AI300014", label:"Tappo fine linea 1/4\"", priceRaw:2.5, costRaw:null, div:1},
+      tappoExtra:[
+        {code:"AI300038", label:"Tappo fine linea 3/8\"", priceRaw:6.8, costRaw:null, div:1},
+      ],
       inline:{code:"AI501414", label:"Portaugello in linea tubo/tubo 1/4\"", priceRaw:5.6, costRaw:null, div:1},
       accessori:[
         {code:"AC300030", label:"Sensore vento",   priceRaw:120,  costRaw:null, div:1},
@@ -140,8 +153,9 @@ export const C = {
         {code:"AI700014", label:"Riduttore di pressione 1/4\"", priceRaw:36, costRaw:null, div:1},
         {code:"AI700038", label:"Riduttore di pressione 3/8\"", priceRaw:36, costRaw:null, div:1},
         {code:"RC333838", label:"Raccordo acqua 3/8\" con valvola NR", priceRaw:27, costRaw:null, div:1},
-        {code:"AI193838", label:"Raccordo T 3/8\"", priceRaw:10.5, costRaw:null, div:1},
         {code:"AI161438", label:"Manicotto riduzione 3/8-1/4", priceRaw:6.8, costRaw:null, div:1},
+        {code:"AI183838", label:"Gomito 90° 3/8\"", priceRaw:14.2, costRaw:null, div:1},
+        {code:"AI360038", label:"Croce 3/8\"",      priceRaw:14,   costRaw:null, div:1},
         {code:"AI251438", label:"Riduzione innesto 3/8-1/4", priceRaw:8.2, costRaw:null, div:1},
         {code:"AC400012", label:"Cavalletto monoprodotto ZA20", priceRaw:53.33, costRaw:null, div:1},
         {code:"AC400011", label:"Cavalletto monoprodotto da ZA100", priceRaw:66.7, costRaw:null, div:1},
@@ -206,6 +220,9 @@ export const C = {
         {code:"RACCT3/8", label:"Raccordo T 3/8\"", priceRaw:10,  costRaw:null, div:1},
       ],
       tappo:{code:"RACCFL1/4", label:"Fine linea cieco 1/4\"", priceRaw:3.3, costRaw:null, div:1},
+      tappoExtra:[
+        {code:"RACCFL3/8", label:"Fine linea cieco 3/8\"", priceRaw:2.4, costRaw:null, div:1},
+      ],
       inline:{code:"RACCPUD1/4", label:"Raccordo dritto portaugello 6-6", priceRaw:6.6, costRaw:null, div:1},
       accessori:[
         {code:"PROXUGUNI15",  label:"Prolunga pieghevole ugello 15 cm", priceRaw:8.5, costRaw:null, div:1},
@@ -214,7 +231,6 @@ export const C = {
         {code:"RIDDRI3/8-1/4",label:"Riduzione dritta 3/8→1/4", priceRaw:4.6, costRaw:null, div:1},
         {code:"RACCL1/4",     label:"Raccordo L 90° 1/4\"", priceRaw:4.7, costRaw:null, div:1},
         {code:"RACCL3/8",     label:"Raccordo L 90° 3/8\"", priceRaw:6.2, costRaw:null, div:1},
-        {code:"RACCFL3/8",    label:"Fine linea cieco 3/8\"", priceRaw:2.4, costRaw:null, div:1},
         {code:"TAGL_TUBO_01", label:"Taglia tubo professionale", priceRaw:39, costRaw:null, div:1},
       ],
     },

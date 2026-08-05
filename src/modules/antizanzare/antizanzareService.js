@@ -274,6 +274,60 @@ export async function cercaClienti(testo) {
   }));
 }
 
+/* ─────────────────── archivio voci extra ─────────────────── */
+
+/**
+ * Suggerimenti dall'archivio delle voci fuori listino.
+ * Con meno di 2 caratteri restituisce le piu' usate, cosi' l'elenco
+ * e' utile anche prima di digitare.
+ */
+export async function cercaVociExtra(testo) {
+  const q = (testo || '').trim();
+
+  let query = supabase
+    .from('az_voci_extra')
+    .select('id, descrizione, codice, um, costo, prezzo, usi')
+    .order('usi', { ascending: false })
+    .order('ultimo_uso', { ascending: false })
+    .limit(8);
+
+  if (q.length >= 2) query = query.ilike('descrizione', `%${q}%`);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Ricerca voci extra fallita:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
+ * Registra nell'archivio le voci extra di un progetto.
+ * Se la descrizione esiste gia' aggiorna prezzi e contatore d'uso.
+ * Non blocca il salvataggio del progetto se fallisce.
+ */
+export async function registraVociExtra(extra, operatoreNome) {
+  const voci = (extra || []).filter((e) => (e.desc || '').trim());
+  if (voci.length === 0) return;
+
+  await Promise.all(
+    voci.map((e) =>
+      supabase
+        .rpc('az_registra_voce_extra', {
+          p_descrizione: e.desc.trim(),
+          p_codice: e.codice || null,
+          p_um: e.um || 'pz',
+          p_costo: e.costo === '' || e.costo == null ? null : Number(e.costo),
+          p_prezzo: e.prezzo === '' || e.prezzo == null ? null : Number(e.prezzo),
+          p_operatore: operatoreNome || null,
+        })
+        .then(({ error }) => {
+          if (error) console.error('Voce extra non archiviata:', e.desc, error.message);
+        })
+    )
+  );
+}
+
 /* ─────────────────── operatori ─────────────────── */
 
 export async function listaTecnici() {

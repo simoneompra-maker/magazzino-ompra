@@ -82,7 +82,8 @@ export function articoliCategoria(brandId, categoriaId) {
     case 'tsel':
       return s.tsel || [];
     case 'tappo':
-      return s.tappo ? [s.tappo] : [];
+      // tappoExtra raccoglie i fine linea di diametro diverso (3/8")
+      return [s.tappo, ...(s.tappoExtra || [])].filter(Boolean);
     case 'accessori':
       return [...(s.accessori || []), ...UNIVERSAL];
     default:
@@ -255,15 +256,43 @@ export function calcolaImpianto(input) {
   const materialeC = CATEGORIE.reduce((a, c) => a + totali[c.id].costo, 0);
   const materialeP = CATEGORIE.reduce((a, c) => a + totali[c.id].prezzo, 0);
 
-  /* ── manodopera: sugli ugelli effettivamente montati ── */
+  /* ── manodopera ──
+   * 'det'    montaggio macchina + righe di fissaggio, ognuna con la sua
+   *          quantita' di ugelli e la sua tariffa (recinzione, siepe, paletti…).
+   *          Se non ci sono righe si ricade su tutti gli ugelli alla tariffa base,
+   *          che e' il comportamento del calcolatore originale.
+   * 'perUg'  tariffa unica per ugello
+   * 'manual' importo secco
+   */
   const N = sugg.ugelli;
   const manoMode = input.manoMode || DEFAULTS.manoMode;
   const manoMac = Math.max(0, nz(input.manoMac, DEFAULTS.manoMac));
   const manoRate = Math.max(0, nz(input.manoRate, DEFAULTS.manoRate));
+
+  const fissaggi = (input.fissaggi || [])
+    .map((f) => ({
+      id: f.id,
+      label: f.label,
+      q: Math.max(0, parseInt(f.q, 10) || 0),
+      eur: Math.max(0, nz(f.eur)),
+    }))
+    .filter((f) => f.q > 0);
+
+  const ugelliFissati = fissaggi.reduce((a, f) => a + f.q, 0);
+  const costoFissaggi = fissaggi.reduce((a, f) => a + f.q * f.eur, 0);
+
   let mano = 0;
-  if (manoMode === 'det') mano = manoMac + N * manoRate;
-  else if (manoMode === 'perUg') mano = manoRate * N;
-  else mano = manoRate;
+  if (manoMode === 'det') {
+    mano = manoMac + (fissaggi.length > 0 ? costoFissaggi : N * manoRate);
+  } else if (manoMode === 'perUg') {
+    mano = manoRate * N;
+  } else {
+    mano = manoRate;
+  }
+
+  if (manoMode === 'det' && fissaggi.length > 0 && ugelliFissati !== N) {
+    avvisi.push(`Fissaggio: ${ugelliFissati} ugelli ripartiti, ${N} montati.`);
+  }
 
   /* ── totali ── */
   const ricarico = Math.max(0, nz(input.margine, DEFAULTS.margine)) / 100;
@@ -347,6 +376,14 @@ export function calcolaImpianto(input) {
 
     suggeriti: sugg,
     totali,
+    manodopera: {
+      modo: manoMode,
+      macchina: manoMode === 'det' ? manoMac : 0,
+      fissaggi,
+      ugelliFissati,
+      costoFissaggi,
+      totale: mano,
+    },
 
     costi: { materiale: materialeC, extra: extraC, totale: costoTot },
     prezzi: {

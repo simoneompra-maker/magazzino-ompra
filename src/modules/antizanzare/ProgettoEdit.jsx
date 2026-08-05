@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  ArrowLeft, Save, Camera, Image as ImageIcon, Trash2, AlertTriangle, ClipboardList, Loader2,
+  ArrowLeft, Save, Camera, Image as ImageIcon, Trash2, AlertTriangle, ClipboardList, Loader2, Wand2,
 } from 'lucide-react';
 import { calcolaImpianto, CATEGORIE, articoliCategoria, arrotonda } from './calcolo';
 import { C, DEFAULTS, FISSAGGI } from './catalogo';
@@ -10,7 +10,7 @@ import Consuntivo from './Consuntivo';
 import { vedePrezzi } from '../../lib/permessi';
 import {
   caricaProgetto, salvaProgetto, prossimoNumero, caricaFoto, urlFoto, eliminaFoto,
-  cercaClienti, listaTecnici,
+  cercaClienti, listaTecnici, registraVociExtra,
 } from './antizanzareService';
 
 const VERDE = '#006B3F';
@@ -185,7 +185,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
   /* ── calcolo live ── */
   const risultato = useMemo(() => {
     try {
-      return calcolaImpianto({ ...cfg, linee });
+      return calcolaImpianto({ ...cfg, linee, fissaggi: cfg.fissaggi });
     } catch (e) {
       return { errore: e.message };
     }
@@ -197,6 +197,79 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     const nuove = allineaVociAuto(cfg, risultato.suggeriti);
     if (nuove) setCfg((c) => ({ ...c, voci: nuove }));
   }, [risultato, cfg, soloLettura]);
+
+  /* ── fissaggio ugelli: una riga per tipo, con tariffa e quantita' ── */
+  const righeFissaggio = FISSAGGI.map((base) => {
+    const salvata = (cfg.fissaggi || []).find((f) => f.id === base.id);
+    return {
+      id: base.id,
+      label: base.label,
+      eur: salvata?.eur ?? base.eurUgello,
+      q: Number(salvata?.q) || 0,
+    };
+  });
+
+  const ugelliFissati = righeFissaggio.reduce((a, f) => a + f.q, 0);
+  const fissaggiAllineati = ugelliFissati === (risultato?.ugelliMontati ?? 0);
+
+  // Come per le categorie di materiale: toccare una casella stacca il
+  // fissaggio dal ricalcolo automatico, "allinea" lo riaggancia.
+  const setFissaggio = (id, patch) => {
+    setModificato(true);
+    setCfg((c) => ({
+      ...c,
+      fissaggiAuto: false,
+      fissaggi: righeFissaggio.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    }));
+  };
+
+  /** Mette tutti gli ugelli montati sul primo fissaggio in uso. */
+  const allineaFissaggi = () => {
+    const totale = risultato?.ugelliMontati ?? 0;
+    const inUso = righeFissaggio.filter((f) => f.q > 0);
+    setModificato(true);
+
+    if (inUso.length <= 1) {
+      const target = inUso[0]?.id || FISSAGGI[0].id;
+      setCfg((c) => ({
+        ...c,
+        fissaggiAuto: true,
+        fissaggi: righeFissaggio.map((f) => ({ ...f, q: f.id === target ? totale : 0 })),
+      }));
+      return;
+    }
+    // Piu' tipi di fissaggio in uso: ridistribuisco in proporzione
+    const somma = inUso.reduce((a, f) => a + f.q, 0) || 1;
+    let residuo = totale;
+    const quote = {};
+    inUso.forEach((f, i) => {
+      const q = i === inUso.length - 1 ? residuo : Math.round((f.q / somma) * totale);
+      residuo -= q;
+      quote[f.id] = Math.max(0, q);
+    });
+    setCfg((c) => ({
+      ...c,
+      fissaggiAuto: true,
+      fissaggi: righeFissaggio.map((f) => ({ ...f, q: quote[f.id] ?? 0 })),
+    }));
+  };
+
+  /* Finche' non ci mette mano, il fissaggio segue gli ugelli montati.
+     Il confronto con `ugelliFissati` chiude il ciclo: appena i due valori
+     coincidono l'effetto non riscrive piu' nulla. */
+  useEffect(() => {
+    if (soloLettura || cfg.manoMode !== 'det') return;
+    if (cfg.fissaggiAuto === false) return; // ripartizione decisa a mano
+    const totale = risultato?.ugelliMontati ?? 0;
+    if (ugelliFissati === totale) return;
+
+    const inUso = righeFissaggio.filter((f) => f.q > 0);
+    const target = inUso[0]?.id || FISSAGGI[0].id;
+    setCfg((c) => ({
+      ...c,
+      fissaggi: righeFissaggio.map((f) => ({ ...f, q: f.id === target ? totale : 0 })),
+    }));
+  }, [risultato?.ugelliMontati, ugelliFissati, cfg.manoMode, cfg.fissaggiAuto, soloLettura]);
 
   /* ── salvataggio ── */
   const salva = useCallback(
@@ -224,6 +297,8 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
         );
         setId(nuovoId);
         setModificato(false);
+        // Alimenta l'archivio delle voci fuori listino, senza bloccare il salvataggio
+        registraVociExtra(cfg.extra, operatore?.nome).catch(() => {});
         return nuovoId;
       } catch (e) {
         setErrore(e.message || 'Salvataggio fallito');
@@ -323,6 +398,9 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
         titolo={testata.cliente_nome}
         numero={testata.numero}
         bom={risultato?.bom || []}
+        progetto={testata}
+        linee={risultato?.linee || linee}
+        risultato={risultato}
         onIndietro={() => setVistaConsuntivo(false)}
       />
     );
@@ -593,39 +671,21 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                 </label>
               )}
 
-              {cfg.manoMode !== 'manual' && (
+              {cfg.manoMode !== 'det' && (
                 <label className="block">
-                  <span className="text-xs text-gray-500">Fissaggio ugelli</span>
-                  <select
-                    value={cfg.manoFix || DEFAULTS.manoFix}
-                    onChange={(e) => {
-                      const f = FISSAGGI.find((x) => x.id === e.target.value);
-                      tocca(setCfg)({ ...cfg, manoFix: e.target.value, manoRate: f?.eurUgello ?? cfg.manoRate });
-                    }}
+                  <span className="text-xs text-gray-500">
+                    {cfg.manoMode === 'manual' ? 'Importo totale €' : '€ per ugello'}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={cfg.manoRate ?? DEFAULTS.manoRate}
+                    onChange={(e) => tocca(setCfg)({ ...cfg, manoRate: e.target.value })}
                     className={inputCls}
-                  >
-                    {FISSAGGI.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.label} ({f.eurUgello} €/ug)
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </label>
               )}
-
-              <label className="block">
-                <span className="text-xs text-gray-500">
-                  {cfg.manoMode === 'manual' ? 'Importo totale €' : '€ per ugello'}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={cfg.manoRate ?? DEFAULTS.manoRate}
-                  onChange={(e) => tocca(setCfg)({ ...cfg, manoRate: e.target.value })}
-                  className={inputCls}
-                />
-              </label>
 
               <label className="block">
                 <span className="text-xs text-gray-500">Margine sul materiale %</span>
@@ -639,6 +699,65 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                 />
               </label>
             </div>
+
+            {/* Fissaggio ugelli: una riga per tipo, non un menu a tendina */}
+            {cfg.manoMode === 'det' && (
+              <div className="border border-gray-200 rounded-lg p-2 mt-1">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-gray-600">Fissaggio ugelli</span>
+                  <span
+                    className={`text-xs font-semibold ${
+                      fissaggiAllineati ? 'text-green-700' : 'text-amber-600'
+                    }`}
+                  >
+                    {ugelliFissati} / {risultato?.ugelliMontati ?? 0}
+                    {!fissaggiAllineati && (
+                      <button
+                        onClick={allineaFissaggi}
+                        className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white"
+                        style={{ backgroundColor: VERDE }}
+                      >
+                        <Wand2 className="w-3 h-3" /> allinea
+                      </button>
+                    )}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  {righeFissaggio.map((f) => (
+                    <div
+                      key={f.id}
+                      className={`flex items-center gap-2 px-2 py-1 rounded border ${
+                        f.q > 0 ? 'border-green-300 bg-green-50' : 'border-gray-100'
+                      }`}
+                    >
+                      <span className="flex-1 min-w-0 text-xs text-gray-700 truncate">{f.label}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={f.eur}
+                        onChange={(e) => setFissaggio(f.id, { eur: e.target.value })}
+                        className="w-16 border rounded px-1 py-1 text-xs text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-green-500"
+                        aria-label={`Euro per ugello ${f.label}`}
+                      />
+                      <span className="text-xs text-gray-400">€/ug</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        step="1"
+                        value={f.q || ''}
+                        placeholder="0"
+                        onChange={(e) => setFissaggio(f.id, { q: e.target.value })}
+                        className="w-14 border rounded px-1 py-1 text-xs text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-green-500"
+                        aria-label={`Ugelli ${f.label}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <p className="text-xs text-gray-400">
               Manodopera calcolata: <b>{eur(risultato?.prezzi?.manodopera)}</b>. Riferimenti: ~10-12 ugelli

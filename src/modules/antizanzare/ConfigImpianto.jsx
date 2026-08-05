@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { C, DEFAULTS, brandList } from './catalogo';
 import { CATEGORIE, articoliCategoria } from './calcolo';
 import SelettoreVoci from './SelettoreVoci';
+import VoceExtraRicerca from './VoceExtraRicerca';
 
 const input =
   'w-full border rounded-lg px-2 py-1.5 text-sm bg-white disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500';
@@ -149,12 +150,27 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
             {extra.map((e, i) => (
               <div key={i} className="border border-gray-200 rounded-lg p-2 space-y-1.5">
                 <div className="flex gap-2">
-                  <input
-                    value={e.desc || ''}
-                    onChange={(ev) => setExtra(i, 'desc', ev.target.value)}
-                    placeholder="Descrizione (es. Paletto PVC 1 m)"
+                  <VoceExtraRicerca
+                    valore={e.desc}
                     disabled={soloLettura}
                     className={input}
+                    onDigita={(v) => setExtra(i, 'desc', v)}
+                    onScegli={(v) =>
+                      set({
+                        extra: extra.map((x, k) =>
+                          k === i
+                            ? {
+                                ...x,
+                                desc: v.descrizione,
+                                codice: v.codice || '',
+                                um: v.um || 'pz',
+                                costo: v.costo ?? x.costo ?? '',
+                                prezzo: v.prezzo ?? x.prezzo ?? '',
+                              }
+                            : x
+                        ),
+                      })
+                    }
                   />
                   {!soloLettura && (
                     <button

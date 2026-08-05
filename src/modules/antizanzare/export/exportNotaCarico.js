@@ -21,6 +21,8 @@ const ETICHETTE_METODO = {
   m2q: 'in linea',
   m3d: 'riser dritto',
   m3a: 'riser 90°',
+  m4d: 'deriv. tronco dritto',
+  m4a: 'deriv. tronco 90°',
 };
 
 

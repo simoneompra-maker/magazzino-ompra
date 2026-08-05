@@ -1,5 +1,5 @@
 import { Plus, Trash2, Wand2 } from 'lucide-react';
-import { METODI, DEFAULTS, supportaInline } from './catalogo';
+import { METODI, DEFAULTS, supportaInline, supportaDerivazione } from './catalogo';
 import { ugelliLinea, montatiLinea } from './calcolo';
 
 const VERDE = '#006B3F';
@@ -11,7 +11,12 @@ const VERDE = '#006B3F';
  */
 export default function LineeEditor({ linee, brand, soloLettura, onChange, risultato }) {
   const inlineOk = supportaInline(brand);
-  const metodiUsabili = METODI.filter((m) => m.id !== 'm2q' || inlineOk);
+  const derivaOk = supportaDerivazione(brand);
+  const metodiUsabili = METODI.filter((m) => {
+    if (m.id === 'm2q') return inlineOk;
+    if (m.deriva) return derivaOk;
+    return true;
+  });
 
   const aggiorna = (i, patch) => onChange(linee.map((l, k) => (k === i ? { ...l, ...patch } : l)));
 
@@ -196,9 +201,10 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                   })}
                 </div>
 
-                {!inlineOk && (
+                {(!inlineOk || !derivaOk) && (
                   <p className="text-xs text-gray-400 mt-1">
-                    Il montaggio in linea senza T non è disponibile per questo brand.
+                    {!inlineOk && 'Il montaggio in linea senza T non è disponibile per questo brand. '}
+                    {!derivaOk && 'Questo brand non ha una dorsale di diametro maggiore da cui derivare.'}
                   </p>
                 )}
               </div>

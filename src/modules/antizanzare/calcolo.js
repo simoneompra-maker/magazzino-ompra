@@ -54,6 +54,7 @@ export const CATEGORIE = [
   { id: 'porta90', label: 'Portaugelli angolati', um: 'pz', fonte: 'porta:a' },
   { id: 'inLinea', label: 'Raccordi in linea', um: 'pz', fonte: 'inline' },
   { id: 'raccordiT', label: 'Raccordi a T', um: 'pz', fonte: 'tsel' },
+  { id: 'riduzioni', label: 'Riduzioni 3/8-1/4', um: 'pz', fonte: 'riduzioni' },
   { id: 'tappi', label: 'Tappi fine linea', um: 'pz', fonte: 'tappo' },
   { id: 'accessori', label: 'Accessori', um: 'pz', fonte: 'accessori' },
 ];
@@ -81,6 +82,8 @@ export function articoliCategoria(brandId, categoriaId) {
       return s.inline ? [s.inline] : [];
     case 'tsel':
       return s.tsel || [];
+    case 'riduzioni':
+      return s.riduzioni || [];
     case 'tappo':
       // tappoExtra raccoglie i fine linea di diametro diverso (3/8")
       return [s.tappo, ...(s.tappoExtra || [])].filter(Boolean);
@@ -110,7 +113,7 @@ export const unitCost = (it, sconto) => {
 
 /* ─────────────────── geometria ─────────────────── */
 
-const METODI_ID = ['m1d', 'm1a', 'm2q', 'm3d', 'm3a'];
+const METODI_ID = ['m1d', 'm1a', 'm2q', 'm3d', 'm3a', 'm4d', 'm4a'];
 
 /** Ugelli previsti su una linea: metri / passo, arrotondato per eccesso. */
 export function ugelliLinea(linea) {
@@ -134,7 +137,7 @@ export function suggerimenti(input) {
   const attive = linee.filter((l) => nz(l.metri) > 0);
   const metriTot = attive.reduce((a, l) => a + nz(l.metri), 0);
 
-  const q = { m1d: 0, m1a: 0, m2q: 0, m3d: 0, m3a: 0 };
+  const q = { m1d: 0, m1a: 0, m2q: 0, m3d: 0, m3a: 0, m4d: 0, m4a: 0 };
   linee.forEach((l) => {
     const met = l.metodi || {};
     METODI_ID.forEach((k) => {
@@ -145,23 +148,33 @@ export function suggerimenti(input) {
   const riserM = Math.max(0, nz(input?.riserM, DEFAULTS.riserM));
   const riserMetri = (q.m3d + q.m3a) * riserM;
 
+  // Derivazione dal tronco: per ogni ugello un T, uno spezzone di tubo 1/4"
+  // e, dove il T non riduce da solo, un raccordo di riduzione.
+  const derivM = Math.max(0, nz(input?.derivM, DEFAULTS.derivM));
+  const nDeriv = q.m4d + q.m4a;
+  const derivMetri = nDeriv * derivM;
+  const servonoRiduzioni = (C.sys[C.brands[input?.brand]?.sys]?.riduzioni || []).length > 0;
+
   let mTronco = Math.max(0, nz(input?.mTronco, DEFAULTS.mTronco));
   if (mTronco > metriTot) mTronco = metriTot;
 
   return {
     macchine: attive.length > 0 || linee.length > 0 ? 1 : 0,
-    tubiLinea: Math.max(0, metriTot - mTronco) + riserMetri,
+    tubiLinea: Math.max(0, metriTot - mTronco) + riserMetri + derivMetri,
     tubiTronco: mTronco,
-    ugelli: q.m1d + q.m1a + q.m2q + q.m3d + q.m3a,
-    portaDritti: q.m1d + q.m3d,
-    porta90: q.m1a + q.m3a,
+    ugelli: q.m1d + q.m1a + q.m2q + q.m3d + q.m3a + q.m4d + q.m4a,
+    portaDritti: q.m1d + q.m3d + q.m4d,
+    porta90: q.m1a + q.m3a + q.m4a,
     inLinea: q.m2q,
-    raccordiT: q.m1d + q.m1a + q.m3d + q.m3a,
+    raccordiT: q.m1d + q.m1a + q.m3d + q.m3a + nDeriv,
+    riduzioni: servonoRiduzioni ? nDeriv : 0,
     tappi: attive.length,
     accessori: null, // nessun suggerimento: sono scelte discrezionali
     _metodi: q,
     _metriTot: metriTot,
     _riserMetri: riserMetri,
+    _derivMetri: derivMetri,
+    _nDeriv: nDeriv,
     _mTronco: mTronco,
     _ugelliPrevisti: linee.reduce((a, l) => a + ugelliLinea(l), 0),
     _nLinee: attive.length,
@@ -370,6 +383,7 @@ export function calcolaImpianto(input) {
       linea: totali.tubiLinea.q,
       tronco: totali.tubiTronco.q,
       riser: sugg._riserMetri,
+      derivazioni: sugg._derivMetri,
       perimetro: Math.max(0, sugg._metriTot - sugg._mTronco),
     },
     metodi: { ...sugg._metodi },

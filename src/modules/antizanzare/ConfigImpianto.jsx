@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import { C, DEFAULTS, brandList } from './catalogo';
+import { C, DEFAULTS, brandList, supportaDerivazione } from './catalogo';
 import { CATEGORIE, articoliCategoria } from './calcolo';
 import SelettoreVoci from './SelettoreVoci';
 import VoceExtraRicerca from './VoceExtraRicerca';
@@ -111,6 +111,24 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
           />
         </Campo>
       </div>
+
+      {supportaDerivazione(brand) && (
+        <Campo
+          label="Metri tubo per derivazione"
+          hint="Spezzone che dal T sul tronco porta all'ugello. Il tubo va nella categoria Tubo linea."
+        >
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.1"
+            value={cfg.derivM ?? DEFAULTS.derivM}
+            onChange={(e) => set({ derivM: e.target.value })}
+            disabled={soloLettura}
+            className={input}
+          />
+        </Campo>
+      )}
 
       {/* ── Materiali: una lista per categoria ── */}
       <div className="space-y-1.5 pt-1">

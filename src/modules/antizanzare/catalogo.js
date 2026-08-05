@@ -80,6 +80,8 @@ export const C = {
         {code:"4240", label:"T Ø8",            priceRaw:1.15, costRaw:0.84, div:1},
       ],
       tappo:{code:"4207", label:"Chiusura fine linea Ø6", priceRaw:0.96, costRaw:0.70, div:1},
+      // Il T Ø8-6-8 riduce da solo: nessun raccordo di riduzione separato
+      riduzioni:[],
       inline:null,
       accessori:[
         {code:"4258", label:"Valvola non ritorno Ø6 (sfuso)", priceRaw:2.5,  costRaw:1.83, div:1},
@@ -138,6 +140,11 @@ export const C = {
       tappoExtra:[
         {code:"AI300038", label:"Tappo fine linea 3/8\"", priceRaw:6.8, costRaw:null, div:1},
       ],
+      // Serve per derivare un ugello 1/4" da una dorsale 3/8"
+      riduzioni:[
+        {code:"AI161438", label:"Manicotto riduzione 3/8-1/4", priceRaw:6.8, costRaw:null, div:1},
+        {code:"AI251438", label:"Riduzione innesto 3/8-1/4",  priceRaw:8.2, costRaw:null, div:1},
+      ],
       inline:{code:"AI501414", label:"Portaugello in linea tubo/tubo 1/4\"", priceRaw:5.6, costRaw:null, div:1},
       accessori:[
         {code:"AC300030", label:"Sensore vento",   priceRaw:120,  costRaw:null, div:1},
@@ -153,10 +160,8 @@ export const C = {
         {code:"AI700014", label:"Riduttore di pressione 1/4\"", priceRaw:36, costRaw:null, div:1},
         {code:"AI700038", label:"Riduttore di pressione 3/8\"", priceRaw:36, costRaw:null, div:1},
         {code:"RC333838", label:"Raccordo acqua 3/8\" con valvola NR", priceRaw:27, costRaw:null, div:1},
-        {code:"AI161438", label:"Manicotto riduzione 3/8-1/4", priceRaw:6.8, costRaw:null, div:1},
         {code:"AI183838", label:"Gomito 90° 3/8\"", priceRaw:14.2, costRaw:null, div:1},
         {code:"AI360038", label:"Croce 3/8\"",      priceRaw:14,   costRaw:null, div:1},
-        {code:"AI251438", label:"Riduzione innesto 3/8-1/4", priceRaw:8.2, costRaw:null, div:1},
         {code:"AC400012", label:"Cavalletto monoprodotto ZA20", priceRaw:53.33, costRaw:null, div:1},
         {code:"AC400011", label:"Cavalletto monoprodotto da ZA100", priceRaw:66.7, costRaw:null, div:1},
         {code:"AC400022", label:"Cavalletto Dual/multizona", priceRaw:82, costRaw:null, div:1},
@@ -183,6 +188,7 @@ export const C = {
         {code:"KT191414P.5",label:"Raccordo T POM (kit 5)", priceRaw:14.92, costRaw:null, div:5},
       ],
       tappo:{code:"KT300014.5", label:"Tappo fine linea (kit 5)", priceRaw:15.41, costRaw:null, div:5},
+      riduzioni:[],  // sistema a kit, solo 1/4"
       inline:{code:"KT501414.5", label:"Portaugello in linea tubo/tubo (kit 5)", priceRaw:29.92, costRaw:null, div:5},
       accessori:[
         {code:"AC300010", label:"Sonda di livello", priceRaw:34.02, costRaw:null, div:1},
@@ -223,12 +229,14 @@ export const C = {
       tappoExtra:[
         {code:"RACCFL3/8", label:"Fine linea cieco 3/8\"", priceRaw:2.4, costRaw:null, div:1},
       ],
+      riduzioni:[
+        {code:"RIDDRI3/8-1/4", label:"Riduzione dritta 3/8→1/4", priceRaw:4.6, costRaw:null, div:1},
+      ],
       inline:{code:"RACCPUD1/4", label:"Raccordo dritto portaugello 6-6", priceRaw:6.6, costRaw:null, div:1},
       accessori:[
         {code:"PROXUGUNI15",  label:"Prolunga pieghevole ugello 15 cm", priceRaw:8.5, costRaw:null, div:1},
         {code:"GRAFISSTB1/4", label:"Graffa fissatubo 1/4\"", priceRaw:0.6, costRaw:null, div:1},
         {code:"GRAFISSTB3/8", label:"Graffa fissatubo 3/8\"", priceRaw:0.8, costRaw:null, div:1},
-        {code:"RIDDRI3/8-1/4",label:"Riduzione dritta 3/8→1/4", priceRaw:4.6, costRaw:null, div:1},
         {code:"RACCL1/4",     label:"Raccordo L 90° 1/4\"", priceRaw:4.7, costRaw:null, div:1},
         {code:"RACCL3/8",     label:"Raccordo L 90° 3/8\"", priceRaw:6.2, costRaw:null, div:1},
         {code:"TAGL_TUBO_01", label:"Taglia tubo professionale", priceRaw:39, costRaw:null, div:1},
@@ -256,6 +264,9 @@ export const METODI = [
   { id: 'm2q', label: 'In linea, senza T',       porta: null, usaT: false, riser: false },
   { id: 'm3d', label: 'Riser + portaugello dritto', porta: 'd', usaT: true, riser: true },
   { id: 'm3a', label: 'Riser + portaugello 90°',    porta: 'a', usaT: true, riser: true },
+  // Derivazione da dorsale Ø8 / 3-8": T + (riduzione) + spezzone di tubo + portaugello
+  { id: 'm4d', label: 'Derivazione da tronco + dritto', porta: 'd', usaT: true, riser: false, deriva: true },
+  { id: 'm4a', label: 'Derivazione da tronco + 90°',    porta: 'a', usaT: true, riser: false, deriva: true },
 ];
 
 /* ===== fissaggio ugelli: tariffe manodopera ===== */
@@ -271,6 +282,7 @@ export const DEFAULTS = {
   metodo: 'm1d',
   mTronco: 0,
   riserM: 2,
+  derivM: 1,        // metri di tubo 1/4" per ogni derivazione dal tronco
   usaTappo: true,
   manoMode: 'det',        // det | perUg | manual
   manoMac: 200,
@@ -301,3 +313,18 @@ export const portaPerTipo = (brandId, kind) =>
 
 /** true se il brand supporta il metodo 2 (raccordo in linea). */
 export const supportaInline = (brandId) => Boolean(sysPerBrand(brandId)?.inline);
+
+/**
+ * true se il brand ha una dorsale di diametro maggiore da cui derivare.
+ * Geyser lo fa con il T Ø8-6-8, Zanzero e Gardheaven con T 3/8" + riduzione.
+ * SMART e' un sistema a kit tutto 1/4": non deriva.
+ */
+export const supportaDerivazione = (brandId) => {
+  const s = sysPerBrand(brandId);
+  if (!s) return false;
+  if (brandId === 'smart') return false;
+  return (s.tubo || []).some((t) => /3\/8|Ø8/i.test(t.label));
+};
+
+/** Articoli di riduzione 3/8 -> 1/4 disponibili per il brand. */
+export const riduzioniPerBrand = (brandId) => sysPerBrand(brandId)?.riduzioni || [];

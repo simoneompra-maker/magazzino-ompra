@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Archive } from 'lucide-react';
+import { Archive, BookOpen } from 'lucide-react';
 import { cercaVociExtra } from './antizanzareService';
 
 /**
@@ -53,6 +53,7 @@ export default function VoceExtraRicerca({ valore, disabled, onScegli, onDigita,
           setAperto(true);
         }}
         onFocus={() => setAperto(true)}
+        title="Cerca nell'archivio delle voci usate e nel Listino Unificato"
         onBlur={() => {
           clearTimeout(chiusuraRef.current);
           chiusuraRef.current = setTimeout(() => setAperto(false), 150);
@@ -64,11 +65,13 @@ export default function VoceExtraRicerca({ valore, disabled, onScegli, onDigita,
       />
 
       {aperto && suggerimenti.length > 0 && (
-        <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
-          <p className="px-3 py-1 text-xs text-gray-400 border-b flex items-center gap-1">
-            <Archive className="w-3 h-3" />
-            {(valore || '').trim().length >= 2 ? 'Dall’archivio' : 'Le più usate'}
+        <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+          <p className="px-3 py-1 text-xs text-gray-400 border-b sticky top-0 bg-white">
+            {(valore || '').trim().length >= 2
+              ? 'Archivio e Listino Unificato'
+              : 'Voci più usate — scrivi per cercare a listino'}
           </p>
+
           {suggerimenti.map((v, i) => (
             <button
               key={v.id}
@@ -79,13 +82,21 @@ export default function VoceExtraRicerca({ valore, disabled, onScegli, onDigita,
                 i === evidenziato ? 'bg-green-50' : 'hover:bg-green-50'
               }`}
             >
-              <p className="text-sm text-gray-800 truncate">{v.descrizione}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-gray-800 flex items-start gap-1.5">
+                {v.fonte === 'archivio' ? (
+                  <Archive className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <BookOpen className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+                )}
+                <span className="truncate">{v.descrizione}</span>
+              </p>
+              <p className="text-xs text-gray-400 pl-5">
                 {[
                   v.codice,
+                  v.marca,
                   v.costo != null && `costo ${Number(v.costo).toFixed(2)} €`,
                   v.prezzo != null && `vendita ${Number(v.prezzo).toFixed(2)} €`,
-                  v.usi > 1 && `usata ${v.usi} volte`,
+                  v.fonte === 'archivio' && v.usi > 1 && `usata ${v.usi} volte`,
                 ]
                   .filter(Boolean)
                   .join(' · ')}

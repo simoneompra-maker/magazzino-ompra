@@ -277,28 +277,43 @@ export async function cercaClienti(testo) {
 /* ─────────────────── archivio voci extra ─────────────────── */
 
 /**
- * Suggerimenti dall'archivio delle voci fuori listino.
- * Con meno di 2 caratteri restituisce le piu' usate, cosi' l'elenco
- * e' utile anche prima di digitare.
+ * Ricerca per le voci fuori listino: cerca sia nell'archivio delle voci
+ * gia' usate sia nell'intero Listino Unificato.
+ * Senza testo mostra solo le voci d'archivio piu' usate.
  */
 export async function cercaVociExtra(testo) {
   const q = (testo || '').trim();
 
-  let query = supabase
-    .from('az_voci_extra')
-    .select('id, descrizione, codice, um, costo, prezzo, usi')
-    .order('usi', { ascending: false })
-    .order('ultimo_uso', { ascending: false })
-    .limit(8);
+  const { data, error } = await supabase.rpc('az_cerca_voci', {
+    p_testo: q,
+    p_limite: 12,
+  });
 
-  if (q.length >= 2) query = query.ilike('descrizione', `%${q}%`);
-
-  const { data, error } = await query;
   if (error) {
-    console.error('Ricerca voci extra fallita:', error);
+    console.error('Ricerca voci fallita:', error);
     return [];
   }
-  return data || [];
+
+  return (data || []).map((v, i) => ({
+    id: `${v.fonte}-${v.codice || i}-${i}`,
+    fonte: v.fonte, // 'archivio' | 'listino'
+    codice: v.codice,
+    descrizione: v.descrizione,
+    marca: v.marca,
+    categoria: v.categoria,
+    um: v.um,
+    costo: v.costo,
+    prezzo: v.prezzo,
+    usi: v.usi,
+  }));
+}
+
+/** Quanti articoli ci sono nel listino importato. */
+export async function contaListino() {
+  const { count, error } = await supabase
+    .from('az_listino')
+    .select('*', { count: 'exact', head: true });
+  return error ? 0 : count || 0;
 }
 
 /**

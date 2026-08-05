@@ -11,7 +11,7 @@
  * riser decimali e piu' varianti in uso nella stessa categoria.
  */
 
-import { calcolaImpianto, CATEGORIE, articoliCategoria, arrotonda } from '../calcolo.js';
+import { calcolaImpianto, CATEGORIE, articoloPredefinito, arrotonda } from '../calcolo.js';
 
 /* Copia fedele di allineaVociAuto da ProgettoEdit.jsx */
 function allineaVociAuto(cfg, suggeriti) {
@@ -40,7 +40,7 @@ function allineaVociAuto(cfg, suggeriti) {
     }
 
     if (attuali.length <= 1) {
-      const code = attuali[0]?.code || articoliCategoria(cfg.brand, cat.id)[0]?.code;
+      const code = attuali[0]?.code || articoloPredefinito(cfg.brand, cat.id)?.code;
       if (!code) return;
       nuove[cat.id] = [{ code, q }];
       cambiato = true;

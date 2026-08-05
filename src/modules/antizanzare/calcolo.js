@@ -94,6 +94,36 @@ export function articoliCategoria(brandId, categoriaId) {
   }
 }
 
+/**
+ * Articolo con cui precompilare una categoria quando l'utente non ne ha
+ * ancora scelto uno.
+ *
+ * Per il tubo tronco non va bene il primo dell'elenco — sarebbe il Ø6 —
+ * ma il primo di diametro maggiore: Ø8 per Geyser, 3/8" per Zanzero e
+ * Gardheaven. Fra due bobine dello stesso diametro vince quella da 100 m,
+ * che e' il formato che usiamo.
+ */
+export function articoloPredefinito(brandId, categoriaId) {
+  const articoli = articoliCategoria(brandId, categoriaId);
+  if (articoli.length === 0) return null;
+
+  if (categoriaId === 'tubiTronco') {
+    const grossi = articoli.filter((a) => /3\/8|Ø8/i.test(a.label));
+    if (grossi.length > 0) {
+      return grossi.find((a) => /100\s*m/i.test(a.label)) || grossi[0];
+    }
+  }
+
+  if (categoriaId === 'tubiLinea') {
+    const sottili = articoli.filter((a) => !/3\/8|Ø8/i.test(a.label));
+    if (sottili.length > 0) {
+      return sottili.find((a) => /100\s*m/i.test(a.label)) || sottili[0];
+    }
+  }
+
+  return articoli[0];
+}
+
 /* ─────────────────── prezzi ─────────────────── */
 
 /** Prezzo di vendita unitario (listino diviso confezione). */

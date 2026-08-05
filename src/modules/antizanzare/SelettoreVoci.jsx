@@ -21,6 +21,7 @@ export default function SelettoreVoci({
   titolo,
   um = 'pz',
   articoli,
+  predefinito, // articolo da usare quando la categoria e' ancora vuota
   valori, // [{code, q}]
   suggerito, // numero, oppure null se la categoria e' discrezionale
   soloLettura,
@@ -50,7 +51,7 @@ export default function SelettoreVoci({
   /** Mette tutto il suggerito sulla prima voce gia' usata, o sul primo articolo. */
   const applicaSuggerito = () => {
     if (suggerito == null) return;
-    const codeTarget = valori[0]?.code || articoli[0]?.code;
+    const codeTarget = valori[0]?.code || predefinito?.code || articoli[0]?.code;
     if (!codeTarget) return;
     if (valori.length <= 1) {
       onChange(suggerito > 0 ? [{ code: codeTarget, q: suggerito }] : [], { auto: true });

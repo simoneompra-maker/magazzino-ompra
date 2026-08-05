@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ArrowLeft, Save, Camera, Image as ImageIcon, Trash2, AlertTriangle, ClipboardList, Loader2, Wand2,
 } from 'lucide-react';
-import { calcolaImpianto, CATEGORIE, articoliCategoria, arrotonda } from './calcolo';
+import { calcolaImpianto, CATEGORIE, articoloPredefinito, arrotonda } from './calcolo';
 import { C, DEFAULTS, FISSAGGI } from './catalogo';
 import LineeEditor from './LineeEditor';
 import ConfigImpianto from './ConfigImpianto';
@@ -73,7 +73,7 @@ function allineaVociAuto(cfg, suggeriti) {
     }
 
     if (attuali.length <= 1) {
-      const code = attuali[0]?.code || articoliCategoria(cfg.brand, cat.id)[0]?.code;
+      const code = attuali[0]?.code || articoloPredefinito(cfg.brand, cat.id)?.code;
       if (!code) return;
       nuove[cat.id] = [{ code, q }];
       cambiato = true;

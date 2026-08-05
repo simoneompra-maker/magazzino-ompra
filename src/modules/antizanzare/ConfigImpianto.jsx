@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { C, DEFAULTS, brandList, supportaDerivazione } from './catalogo';
-import { CATEGORIE, articoliCategoria } from './calcolo';
+import { CATEGORIE, articoliCategoria, articoloPredefinito } from './calcolo';
 import SelettoreVoci from './SelettoreVoci';
 import VoceExtraRicerca from './VoceExtraRicerca';
 
@@ -132,6 +132,7 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
               titolo={cat.label}
               um={cat.um}
               articoli={articoli}
+              predefinito={articoloPredefinito(brand, cat.id)}
               valori={voci[cat.id] || []}
               suggerito={sugg[cat.id] ?? null}
               soloLettura={soloLettura}

@@ -19,17 +19,29 @@ import StihlCatalog from './components/StihlCatalog';
 import ArchivioPreventivi from './components/ArchivioPreventivi';
 import CompilatorePrev from './components/CompilatorePrev';
 import CatalogoProdotti from './components/CatalogoProdotti';
+import AntizanzareModule from './modules/antizanzare/AntizanzareModule';
+import { puoAccedere, paginaIniziale, bloccatoSuModulo } from './lib/permessi';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
+const OPERATORE_FULL_KEY = 'ompra_operatore';
+
+/** Legge l'operatore salvato. Chi ha fatto login prima dei ruoli ha solo il nome. */
+function leggiOperatore() {
+  try {
+    const raw = localStorage.getItem(OPERATORE_FULL_KEY);
+    if (raw) return JSON.parse(raw);
+    const nome = localStorage.getItem(OPERATORE_KEY);
+    if (nome) return { nome, ruolo: nome.toLowerCase() === 'admin' ? 'admin' : 'commerciale', moduli: null };
+  } catch { /* localStorage non disponibile */ }
+  return null;
+}
 
 // Versione iniettata da vite.config.js al momento del build
 const CURRENT_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
-  const [operatore, setOperatore] = useState(() => {
-    try { return localStorage.getItem(OPERATORE_KEY) || ''; } catch { return ''; }
-  });
+  const [operatore, setOperatore] = useState(leggiOperatore);
   const init = useStore((state) => state.init);
   const cleanup = useStore((state) => state.cleanup);
 
@@ -66,16 +78,23 @@ function App() {
   }, []);
   // ───────────────────────────────────────────────────────────
 
-  const navigate = (page) => setCurrentPage(page);
+  // Blocca la navigazione verso moduli non consentiti all'operatore
+  const navigate = (page) => {
+    if (page !== 'home' && !puoAccedere(operatore, page)) return;
+    setCurrentPage(page);
+  };
 
-  const handleSelezionaOperatore = (nome) => {
-    setOperatore(nome);
-    setCurrentPage('home');
+  const handleSelezionaOperatore = (op) => {
+    setOperatore(op);
+    setCurrentPage(paginaIniziale(op));
   };
 
   const handleCambiaOperatore = () => {
-    try { localStorage.removeItem(OPERATORE_KEY); } catch {}
-    setOperatore('');
+    try {
+      localStorage.removeItem(OPERATORE_KEY);
+      localStorage.removeItem(OPERATORE_FULL_KEY);
+    } catch {}
+    setOperatore(null);
     setCurrentPage('home');
   };
 
@@ -84,6 +103,15 @@ function App() {
     return (
       <div className="min-h-screen bg-gray-100">
         <SelezionaOperatore onSelezionato={handleSelezionaOperatore} />
+      </div>
+    );
+  }
+
+  // Il tecnico non ha una dashboard: vive dentro il suo unico modulo
+  if (bloccatoSuModulo(operatore)) {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <AntizanzareModule operatore={operatore} onEsci={null} />
       </div>
     );
   }
@@ -124,6 +152,8 @@ function App() {
         return <CompilatorePrev onNavigate={navigate} />;
       case 'catalogo-prodotti':
         return <CatalogoProdotti onNavigate={navigate} />;
+      case 'antizanzare':
+        return <AntizanzareModule operatore={operatore} onEsci={() => navigate('home')} />;
       default:
         return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }

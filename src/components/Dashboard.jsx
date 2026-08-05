@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, PieChart, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch, BookOpen, FilePlus2 } from 'lucide-react';
+import { PackagePlus, ShoppingCart, Package, Wifi, WifiOff, History, FileText, Clock, ClipboardList, BookLock, BarChart2, PieChart, UserCircle, LogOut, UserPlus, Trash2, AlertTriangle, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, Leaf, Users, Key, FileSearch, BookOpen, FilePlus2, Bug } from 'lucide-react';
 import useStore from '../store';
 import { supabase } from '../store';
 
@@ -333,6 +333,14 @@ export default function Dashboard({ onNavigate, onCambiaOperatore }) {
           >
             <ClipboardList className="w-6 h-6" />
             <div className="text-xs font-bold">LISTINI</div>
+          </button>
+          <button
+            onClick={() => onNavigate('antizanzare')}
+            className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl font-semibold shadow-sm active:scale-95 transition-transform border-2"
+            style={{ borderColor: '#006B3F', backgroundColor: '#f0fdf4', color: '#006B3F' }}
+          >
+            <Bug className="w-6 h-6" />
+            <div className="text-xs font-bold">ANTIZANZARE</div>
           </button>
         </div>
       </div>

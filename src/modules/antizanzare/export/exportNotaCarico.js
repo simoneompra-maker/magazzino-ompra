@@ -111,6 +111,7 @@ export function costruisciNotaCarico({ progetto, bom, linee, risultato }) {
     riga([
       intestazione('Etichetta'),
       intestazione('Metri'),
+      intestazione('di cui tronco'),
       intestazione('Passo'),
       intestazione('Ugelli'),
       intestazione('Montaggio'),
@@ -123,6 +124,7 @@ export function costruisciNotaCarico({ progetto, bom, linee, risultato }) {
       riga([
         datoTesto(l.etichetta || `Linea ${i + 1}`),
         datoNum(Number(l.metri) || 0),
+        datoNum(Number(l.metriTronco) || 0),
         datoNum(Number(l.passo) || 0),
         datoNum(l.ugelliPrevisti ?? Math.ceil((Number(l.metri) || 0) / (Number(l.passo) || 4))),
         datoTesto(met),

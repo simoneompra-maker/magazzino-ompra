@@ -86,18 +86,6 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Campo label="Metri tubo tronco" hint="Tratto di alimentazione, escluso dal perimetro">
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="1"
-            value={cfg.mTronco ?? DEFAULTS.mTronco}
-            onChange={(e) => set({ mTronco: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          />
-        </Campo>
         <Campo label="Metri riser per ugello" hint="Prolunga usata dai metodi con riser">
           <input
             type="number"
@@ -110,6 +98,9 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
             className={input}
           />
         </Campo>
+        <p className="text-xs text-gray-400 self-end pb-1">
+          I metri di tubo tronco si dichiarano riga per riga, nella sezione Linee.
+        </p>
       </div>
 
       {supportaDerivazione(brand) && (

@@ -167,6 +167,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
           (p.linee || []).map((l) => ({
             etichetta: l.etichetta || '',
             metri: l.metri,
+            metriTronco: l.metri_tronco ?? 0,
             passo: l.passo,
             metodi: l.metodi || {},
           }))

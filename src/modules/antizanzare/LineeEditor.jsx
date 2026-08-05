@@ -62,6 +62,10 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
 
   const maxLinea = risultato?.macchina?.perLine || 0;
   const totMetri = linee.reduce((a, l) => a + (parseFloat(l.metri) || 0), 0);
+  const totTronco = linee.reduce(
+    (a, l) => a + Math.min(parseFloat(l.metriTronco) || 0, parseFloat(l.metri) || 0),
+    0
+  );
   const totPrevisti = linee.reduce((a, l) => a + ugelliLinea(l), 0);
   const totMontati = linee.reduce((a, l) => a + montatiLinea(l), 0);
 
@@ -92,6 +96,8 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
           const montati = montatiLinea(l);
           const coincide = previsti === montati;
           const oltre = maxLinea > 0 && previsti > maxLinea;
+          const troncoEccessivo =
+            (parseFloat(l.metriTronco) || 0) > (parseFloat(l.metri) || 0);
 
           return (
             <div key={i} className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/60">
@@ -123,7 +129,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <label className="block">
                   <span className="text-xs text-gray-500">Metri</span>
                   <input
@@ -150,7 +156,32 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                     className="w-full border rounded-lg px-2 py-1.5 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </label>
+                <label className="block">
+                  <span className="text-xs text-gray-500" title="Quanti di questi metri corrono in diametro maggiore. Sono compresi nei metri, non si aggiungono.">
+                    di cui tronco
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="1"
+                    max={l.metri || undefined}
+                    value={l.metriTronco ?? ''}
+                    placeholder="0"
+                    onChange={(e) => aggiorna(i, { metriTronco: e.target.value })}
+                    disabled={soloLettura}
+                    className={`w-full border rounded-lg px-2 py-1.5 text-sm disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      troncoEccessivo ? 'border-red-400 bg-red-50' : ''
+                    }`}
+                  />
+                </label>
               </div>
+
+              {troncoEccessivo && (
+                <p className="text-xs text-red-600 mt-1">
+                  I metri su tronco non possono superare i metri della linea.
+                </p>
+              )}
 
               {/* Ripartizione sui metodi di montaggio */}
               <div className="mt-2.5">
@@ -215,7 +246,8 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
 
       {linee.length > 0 && (
         <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
-          Totale <b>{totMetri.toLocaleString('it-IT')} m</b> · <b>{totPrevisti}</b> ugelli previsti ·{' '}
+          Totale <b>{totMetri.toLocaleString('it-IT')} m</b>
+          {totTronco > 0 && <> · di cui <b>{totTronco.toLocaleString('it-IT')} m</b> su tronco</>} · <b>{totPrevisti}</b> ugelli previsti ·{' '}
           <b className={totMontati === totPrevisti ? 'text-green-700' : 'text-amber-600'}>
             {totMontati}
           </b>{' '}

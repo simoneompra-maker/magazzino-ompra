@@ -155,8 +155,17 @@ export function suggerimenti(input) {
   const derivMetri = nDeriv * derivM;
   const servonoRiduzioni = (C.sys[C.brands[input?.brand]?.sys]?.riduzioni || []).length > 0;
 
-  let mTronco = Math.max(0, nz(input?.mTronco, DEFAULTS.mTronco));
-  if (mTronco > metriTot) mTronco = metriTot;
+  // Il tronco e' una proprieta' della linea: quanti dei suoi metri corrono
+  // in diametro maggiore. Sono COMPRESI nei metri della linea, non aggiuntivi.
+  let mTronco = linee.reduce(
+    (a, l) => a + Math.min(Math.max(0, nz(l.metriTronco)), Math.max(0, nz(l.metri))),
+    0
+  );
+
+  // Compatibilita': i progetti salvati prima avevano un unico valore globale
+  if (mTronco === 0 && nz(input?.mTronco) > 0) {
+    mTronco = Math.min(Math.max(0, nz(input.mTronco)), metriTot);
+  }
 
   return {
     macchine: attive.length > 0 || linee.length > 0 ? 1 : 0,

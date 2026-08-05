@@ -129,6 +129,7 @@ async function salvaLinee(progettoId, linee) {
         ordine: i,
         etichetta: l.etichetta || null,
         metri: Number(l.metri) || 0,
+        metri_tronco: Math.min(Number(l.metriTronco) || 0, Number(l.metri) || 0),
         passo: Number(l.passo) || 4,
         metodi,
         ugelli: Number(l.metri) > 0 ? Math.ceil(Number(l.metri) / (Number(l.passo) || 4)) : 0,

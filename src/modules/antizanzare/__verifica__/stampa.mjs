@@ -21,11 +21,33 @@ import { costruisciNotaCarico } from '../export/exportNotaCarico.js';
 
 const LAVORO = '/tmp/az-stampa';
 
-/* Colonne che devono stare tutte sullo stesso foglio */
-const INTESTAZIONI = ['Codice', 'Descrizione', 'U.M.', 'Q.tà prevista', 'Q.tà usata', 'Extra usati', 'Note'];
+/**
+ * Una parola per colonna, scelta perche' univoca.
+ * Non uso le intestazioni intere: quando vanno a capo, pdftotext le spezza
+ * su due righe e un confronto sulla stringa completa fallirebbe anche con
+ * una stampa perfetta. Le singole parole invece restano intatte.
+ */
+const INTESTAZIONI = ['Codice', 'Descrizione', 'U.M.', 'prevista', 'usata', 'Extra', 'Note'];
 
 const A4_LARGHEZZA_PT = 595.28;
 const A4_ALTEZZA_PT = 841.89;
+
+/**
+ * Codici articolo lunghi: se la colonna e' troppo stretta per il corpo
+ * scelto, Excel li spezza a meta' ("TBPA30BAR1/ 4") e diventano illeggibili.
+ */
+const CODICI_LUNGHI = ['TBPA30BAR1/4', 'TBPA80BAR3/8', 'PROXUGUNI15', 'RIDDRI3/8-1/4', 'BASINXUG1/4'];
+
+/**
+ * Ultima parola di descrizioni che vanno a capo. Le righe hanno altezza
+ * fissa: se non basta per due righe di testo, Excel taglia invece di
+ * allargare, e queste parole spariscono.
+ *
+ * Cerco parole singole e non frasi intere: pdftotext -layout intercala la
+ * seconda riga di un a-capo con le celle della riga successiva, quindi una
+ * frase non risulterebbe mai contigua nel testo estratto.
+ */
+const CODE_DESCRIZIONI = ['rinforzata', 'ug./linea', 'ceramico', 'bambù'];
 
 function comando(cmd, args) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -223,9 +245,18 @@ async function main() {
 
   // Le descrizioni lunghe devono andare a capo, non essere troncate
   const tutto = testoPagine.join('\n');
+  const tagliate = CODE_DESCRIZIONI.filter((c) => !tutto.includes(c));
   esito(
-    'le descrizioni lunghe restano leggibili',
-    tutto.includes('Base innesto') || tutto.includes('Portaugelli angolati')
+    'nessuna descrizione troncata dall' + String.fromCharCode(39) + 'altezza di riga',
+    tagliate.length === 0,
+    tagliate.length ? `sparite: ${tagliate.join(', ')}` : ''
+  );
+
+  const rotti = CODICI_LUNGHI.filter((c) => !tutto.includes(c));
+  esito(
+    'nessun codice articolo spezzato a meta' + String.fromCharCode(39),
+    rotti.length === 0,
+    rotti.length ? `spezzati: ${rotti.join(', ')}` : ''
   );
 
   console.log(`\nPDF: ${pdf}`);

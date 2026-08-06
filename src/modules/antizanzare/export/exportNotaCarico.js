@@ -25,13 +25,34 @@ const VERDE = '006B3F';
 const AMBRA = 'B45309';
 
 /**
- * Larghezze in unita' Excel. Somma 90, dentro il limite dell'A4 verticale.
+ * Larghezze in unita' Excel. Il totale di 90 e' un limite MISURATO, non
+ * stimato: provando a stampare, a 93 la colonna Note finisce sulla pagina
+ * successiva. Il calcolo teorico direbbe che c'e' spazio fino a ~95, ma
+ * LibreOffice e Excel si tengono un margine in piu'. Non alzarlo senza
+ * rilanciare __verifica__/stampa.mjs.
+ *
  * La colonna B e' l'unica larga: ci vanno le descrizioni degli articoli e,
  * nella tabella delle linee, la ripartizione per metodo. Tutte e due vanno
  * a capo invece di allargare la pagina.
  */
-const LARGHEZZE = [13, 32, 5, 9, 9, 9, 13];
+const LARGHEZZE = [14, 31, 5, 9, 9, 9, 13];
 const ULTIMA_COL = LARGHEZZE.length - 1; // G
+
+/**
+ * Corpi. Le righe sono alte 20-28 pt per poterci scrivere a penna: con un
+ * carattere da 9 pt restava aria sprecata in ogni riga.
+ *
+ * 12 pt e' il massimo utile, anche questo misurato: a 13 pt i codici
+ * articolo si spezzano a meta' ("TBPA30BAR1/ 4") perche' non stanno piu'
+ * nella colonna A.
+ */
+const F_TITOLO = 15;
+const F_SOTTOTITOLO = 9;
+const F_SEZIONE = 12;
+const F_ETICHETTA = 10;
+const F_TESTO = 12;
+const F_INTESTAZIONE = 11;
+const F_DATO = 12;
 
 const ETICHETTE_METODO = {
   m1d: 'T+dritto',
@@ -52,26 +73,26 @@ const bordo = {
 
 const cella = (v, stile = {}) => ({ v: v ?? '', t: typeof v === 'number' ? 'n' : 's', s: stile });
 
-const titolo = (v) => cella(v, { font: { bold: true, sz: 13, color: { rgb: VERDE } } });
-const sottotitolo = (v) => cella(v, { font: { sz: 8, color: { rgb: '888888' } } });
-const sezione = (v, colore = VERDE) => cella(v, { font: { bold: true, sz: 10, color: { rgb: colore } } });
-const etichetta = (v) => cella(v, { font: { sz: 8, color: { rgb: '888888' } } });
-const testo = (v) => cella(v, { font: { sz: 9 }, alignment: { wrapText: true } });
+const titolo = (v) => cella(v, { font: { bold: true, sz: F_TITOLO, color: { rgb: VERDE } } });
+const sottotitolo = (v) => cella(v, { font: { sz: F_SOTTOTITOLO, color: { rgb: '888888' } } });
+const sezione = (v, colore = VERDE) => cella(v, { font: { bold: true, sz: F_SEZIONE, color: { rgb: colore } } });
+const etichetta = (v) => cella(v, { font: { sz: F_ETICHETTA, color: { rgb: '888888' } } });
+const testo = (v) => cella(v, { font: { sz: F_TESTO }, alignment: { wrapText: true } });
 
 const intestazione = (v) =>
   cella(v, {
-    font: { bold: true, sz: 8, color: { rgb: 'FFFFFF' } },
+    font: { bold: true, sz: F_INTESTAZIONE, color: { rgb: 'FFFFFF' } },
     fill: { fgColor: { rgb: VERDE } },
     alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
     border: bordo,
   });
 
 const datoTesto = (v) =>
-  cella(v, { font: { sz: 9 }, border: bordo, alignment: { wrapText: true, vertical: 'center' } });
+  cella(v, { font: { sz: F_DATO }, border: bordo, alignment: { wrapText: true, vertical: 'center' } });
 
 const datoNum = (v) =>
   cella(v, {
-    font: { sz: 9 },
+    font: { sz: F_DATO },
     border: bordo,
     alignment: { horizontal: 'center', vertical: 'center' },
     numFmt: '0.##',
@@ -91,11 +112,37 @@ const RIGHE_LIBERE_MIN = 4;
 const RIGHE_LIBERE_MAX = 12;
 
 /**
- * Altezze minime: una riga da compilare a penna vuole almeno 7 mm,
- * cioe' una ventina di punti. Sotto quella soglia si scrive male.
+ * Altezze. Una riga da compilare a penna vuole almeno 7 mm, cioe' una
+ * ventina di punti. Le righe con testo a capo vanno calcolate: con
+ * altezza fissa il testo sfonda la cella e si sovrappone ai bordi.
  */
 const H_RIGA_DATI = 20;
 const H_RIGA_LIBERA = 22;
+
+/** Larghezza fisica di una colonna, in punti. */
+const puntiColonna = (unita) => 5.25 * (unita + 0.83) + 3.75;
+
+/**
+ * Caratteri che stanno su una riga di quella colonna a quel corpo.
+ * Il coefficiente 0,45 e' la larghezza media di un carattere Calibri
+ * rapportata al corpo, ricavata confrontando il calcolo con le stampe.
+ */
+const caratteriPerRiga = (unita, corpo) => Math.max(4, Math.floor(puntiColonna(unita) / (0.45 * corpo)));
+
+/**
+ * Altezza necessaria a una riga, dato il testo di ogni colonna.
+ * @param {Array<{testo:string, colonna:number}>} celle
+ * @param {number} minimo altezza sotto la quale non scendere
+ */
+const altezzaRiga = (celle, minimo = H_RIGA_DATI) => {
+  const righe = celle.reduce((max, c) => {
+    const testo = String(c.testo ?? '');
+    if (!testo) return max;
+    const perRiga = caratteriPerRiga(LARGHEZZE[c.colonna], F_DATO);
+    return Math.max(max, Math.ceil(testo.length / perRiga));
+  }, 1);
+  return Math.max(minimo, Math.round(4 + righe * F_DATO * 1.3));
+};
 
 /**
  * Altezza utile di un A4 verticale con i margini impostati sopra:
@@ -227,9 +274,10 @@ export function costruisciNotaCarico({ progetto, bom, linee, risultato }) {
         .filter(([, v]) => v > 0)
         .map(([k, v]) => `${ETICHETTE_METODO[k] || k}: ${v}`)
         .join(' · ');
+      const et = l.etichetta || `Linea ${i + 1}`;
       push(
         [
-          datoTesto(l.etichetta || `Linea ${i + 1}`),
+          datoTesto(et),
           datoTesto(met),
           datoNum(Number(l.metri) || 0),
           datoNum(Number(l.metriTronco) || 0),
@@ -237,7 +285,10 @@ export function costruisciNotaCarico({ progetto, bom, linee, risultato }) {
           datoNum(l.ugelliPrevisti ?? Math.ceil((Number(l.metri) || 0) / (Number(l.passo) || 4))),
           null,
         ],
-        H_RIGA_DATI
+        altezzaRiga([
+          { testo: et, colonna: 0 },
+          { testo: met, colonna: 1 },
+        ])
       );
       unisci(5, ULTIMA_COL);
     });
@@ -262,9 +313,6 @@ export function costruisciNotaCarico({ progetto, bom, linee, risultato }) {
   intestazioneMateriale();
 
   (bom || []).forEach((b) => {
-    // Le descrizioni lunghe vanno a capo: due righe di testo vogliono
-    // piu' spazio, altrimenti Excel taglia
-    const alta = (b.desc || '').length > 46;
     pushConIntestazione(
       [
         datoTesto(b.code || ''),
@@ -275,7 +323,10 @@ export function costruisciNotaCarico({ progetto, bom, linee, risultato }) {
         daCompilare(),
         daCompilare(),
       ],
-      alta ? H_RIGA_DATI + 8 : H_RIGA_DATI,
+      altezzaRiga([
+        { testo: b.code, colonna: 0 },
+        { testo: b.desc, colonna: 1 },
+      ]),
       celleIntestazione(),
       H_INTESTAZIONE
     );

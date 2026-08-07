@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../store';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
+// Chiave aggiuntiva con ruolo e permessi. Quella sopra resta il nome
+// in chiaro, perche' Dashboard e useStihl la leggono cosi' da sempre.
+const OPERATORE_FULL_KEY = 'ompra_operatore';
 
 export default function SelezionaOperatore({ onSelezionato }) {
   const [operatori, setOperatori] = useState([]);
@@ -16,7 +19,7 @@ export default function SelezionaOperatore({ onSelezionato }) {
     setLoading(true);
     const { data, error } = await supabase
       .from('operatori')
-      .select('nome')
+      .select('nome, ruolo, moduli')
       .order('nome');
     if (error) {
       setErrore('Errore di connessione. Riprova.');
@@ -26,9 +29,17 @@ export default function SelezionaOperatore({ onSelezionato }) {
     setLoading(false);
   };
 
-  const seleziona = (nome) => {
-    try { localStorage.setItem(OPERATORE_KEY, nome); } catch {}
-    onSelezionato(nome);
+  const seleziona = (op) => {
+    const operatore = {
+      nome: op.nome,
+      ruolo: op.ruolo || 'commerciale',
+      moduli: op.moduli || null,
+    };
+    try {
+      localStorage.setItem(OPERATORE_KEY, operatore.nome);
+      localStorage.setItem(OPERATORE_FULL_KEY, JSON.stringify(operatore));
+    } catch {}
+    onSelezionato(operatore);
   };
 
   return (
@@ -60,10 +71,12 @@ export default function SelezionaOperatore({ onSelezionato }) {
 
         {!loading && !errore && (
           <div className="space-y-2">
-            {operatori.map(({ nome }) => (
+            {operatori.map((op) => {
+              const { nome } = op;
+              return (
               <button
                 key={nome}
-                onClick={() => seleziona(nome)}
+                onClick={() => seleziona(op)}
                 className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl border-2 border-gray-100 hover:border-green-400 hover:bg-green-50 active:scale-95 transition-all text-left"
               >
                 <div className="flex items-center gap-3">
@@ -73,11 +86,14 @@ export default function SelezionaOperatore({ onSelezionato }) {
                   </div>
                   <span className="font-semibold text-gray-700">{nome}</span>
                 </div>
-                {nome === 'Admin' && (
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Admin</span>
+                {op.ruolo && op.ruolo !== 'commerciale' && (
+                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                    {op.ruolo === 'admin' ? 'Admin' : 'Tecnico'}
+                  </span>
                 )}
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
 

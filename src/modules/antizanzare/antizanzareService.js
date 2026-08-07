@@ -309,6 +309,19 @@ export async function cercaVociExtra(testo) {
   }));
 }
 
+/**
+ * Toglie una voce dall'archivio. Serve quando si e' digitato male una
+ * descrizione: senza questo resterebbe fra i suggerimenti per sempre.
+ * Riguarda solo l'archivio, non il Listino Unificato.
+ */
+export async function eliminaVoceExtra(descrizione) {
+  const { data, error } = await supabase.rpc('az_elimina_voce_extra', {
+    p_descrizione: descrizione,
+  });
+  if (error) throw error;
+  return data || 0;
+}
+
 /** Quanti articoli ci sono nel listino importato. */
 export async function contaListino() {
   const { count, error } = await supabase

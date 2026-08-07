@@ -269,12 +269,16 @@ export const METODI = [
   { id: 'm4a', label: 'Derivazione da tronco + 90°',    porta: 'a', usaT: true, riser: false, deriva: true },
 ];
 
-/* ===== fissaggio ugelli: tariffe manodopera ===== */
-export const FISSAGGI = [
-  { id: 'recinzione', label: 'Su recinzione', eurUgello: 8 },
-  { id: 'siepe',      label: 'Su siepe',      eurUgello: 9 },
-  { id: 'paletti',    label: 'Su paletti',    eurUgello: 12 },
-];
+/**
+ * Manodopera: tariffa unica per ugello, indipendente da dove l'ugello
+ * viene fissato. Concordata col tecnico dopo aver misurato alcuni
+ * montaggi: le ore impiegate per centralina, tubi e ugelli risultavano
+ * circa la meta' del numero di ugelli, quindi 22 EUR/ugello equivalgono
+ * a ~44 EUR/ora e coprono l'intero montaggio.
+ *
+ * Uniformare la tariffa allinea i costi gia' in fase di preventivo.
+ */
+export const EUR_PER_UGELLO = 22;
 
 /* ===== valori di default (allineati al calcolatore originale) ===== */
 export const DEFAULTS = {
@@ -284,10 +288,9 @@ export const DEFAULTS = {
   riserM: 2,
   derivM: 1,        // metri di tubo 1/4" per ogni derivazione dal tronco
   usaTappo: true,
-  manoMode: 'det',        // det | perUg | manual
-  manoMac: 200,
-  manoFix: 'recinzione',
-  manoRate: 8,
+  manoMode: 'det',        // det | manual
+  manoMac: 0,             // programmazione centralina: di norma inclusa
+  manoRate: EUR_PER_UGELLO,
   margine: 0,             // % di ricarico sul materiale
 };
 

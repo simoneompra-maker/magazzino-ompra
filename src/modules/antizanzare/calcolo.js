@@ -185,6 +185,15 @@ export function suggerimenti(input) {
   const derivMetri = nDeriv * derivM;
   const servonoRiduzioni = (C.sys[C.brands[input?.brand]?.sys]?.riduzioni || []).length > 0;
 
+  /* Una linea che corre in parte su tronco 3/8" e in parte su 1/4" ha un
+     punto di passaggio fra i due diametri, e li' serve una riduzione anche
+     se su quella linea non c'e' nessuna derivazione. */
+  const cambiDiametro = linee.filter((l) => {
+    const m = Math.max(0, nz(l.metri));
+    const t = Math.min(Math.max(0, nz(l.metriTronco)), m);
+    return t > 0 && t < m;
+  }).length;
+
   // Il tronco e' una proprieta' della linea: quanti dei suoi metri corrono
   // in diametro maggiore. Sono COMPRESI nei metri della linea, non aggiuntivi.
   let mTronco = linee.reduce(
@@ -206,7 +215,7 @@ export function suggerimenti(input) {
     porta90: q.m1a + q.m3a + q.m4a,
     inLinea: q.m2q,
     raccordiT: q.m1d + q.m1a + q.m3d + q.m3a + nDeriv,
-    riduzioni: servonoRiduzioni ? nDeriv : 0,
+    riduzioni: servonoRiduzioni ? nDeriv + cambiDiametro : 0,
     tappi: attive.length,
     accessori: null, // nessun suggerimento: sono scelte discrezionali
     _metodi: q,
@@ -214,6 +223,7 @@ export function suggerimenti(input) {
     _riserMetri: riserMetri,
     _derivMetri: derivMetri,
     _nDeriv: nDeriv,
+    _cambiDiametro: cambiDiametro,
     _mTronco: mTronco,
     _ugelliPrevisti: linee.reduce((a, l) => a + ugelliLinea(l), 0),
     _nLinee: attive.length,
@@ -309,11 +319,12 @@ export function calcolaImpianto(input) {
   const materialeP = CATEGORIE.reduce((a, c) => a + totali[c.id].prezzo, 0);
 
   /* ── manodopera ──
-   * 'det'    montaggio macchina + righe di fissaggio, ognuna con la sua
-   *          quantita' di ugelli e la sua tariffa (recinzione, siepe, paletti…).
-   *          Se non ci sono righe si ricade su tutti gli ugelli alla tariffa base,
-   *          che e' il comportamento del calcolatore originale.
-   * 'perUg'  tariffa unica per ugello
+   * Tariffa unica per ugello, indipendente dal tipo di fissaggio: la
+   * differenza fra recinzione, siepe e paletti si compensa sul cantiere
+   * e distinguerla in preventivo dava prezzi disomogenei.
+   *
+   * 'det'    programmazione centralina + ugelli x tariffa
+   * 'perUg'  solo ugelli x tariffa (resta per i progetti gia' salvati)
    * 'manual' importo secco
    */
   const N = sugg.ugelli;
@@ -321,30 +332,10 @@ export function calcolaImpianto(input) {
   const manoMac = Math.max(0, nz(input.manoMac, DEFAULTS.manoMac));
   const manoRate = Math.max(0, nz(input.manoRate, DEFAULTS.manoRate));
 
-  const fissaggi = (input.fissaggi || [])
-    .map((f) => ({
-      id: f.id,
-      label: f.label,
-      q: Math.max(0, parseInt(f.q, 10) || 0),
-      eur: Math.max(0, nz(f.eur)),
-    }))
-    .filter((f) => f.q > 0);
-
-  const ugelliFissati = fissaggi.reduce((a, f) => a + f.q, 0);
-  const costoFissaggi = fissaggi.reduce((a, f) => a + f.q * f.eur, 0);
-
   let mano = 0;
-  if (manoMode === 'det') {
-    mano = manoMac + (fissaggi.length > 0 ? costoFissaggi : N * manoRate);
-  } else if (manoMode === 'perUg') {
-    mano = manoRate * N;
-  } else {
-    mano = manoRate;
-  }
-
-  if (manoMode === 'det' && fissaggi.length > 0 && ugelliFissati !== N) {
-    avvisi.push(`Fissaggio: ${ugelliFissati} ugelli ripartiti, ${N} montati.`);
-  }
+  if (manoMode === 'det') mano = manoMac + N * manoRate;
+  else if (manoMode === 'perUg') mano = N * manoRate;
+  else mano = manoRate;
 
   /* ── totali ── */
   const ricarico = Math.max(0, nz(input.margine, DEFAULTS.margine)) / 100;
@@ -431,10 +422,9 @@ export function calcolaImpianto(input) {
     totali,
     manodopera: {
       modo: manoMode,
-      macchina: manoMode === 'det' ? manoMac : 0,
-      fissaggi,
-      ugelliFissati,
-      costoFissaggi,
+      programmazione: manoMode === 'det' ? manoMac : 0,
+      tariffaUgello: manoRate,
+      ugelli: N,
       totale: mano,
     },
 

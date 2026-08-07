@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  ArrowLeft, Save, Camera, Image as ImageIcon, Trash2, AlertTriangle, ClipboardList, Loader2, Wand2,
+  ArrowLeft, Save, Camera, Image as ImageIcon, Trash2, AlertTriangle, ClipboardList, Loader2,
+  Wand2, ScanText,
 } from 'lucide-react';
 import { calcolaImpianto, CATEGORIE, articoloPredefinito, arrotonda } from './calcolo';
-import { C, DEFAULTS, FISSAGGI } from './catalogo';
+import { C, DEFAULTS, EUR_PER_UGELLO } from './catalogo';
 import LineeEditor from './LineeEditor';
 import ConfigImpianto from './ConfigImpianto';
 import Consuntivo from './Consuntivo';
+import { leggiLineeDaPiantina } from './leggiPiantina';
 import { vedePrezzi } from '../../lib/permessi';
 import {
   caricaProgetto, salvaProgetto, prossimoNumero, caricaFoto, urlFoto, eliminaFoto,
@@ -32,7 +34,6 @@ function configIniziale(brand = 'gardheaven') {
     margine: DEFAULTS.margine,
     manoMode: DEFAULTS.manoMode,
     manoMac: DEFAULTS.manoMac,
-    manoFix: DEFAULTS.manoFix,
     manoRate: DEFAULTS.manoRate,
     extra: [],
   };
@@ -186,7 +187,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
   /* ── calcolo live ── */
   const risultato = useMemo(() => {
     try {
-      return calcolaImpianto({ ...cfg, linee, fissaggi: cfg.fissaggi });
+      return calcolaImpianto({ ...cfg, linee });
     } catch (e) {
       return { errore: e.message };
     }
@@ -198,79 +199,6 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     const nuove = allineaVociAuto(cfg, risultato.suggeriti);
     if (nuove) setCfg((c) => ({ ...c, voci: nuove }));
   }, [risultato, cfg, soloLettura]);
-
-  /* ── fissaggio ugelli: una riga per tipo, con tariffa e quantita' ── */
-  const righeFissaggio = FISSAGGI.map((base) => {
-    const salvata = (cfg.fissaggi || []).find((f) => f.id === base.id);
-    return {
-      id: base.id,
-      label: base.label,
-      eur: salvata?.eur ?? base.eurUgello,
-      q: Number(salvata?.q) || 0,
-    };
-  });
-
-  const ugelliFissati = righeFissaggio.reduce((a, f) => a + f.q, 0);
-  const fissaggiAllineati = ugelliFissati === (risultato?.ugelliMontati ?? 0);
-
-  // Come per le categorie di materiale: toccare una casella stacca il
-  // fissaggio dal ricalcolo automatico, "allinea" lo riaggancia.
-  const setFissaggio = (id, patch) => {
-    setModificato(true);
-    setCfg((c) => ({
-      ...c,
-      fissaggiAuto: false,
-      fissaggi: righeFissaggio.map((f) => (f.id === id ? { ...f, ...patch } : f)),
-    }));
-  };
-
-  /** Mette tutti gli ugelli montati sul primo fissaggio in uso. */
-  const allineaFissaggi = () => {
-    const totale = risultato?.ugelliMontati ?? 0;
-    const inUso = righeFissaggio.filter((f) => f.q > 0);
-    setModificato(true);
-
-    if (inUso.length <= 1) {
-      const target = inUso[0]?.id || FISSAGGI[0].id;
-      setCfg((c) => ({
-        ...c,
-        fissaggiAuto: true,
-        fissaggi: righeFissaggio.map((f) => ({ ...f, q: f.id === target ? totale : 0 })),
-      }));
-      return;
-    }
-    // Piu' tipi di fissaggio in uso: ridistribuisco in proporzione
-    const somma = inUso.reduce((a, f) => a + f.q, 0) || 1;
-    let residuo = totale;
-    const quote = {};
-    inUso.forEach((f, i) => {
-      const q = i === inUso.length - 1 ? residuo : Math.round((f.q / somma) * totale);
-      residuo -= q;
-      quote[f.id] = Math.max(0, q);
-    });
-    setCfg((c) => ({
-      ...c,
-      fissaggiAuto: true,
-      fissaggi: righeFissaggio.map((f) => ({ ...f, q: quote[f.id] ?? 0 })),
-    }));
-  };
-
-  /* Finche' non ci mette mano, il fissaggio segue gli ugelli montati.
-     Il confronto con `ugelliFissati` chiude il ciclo: appena i due valori
-     coincidono l'effetto non riscrive piu' nulla. */
-  useEffect(() => {
-    if (soloLettura || cfg.manoMode !== 'det') return;
-    if (cfg.fissaggiAuto === false) return; // ripartizione decisa a mano
-    const totale = risultato?.ugelliMontati ?? 0;
-    if (ugelliFissati === totale) return;
-
-    const inUso = righeFissaggio.filter((f) => f.q > 0);
-    const target = inUso[0]?.id || FISSAGGI[0].id;
-    setCfg((c) => ({
-      ...c,
-      fissaggi: righeFissaggio.map((f) => ({ ...f, q: f.id === target ? totale : 0 })),
-    }));
-  }, [risultato?.ugelliMontati, ugelliFissati, cfg.manoMode, cfg.fissaggiAuto, soloLettura]);
 
   /* ── salvataggio ── */
   const salva = useCallback(
@@ -333,6 +261,46 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
   /* ── foto ── */
   const fileRef = useRef(null);
   const [caricandoFoto, setCaricandoFoto] = useState(false);
+  const [fileFoto, setFileFoto] = useState(null); // tenuto per rileggere senza riscaricare
+  const [leggendo, setLeggendo] = useState(false);
+  const [propostaLinee, setPropostaLinee] = useState(null);
+
+  /**
+   * Legge le etichette della piantina — "Insetticida 250 m" — invece di
+   * farle ribattere a mano. Il risultato e' una proposta da confermare:
+   * il modello puo' sbagliare e i metri di Google Earth sono il dato su
+   * cui si costruisce tutto il preventivo.
+   */
+  const leggiPiantina = async () => {
+    setErrore('');
+    setLeggendo(true);
+    try {
+      let sorgente = fileFoto;
+      if (!sorgente && foto) {
+        const risposta = await fetch(foto);
+        if (!risposta.ok) throw new Error('Foto non scaricabile');
+        sorgente = await risposta.blob();
+      }
+      if (!sorgente) throw new Error('Carica prima una foto.');
+
+      const lette = await leggiLineeDaPiantina(sorgente);
+      if (lette.length === 0) {
+        setErrore('Nessuna etichetta con i metri trovata sulla piantina. Aggiungi le linee a mano.');
+        return;
+      }
+      setPropostaLinee(lette);
+    } catch (e) {
+      setErrore('Lettura della piantina non riuscita: ' + (e.message || e));
+    } finally {
+      setLeggendo(false);
+    }
+  };
+
+  const confermaProposta = (sostituisci) => {
+    setModificato(true);
+    setLinee((attuali) => (sostituisci ? propostaLinee : [...attuali, ...propostaLinee]));
+    setPropostaLinee(null);
+  };
 
   const onFile = async (e) => {
     const file = e.target.files?.[0];
@@ -341,6 +309,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
 
     setCaricandoFoto(true);
     setErrore('');
+    setFileFoto(file);
     try {
       let pid = id;
       if (!pid) {
@@ -615,6 +584,69 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                 {caricandoFoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 {foto ? 'Sostituisci' : 'Scatta o carica'}
               </button>
+
+              {foto && (
+                <button
+                  onClick={leggiPiantina}
+                  disabled={leggendo}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50"
+                  style={{ backgroundColor: VERDE }}
+                  title="Legge le etichette con i metri scritte sulla piantina"
+                >
+                  {leggendo ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanText className="w-4 h-4" />}
+                  Leggi le linee
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Proposta letta dalla piantina, da confermare */}
+          {propostaLinee && (
+            <div className="mt-3 border-2 rounded-lg p-3" style={{ borderColor: VERDE }}>
+              <p className="text-sm font-semibold text-gray-700 mb-1">
+                Trovate {propostaLinee.length} linee sulla piantina
+              </p>
+              <p className="text-xs text-gray-500 mb-2">
+                Controlla i metri prima di confermare: sono quelli scritti sull'etichetta di
+                Google Earth.
+              </p>
+
+              <ul className="text-sm text-gray-700 mb-3 space-y-0.5">
+                {propostaLinee.map((l, i) => (
+                  <li key={i} className="flex justify-between gap-2 border-b last:border-0 py-1">
+                    <span className="truncate">
+                      {l.etichetta}
+                      {l.colore && <span className="text-gray-400"> · {l.colore}</span>}
+                    </span>
+                    <b className="flex-shrink-0">{l.metri} m</b>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => confermaProposta(true)}
+                  className="px-3 py-1.5 rounded-lg text-white text-sm font-semibold"
+                  style={{ backgroundColor: VERDE }}
+                >
+                  {linee.length > 0 ? 'Sostituisci le linee' : 'Usa queste linee'}
+                </button>
+                {linee.length > 0 && (
+                  <button
+                    onClick={() => confermaProposta(false)}
+                    className="px-3 py-1.5 rounded-lg border-2 text-sm font-semibold"
+                    style={{ borderColor: VERDE, color: VERDE }}
+                  >
+                    Aggiungi a quelle esistenti
+                  </button>
+                )}
+                <button
+                  onClick={() => setPropostaLinee(null)}
+                  className="px-3 py-1.5 rounded-lg text-sm text-gray-500"
+                >
+                  Annulla
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -652,36 +684,44 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                   onChange={(e) => tocca(setCfg)({ ...cfg, manoMode: e.target.value })}
                   className={inputCls}
                 >
-                  <option value="det">Macchina + ugelli</option>
-                  <option value="perUg">€ per ugello</option>
+                  <option value="det">Per ugello</option>
                   <option value="manual">Importo manuale</option>
                 </select>
               </label>
 
-              {cfg.manoMode === 'det' && (
+              {cfg.manoMode === 'det' ? (
+                <>
+                  <label className="block">
+                    <span className="text-xs text-gray-500">€ per ugello</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={cfg.manoRate ?? EUR_PER_UGELLO}
+                      onChange={(e) => tocca(setCfg)({ ...cfg, manoRate: e.target.value })}
+                      className={inputCls}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-gray-500">Programmazione centralina €</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="10"
+                      value={cfg.manoMac ?? 0}
+                      onChange={(e) => tocca(setCfg)({ ...cfg, manoMac: e.target.value })}
+                      className={inputCls}
+                    />
+                  </label>
+                </>
+              ) : (
                 <label className="block">
-                  <span className="text-xs text-gray-500">Montaggio macchina €</span>
+                  <span className="text-xs text-gray-500">Importo totale €</span>
                   <input
                     type="number"
                     min="0"
                     step="10"
-                    value={cfg.manoMac ?? DEFAULTS.manoMac}
-                    onChange={(e) => tocca(setCfg)({ ...cfg, manoMac: e.target.value })}
-                    className={inputCls}
-                  />
-                </label>
-              )}
-
-              {cfg.manoMode !== 'det' && (
-                <label className="block">
-                  <span className="text-xs text-gray-500">
-                    {cfg.manoMode === 'manual' ? 'Importo totale €' : '€ per ugello'}
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={cfg.manoRate ?? DEFAULTS.manoRate}
+                    value={cfg.manoRate ?? 0}
                     onChange={(e) => tocca(setCfg)({ ...cfg, manoRate: e.target.value })}
                     className={inputCls}
                   />
@@ -701,68 +741,13 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
               </label>
             </div>
 
-            {/* Fissaggio ugelli: una riga per tipo, non un menu a tendina */}
-            {cfg.manoMode === 'det' && (
-              <div className="border border-gray-200 rounded-lg p-2 mt-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-gray-600">Fissaggio ugelli</span>
-                  <span
-                    className={`text-xs font-semibold ${
-                      fissaggiAllineati ? 'text-green-700' : 'text-amber-600'
-                    }`}
-                  >
-                    {ugelliFissati} / {risultato?.ugelliMontati ?? 0}
-                    {!fissaggiAllineati && (
-                      <button
-                        onClick={allineaFissaggi}
-                        className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white"
-                        style={{ backgroundColor: VERDE }}
-                      >
-                        <Wand2 className="w-3 h-3" /> allinea
-                      </button>
-                    )}
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  {righeFissaggio.map((f) => (
-                    <div
-                      key={f.id}
-                      className={`flex items-center gap-2 px-2 py-1 rounded border ${
-                        f.q > 0 ? 'border-green-300 bg-green-50' : 'border-gray-100'
-                      }`}
-                    >
-                      <span className="flex-1 min-w-0 text-xs text-gray-700 truncate">{f.label}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={f.eur}
-                        onChange={(e) => setFissaggio(f.id, { eur: e.target.value })}
-                        className="w-16 border rounded px-1 py-1 text-xs text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-green-500"
-                        aria-label={`Euro per ugello ${f.label}`}
-                      />
-                      <span className="text-xs text-gray-400">€/ug</span>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        step="1"
-                        value={f.q || ''}
-                        placeholder="0"
-                        onChange={(e) => setFissaggio(f.id, { q: e.target.value })}
-                        className="w-14 border rounded px-1 py-1 text-xs text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-green-500"
-                        aria-label={`Ugelli ${f.label}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <p className="text-xs text-gray-400">
-              Manodopera calcolata: <b>{eur(risultato?.prezzi?.manodopera)}</b>. Riferimenti: ~10-12 ugelli
-              mezza giornata, ~20-25 ugelli giornata intera.
+              Manodopera calcolata: <b>{eur(risultato?.prezzi?.manodopera)}</b>
+              {cfg.manoMode === 'det' && risultato?.ugelliMontati > 0 && (
+                <> — {risultato.ugelliMontati} ugelli × {eur(cfg.manoRate ?? EUR_PER_UGELLO)}</>
+              )}
+              . Tariffa unica per ugello, indipendente dal tipo di fissaggio: le ore di montaggio
+              risultano circa la metà del numero di ugelli, centralina e tubi compresi.
             </p>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Archive, BookOpen } from 'lucide-react';
-import { cercaVociExtra } from './antizanzareService';
+import { Archive, BookOpen, Trash2 } from 'lucide-react';
+import { cercaVociExtra, eliminaVoceExtra } from './antizanzareService';
 
 /**
  * Campo descrizione di una voce extra, con ricerca incrementale
@@ -26,6 +26,19 @@ export default function VoceExtraRicerca({ valore, disabled, onScegli, onDigita,
     onScegli(v);
     setAperto(false);
     setSuggerimenti([]);
+  };
+
+  /** Toglie dall'archivio una voce digitata male. Il listino non si tocca. */
+  const elimina = async (v, e) => {
+    e.stopPropagation();
+    if (v.fonte !== 'archivio') return;
+    if (!window.confirm(`Togliere "${v.descrizione}" dall'archivio delle voci extra?`)) return;
+    try {
+      await eliminaVoceExtra(v.descrizione);
+      setSuggerimenti((s) => s.filter((x) => x.id !== v.id));
+    } catch (err) {
+      console.error('Eliminazione voce fallita:', err);
+    }
   };
 
   const onKeyDown = (e) => {
@@ -73,35 +86,51 @@ export default function VoceExtraRicerca({ valore, disabled, onScegli, onDigita,
           </p>
 
           {suggerimenti.map((v, i) => (
-            <button
+            <div
               key={v.id}
-              onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setEvidenziato(i)}
-              onClick={() => scegli(v)}
-              className={`w-full text-left px-3 py-2 border-b last:border-0 ${
+              className={`flex items-start border-b last:border-0 ${
                 i === evidenziato ? 'bg-green-50' : 'hover:bg-green-50'
               }`}
             >
-              <p className="text-sm text-gray-800 flex items-start gap-1.5">
-                {v.fonte === 'archivio' ? (
-                  <Archive className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-                ) : (
-                  <BookOpen className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
-                )}
-                <span className="truncate">{v.descrizione}</span>
-              </p>
-              <p className="text-xs text-gray-400 pl-5">
-                {[
-                  v.codice,
-                  v.marca,
-                  v.costo != null && `costo ${Number(v.costo).toFixed(2)} €`,
-                  v.prezzo != null && `vendita ${Number(v.prezzo).toFixed(2)} €`,
-                  v.fonte === 'archivio' && v.usi > 1 && `usata ${v.usi} volte`,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            </button>
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => scegli(v)}
+                className="flex-1 min-w-0 text-left px-3 py-2"
+              >
+                <p className="text-sm text-gray-800 flex items-start gap-1.5">
+                  {v.fonte === 'archivio' ? (
+                    <Archive className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <BookOpen className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  )}
+                  <span className="truncate">{v.descrizione}</span>
+                </p>
+                <p className="text-xs text-gray-400 pl-5">
+                  {[
+                    v.codice,
+                    v.marca,
+                    v.costo != null && `costo ${Number(v.costo).toFixed(2)} €`,
+                    v.prezzo != null && `vendita ${Number(v.prezzo).toFixed(2)} €`,
+                    v.fonte === 'archivio' && v.usi > 1 && `usata ${v.usi} volte`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </button>
+
+              {v.fonte === 'archivio' && (
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => elimina(v, e)}
+                  className="p-2 mt-1 mr-1 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 flex-shrink-0"
+                  title="Togli dall'archivio"
+                  aria-label={`Togli ${v.descrizione} dall'archivio`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

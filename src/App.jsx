@@ -20,6 +20,7 @@ import ArchivioPreventivi from './components/ArchivioPreventivi';
 import CompilatorePrev from './components/CompilatorePrev';
 import CatalogoProdotti from './components/CatalogoProdotti';
 import AntizanzareModule from './modules/antizanzare/AntizanzareModule';
+import ConsumiPage from './modules/antizanzare/ConsumiPage';
 import { puoAccedere, paginaIniziale, bloccatoSuModulo } from './lib/permessi';
 
 const OPERATORE_KEY = 'ompra_ultimo_operatore';
@@ -154,6 +155,11 @@ function App() {
         return <CatalogoProdotti onNavigate={navigate} />;
       case 'antizanzare':
         return <AntizanzareModule operatore={operatore} onEsci={() => navigate('home')} />;
+      /* Il calcolatore consumi e' raggiungibile in due modi: da qui, come
+         modulo a se' con ritorno alla dashboard, e dall'interno del modulo
+         antizanzare, dove torna alla lista progetti. Stessa schermata. */
+      case 'antizanzare.consumi':
+        return <ConsumiPage onEsci={() => navigate('home')} />;
       default:
         return <Dashboard onNavigate={navigate} onCambiaOperatore={handleCambiaOperatore} />;
     }

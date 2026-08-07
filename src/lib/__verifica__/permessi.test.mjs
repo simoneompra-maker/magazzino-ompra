@@ -39,7 +39,11 @@ t('entra in antizanzare', true, puoAccedere(comm, 'antizanzare'));
 t('usa i progetti antizanzare', true, puoAccedere(comm, 'antizanzare.progetti'));
 t('NON vede budget-admin', false, puoAccedere(comm, 'budget-admin'));
 t('NON aggiorna i listini antizanzare', false, puoAccedere(comm, 'antizanzare.listini'));
+/* 'antizanzare.consumi' e' anche la rotta del modulo a se' stante in
+   App.jsx: se il permesso mancasse, navigate() bloccherebbe il click sulla
+   piastrella CONSUMI della dashboard senza dire niente. */
 t('usa il calcolatore consumi', true, puoAccedere(comm, 'antizanzare.consumi'));
+t('apre il modulo consumi dalla dashboard', true, puoAccedere(admin, 'antizanzare.consumi'));
 t('vede prezzi', true, vedePrezzi(comm));
 t('parte dalla home', 'home', paginaIniziale(comm));
 t('non e bloccato su un modulo', false, bloccatoSuModulo(comm));

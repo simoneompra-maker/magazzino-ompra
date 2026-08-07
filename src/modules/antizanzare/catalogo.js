@@ -288,6 +288,13 @@ export const METODI = [
  */
 export const EUR_PER_UGELLO = 22;
 
+/**
+ * Aliquota IVA ordinaria. Tutti i prezzi del catalogo sono IVA ESCLUSA:
+ * il Listino Unificato ha le due colonne separate e quella lorda e'
+ * esattamente il netto piu' 22%.
+ */
+export const ALIQUOTA_IVA = 22;
+
 /* ===== valori di default (allineati al calcolatore originale) ===== */
 export const DEFAULTS = {
   passo: 4,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, Search, Bug, RefreshCw } from 'lucide-react';
-import { listaProgetti } from './antizanzareService';
+import { ArrowLeft, Plus, Search, Bug, RefreshCw, Trash2, Loader2 } from 'lucide-react';
+import { listaProgetti, eliminaProgetto } from './antizanzareService';
 import { vedePrezzi } from '../../lib/permessi';
 
 const VERDE = '#006B3F';
@@ -42,6 +42,30 @@ export default function ProgettiList({ operatore, onApri, onNuovo, onEsci }) {
   useEffect(() => {
     carica();
   }, [carica]);
+
+  /* Il tecnico non cancella niente: vede solo i progetti che deve montare */
+  const puoEliminare = operatore?.ruolo !== 'tecnico';
+  const [inCancellazione, setInCancellazione] = useState(null);
+
+  const elimina = async (p, e) => {
+    e.stopPropagation();
+    const conferma = window.confirm(
+      `Eliminare ${p.numero || 'il progetto'} di ${p.cliente_nome}?\n\n` +
+        'Spariscono anche le linee, la nota di carico e la foto. Non si torna indietro.'
+    );
+    if (!conferma) return;
+
+    setInCancellazione(p.id);
+    setErrore('');
+    try {
+      await eliminaProgetto(p.id);
+      setProgetti((elenco) => elenco.filter((x) => x.id !== p.id));
+    } catch (err) {
+      setErrore('Eliminazione non riuscita: ' + (err.message || err));
+    } finally {
+      setInCancellazione(null);
+    }
+  };
 
   const q = filtro.trim().toLowerCase();
   const visibili = progetti.filter((p) => {
@@ -124,11 +148,11 @@ export default function ProgettiList({ operatore, onApri, onNuovo, onEsci }) {
             {visibili.map((p) => {
               const st = STATI[p.stato] || STATI.bozza;
               return (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => onApri(p.id)}
-                  className="w-full text-left bg-white rounded-xl shadow-sm border border-gray-200 p-3 active:scale-[0.99] transition-transform"
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-3"
                 >
+                  <button onClick={() => onApri(p.id)} className="w-full text-left">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-800 truncate">{p.cliente_nome}</p>
@@ -156,7 +180,26 @@ export default function ProgettiList({ operatore, onApri, onNuovo, onEsci }) {
                       )}
                     </span>
                   </div>
-                </button>
+                  </button>
+
+                  {puoEliminare && (
+                    <div className="flex justify-end mt-1 -mb-1">
+                      <button
+                        onClick={(e) => elimina(p, e)}
+                        disabled={inCancellazione === p.id}
+                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
+                        title="Elimina il progetto"
+                        aria-label={`Elimina ${p.numero || p.cliente_nome}`}
+                      >
+                        {inCancellazione === p.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

@@ -20,7 +20,7 @@
  * calcolatore originale: lo verifica __verifica__/confronto.mjs.
  */
 
-import { C, UNIVERSAL, DEFAULTS } from './catalogo.js';
+import { C, UNIVERSAL, DEFAULTS, ALIQUOTA_IVA } from './catalogo.js';
 
 /* ─────────────────── util ─────────────────── */
 
@@ -360,9 +360,12 @@ export function calcolaImpianto(input) {
   const ricarico = Math.max(0, nz(input.margine, DEFAULTS.margine)) / 100;
   const costoTot = materialeC + extraC;
   const venditaMat = (materialeP + extraP) * (1 + ricarico);
-  const prezzoTot = venditaMat + mano;
+  const prezzoTot = venditaMat + mano; // imponibile: i prezzi sono IVA esclusa
   const margine = venditaMat - costoTot;
   const marginePct = venditaMat > 0 ? (margine / venditaMat) * 100 : 0;
+
+  const aliquota = nz(input.aliquotaIva, ALIQUOTA_IVA);
+  const iva = prezzoTot * (aliquota / 100);
 
   /* ── controlli ── */
   const linee = input.linee || [];
@@ -452,7 +455,11 @@ export function calcolaImpianto(input) {
       extra: extraP,
       venditaMateriale: venditaMat,
       manodopera: mano,
-      totale: prezzoTot,
+      totale: prezzoTot, // imponibile
+      imponibile: prezzoTot,
+      aliquotaIva: aliquota,
+      iva,
+      totaleIva: prezzoTot + iva,
     },
     margine,
     marginePct,

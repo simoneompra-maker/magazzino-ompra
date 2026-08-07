@@ -202,6 +202,14 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     if (nuove) setCfg((c) => ({ ...c, voci: nuove }));
   }, [risultato, cfg, soloLettura]);
 
+  /* Il prezzo scritto a mano, se c'e', sostituisce il totale calcolato:
+     l'IVA va calcolata su quello che il cliente paga davvero. */
+  const imponibile =
+    testata.prezzo_cliente === '' || testata.prezzo_cliente == null
+      ? risultato?.prezzi?.imponibile ?? 0
+      : Number(testata.prezzo_cliente) || 0;
+  const iva = imponibile * ((risultato?.prezzi?.aliquotaIva ?? 22) / 100);
+
   /* Finche' e' bozza o preventivo la data che conta e' quella del
      documento; la data di montaggio serve da quando diventa ordine */
   const montaggioRilevante = ['ordine', 'montato', 'chiuso'].includes(testata.stato);
@@ -831,23 +839,37 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                 <dd>{eur(risultato.prezzi.manodopera)}</dd>
               </div>
               <div className="flex justify-between pt-2 mt-1 border-t border-white/20 text-base font-bold">
-                <dt>Totale</dt>
-                <dd className="text-green-300">{eur(risultato.prezzi.totale)}</dd>
+                <dt>Totale imponibile</dt>
+                <dd className="text-green-300">{eur(imponibile)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-white/60">IVA {risultato.prezzi.aliquotaIva}%</dt>
+                <dd>{eur(iva)}</dd>
+              </div>
+              <div className="flex justify-between text-base font-bold">
+                <dt>Totale IVA compresa</dt>
+                <dd className="text-green-300">{eur(imponibile + iva)}</dd>
               </div>
             </dl>
 
             <label className="block mt-3">
-              <span className="text-xs text-white/60">Prezzo al cliente (rieditabile)</span>
+              <span className="text-xs text-white/60">
+                Prezzo al cliente, imponibile (rieditabile)
+              </span>
               <input
                 type="number"
                 min="0"
                 step="10"
                 value={testata.prezzo_cliente}
                 onChange={(e) => setT({ prezzo_cliente: e.target.value })}
-                placeholder={risultato.prezzi.totale.toFixed(2)}
+                placeholder={risultato.prezzi.imponibile.toFixed(2)}
                 className="w-full mt-0.5 rounded-lg px-2 py-1.5 text-sm bg-white/10 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-green-400"
               />
             </label>
+            <p className="text-xs text-white/50 mt-1">
+              Tutti i prezzi del catalogo sono IVA esclusa. Se scrivi un prezzo qui, l'IVA sopra
+              viene ricalcolata su quello.
+            </p>
           </div>
         )}
 

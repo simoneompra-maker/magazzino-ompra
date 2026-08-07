@@ -145,10 +145,26 @@ async function salvaLinee(progettoId, linee) {
   if (error) throw error;
 }
 
+/**
+ * Elimina un progetto con linee, consuntivo e foto.
+ * Linee e consuntivo se ne vanno da soli per via del cascade; la foto sta
+ * nello storage e va tolta a parte, altrimenti resta un file orfano che
+ * nessuno cancellera' mai piu'.
+ */
 export async function eliminaProgetto(id) {
-  // Le linee e il consuntivo hanno on delete cascade
+  const { data } = await supabase
+    .from('az_progetti')
+    .select('foto_path')
+    .eq('id', id)
+    .maybeSingle();
+
   const { error } = await supabase.from('az_progetti').delete().eq('id', id);
   if (error) throw error;
+
+  if (data?.foto_path) {
+    // Se fallisce resta solo un file inutile: non vale la pena bloccare
+    await eliminaFoto(data.foto_path).catch(() => {});
+  }
 }
 
 /* ─────────────────── foto ─────────────────── */

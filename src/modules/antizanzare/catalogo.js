@@ -16,6 +16,9 @@ export const C = {
     geyser:     {label:"Geyser", netCost:false, disc:0,  sys:"geyser"},
     pro:        {label:"Zanzero PRO (1/4\")", netCost:true, disc:30, sys:"pro"},
     smart:      {label:"Zanzero SMART (1/4\")", netCost:true, disc:30, sys:"smart"},
+    /* Il 50% Gardheaven vale su TUTTO il listino, prodotti di consumo
+       compresi: confermato da Simone. Non serve uno sconto separato per
+       i consumabili. */
     gardheaven: {label:"Gardheaven", netCost:true, disc:50, sys:"gardheaven"},
   },
   machines: {
@@ -285,7 +288,17 @@ export const UNIVERSAL = [
  *
  * Fonti: Listino Unificato per Stocker/Zanzero (colonna Categoria =
  * Consumabile) e listino Gardheaven 2026 pag. 6 per Gardheaven, che nel
- * Listino Unificato non compare.
+ * Listino Unificato non compare. Tutti i prezzi sono IVA ESCLUSA: il
+ * listino Gardheaven lo dichiara in testa, il Listino Unificato tiene le
+ * due colonne separate.
+ *
+ * COSTO D'ACQUISTO. I codici Stocker portano il costo reale dal listino
+ * (28,11 su 38,40, cioe' il 26,8%). Per gli altri vale lo sconto
+ * d'acquisto del brand, lo stesso usato per il materiale d'impianto:
+ * Gardheaven 50% su tutto il listino, confermato. Il 30% Zanzero sui
+ * consumabili non e' invece mai stato verificato — se un giorno risultasse
+ * diverso, il margine a schermo e' l'unica cosa che cambia, il prezzo al
+ * cliente resta il listino.
  */
 export const CONSUMABILI = {
   geyser: [

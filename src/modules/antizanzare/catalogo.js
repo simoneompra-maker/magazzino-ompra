@@ -285,7 +285,7 @@ export const DEFAULTS = {
   passo: 4,
   metodo: 'm1d',
   risalitaM: 2,     // metri di tubo per alzare l'ugello da terra
-  usaTappo: true,
+  anello: true,     // di norma il circuito si chiude ad anello: nessun tappo
   manoMode: 'det',        // det | manual
   manoMac: 0,             // programmazione centralina: di norma inclusa
   manoRate: EUR_PER_UGELLO,

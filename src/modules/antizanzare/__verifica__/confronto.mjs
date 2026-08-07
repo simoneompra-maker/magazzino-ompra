@@ -8,6 +8,12 @@
  * I casi sono definiti per LINEE, ognuna con la sua ripartizione per metodo.
  * Da li' ricavo sia le zone e le 5 quantita' globali che servono all'originale,
  * sia le voci con quantita' suggerite che servono al motore nuovo.
+ *
+ * UNICA DIVERGENZA VOLUTA: i tappi fine linea. Il calcolatore originale ne
+ * metteva sempre uno per zona; nella pratica il circuito si chiude ad anello
+ * e non ne serve nessuno, e quando resta aperto ne servono due, uno per
+ * estremita'. Qui forzo la quantita' dell'originale per poter confrontare
+ * tutto il resto: la regola nuova e' verificata in derivazione.mjs.
  */
 
 import { eseguiOriginale } from './oracolo.mjs';
@@ -160,7 +166,8 @@ for (const caso of CASI) {
     porta90: [{ code: s.porta[idx.porta9]?.code, q: sugg.porta90 }],
     inLinea: s.inline ? [{ code: s.inline.code, q: sugg.inLinea }] : [],
     raccordiT: [{ code: s.tsel[idx.tsel].code, q: sugg.raccordiT }],
-    tappi: s.tappo ? [{ code: s.tappo.code, q: sugg.tappi }] : [],
+    // forzato al valore dell'originale: vedi nota in testa al file
+    tappi: s.tappo ? [{ code: s.tappo.code, q: old.nTappo }] : [],
     accessori: (caso.accessori || []).map((a) => ({ code: tuttiAcc[a.i].code, q: a.q })),
   };
 

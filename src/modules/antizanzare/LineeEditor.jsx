@@ -57,7 +57,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
   const aggiungi = () =>
     onChange([
       ...linee,
-      { etichetta: '', metri: '', passo: DEFAULTS.passo, metodi: {} },
+      { etichetta: '', metri: '', metriTronco: '', passo: DEFAULTS.passo, anello: true, metodi: {} },
     ]);
 
   const rimuovi = (i) => onChange(linee.filter((_, k) => k !== i));
@@ -181,6 +181,20 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                   />
                 </label>
               </div>
+
+              <label className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={l.anello !== false}
+                  onChange={(e) => aggiorna(i, { anello: e.target.checked })}
+                  disabled={soloLettura}
+                  className="w-4 h-4 accent-green-700"
+                />
+                Circuito chiuso ad anello
+                <span className="text-gray-400">
+                  {l.anello !== false ? '· nessun tappo' : '· 2 tappi, uno per estremità'}
+                </span>
+              </label>
 
               {troncoEccessivo && (
                 <p className="text-xs text-red-600 mt-1">

@@ -43,7 +43,9 @@ t('m4a presente', true, METODI.some((m) => m.id === 'm4a' && m.deriva));
 /* ── Zanzero PRO: dorsale 3/8" con 20 ugelli derivati ── */
 console.log('\n■ Zanzero PRO — 60 m di dorsale 3/8", 20 ugelli derivati');
 {
-  const linee = [{ etichetta: 'Dorsale', metri: 60, metriTronco: 60, passo: 3, metodi: { m4d: 15, m4a: 5 } }];
+  const linee = [
+    { etichetta: 'Dorsale', metri: 60, metriTronco: 60, passo: 3, anello: false, metodi: { m4d: 15, m4a: 5 } },
+  ];
   const base = { brand: 'pro', linee, risalitaM: 2 };
   const s = suggerimenti(base);
 
@@ -54,7 +56,7 @@ console.log('\n■ Zanzero PRO — 60 m di dorsale 3/8", 20 ugelli derivati');
   t('riduzioni 3/8-1/4', 20, s.riduzioni);
   t('tubo 3/8" (m)', 60, s.tubiTronco);
   t('tubo 1/4": gli spezzoni non si conteggiano', 0, s.tubiLinea);
-  t('tappi (una linea attiva)', 1, s.tappi);
+  t('tappi: linea aperta, due estremita', 2, s.tappi);
 
   // distinta completa con le quantita' suggerite
   const sys = C.sys[C.brands.pro.sys];
@@ -83,7 +85,7 @@ console.log('\n■ Zanzero PRO — 60 m di dorsale 3/8", 20 ugelli derivati');
     5 * 4.3 * 0.7 + // portaugelli 90
     20 * 10.5 * 0.7 + // T 3/8"
     20 * 6.8 * 0.7 + // riduzioni
-    1 * 6.8 * 0.7; // tappo 3/8"
+    2 * 6.8 * 0.7; // due tappi 3/8"
   const scarto = Math.abs(r.costi.totale - atteso);
   t('costo coincide col calcolo a mano', true, scarto < 0.005);
   console.log(`     costo motore ${r.costi.totale.toFixed(2)} € · a mano ${atteso.toFixed(2)} €`);
@@ -119,9 +121,44 @@ console.log('\n■ Gardheaven — dorsale derivata + linea perimetrale');
   t('riduzioni solo per le derivazioni', 10, s.riduzioni);
   t('tubo 3/8"', 40, s.tubiTronco);
   t('tubo 1/4" = solo il perimetro', 120, s.tubiLinea);
-  t('tappi = 2 linee attive', 2, s.tappi);
+  t('tappi: entrambe ad anello chiuso', 0, s.tappi);
+}
+
+/* ── Chiusura del circuito ── */
+console.log('\n■ Tappi: anello chiuso o linea aperta');
+{
+  const conAnello = suggerimenti({
+    brand: 'gardheaven',
+    linee: [
+      { metri: 250, passo: 4, anello: true, metodi: { m1d: 63 } },
+      { metri: 230, passo: 4, anello: true, metodi: { m1d: 58 } },
+    ],
+  });
+  const aperte = suggerimenti({
+    brand: 'gardheaven',
+    linee: [
+      { metri: 250, passo: 4, anello: false, metodi: { m1d: 63 } },
+      { metri: 230, passo: 4, anello: false, metodi: { m1d: 58 } },
+    ],
+  });
+  const mista = suggerimenti({
+    brand: 'gardheaven',
+    linee: [
+      { metri: 250, passo: 4, anello: true, metodi: { m1d: 63 } },
+      { metri: 230, passo: 4, anello: false, metodi: { m1d: 58 } },
+    ],
+  });
+  const predefinito = suggerimenti({
+    brand: 'gardheaven',
+    linee: [{ metri: 250, passo: 4, metodi: { m1d: 63 } }],
+  });
+
+  t('due anelli chiusi: nessun tappo', 0, conAnello.tappi);
+  t('due linee aperte: quattro tappi', 4, aperte.tappi);
+  t('una chiusa e una aperta: due tappi', 2, mista.tappi);
+  t('senza indicazione vale anello chiuso', 0, predefinito.tappi);
 }
 
 console.log('\n' + '─'.repeat(72));
-console.log(ko === 0 ? '✅ DERIVAZIONE DAL TRONCO OK' : `❌ ${ko} verifiche fallite`);
+console.log(ko === 0 ? '✅ DERIVAZIONE E CHIUSURA CIRCUITO OK' : `❌ ${ko} verifiche fallite`);
 process.exit(ko === 0 ? 0 : 1);

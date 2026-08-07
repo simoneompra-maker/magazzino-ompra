@@ -119,6 +119,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     riferimento: '',
     stato: 'bozza',
     tecnico: '',
+    data_preventivo: new Date().toISOString().slice(0, 10),
     data_montaggio: '',
     prezzo_cliente: '',
     note: '',
@@ -157,6 +158,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
           riferimento: p.riferimento || '',
           stato: p.stato || 'bozza',
           tecnico: p.tecnico || '',
+          data_preventivo: p.data_preventivo || (p.created_at || '').slice(0, 10),
           data_montaggio: p.data_montaggio || '',
           prezzo_cliente: p.prezzo_cliente ?? '',
           note: p.note || '',
@@ -169,6 +171,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
             metri: l.metri,
             metriTronco: l.metri_tronco ?? 0,
             passo: l.passo,
+            anello: l.anello !== false,
             metodi: l.metodi || {},
           }))
         );
@@ -199,6 +202,10 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     if (nuove) setCfg((c) => ({ ...c, voci: nuove }));
   }, [risultato, cfg, soloLettura]);
 
+  /* Finche' e' bozza o preventivo la data che conta e' quella del
+     documento; la data di montaggio serve da quando diventa ordine */
+  const montaggioRilevante = ['ordine', 'montato', 'chiuso'].includes(testata.stato);
+
   /* ── salvataggio ── */
   const salva = useCallback(
     async (silenzioso = false) => {
@@ -213,6 +220,7 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
           {
             id,
             ...testata,
+            data_preventivo: testata.data_preventivo || null,
             data_montaggio: testata.data_montaggio || null,
             prezzo_cliente: testata.prezzo_cliente === '' ? null : Number(testata.prezzo_cliente),
             operatore: operatore?.nome,
@@ -528,12 +536,24 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                   ))}
                 </datalist>
               </label>
+              {/* La data di montaggio serve solo da quando il lavoro e'
+                  confermato: prima conta quella del documento */}
               <label className="block">
-                <span className="text-xs text-gray-500">Data montaggio</span>
+                <span className="text-xs text-gray-500">
+                  {montaggioRilevante ? 'Data montaggio' : 'Data preventivo'}
+                </span>
                 <input
                   type="date"
-                  value={testata.data_montaggio || ''}
-                  onChange={(e) => setT({ data_montaggio: e.target.value })}
+                  value={
+                    (montaggioRilevante ? testata.data_montaggio : testata.data_preventivo) || ''
+                  }
+                  onChange={(e) =>
+                    setT(
+                      montaggioRilevante
+                        ? { data_montaggio: e.target.value }
+                        : { data_preventivo: e.target.value }
+                    )
+                  }
                   className={inputCls}
                 />
               </label>

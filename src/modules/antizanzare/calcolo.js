@@ -232,7 +232,11 @@ export function suggerimenti(input) {
     inLinea: q.m2q,
     raccordiT: q.m1d + q.m1a + q.m3d + q.m3a + nDeriv,
     riduzioni: servonoRiduzioni ? nDeriv + cambiDiametro : 0,
-    tappi: attive.length,
+    /* Tappi: quando la linea torna alla centralina formando un anello il
+       circuito e' gia' chiuso e non serve nulla. Una linea aperta invece ha
+       due estremita' libere, quindi due tappi. L'anello e' il caso normale,
+       percio' e' il valore predefinito. */
+    tappi: attive.reduce((a, l) => a + (l.anello === false ? 2 : 0), 0),
     accessori: null, // nessun suggerimento: sono scelte discrezionali
     _metodi: q,
     _metriTot: metriTot,

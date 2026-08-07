@@ -57,6 +57,26 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
   const setExtra = (i, campo, v) =>
     set({ extra: extra.map((e, k) => (k === i ? { ...e, [campo]: v } : e)) });
 
+  const scontoBrand = Number(cfg.scontoAcq ?? C.brands[brand].disc) || 0;
+
+  /**
+   * Digitando il prezzo si ricava anche il costo, con lo stesso sconto
+   * d'acquisto usato per il catalogo. Se la voce arriva dal listino con un
+   * costo reale — i codici Stocker ce l'hanno — quello non si tocca.
+   */
+  const setPrezzoExtra = (i, valore) => {
+    const prezzo = valore;
+    const p = parseFloat(String(valore).replace(',', '.'));
+    set({
+      extra: extra.map((e, k) => {
+        if (k !== i) return e;
+        if (e.costoDaListino) return { ...e, prezzo };
+        const costo = Number.isFinite(p) ? Math.round(p * (1 - scontoBrand / 100) * 100) / 100 : '';
+        return { ...e, prezzo, costo };
+      }),
+    });
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
       <h2 className="font-semibold text-gray-700 text-sm">Impianto</h2>
@@ -147,6 +167,7 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
                                 um: v.um || 'pz',
                                 costo: v.costo ?? x.costo ?? '',
                                 prezzo: v.prezzo ?? x.prezzo ?? '',
+                                costoDaListino: v.costo != null,
                               }
                             : x
                         ),
@@ -163,7 +184,11 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-1.5">
+                {/* Si digita solo il prezzo di vendita: il costo si ricava
+                    dallo sconto d'acquisto del fornitore, come per tutti gli
+                    altri articoli. Resta a vista per non far sparire il dato
+                    su cui si calcola il margine. */}
+                <div className="grid grid-cols-2 gap-1.5">
                   <input
                     type="number"
                     min="0"
@@ -178,23 +203,19 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
                     type="number"
                     min="0"
                     step="0.01"
-                    value={e.costo ?? ''}
-                    onChange={(ev) => setExtra(i, 'costo', ev.target.value)}
-                    placeholder="costo €"
-                    disabled={soloLettura || !mostraPrezzi}
-                    className={input}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
                     value={e.prezzo ?? ''}
-                    onChange={(ev) => setExtra(i, 'prezzo', ev.target.value)}
-                    placeholder="vendita €"
+                    onChange={(ev) => setPrezzoExtra(i, ev.target.value)}
+                    placeholder="prezzo €"
                     disabled={soloLettura || !mostraPrezzi}
                     className={input}
                   />
                 </div>
+                {mostraPrezzi && Number(e.prezzo) > 0 && (
+                  <p className="text-xs text-gray-400">
+                    Costo {Number(e.costo || 0).toFixed(2)} €
+                    {e.costoDaListino ? ' (dal listino)' : ` (prezzo − ${scontoBrand}%)`}
+                  </p>
+                )}
               </div>
             ))}
 

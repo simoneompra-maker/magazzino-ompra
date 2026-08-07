@@ -1,16 +1,18 @@
 import { Plus, Trash2, Wand2 } from 'lucide-react';
 import { METODI, DEFAULTS, supportaInline, supportaDerivazione } from './catalogo';
-import { ugelliLinea, montatiLinea } from './calcolo';
+import { ugelliLinea, montatiLinea, etichettaCategoria } from './calcolo';
 
 const VERDE = '#006B3F';
 
 /**
  * Righe-linea del progetto: una per ogni percorso disegnato su Google Earth.
  * Ogni linea ripartisce i suoi ugelli su piu' metodi di montaggio: la stessa
- * linea puo' avere una parte su T+dritto e una parte su riser.
+ * linea puo' avere una parte su T+dritto e una parte su risalita.
  */
 export default function LineeEditor({ linee, brand, soloLettura, onChange, risultato }) {
   const inlineOk = supportaInline(brand);
+  // "Tubo 3/8"" oppure "Tubo Ø8" a seconda del brand
+  const nomeGrosso = etichettaCategoria(brand, 'tubiTronco').replace(/^Tubo\s*/, '');
   const derivaOk = supportaDerivazione(brand);
   const metodiUsabili = METODI.filter((m) => {
     if (m.id === 'm2q') return inlineOk;
@@ -157,8 +159,11 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-gray-500" title="Quanti di questi metri corrono in diametro maggiore. Sono compresi nei metri, non si aggiungono.">
-                    di cui tronco
+                  <span
+                    className="text-xs text-gray-500"
+                    title={`Quanti di questi metri corrono in ${nomeGrosso}. Sono compresi nei metri, non si aggiungono.`}
+                  >
+                    di cui {nomeGrosso}
                   </span>
                   <input
                     type="number"
@@ -179,7 +184,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
 
               {troncoEccessivo && (
                 <p className="text-xs text-red-600 mt-1">
-                  I metri su tronco non possono superare i metri della linea.
+                  I metri in {nomeGrosso} non possono superare i metri della linea.
                 </p>
               )}
 
@@ -235,7 +240,7 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
                 {(!inlineOk || !derivaOk) && (
                   <p className="text-xs text-gray-400 mt-1">
                     {!inlineOk && 'Il montaggio in linea senza T non è disponibile per questo brand. '}
-                    {!derivaOk && 'Questo brand non ha una dorsale di diametro maggiore da cui derivare.'}
+                    {!derivaOk && `Questo brand non ha tubo ${nomeGrosso} da cui derivare.`}
                   </p>
                 )}
               </div>
@@ -247,7 +252,9 @@ export default function LineeEditor({ linee, brand, soloLettura, onChange, risul
       {linee.length > 0 && (
         <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
           Totale <b>{totMetri.toLocaleString('it-IT')} m</b>
-          {totTronco > 0 && <> · di cui <b>{totTronco.toLocaleString('it-IT')} m</b> su tronco</>} · <b>{totPrevisti}</b> ugelli previsti ·{' '}
+          {totTronco > 0 && (
+            <> · di cui <b>{totTronco.toLocaleString('it-IT')} m</b> in {nomeGrosso}</>
+          )} · <b>{totPrevisti}</b> ugelli previsti ·{' '}
           <b className={totMontati === totPrevisti ? 'text-green-700' : 'text-amber-600'}>
             {totMontati}
           </b>{' '}

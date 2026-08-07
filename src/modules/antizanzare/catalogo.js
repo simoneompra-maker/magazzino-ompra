@@ -259,14 +259,14 @@ export const UNIVERSAL = [
 
 /* ===== metodi di montaggio ugelli ===== */
 export const METODI = [
-  { id: 'm1d', label: 'T + portaugello dritto',  porta: 'd', usaT: true,  riser: false },
-  { id: 'm1a', label: 'T + portaugello 90°',     porta: 'a', usaT: true,  riser: false },
-  { id: 'm2q', label: 'In linea, senza T',       porta: null, usaT: false, riser: false },
-  { id: 'm3d', label: 'Riser + portaugello dritto', porta: 'd', usaT: true, riser: true },
-  { id: 'm3a', label: 'Riser + portaugello 90°',    porta: 'a', usaT: true, riser: true },
+  { id: 'm1d', label: 'T + portaugello dritto',  porta: 'd', usaT: true,  risalita: false },
+  { id: 'm1a', label: 'T + portaugello 90°',     porta: 'a', usaT: true,  risalita: false },
+  { id: 'm2q', label: 'In linea, senza T',       porta: null, usaT: false, risalita: false },
+  { id: 'm3d', label: 'Risalita + portaugello dritto', porta: 'd', usaT: true, risalita: true },
+  { id: 'm3a', label: 'Risalita + portaugello 90°',    porta: 'a', usaT: true, risalita: true },
   // Derivazione da dorsale Ø8 / 3-8": T + (riduzione) + spezzone di tubo + portaugello
-  { id: 'm4d', label: 'Derivazione da tronco + dritto', porta: 'd', usaT: true, riser: false, deriva: true },
-  { id: 'm4a', label: 'Derivazione da tronco + 90°',    porta: 'a', usaT: true, riser: false, deriva: true },
+  { id: 'm4d', label: 'Derivazione da Ø maggiore + dritto', porta: 'd', usaT: true, risalita: false, deriva: true },
+  { id: 'm4a', label: 'Derivazione da Ø maggiore + 90°',    porta: 'a', usaT: true, risalita: false, deriva: true },
 ];
 
 /**
@@ -284,9 +284,7 @@ export const EUR_PER_UGELLO = 22;
 export const DEFAULTS = {
   passo: 4,
   metodo: 'm1d',
-  mTronco: 0,
-  riserM: 2,
-  derivM: 1,        // metri di tubo 1/4" per ogni derivazione dal tronco
+  risalitaM: 2,     // metri di tubo per alzare l'ugello da terra
   usaTappo: true,
   manoMode: 'det',        // det | manual
   manoMac: 0,             // programmazione centralina: di norma inclusa

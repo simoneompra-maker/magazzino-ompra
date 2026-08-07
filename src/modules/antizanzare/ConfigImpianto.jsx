@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import { C, DEFAULTS, brandList, supportaDerivazione } from './catalogo';
-import { CATEGORIE, articoliCategoria, articoloPredefinito } from './calcolo';
+import { C, DEFAULTS, brandList } from './catalogo';
+import { CATEGORIE, articoliCategoria, articoloPredefinito, etichettaCategoria } from './calcolo';
 import SelettoreVoci from './SelettoreVoci';
 import VoceExtraRicerca from './VoceExtraRicerca';
 
@@ -71,55 +71,26 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
             ))}
           </select>
         </Campo>
-        <Campo label="Sconto d'acquisto %">
-          <input
-            type="number"
-            min="0"
-            max="100"
-            step="1"
-            value={cfg.scontoAcq ?? C.brands[brand].disc}
-            onChange={(e) => set({ scontoAcq: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          />
-        </Campo>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Campo label="Metri riser per ugello" hint="Prolunga usata dai metodi con riser">
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.5"
-            value={cfg.riserM ?? DEFAULTS.riserM}
-            onChange={(e) => set({ riserM: e.target.value })}
-            disabled={soloLettura}
-            className={input}
-          />
-        </Campo>
-        <p className="text-xs text-gray-400 self-end pb-1">
-          I metri di tubo tronco si dichiarano riga per riga, nella sezione Linee.
-        </p>
-      </div>
-
-      {supportaDerivazione(brand) && (
         <Campo
-          label="Metri tubo per derivazione"
-          hint="Spezzone che dal T sul tronco porta all'ugello. Il tubo va nella categoria Tubo linea."
+          label="Metri di tubo di risalita per ugello"
+          hint="Il tratto che alza l'ugello da terra, su paletto o tubolare"
         >
           <input
             type="number"
             inputMode="decimal"
             min="0"
-            step="0.1"
-            value={cfg.derivM ?? DEFAULTS.derivM}
-            onChange={(e) => set({ derivM: e.target.value })}
+            step="0.5"
+            value={cfg.risalitaM ?? DEFAULTS.risalitaM}
+            onChange={(e) => set({ risalitaM: e.target.value })}
             disabled={soloLettura}
             className={input}
           />
         </Campo>
-      )}
+      </div>
+
+      <p className="text-xs text-gray-400">
+        I metri di tubo di diametro maggiore si dichiarano riga per riga, nella sezione Linee.
+      </p>
 
       {/* ── Materiali: una lista per categoria ── */}
       <div className="space-y-1.5 pt-1">
@@ -129,7 +100,7 @@ export default function ConfigImpianto({ cfg, risultato, soloLettura, mostraPrez
           return (
             <SelettoreVoci
               key={cat.id}
-              titolo={cat.label}
+              titolo={etichettaCategoria(brand, cat.id)}
               um={cat.um}
               articoli={articoli}
               predefinito={articoloPredefinito(brand, cat.id)}

@@ -28,9 +28,8 @@ function configIniziale(brand = 'gardheaven') {
     brand,
     voci: {}, // per categoria: [{code, q}] — riempite dai suggerimenti
     auto: {}, // categoria -> false quando l'utente forza le quantita'
-    mTronco: DEFAULTS.mTronco,
-    riserM: DEFAULTS.riserM,
-    scontoAcq: C.brands[brand].disc,
+    risalitaM: DEFAULTS.risalitaM,
+    scontoAcq: C.brands[brand].disc, // dal catalogo, non si dichiara a schermo
     margine: DEFAULTS.margine,
     manoMode: DEFAULTS.manoMode,
     manoMac: DEFAULTS.manoMac,
@@ -514,19 +513,20 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
               </label>
               <label className="block">
                 <span className="text-xs text-gray-500">Tecnico assegnato</span>
-                <select
+                {/* Campo libero con suggerimenti: il montatore puo' essere
+                    anche un esterno che non e' fra gli operatori dell'app */}
+                <input
+                  list="az-tecnici"
                   value={testata.tecnico}
                   onChange={(e) => setT({ tecnico: e.target.value })}
+                  placeholder="Nome del montatore"
                   className={inputCls}
-                >
-                  <option value="">— nessuno —</option>
+                />
+                <datalist id="az-tecnici">
                   {tecnici.map((t) => (
-                    <option key={t.nome} value={t.nome}>
-                      {t.nome}
-                      {t.ruolo === 'tecnico' ? ' (tecnico)' : ''}
-                    </option>
+                    <option key={t.nome} value={t.nome} />
                   ))}
-                </select>
+                </datalist>
               </label>
               <label className="block">
                 <span className="text-xs text-gray-500">Data montaggio</span>

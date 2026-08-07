@@ -47,8 +47,8 @@ export const arrotonda = (n, decimali = 2) => {
 /** Categorie di materiale, nell'ordine in cui compaiono in distinta. */
 export const CATEGORIE = [
   { id: 'macchine', label: 'Centralina', um: 'pz', fonte: 'machines' },
-  { id: 'tubiLinea', label: 'Tubo linea', um: 'm', fonte: 'tubo' },
-  { id: 'tubiTronco', label: 'Tubo tronco', um: 'm', fonte: 'tubo' },
+  { id: 'tubiLinea', label: 'Tubo Ø minore', um: 'm', fonte: 'tubo' },
+  { id: 'tubiTronco', label: 'Tubo Ø maggiore', um: 'm', fonte: 'tubo' },
   { id: 'ugelli', label: 'Ugelli', um: 'pz', fonte: 'ugello' },
   { id: 'portaDritti', label: 'Portaugelli dritti', um: 'pz', fonte: 'porta:d' },
   { id: 'porta90', label: 'Portaugelli angolati', um: 'pz', fonte: 'porta:a' },
@@ -58,6 +58,22 @@ export const CATEGORIE = [
   { id: 'tappi', label: 'Tappi fine linea', um: 'pz', fonte: 'tappo' },
   { id: 'accessori', label: 'Accessori', um: 'pz', fonte: 'accessori' },
 ];
+
+/**
+ * Etichetta della categoria da mostrare, dato il brand.
+ * I tubi si chiamano col loro diametro — Ø6 e Ø8 per Geyser, 1/4" e 3/8"
+ * per gli altri — perche' e' cosi' che li chiamano in magazzino e in
+ * cantiere: dire il ruolo senza dire il pezzo costringeva a tradurre.
+ */
+export function etichettaCategoria(brandId, categoriaId) {
+  const cat = CATEGORIE.find((c) => c.id === categoriaId);
+  if (!cat) return '';
+  const pollici = brandId !== 'geyser';
+
+  if (categoriaId === 'tubiLinea') return pollici ? 'Tubo 1/4"' : 'Tubo Ø6';
+  if (categoriaId === 'tubiTronco') return pollici ? 'Tubo 3/8"' : 'Tubo Ø8';
+  return cat.label;
+}
 
 /** Articoli disponibili per una categoria, dato il brand. */
 export function articoliCategoria(brandId, categoriaId) {
@@ -98,8 +114,8 @@ export function articoliCategoria(brandId, categoriaId) {
  * Articolo con cui precompilare una categoria quando l'utente non ne ha
  * ancora scelto uno.
  *
- * Per il tubo tronco non va bene il primo dell'elenco — sarebbe il Ø6 —
- * ma il primo di diametro maggiore: Ø8 per Geyser, 3/8" per Zanzero e
+ * Per il tubo di diametro maggiore non va bene il primo dell'elenco —
+ * sarebbe il Ø6 — ma il primo grosso: Ø8 per Geyser, 3/8" per Zanzero e
  * Gardheaven. Fra due bobine dello stesso diametro vince quella da 100 m,
  * che e' il formato che usiamo.
  */
@@ -175,14 +191,14 @@ export function suggerimenti(input) {
     });
   });
 
-  const riserM = Math.max(0, nz(input?.riserM, DEFAULTS.riserM));
-  const riserMetri = (q.m3d + q.m3a) * riserM;
+  // Risalita: il tubo che alza l'ugello da terra, su paletto o tubolare
+  const risalitaM = Math.max(0, nz(input?.risalitaM ?? input?.riserM, DEFAULTS.risalitaM));
+  const risalitaMetri = (q.m3d + q.m3a) * risalitaM;
 
-  // Derivazione dal tronco: per ogni ugello un T, uno spezzone di tubo 1/4"
-  // e, dove il T non riduce da solo, un raccordo di riduzione.
-  const derivM = Math.max(0, nz(input?.derivM, DEFAULTS.derivM));
+  /* Derivazione dal tronco: per ogni ugello un T, un raccordo di riduzione
+     dove il T non riduce da solo, e uno spezzone di tubo che in cantiere si
+     ricava dagli sfridi — pochi centimetri, non si conteggia. */
   const nDeriv = q.m4d + q.m4a;
-  const derivMetri = nDeriv * derivM;
   const servonoRiduzioni = (C.sys[C.brands[input?.brand]?.sys]?.riduzioni || []).length > 0;
 
   /* Una linea che corre in parte su tronco 3/8" e in parte su 1/4" ha un
@@ -208,7 +224,7 @@ export function suggerimenti(input) {
 
   return {
     macchine: attive.length > 0 || linee.length > 0 ? 1 : 0,
-    tubiLinea: Math.max(0, metriTot - mTronco) + riserMetri + derivMetri,
+    tubiLinea: Math.max(0, metriTot - mTronco) + risalitaMetri,
     tubiTronco: mTronco,
     ugelli: q.m1d + q.m1a + q.m2q + q.m3d + q.m3a + q.m4d + q.m4a,
     portaDritti: q.m1d + q.m3d + q.m4d,
@@ -220,8 +236,7 @@ export function suggerimenti(input) {
     accessori: null, // nessun suggerimento: sono scelte discrezionali
     _metodi: q,
     _metriTot: metriTot,
-    _riserMetri: riserMetri,
-    _derivMetri: derivMetri,
+    _risalitaMetri: risalitaMetri,
     _nDeriv: nDeriv,
     _cambiDiametro: cambiDiametro,
     _mTronco: mTronco,
@@ -238,8 +253,8 @@ export function suggerimenti(input) {
  * @param {Array<{etichetta?:string, metri:number, passo:number, metodi:Object}>} input.linee
  * @param {Object<string, Array<{code:string,q:number}>>} input.voci per categoria
  * @param {Array} [input.extra] voci fuori listino
- * @param {number} [input.mTronco] metri di tubo tronco
- * @param {number} [input.riserM]  metri di prolunga per ugello, metodo 3
+ * @param {number} [input.mTronco] metri di tubo grosso, solo per i progetti vecchi
+ * @param {number} [input.risalitaM] metri di tubo di risalita per ugello
  * @param {number} [input.scontoAcq] %
  * @param {number} [input.margine]   % di ricarico sul materiale
  * @param {string} [input.manoMode]  det | perUg | manual
@@ -279,7 +294,7 @@ export function calcolaImpianto(input) {
       bom.push({
         categoria: cat.id,
         code: art.code,
-        desc: `${cat.label} — ${art.label}`,
+        desc: `${etichettaCategoria(brandId, cat.id)} — ${art.label}`,
         q: n,
         um: cat.um,
         uC: c,
@@ -367,7 +382,7 @@ export function calcolaImpianto(input) {
     const scarto = Math.abs(t.q - t.suggerito);
     if (scarto > 0.005) {
       avvisi.push(
-        `${cat.label}: inseriti ${t.q} ${cat.um}, il calcolo ne suggerisce ${t.suggerito}.`
+        `${etichettaCategoria(brandId, cat.id)}: inseriti ${t.q} ${cat.um}, il calcolo ne suggerisce ${t.suggerito}.`
       );
     }
   });
@@ -412,8 +427,7 @@ export function calcolaImpianto(input) {
     tubo: {
       linea: totali.tubiLinea.q,
       tronco: totali.tubiTronco.q,
-      riser: sugg._riserMetri,
-      derivazioni: sugg._derivMetri,
+      risalita: sugg._risalitaMetri,
       perimetro: Math.max(0, sugg._metriTot - sugg._mTronco),
     },
     metodi: { ...sugg._metodi },

@@ -7,7 +7,10 @@
  * subito quale passaggio e' saltato.
  */
 
-import { calcolaConsumi, consumoProdotto, rigaProdotto, prodottiDaProgetto } from '../consumi.js';
+import {
+  calcolaConsumi, consumoProdotto, rigaProdotto, prodottiDaProgetto,
+  righeRapide, ugelliDaMetri, metriDaUgelli,
+} from '../consumi.js';
 import { portataStimata, portataUgello, C, TARATURA_PORTATA, CONSUMABILI, consumabiliPerBrand } from '../catalogo.js';
 import { calcolaImpianto } from '../calcolo.js';
 
@@ -190,8 +193,10 @@ console.log('\n■ Precompilazione dal progetto');
   t('ugelli dal progetto', 63, righe[0].ugelli);
   t('portata dichiarata Stocker', 0.04, righe[0].portataLmin);
   t('pressione predefinita Geyser', 12, righe[0]._pressione);
-  t('minuti da compilare a mano', 0, righe[0].minutiGiorno);
-  t('percentuale da compilare a mano', 0, righe[0].percentuale);
+  t('insetticida: 1 min/giorno', 1, righe[0].minutiGiorno);
+  t('insetticida: 1%', 1, righe[0].percentuale);
+  t('repellente: 2 min/giorno', 2, righe[1].minutiGiorno);
+  t('repellente: 5%', 5, righe[1].percentuale);
   t('giorni di stagione', 150, righe[0].giorni);
 
   // L'anticalcare e' 'altro': non e' un prodotto da nebulizzare a ciclo
@@ -226,6 +231,45 @@ console.log('\n■ Catalogo consumabili');
   );
   t('articoli senza litri o prezzo', 0, rotti.length);
   if (rotti.length) console.log('     ', rotti.join(', '));
+}
+
+/* ── calcolatore rapido ── */
+console.log('\n■ Calcolatore rapido: dal perimetro al costo');
+{
+  t('250 m a passo 4 = 63 ugelli', 63, ugelliDaMetri(250, 4));
+  t('252 m a passo 4 = 63 ugelli', 63, ugelliDaMetri(252, 4));
+  t('253 m arrotonda per eccesso', 64, ugelliDaMetri(253, 4));
+  t('passo 3', 84, ugelliDaMetri(250, 3));
+  t('andata e ritorno: 63 ugelli = 252 m', 252, metriDaUgelli(63, 4));
+  t('perimetro nullo', 0, ugelliDaMetri(0, 4));
+
+  const righe = righeRapide({ brandId: 'geyser', ugelli: 63, mesi: 5 });
+  t('due righe pronte', 2, righe.length);
+  t('ugello standard da 0,3 mm', '4219', righe[0]._ugello);
+  t('portata dichiarata', 0.04, righe[0].portataLmin);
+  t('5 mesi = 150 giorni', 150, righe[0].giorni);
+  t('insetticida 1 min all 1%', '1/1', `${righe[0].minutiGiorno}/${righe[0].percentuale}`);
+  t('repellente 2 min al 5%', '2/5', `${righe[1].minutiGiorno}/${righe[1].percentuale}`);
+  t('formato piu conveniente al litro', '45147', righe[0].code);
+
+  const r = calcolaConsumi({ prodotti: righe });
+  /* Controprova dichiarata a Simone: una tanica da 5 L al 5% fa 100 l di
+     miscela; a 63 ugelli x 0,04 x 2 min = 5,04 l al giorno, dura tre
+     settimane scarse. E' il numero che smaschera una diluizione sbagliata. */
+  t('miscela repellente al giorno', 5.04, r.righe[1].miscelaGiorno, 1e-9);
+  t('una tanica da 5 L dura ~20 giorni', 5 / 0.252, r.righe[1].giorniPerConfezione, 1e-9);
+  t('taniche di repellente in stagione', 8, r.righe[1].confezioni);
+  console.log(`     costo di stagione: ${r.costoStagione.toFixed(2)} €`);
+
+  // Ugelli a zero: nessun consumo, nessun costo, nessuna divisione per zero
+  const vuoto = calcolaConsumi({ prodotti: righeRapide({ brandId: 'geyser', ugelli: 0, mesi: 5 }) });
+  t('senza ugelli non consuma', 0, vuoto.costoStagione);
+  t('durata confezione non esplode', 0, vuoto.righe[0].giorniPerConfezione);
+
+  // Gardheaven: 0,3 mm c'e' a catalogo, ma la portata e' stimata
+  const gh = righeRapide({ brandId: 'gardheaven', ugelli: 40, mesi: 5 });
+  t('Gardheaven usa lo 0,3 mm', 'UGEL003', gh[0]._ugello);
+  t('portata stimata, non dichiarata', 'stimata', gh[0]._fontePortata);
 }
 
 /* ── il kit prodotti nel preventivo ── */

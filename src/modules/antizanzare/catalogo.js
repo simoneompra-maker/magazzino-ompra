@@ -13,7 +13,10 @@
 
 export const C = {
   brands: {
-    geyser:     {label:"Geyser", netCost:false, disc:0,  sys:"geyser"},
+    /* L'id resta 'geyser' — i progetti salvati lo contengono — ma a schermo
+       si legge il produttore, come per gli altri tre. La linea Geyser resta
+       riconoscibile nei nomi delle macchine: "Geyser Pro (240 m)". */
+    geyser:     {label:"Stocker", netCost:false, disc:0,  sys:"geyser"},
     pro:        {label:"Zanzero PRO (1/4\")", netCost:true, disc:30, sys:"pro"},
     smart:      {label:"Zanzero SMART (1/4\")", netCost:true, disc:30, sys:"smart"},
     /* Il 50% Gardheaven vale su TUTTO il listino, prodotti di consumo
@@ -409,6 +412,31 @@ export function portataUgello(articolo, bar) {
 
 /** Giorni di stagione usati come punto di partenza: maggio-settembre. */
 export const GIORNI_STAGIONE = 150;
+
+/** Mesi di funzionamento predefiniti, e quanti giorni conta un mese. */
+export const MESI_STAGIONE = 5;
+export const GIORNI_PER_MESE = 30;
+
+/**
+ * Valori di partenza del calcolatore consumi, dichiarati da Simone come
+ * impostazione abituale.
+ *
+ * La percentuale e' quella della MISCELA NEBULIZZATA. Sulle centraline con
+ * tanica di miscelazione coincide con la concentrazione in tanica, perche'
+ * quel liquido va agli ugelli senza ulteriori diluizioni.
+ *
+ * Sono predefiniti, non verita': la diluizione la decide l'etichetta del
+ * prodotto e l'abitudine del cliente. Per questo l'interfaccia mostra
+ * accanto QUANTO DURA UNA CONFEZIONE, che e' il modo piu' rapido di
+ * accorgersi che la percentuale impostata non e' quella reale.
+ */
+export const CICLO_PREDEFINITO = {
+  insetticida: { minutiGiorno: 1, percentuale: 1 },
+  repellente: { minutiGiorno: 2, percentuale: 5 },
+};
+
+/** Passo predefinito fra un ugello e il successivo, in metri. */
+export const PASSO_PREDEFINITO = 4;
 
 /* ===== metodi di montaggio ugelli ===== */
 export const METODI = [

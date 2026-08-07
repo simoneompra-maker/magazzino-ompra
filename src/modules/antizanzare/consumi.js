@@ -26,7 +26,10 @@
  * parte, perche' e' prodotto pagato che avanza e la stagione dopo si usa.
  */
 
-import { GIORNI_STAGIONE, portataUgello, PRESSIONE_BAR } from './catalogo.js';
+import {
+  GIORNI_STAGIONE, portataUgello, PRESSIONE_BAR, CICLO_PREDEFINITO, PASSO_PREDEFINITO,
+  GIORNI_PER_MESE, C, consumabiliPerBrand,
+} from './catalogo.js';
 
 const nz = (v, d = 0) => {
   const n = parseFloat(v);
@@ -121,6 +124,12 @@ export function consumoProdotto(riga) {
     confezioni,
     residuo,
     costo,
+    /* Quanto dura una confezione. E' il numero con cui si smaschera una
+       percentuale sbagliata: se il calcolo dice tre settimane e il cliente
+       racconta che una tanica gli e' durata due mesi, la diluizione
+       impostata non e' quella che usa davvero. Molto piu' parlante dei
+       litri di stagione, che nessuno sa verificare a occhio. */
+    giorniPerConfezione: concentratoGiorno > 0 ? litriConf / concentratoGiorno : 0,
     costoGiorno: giorni > 0 ? costo / giorni : 0,
     /* Costo al litro di concentrato: serve a confrontare formati diversi,
        dove la tanica da 5 L costa meno al litro del flacone da 1 L. */
@@ -172,11 +181,11 @@ export function calcolaConsumi(input) {
 /**
  * Righe precompilate a partire da un progetto.
  *
- * Prende gli ugelli e la portata dall'impianto gia' configurato, e propone
- * l'insetticida e il repellente scelti nel kit prodotti. Percentuale e
- * minuti restano a zero: sono i due numeri che dipendono dal prodotto e
- * dalle abitudini del cliente, e inventarli darebbe un costo di gestione
- * falso con l'aria di essere calcolato.
+ * Prende gli ugelli e la portata dall'impianto gia' configurato, propone
+ * l'insetticida e il repellente scelti nel kit prodotti e applica i cicli
+ * abituali: un minuto al giorno all'1% per l'insetticida, due minuti al 5%
+ * per il repellente. Restano tutti modificabili — sono l'impostazione di
+ * partenza, non una regola.
  *
  * @param {Object} p
  * @param {string} p.brandId
@@ -212,10 +221,75 @@ export function prodottiDaProgetto({ brandId, ugelli, articoloUgello, consumabil
         prezzoConf: art.priceRaw,
         ugelli: positivo(ugelli),
         portataLmin: lMin,
+        ...CICLO_PREDEFINITO[t],
         _fontePortata: fonte,
         _pressione: pressione,
       });
     });
+}
+
+/* ─────────────── calcolatore rapido ─────────────── */
+
+/** Ugelli che stanno su un perimetro, uno ogni `passo` metri. */
+export const ugelliDaMetri = (metri, passo = PASSO_PREDEFINITO) => {
+  const m = positivo(metri);
+  const p = Math.max(0.5, nz(passo, PASSO_PREDEFINITO));
+  return m > 0 ? Math.ceil(m / p) : 0;
+};
+
+/** Metri di perimetro corrispondenti a un numero di ugelli. */
+export const metriDaUgelli = (ugelli, passo = PASSO_PREDEFINITO) =>
+  positivo(ugelli) * Math.max(0.5, nz(passo, PASSO_PREDEFINITO));
+
+/**
+ * Due righe pronte all'uso, senza bisogno di un progetto.
+ *
+ * E' il punto di partenza del calcolatore autonomo: scelto il brand e detto
+ * quanti ugelli, il conto e' gia' fatto. Prodotti, ugello e cicli sono
+ * quelli abituali; chi vuole cambiarli apre le impostazioni avanzate.
+ *
+ * L'ugello predefinito e' quello da 0,3 mm, la misura standard su tutti e
+ * quattro i brand. Se il catalogo del brand non ce l'ha, si prende il primo.
+ */
+export function righeRapide({ brandId, ugelli, mesi, bar }) {
+  const sys = C.sys[C.brands[brandId]?.sys];
+  const listaUgelli = sys?.ugello || [];
+  const ugello = listaUgelli.find((u) => u.foroMm === 0.3) || listaUgelli[0] || null;
+
+  const pressione = positivo(bar, PRESSIONE_BAR[brandId] ?? 0);
+  const { lMin, fonte } = portataUgello(ugello, pressione);
+  const giorni = Math.round(positivo(mesi) * GIORNI_PER_MESE);
+
+  /* Formato piu' conveniente al litro per ciascun tipo: e' quello che si
+     ricompra a stagione avviata, e quindi quello su cui ha senso stimare
+     la spesa. */
+  const migliore = (tipo) =>
+    consumabiliPerBrand(brandId, tipo).reduce((best, a) => {
+      if (!(a.litri > 0)) return best;
+      const el = a.priceRaw / a.litri;
+      return !best || el < best.priceRaw / best.litri ? a : best;
+    }, null);
+
+  return ['insetticida', 'repellente']
+    .map((tipo) => {
+      const art = migliore(tipo);
+      if (!art) return null;
+      return rigaProdotto({
+        code: art.code,
+        label: art.label,
+        tipo,
+        litriConf: art.litri,
+        prezzoConf: art.priceRaw,
+        ugelli: positivo(ugelli),
+        portataLmin: lMin,
+        giorni,
+        ...CICLO_PREDEFINITO[tipo],
+        _ugello: ugello?.code ?? null,
+        _pressione: pressione,
+        _fontePortata: fonte,
+      });
+    })
+    .filter(Boolean);
 }
 
 export default calcolaConsumi;

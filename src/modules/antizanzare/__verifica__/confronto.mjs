@@ -9,11 +9,19 @@
  * Da li' ricavo sia le zone e le 5 quantita' globali che servono all'originale,
  * sia le voci con quantita' suggerite che servono al motore nuovo.
  *
- * UNICA DIVERGENZA VOLUTA: i tappi fine linea. Il calcolatore originale ne
- * metteva sempre uno per zona; nella pratica il circuito si chiude ad anello
- * e non ne serve nessuno, e quando resta aperto ne servono due, uno per
- * estremita'. Qui forzo la quantita' dell'originale per poter confrontare
- * tutto il resto: la regola nuova e' verificata in derivazione.mjs.
+ * DIVERGENZE VOLUTE, entrambe sui tappi fine linea:
+ *
+ * 1. QUANTITA'. L'originale ne metteva sempre uno per zona; nella pratica il
+ *    circuito si chiude ad anello e non ne serve nessuno, e quando resta
+ *    aperto ne servono due. Qui forzo la quantita' dell'originale.
+ *
+ * 2. ARTICOLO, solo Geyser. L'originale usava l'art. 4207, che nel listino
+ *    Stocker e' "Raccordo dritto Ø6" — un manicotto — con il prezzo gia'
+ *    diviso per 5. Il tappo vero e' il 4215. Per questo dal confronto sui
+ *    totali sottraggo il contributo dei tappi da entrambe le parti: cosi'
+ *    resta verificato tutto il resto senza chiudere un occhio sull'importo.
+ *
+ * La regola nuova sui tappi e' verificata in derivazione.mjs.
  */
 
 import { eseguiOriginale } from './oracolo.mjs';
@@ -183,7 +191,25 @@ for (const caso of CASI) {
     manoRate: caso.manoRate,
   });
 
-  /* ---- confronto ---- */
+  /* ---- confronto ----
+     I tappi escono dai totali su entrambi i lati: articolo diverso di
+     proposito, vedi nota in testa al file. */
+  const scontoCaso = caso.scontoAcq;
+  const ucTappo = (it) =>
+    it.costRaw != null ? it.costRaw / (it.div || 1) : (it.priceRaw / (it.div || 1)) * (1 - scontoCaso / 100);
+  const upTappo = (it) => it.priceRaw / (it.div || 1);
+
+  const tappiOldC = old.tappo ? old.nTappo * ucTappo(old.tappo) : 0;
+  const tappiOldP = old.tappo ? old.nTappo * upTappo(old.tappo) : 0;
+  const tappiNewC = nuovo.totali.tappi.costo;
+  const tappiNewP = nuovo.totali.tappi.prezzo;
+  const ric = 1 + caso.margine / 100;
+
+  const oldCosto = old.costoTot - tappiOldC;
+  const newCosto = nuovo.costi.totale - tappiNewC;
+  const oldVendita = old.venditaMat - tappiOldP * ric;
+  const newVendita = nuovo.prezzi.venditaMateriale - tappiNewP * ric;
+
   const confronti = [
     ['Ugelli montati', old.ugN, nuovo.ugelliMontati],
     ['Metri totali', old.metriTot, nuovo.metriTot],
@@ -194,12 +220,11 @@ for (const caso of CASI) {
     ['Portaugelli 90°', old.noveN, nuovo.totali.porta90.q],
     ['Raccordi in linea', old.inlineN, nuovo.totali.inLinea.q],
     ['Tappi', old.nTappo, nuovo.totali.tappi.q],
-    ['Costo totale', old.costoTot, nuovo.costi.totale],
-    ['Vendita materiali', old.venditaMat, nuovo.prezzi.venditaMateriale],
+    ['Costo senza tappi', oldCosto, newCosto],
+    ['Vendita senza tappi', oldVendita, newVendita],
     ['Manodopera', old.mano, nuovo.prezzi.manodopera],
-    ['Prezzo totale', old.prezzoTot, nuovo.prezzi.totale],
-    ['Margine €', old.margine, nuovo.margine],
-    ['Margine %', old.margPct, nuovo.marginePct],
+    ['Prezzo senza tappi', oldVendita + old.mano, newVendita + nuovo.prezzi.manodopera],
+    ['Margine € senza tappi', oldVendita - oldCosto, newVendita - newCosto],
   ];
 
   const ko = confronti.filter(([, a, b]) => !uguali(a, b));

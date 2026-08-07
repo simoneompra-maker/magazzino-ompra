@@ -79,7 +79,11 @@ export const C = {
         {code:"4245", label:"T Ø8-6-8 riduz.", priceRaw:1.15, costRaw:0.84, div:1},
         {code:"4240", label:"T Ø8",            priceRaw:1.15, costRaw:0.84, div:1},
       ],
-      tappo:{code:"4207", label:"Chiusura fine linea Ø6", priceRaw:0.96, costRaw:0.70, div:1},
+      /* Il calcolatore originale usava come tappo l'art. 4207, che nel
+         listino Stocker e' "Raccordo dritto Ø6" — un manicotto, non una
+         chiusura — con il prezzo gia' diviso per 5. Il tappo vero e'
+         il 4215, confezione da 5 a 3,65 EUR: 0,73 EUR a pezzo. */
+      tappo:{code:"4215", label:"Tappo chiusura Ø6 (conf. 5 pz)", priceRaw:3.65, costRaw:2.67, div:5},
       // Il T Ø8-6-8 riduce da solo: nessun raccordo di riduzione separato
       riduzioni:[],
       inline:null,
@@ -101,7 +105,6 @@ export const C = {
         {code:"4241", label:"Raccordo dritto Ø8 (sfuso)",   priceRaw:0.74, costRaw:0.54, div:1},
         {code:"4244", label:"Raccordo dritto Ø6-8 (sfuso)", priceRaw:0.82, costRaw:0.60, div:1},
         {code:"4261", label:"Valvola non ritorno Ø8 (5 pz)", priceRaw:29.55, costRaw:21.63, div:1},
-        {code:"4215", label:"Tappi chiusura Ø6 (5 pz)", priceRaw:3.65, costRaw:2.67, div:1},
         {code:"4246", label:"Fissatubo a P Ø6 (sfuso)", priceRaw:0.45, costRaw:0.33, div:1},
         {code:"4250", label:"Fissatubo a P Ø8 (sfuso)", priceRaw:0.53, costRaw:0.39, div:1},
         {code:"4247", label:"Fissatubo a U Ø6 (sfuso)", priceRaw:0.53, costRaw:0.39, div:1},
@@ -247,9 +250,11 @@ export const C = {
 
 /* ===== accessori universali (validi per ogni brand) ===== */
 export const UNIVERSAL = [
-  {code:"4255",     label:"Palo innalzamento ugello 80 cm (ferro)",  priceRaw:15.7,  costRaw:11.49, div:1},
-  {code:"4256",     label:"Palo innalzamento ugello 100 cm (ferro)", priceRaw:17.21, costRaw:12.6,  div:1},
-  {code:"4257",     label:"Palo innalzamento ugello 150 cm (ferro)", priceRaw:18.85, costRaw:13.8,  div:1},
+  // I tre pali sono venduti a coppie: div 2 porta prezzo e costo al singolo
+  // palo, cosi' la quantita' che si digita e' il numero di pali montati.
+  {code:"4255",     label:"Palo innalzamento ugello 80 cm (ferro, conf. 2 pz)",  priceRaw:15.7,  costRaw:11.49, div:2},
+  {code:"4256",     label:"Palo innalzamento ugello 100 cm (ferro, conf. 2 pz)", priceRaw:17.21, costRaw:12.6,  div:2},
+  {code:"4257",     label:"Palo innalzamento ugello 150 cm (ferro, conf. 2 pz)", priceRaw:18.85, costRaw:13.8,  div:2},
   {code:"AC101005", label:"Tubolare inox 50 cm",       priceRaw:12.8, costRaw:8.96,  div:1},
   {code:"AC101010", label:"Tubolare inox 100 cm",      priceRaw:18.9, costRaw:13.23, div:1},
   {code:"AC101015", label:"Tubolare inox 150 cm",      priceRaw:23.4, costRaw:16.38, div:1},

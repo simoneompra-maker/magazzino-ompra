@@ -20,7 +20,7 @@
  * calcolatore originale: lo verifica __verifica__/confronto.mjs.
  */
 
-import { C, UNIVERSAL, DEFAULTS, ALIQUOTA_IVA } from './catalogo.js';
+import { C, UNIVERSAL, DEFAULTS, ALIQUOTA_IVA, consumabiliPerBrand } from './catalogo.js';
 
 /* ─────────────────── util ─────────────────── */
 
@@ -60,6 +60,21 @@ export const CATEGORIE = [
 ];
 
 /**
+ * Il kit di prodotti di partenza — insetticida e repellente del brand.
+ *
+ * NON sta dentro CATEGORIE di proposito. Le categorie sono materiale
+ * d'impianto: hanno una quantita' suggerita dalla geometria, finiscono
+ * nella nota di carico del tecnico e concorrono al totale impianto. I
+ * consumabili non hanno niente di tutto questo — la quantita' la decide
+ * il commerciale, e nel preventivo compaiono su una riga loro, cosi'
+ * togliere il kit non muove il prezzo dell'impianto.
+ *
+ * Tenendoli fuori dal ciclo delle categorie, inoltre, un progetto senza
+ * kit da esattamente gli stessi numeri di prima.
+ */
+export const CATEGORIA_CONSUMABILI = { id: 'consumabili', label: 'Kit prodotti', um: 'pz' };
+
+/**
  * Etichetta della categoria da mostrare, dato il brand.
  * I tubi si chiamano col loro diametro — Ø6 e Ø8 per Geyser, 1/4" e 3/8"
  * per gli altri — perche' e' cosi' che li chiamano in magazzino e in
@@ -80,6 +95,7 @@ export function articoliCategoria(brandId, categoriaId) {
   const brand = C.brands[brandId];
   if (!brand) return [];
   const s = C.sys[brand.sys];
+  if (categoriaId === CATEGORIA_CONSUMABILI.id) return consumabiliPerBrand(brandId);
   const cat = CATEGORIE.find((c) => c.id === categoriaId);
   if (!cat) return [];
 
@@ -334,6 +350,38 @@ export function calcolaImpianto(input) {
     });
   });
 
+  /* ── kit prodotti di consumo ──
+   * Insetticida e repellente del brand, di norma inclusi come scorta di
+   * partenza. Si vendono al listino: nessun ricarico sopra, a differenza
+   * del materiale d'impianto, perche' il prezzo del prodotto e' pubblico
+   * e il cliente lo ritrova sul sito del fabbricante. */
+  const disponibiliKit = consumabiliPerBrand(brandId);
+  let kitQ = 0;
+  let kitC = 0;
+  let kitP = 0;
+  (input.consumabili || []).forEach((v) => {
+    const art = findByCode(disponibiliKit, v.code);
+    const n = Math.max(0, nz(v.q));
+    if (!art || n <= 0) return;
+    const c = uc(art);
+    const p = up(art);
+    kitQ += n;
+    kitC += c * n;
+    kitP += p * n;
+    bom.push({
+      categoria: CATEGORIA_CONSUMABILI.id,
+      code: art.code,
+      desc: `${CATEGORIA_CONSUMABILI.label} — ${art.label}`,
+      q: n,
+      um: CATEGORIA_CONSUMABILI.um,
+      uC: c,
+      uP: p,
+      tC: c * n,
+      tP: p * n,
+    });
+  });
+  totali[CATEGORIA_CONSUMABILI.id] = { q: kitQ, costo: kitC, prezzo: kitP, suggerito: null };
+
   const materialeC = CATEGORIE.reduce((a, c) => a + totali[c.id].costo, 0);
   const materialeP = CATEGORIE.reduce((a, c) => a + totali[c.id].prezzo, 0);
 
@@ -358,11 +406,14 @@ export function calcolaImpianto(input) {
 
   /* ── totali ── */
   const ricarico = Math.max(0, nz(input.margine, DEFAULTS.margine)) / 100;
-  const costoTot = materialeC + extraC;
+  const costoTot = materialeC + extraC + kitC;
   const venditaMat = (materialeP + extraP) * (1 + ricarico);
-  const prezzoTot = venditaMat + mano; // imponibile: i prezzi sono IVA esclusa
-  const margine = venditaMat - costoTot;
-  const marginePct = venditaMat > 0 ? (margine / venditaMat) * 100 : 0;
+  /* Il ricarico NON si applica al kit: quei prodotti si rivendono al
+     listino del fabbricante. */
+  const venditaTot = venditaMat + kitP;
+  const prezzoTot = venditaTot + mano; // imponibile: i prezzi sono IVA esclusa
+  const margine = venditaTot - costoTot;
+  const marginePct = venditaTot > 0 ? (margine / venditaTot) * 100 : 0;
 
   const aliquota = nz(input.aliquotaIva, ALIQUOTA_IVA);
   const iva = prezzoTot * (aliquota / 100);
@@ -449,11 +500,15 @@ export function calcolaImpianto(input) {
       totale: mano,
     },
 
-    costi: { materiale: materialeC, extra: extraC, totale: costoTot },
+    costi: { materiale: materialeC, extra: extraC, kit: kitC, totale: costoTot },
     prezzi: {
       materiale: materialeP,
       extra: extraP,
       venditaMateriale: venditaMat,
+      /* Impianto = materiale + manodopera, senza i prodotti di consumo.
+         E' la cifra che il cliente confronta con gli altri preventivi. */
+      impianto: venditaMat + mano,
+      kitProdotti: kitP,
       manodopera: mano,
       totale: prezzoTot, // imponibile
       imponibile: prezzoTot,

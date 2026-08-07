@@ -43,6 +43,7 @@ export const SOTTOMODULI = [
   'antizanzare.impianto',
   'antizanzare.consuntivo',
   'antizanzare.preventivo',
+  'antizanzare.consumi',
   'antizanzare.listini',
 ];
 

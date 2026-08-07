@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, Search, Bug, RefreshCw, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Bug, RefreshCw, Trash2, Loader2, Droplets } from 'lucide-react';
 import { listaProgetti, eliminaProgetto } from './antizanzareService';
 import { vedePrezzi } from '../../lib/permessi';
 
@@ -18,7 +18,7 @@ const eur = (n) =>
 
 const dataIt = (s) => (s ? new Date(s).toLocaleDateString('it-IT') : '');
 
-export default function ProgettiList({ operatore, onApri, onNuovo, onEsci }) {
+export default function ProgettiList({ operatore, onApri, onNuovo, onEsci, onConsumi }) {
   const [progetti, setProgetti] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errore, setErrore] = useState('');
@@ -93,6 +93,19 @@ export default function ProgettiList({ operatore, onApri, onNuovo, onEsci }) {
             {operatore?.ruolo === 'tecnico' && ' · progetti assegnati a te'}
           </p>
         </div>
+        {/* Il calcolatore consumi serve anche senza un progetto aperto:
+            in trattativa la domanda sui costi di gestione arriva prima
+            che il preventivo esista. */}
+        {onConsumi && mostraPrezzi && (
+          <button
+            onClick={onConsumi}
+            className="p-1.5 rounded-lg hover:bg-white/20"
+            aria-label="Calcolatore consumi"
+            title="Calcolatore consumi"
+          >
+            <Droplets className="w-4 h-4" />
+          </button>
+        )}
         <button onClick={carica} className="p-1.5 rounded-lg hover:bg-white/20" aria-label="Ricarica">
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>

@@ -66,8 +66,9 @@ export const C = {
         {code:"4271", label:"Ø8 nero 25 m",     priceRaw:19.80, costRaw:14.49, div:25},
       ],
       ugello:[
-        {code:"4219", label:"Anti-gocc. standard", priceRaw:2.75, costRaw:2.01, div:1},
-        {code:"4253", label:"Anti-gocc. 135°",     priceRaw:4.75, costRaw:3.48, div:1},
+        // portataLmin = dato DICHIARATO da Stocker, non calcolato
+        {code:"4219", label:"Anti-gocc. standard", priceRaw:2.75, costRaw:2.01, div:1, foroMm:0.3, portataLmin:0.04},
+        {code:"4253", label:"Anti-gocc. 135°",     priceRaw:4.75, costRaw:3.48, div:1, foroMm:0.3, portataLmin:0.04},
       ],
       porta:[
         {code:"4236", label:"Dritto Ø6 (sfuso)", priceRaw:0.78, costRaw:0.57, div:1, kind:"d"},
@@ -129,8 +130,8 @@ export const C = {
         {code:"AI38100T", label:"Tubo 3/8\" aspirazione acqua (m)", priceRaw:2.9, costRaw:null, div:1},
       ],
       ugello:[
-        {code:"AI040302", label:"Ugello standard",   priceRaw:5.1, costRaw:null, div:1},
-        {code:"AI040303", label:"Ugello antigoccia 0.4", priceRaw:5.3, costRaw:null, div:1},
+        {code:"AI040302", label:"Ugello standard",   priceRaw:5.1, costRaw:null, div:1, foroMm:0.3},
+        {code:"AI040303", label:"Ugello antigoccia 0.4", priceRaw:5.3, costRaw:null, div:1, foroMm:0.4},
       ],
       porta:[
         {code:"AI529014", label:"Portaugello 1/4\" dritto", priceRaw:4.47, costRaw:null, div:1, kind:"d"},
@@ -182,7 +183,7 @@ export const C = {
         {code:"AI14025N", label:"Tubo mandata nero 25 m", priceRaw:34.43, costRaw:null, div:25},
       ],
       ugello:[
-        {code:"KT040302.5", label:"Ugello 0,15 (kit 5)", priceRaw:29.92, costRaw:null, div:5},
+        {code:"KT040302.5", label:"Ugello 0,15 (kit 5)", priceRaw:29.92, costRaw:null, div:5, foroMm:0.15},
       ],
       porta:[
         {code:"KT529014.5", label:"Portaugello dritto 1/4\" (kit 5)", priceRaw:25.82, costRaw:null, div:5, kind:"d"},
@@ -214,14 +215,22 @@ export const C = {
         {code:"TBPA60BAR1/4", label:"Tubo PA 1/4\" 60 bar 100 m",  priceRaw:165,   costRaw:null, div:100},
         {code:"TBPA80BAR3/8", label:"Tubo PA 3/8\" 80 bar 100 m",  priceRaw:177.5, costRaw:null, div:100},
       ],
+      /* Le misure sul listino Gardheaven 2026 sono scritte "0,015 mm",
+         "0,02 mm" e cosi' via: e' un errore di virgola, sono DECIMI di
+         quei valori (0,15 mm, 0,2 mm). Confermato da Simone, che monta
+         gli 0,1 e 0,15 sul raffrescamento e riconosce lo 0,3 come la
+         misura dell'ugello Stocker. Se fossero millimetri veri, uno
+         "0,015 mm" avrebbe un foro venti volte piu' stretto di quello
+         Stocker, cioe' quattrocento volte meno portata: impossibile.
+         Le etichette qui sotto riportano la misura VERA. */
       ugello:[
-        {code:"UGEL0015", label:"Ugello 0,015 mm",          priceRaw:5.5, costRaw:null, div:1},
-        {code:"UGEL002",  label:"Ugello 0,02 mm",           priceRaw:5.5, costRaw:null, div:1},
-        {code:"UGEL001",  label:"Ugello 0,01 mm (fine)",    priceRaw:5.5, costRaw:null, div:1},
-        {code:"UGEL003",  label:"Ugello 0,03 mm",           priceRaw:5.5, costRaw:null, div:1},
-        {code:"UGEL004",  label:"Ugello 0,04 mm",           priceRaw:6.2, costRaw:null, div:1},
-        {code:"UGEL0015C",label:"Ugello 0,015 mm ceramico", priceRaw:6.6, costRaw:null, div:1},
-        {code:"UGEL002C", label:"Ugello 0,02 mm ceramico",  priceRaw:6.6, costRaw:null, div:1},
+        {code:"UGEL0015", label:"Ugello 0,15 mm",          priceRaw:5.5, costRaw:null, div:1, foroMm:0.15},
+        {code:"UGEL002",  label:"Ugello 0,2 mm",           priceRaw:5.5, costRaw:null, div:1, foroMm:0.2},
+        {code:"UGEL001",  label:"Ugello 0,1 mm (fine)",    priceRaw:5.5, costRaw:null, div:1, foroMm:0.1},
+        {code:"UGEL003",  label:"Ugello 0,3 mm",           priceRaw:5.5, costRaw:null, div:1, foroMm:0.3},
+        {code:"UGEL004",  label:"Ugello 0,4 mm",           priceRaw:6.2, costRaw:null, div:1, foroMm:0.4},
+        {code:"UGEL0015C",label:"Ugello 0,15 mm ceramico", priceRaw:6.6, costRaw:null, div:1, foroMm:0.15},
+        {code:"UGEL002C", label:"Ugello 0,2 mm ceramico",  priceRaw:6.6, costRaw:null, div:1, foroMm:0.2},
       ],
       porta:[
         {code:"RACCPUD1/4", label:"Porta ugello dritto 1/4\"",   priceRaw:6.6, costRaw:null, div:1, kind:"d"},
@@ -264,6 +273,129 @@ export const UNIVERSAL = [
   {code:"AC101109", label:"Tubolare PVC tipo bambù 50 cm",  priceRaw:4.32, costRaw:3.02, div:1},
   {code:"AC101110", label:"Tubolare PVC tipo bambù 100 cm", priceRaw:3.12, costRaw:2.18, div:1},
 ];
+
+/* ===== prodotti di consumo =====
+ *
+ * Insetticida e repellente del brand della centralina: nel preventivo
+ * entrano come kit di partenza, e sono la base del calcolo dei consumi.
+ *
+ * litri = contenuto della confezione, serve a convertire il prezzo in
+ *         euro/litro e a dire quante confezioni servono per la stagione
+ * tipo  = 'insetticida' | 'repellente' | 'altro'
+ *
+ * Fonti: Listino Unificato per Stocker/Zanzero (colonna Categoria =
+ * Consumabile) e listino Gardheaven 2026 pag. 6 per Gardheaven, che nel
+ * Listino Unificato non compare.
+ */
+export const CONSUMABILI = {
+  geyser: [
+    {code:"45130", label:"Etokraft zanzaricida 1 L",    priceRaw:38.40,  costRaw:28.11,  div:1, litri:1,    tipo:"insetticida"},
+    {code:"45147", label:"Etokraft zanzaricida 5 L",    priceRaw:174.59, costRaw:127.80, div:1, litri:5,    tipo:"insetticida"},
+    {code:"45135", label:"Etokraft zanzaricida 250 ml", priceRaw:13.89,  costRaw:10.17,  div:1, litri:0.25, tipo:"insetticida"},
+    {code:"45148", label:"Pirekraft concentrato 500 ml",priceRaw:37.46,  costRaw:27.42,  div:1, litri:0.5,  tipo:"insetticida"},
+    {code:"45149", label:"Pirekraft concentrato 5 L",   priceRaw:287.70, costRaw:210.60, div:1, litri:5,    tipo:"insetticida"},
+    {code:"45128", label:"Nebuzan repellente 1 L",      priceRaw:34.34,  costRaw:25.14,  div:1, litri:1,    tipo:"repellente"},
+    {code:"45138", label:"Nebuzan repellente 5 L",      priceRaw:131.56, costRaw:96.30,  div:1, litri:5,    tipo:"repellente"},
+    {code:"45129", label:"Florifens disabituante 250 ml",priceRaw:11.11, costRaw:null,   div:1, litri:0.25, tipo:"repellente"},
+    {code:"45124", label:"Florifens disabituante 1 L",  priceRaw:31.60,  costRaw:null,   div:1, litri:1,    tipo:"repellente"},
+    {code:"45136", label:"Florifens disabituante 5 L",  priceRaw:125.41, costRaw:null,   div:1, litri:5,    tipo:"repellente"},
+    {code:"45137", label:"Florifens larvicida 50 ml",   priceRaw:11.93,  costRaw:null,   div:1, litri:0.05, tipo:"altro"},
+  ],
+  pro: [
+    {code:"VPPM1000", label:"Vapo Perm Plus insetticida 1 L",      priceRaw:40.98,  costRaw:null, div:1, litri:1, tipo:"insetticida"},
+    {code:"VPPM5000", label:"Vapo Perm Plus insetticida 5 L",      priceRaw:194.26, costRaw:null, div:1, litri:5, tipo:"insetticida"},
+    {code:"VPSS10TR", label:"Vapo Silver Shield tea tree/rosm. 1 L",priceRaw:32.79, costRaw:null, div:1, litri:1, tipo:"repellente"},
+    {code:"VPSS05LC", label:"Vapo Silver Shield limone/cedro 5 L", priceRaw:155.44, costRaw:null, div:1, litri:5, tipo:"repellente"},
+    {code:"VPNA5000", label:"Vapo Nature rosmarino 5 L",           priceRaw:159.32, costRaw:null, div:1, litri:5, tipo:"repellente"},
+  ],
+  smart: [
+    {code:"A0133", label:"Vapo Ciper 1 L",               priceRaw:32.79,  costRaw:null, div:1, litri:1,  tipo:"insetticida"},
+    {code:"A0134", label:"Vapo Ciper 5 L",               priceRaw:143.44, costRaw:null, div:1, litri:5,  tipo:"insetticida"},
+    {code:"A0135", label:"Vapo Ciper 10 L",              priceRaw:271.31, costRaw:null, div:1, litri:10, tipo:"insetticida"},
+    {code:"A0136", label:"Vapo Perm Plus Tri Active 1 L",priceRaw:59.02,  costRaw:null, div:1, litri:1,  tipo:"insetticida"},
+    {code:"A0137", label:"Vapo Perm Plus Tri Active 5 L",priceRaw:277.87, costRaw:null, div:1, litri:5,  tipo:"insetticida"},
+    {code:"A0138", label:"Vapo Perm Plus Tri Active 10 L",priceRaw:540.16,costRaw:null, div:1, litri:10, tipo:"insetticida"},
+    {code:"A0139", label:"Vapo Silver Shield 1 L",       priceRaw:46.72,  costRaw:null, div:1, litri:1,  tipo:"repellente"},
+    {code:"A0140", label:"Vapo Silver Shield 5 L",       priceRaw:227.05, costRaw:null, div:1, litri:5,  tipo:"repellente"},
+    {code:"A0141", label:"Vapo Nature 1 L",              priceRaw:46.72,  costRaw:null, div:1, litri:1,  tipo:"repellente"},
+    {code:"A0142", label:"Vapo Nature 5 L",              priceRaw:227.05, costRaw:null, div:1, litri:5,  tipo:"repellente"},
+    {code:"A0143", label:"Vapo Nature 10 L",             priceRaw:442.62, costRaw:null, div:1, litri:10, tipo:"repellente"},
+  ],
+  gardheaven: [
+    {code:"FIREWALL-Inse1L", label:"Insetticida abbattente Firewall 1 L", priceRaw:32,  costRaw:null, div:1, litri:1,   tipo:"insetticida"},
+    {code:"FIREWALL-Inse5L", label:"Insetticida abbattente Firewall 5 L", priceRaw:139, costRaw:null, div:1, litri:5,   tipo:"insetticida"},
+    {code:"CHEF-BarrArom1L", label:"Barriera aromatica Chef 1 L",         priceRaw:49,  costRaw:null, div:1, litri:1,   tipo:"repellente"},
+    {code:"CHEF-BarrArom5L", label:"Barriera aromatica Chef 5 L",         priceRaw:199, costRaw:null, div:1, litri:5,   tipo:"repellente"},
+    {code:"ANTICALC-05L",    label:"Liquido anticalcare 0,5 L",           priceRaw:26,  costRaw:null, div:1, litri:0.5, tipo:"altro"},
+  ],
+};
+
+/** Consumabili del brand, eventualmente filtrati per tipo. */
+export const consumabiliPerBrand = (brandId, tipo = null) => {
+  const l = CONSUMABILI[brandId] || [];
+  return tipo ? l.filter((p) => p.tipo === tipo) : l;
+};
+
+/**
+ * Pressione di esercizio tipica, in bar. Valori di partenza dichiarati da
+ * Simone; restano modificabili sul singolo progetto perche' dipendono da
+ * come la centralina e' regolata.
+ */
+export const PRESSIONE_BAR = {
+  geyser: 12,
+  pro: 17,
+  smart: 17,
+  gardheaven: 17,
+};
+
+/** Il raffrescamento Gardheaven gira molto piu' alto, con ugelli da 0,1-0,15. */
+export const PRESSIONE_RAFFRESCAMENTO = 50;
+
+/**
+ * Punto di taratura del modello di portata: Stocker dichiara 0,04 l/min
+ * per l'ugello da 0,3 mm a 12 bar. Tutto il resto si estrapola da qui.
+ */
+export const TARATURA_PORTATA = { foroMm: 0.3, bar: 12, lMin: 0.04 };
+
+/**
+ * Portata stimata di un ugello, in litri al minuto.
+ *
+ * Legge dell'ugello: la portata cresce col QUADRATO del diametro e con la
+ * RADICE della pressione. La costante e' fissata sul dato dichiarato da
+ * Stocker, quindi sullo 0,3 mm il modello restituisce esattamente il valore
+ * di targa e sulle misure vicine resta attendibile.
+ *
+ * ATTENZIONE ai fori molto piccoli. Sotto i 0,2 mm il confronto con le
+ * tabelle pubblicate di settore mostra scarti fino al doppio: a quelle
+ * misure a limitare il flusso non e' piu' il foro ma la camera di
+ * turbolenza, che questa formula non descrive. Per gli ugelli da
+ * raffrescamento il numero e' quindi un ordine di grandezza, da
+ * sostituire col dato del costruttore appena disponibile.
+ */
+export function portataStimata(foroMm, bar) {
+  const d = Math.max(0, parseFloat(foroMm) || 0);
+  const p = Math.max(0, parseFloat(bar) || 0);
+  if (d <= 0 || p <= 0) return 0;
+  const k = TARATURA_PORTATA.lMin / (TARATURA_PORTATA.foroMm ** 2 * Math.sqrt(TARATURA_PORTATA.bar));
+  return k * d * d * Math.sqrt(p);
+}
+
+/**
+ * Portata da usare per un ugello: il dato dichiarato se c'e', altrimenti
+ * la stima. Restituisce anche da dove viene il numero, cosi' l'interfaccia
+ * puo' dirlo invece di far finta che siano tutti equivalenti.
+ */
+export function portataUgello(articolo, bar) {
+  if (!articolo) return { lMin: 0, fonte: 'ignota' };
+  if (articolo.portataLmin > 0) {
+    return { lMin: articolo.portataLmin, fonte: 'dichiarata' };
+  }
+  const stima = portataStimata(articolo.foroMm, bar);
+  return { lMin: stima, fonte: stima > 0 ? 'stimata' : 'ignota' };
+}
+
+/** Giorni di stagione usati come punto di partenza: maggio-settembre. */
+export const GIORNI_STAGIONE = 150;
 
 /* ===== metodi di montaggio ugelli ===== */
 export const METODI = [

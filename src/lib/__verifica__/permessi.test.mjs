@@ -39,6 +39,7 @@ t('entra in antizanzare', true, puoAccedere(comm, 'antizanzare'));
 t('usa i progetti antizanzare', true, puoAccedere(comm, 'antizanzare.progetti'));
 t('NON vede budget-admin', false, puoAccedere(comm, 'budget-admin'));
 t('NON aggiorna i listini antizanzare', false, puoAccedere(comm, 'antizanzare.listini'));
+t('usa il calcolatore consumi', true, puoAccedere(comm, 'antizanzare.consumi'));
 t('vede prezzi', true, vedePrezzi(comm));
 t('parte dalla home', 'home', paginaIniziale(comm));
 t('non e bloccato su un modulo', false, bloccatoSuModulo(comm));
@@ -47,6 +48,9 @@ console.log('\n— Tecnico —');
 t('entra in antizanzare', true, puoAccedere(tec, 'antizanzare'));
 t('vede il consuntivo', true, puoAccedere(tec, 'antizanzare.consuntivo'));
 t('NON configura l impianto', false, puoAccedere(tec, 'antizanzare.impianto'));
+/* Il calcolatore consumi parla di prezzi e costi di gestione: e' materia
+   commerciale, non da cantiere. */
+t('NON vede il calcolatore consumi', false, puoAccedere(tec, 'antizanzare.consumi'));
 t('NON vede vendita', false, puoAccedere(tec, 'vendita'));
 t('NON vede magazzino', false, puoAccedere(tec, 'giacenze'));
 t('NON vede la rubrica', false, puoAccedere(tec, 'rubrica-clienti'));

@@ -8,6 +8,10 @@ import { C, DEFAULTS, EUR_PER_UGELLO } from './catalogo';
 import LineeEditor from './LineeEditor';
 import ConfigImpianto from './ConfigImpianto';
 import Consuntivo from './Consuntivo';
+import KitProdotti from './KitProdotti';
+import CalcolatoreConsumi from './CalcolatoreConsumi';
+import { prodottiDaProgetto, calcolaConsumi } from './consumi';
+import { consumabiliPerBrand } from './catalogo';
 import { leggiLineeDaPiantina } from './leggiPiantina';
 import { vedePrezzi } from '../../lib/permessi';
 import {
@@ -35,6 +39,8 @@ function configIniziale(brand = 'gardheaven') {
     manoMac: DEFAULTS.manoMac,
     manoRate: DEFAULTS.manoRate,
     extra: [],
+    consumabili: [], // kit prodotti: [{code, q}]
+    consumi: [], // righe del calcolatore consumi
   };
 }
 
@@ -201,6 +207,47 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
     const nuove = allineaVociAuto(cfg, risultato.suggeriti);
     if (nuove) setCfg((c) => ({ ...c, voci: nuove }));
   }, [risultato, cfg, soloLettura]);
+
+  /* ── consumi: riprende ugelli e prodotti da quello che c'e' gia' ──
+     Minuti e percentuale gia' digitati NON si perdono: sono i due valori
+     che dipendono dal cliente e riscriverli a zero a ogni ricalcolo
+     sarebbe il modo piu' rapido di far odiare il pulsante. */
+  const precompilaConsumi = useCallback(() => {
+    const codeUgello = (cfg.voci?.ugelli || [])[0]?.code;
+    const articoloUgello = (C.sys[C.brands[cfg.brand]?.sys]?.ugello || []).find(
+      (u) => u.code === codeUgello
+    );
+    const scelti = (cfg.consumabili || [])
+      .map((v) => consumabiliPerBrand(cfg.brand).find((a) => a.code === v.code))
+      .filter(Boolean);
+
+    const nuove = prodottiDaProgetto({
+      brandId: cfg.brand,
+      ugelli: risultato?.ugelliMontati || risultato?.N || 0,
+      articoloUgello,
+      consumabili: scelti,
+    });
+
+    const vecchie = cfg.consumi || [];
+    setModificato(true);
+    setCfg((c) => ({
+      ...c,
+      consumi: nuove.map((r) => {
+        const gia = vecchie.find((v) => v.tipo === r.tipo);
+        return gia
+          ? { ...r, minutiGiorno: gia.minutiGiorno, percentuale: gia.percentuale, giorni: gia.giorni }
+          : r;
+      }),
+    }));
+  }, [cfg, risultato]);
+
+  /* I consumi non entrano MAI nel prezzo: sono una stima di quanto costera'
+     tenere acceso l'impianto, e vanno tenuti lontani dal totale che il
+     cliente paga oggi. Compaiono in fondo al riepilogo, dichiarati come tali. */
+  const consumi = useMemo(
+    () => calcolaConsumi({ prodotti: cfg.consumi || [] }),
+    [cfg.consumi]
+  );
 
   /* Il prezzo scritto a mano, se c'e', sostituisce il totale calcolato:
      l'IVA va calcolata su quello che il cliente paga davvero. */
@@ -716,6 +763,28 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
           />
         )}
 
+        {/* ── KIT PRODOTTI DI CONSUMO ── */}
+        {mostraPrezzi && !soloLettura && (
+          <KitProdotti
+            brand={cfg.brand}
+            valori={cfg.consumabili || []}
+            soloLettura={soloLettura}
+            mostraPrezzi={mostraPrezzi}
+            onChange={(lista) => tocca(setCfg)({ ...cfg, consumabili: lista })}
+          />
+        )}
+
+        {/* ── CONSUMI E COSTI DI GESTIONE ── */}
+        {mostraPrezzi && !soloLettura && (
+          <CalcolatoreConsumi
+            brand={cfg.brand}
+            prodotti={cfg.consumi || []}
+            soloLettura={soloLettura}
+            onPrecompila={precompilaConsumi}
+            onChange={(lista) => tocca(setCfg)({ ...cfg, consumi: lista })}
+          />
+        )}
+
         {/* ── MANODOPERA E MARGINE ── */}
         {mostraPrezzi && !soloLettura && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-2">
@@ -838,6 +907,23 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                 <dt className="text-white/60">Manodopera</dt>
                 <dd>{eur(risultato.prezzi.manodopera)}</dd>
               </div>
+
+              {/* Impianto e prodotti restano distinti: il cliente confronta
+                  i preventivi sul prezzo dell'impianto, e togliere il kit
+                  non deve sembrare uno sconto sul montaggio. */}
+              {risultato.prezzi.kitProdotti > 0 && (
+                <>
+                  <div className="flex justify-between pt-2 mt-1 border-t border-white/20">
+                    <dt className="text-white/60">Totale impianto</dt>
+                    <dd>{eur(risultato.prezzi.impianto)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-white/60">Kit prodotti</dt>
+                    <dd>{eur(risultato.prezzi.kitProdotti)}</dd>
+                  </div>
+                </>
+              )}
+
               <div className="flex justify-between pt-2 mt-1 border-t border-white/20 text-base font-bold">
                 <dt>Totale imponibile</dt>
                 <dd className="text-green-300">{eur(imponibile)}</dd>
@@ -851,6 +937,36 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
                 <dd className="text-green-300">{eur(imponibile + iva)}</dd>
               </div>
             </dl>
+
+            {/* Costi di gestione: FUORI dal totale, sotto una riga di
+                separazione e dichiarati come stima. Sono quanto costera'
+                tenerlo acceso, non quanto si paga oggi: mescolarli al
+                prezzo sarebbe scorretto verso il cliente. */}
+            {consumi.nProdotti > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/20 text-xs space-y-1">
+                <p className="text-white/60 font-semibold">
+                  Costi di gestione stimati — non compresi nel prezzo
+                </p>
+                <div className="flex justify-between">
+                  <span className="text-white/60">Prodotto per stagione</span>
+                  <span className="tabular-nums">
+                    {consumi.concentratoStagione.toLocaleString('it-IT', {
+                      maximumFractionDigits: 1,
+                    })}{' '}
+                    l
+                  </span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span>Spesa a stagione</span>
+                  <span className="tabular-nums">{eur(consumi.costoStagione)}</span>
+                </div>
+                <p className="text-white/40 leading-snug pt-0.5">
+                  Stima sui parametri d&apos;uso dichiarati ({consumi.giorniMax} giorni),
+                  a confezioni intere. Il consumo reale dipende da come viene programmata
+                  la centralina.
+                </p>
+              </div>
+            )}
 
             <label className="block mt-3">
               <span className="text-xs text-white/60">

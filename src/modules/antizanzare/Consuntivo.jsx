@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, Plus, Trash2, Loader2, CheckCheck, FileSpreadsheet } from 'lucide-react';
-import { caricaConsuntivo, inizializzaConsuntivo, salvaConsuntivo } from './antizanzareService';
+import {
+  caricaConsuntivo,
+  inizializzaConsuntivo,
+  salvaConsuntivo,
+  ripuliDuplicatiConsuntivo,
+} from './antizanzareService';
 import { scaricaNotaCarico } from './export/exportNotaCarico';
 
 const VERDE = '#006B3F';
@@ -29,14 +34,32 @@ export default function Consuntivo({
   const [errore, setErrore] = useState('');
   const [salvato, setSalvato] = useState(false);
 
+  /* La distinta serve solo alla prima inizializzazione: la tengo in un ref
+     invece che fra le dipendenze, altrimenti ogni nuovo array ricaricherebbe
+     tutto. */
+  const bomRef = useRef(bom);
+  bomRef.current = bom;
+
   useEffect(() => {
     let vivo = true;
     (async () => {
       try {
         let dati = await caricaConsuntivo(progettoId);
-        if (dati.length === 0 && bom?.length > 0) {
-          dati = await inizializzaConsuntivo(progettoId, bom);
+
+        if (dati.length === 0 && bomRef.current?.length > 0) {
+          dati = await inizializzaConsuntivo(progettoId, bomRef.current);
+        } else if (dati.length > 0) {
+          // Ripara i doppioni lasciati dalla vecchia corsa in inizializzazione
+          const { rimosse, ambigue } = await ripuliDuplicatiConsuntivo(progettoId, dati);
+          if (rimosse > 0) dati = await caricaConsuntivo(progettoId);
+          if (vivo && ambigue > 0) {
+            setErrore(
+              `${ambigue} materiali compaiono in doppio con quantità diverse su entrambe le copie: ` +
+                'controllali e cancella la riga di troppo.'
+            );
+          }
         }
+
         if (vivo) setRighe(dati);
       } catch (e) {
         if (vivo) setErrore(e.message || 'Caricamento fallito');
@@ -47,7 +70,7 @@ export default function Consuntivo({
     return () => {
       vivo = false;
     };
-  }, [progettoId, bom]);
+  }, [progettoId]);
 
   const set = (i, campo, v) => {
     setSalvato(false);
@@ -181,10 +204,22 @@ export default function Consuntivo({
               {righe.map((r, i) =>
                 r.extra ? null : (
                   <div key={i} className="p-3">
-                    <p className="text-sm text-gray-800 leading-snug">{r.descrizione}</p>
-                    <p className="text-xs text-gray-400 mb-2">
-                      {r.codice} · previsti <b>{r.q_prevista}</b> {r.um}
-                    </p>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800 leading-snug">{r.descrizione}</p>
+                        <p className="text-xs text-gray-400 mb-2">
+                          {r.codice} · previsti <b>{r.q_prevista}</b> {r.um}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => rimuovi(i)}
+                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 flex-shrink-0"
+                        title="Togli questa riga dalla nota di carico"
+                        aria-label={`Togli ${r.descrizione}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block">
                         <span className="text-xs text-gray-500">Q.tà usata</span>

@@ -190,28 +190,88 @@ export async function caricaConsuntivo(progettoId) {
 }
 
 /**
+ * Inizializzazioni in corso, per progetto.
+ *
+ * Senza questo, due chiamate ravvicinate leggono entrambe un consuntivo
+ * vuoto e inseriscono entrambe la distinta: il risultato e' ogni riga in
+ * doppio. Capita di sicuro in sviluppo, dove StrictMode esegue gli effetti
+ * due volte, ma basta un doppio render anche in produzione.
+ * Condividendo la stessa promessa, la seconda chiamata aspetta la prima
+ * invece di ripartire da capo.
+ */
+const inizializzazioniInCorso = new Map();
+
+/**
  * Genera le righe di consuntivo dalla distinta materiali, se non esistono gia'.
  * Non sovrascrive un consuntivo gia' compilato.
  */
-export async function inizializzaConsuntivo(progettoId, bom) {
-  const esistenti = await caricaConsuntivo(progettoId);
-  if (esistenti.length > 0) return esistenti;
+export function inizializzaConsuntivo(progettoId, bom) {
+  const inCorso = inizializzazioniInCorso.get(progettoId);
+  if (inCorso) return inCorso;
 
-  const righe = (bom || []).map((r, i) => ({
-    progetto_id: progettoId,
-    ordine: i,
-    codice: r.code,
-    descrizione: r.desc,
-    um: r.um,
-    q_prevista: r.q,
-    q_usata: null,
-    extra: false,
-  }));
+  const lavoro = (async () => {
+    const esistenti = await caricaConsuntivo(progettoId);
+    if (esistenti.length > 0) return esistenti;
 
-  if (righe.length === 0) return [];
-  const { data, error } = await supabase.from('az_consuntivo').insert(righe).select();
-  if (error) throw error;
-  return data || [];
+    const righe = (bom || []).map((r, i) => ({
+      progetto_id: progettoId,
+      ordine: i,
+      codice: r.code,
+      descrizione: r.desc,
+      um: r.um,
+      q_prevista: r.q,
+      q_usata: null,
+      extra: false,
+    }));
+
+    if (righe.length === 0) return [];
+    const { data, error } = await supabase.from('az_consuntivo').insert(righe).select();
+    if (error) throw error;
+    return data || [];
+  })().finally(() => inizializzazioniInCorso.delete(progettoId));
+
+  inizializzazioniInCorso.set(progettoId, lavoro);
+  return lavoro;
+}
+
+/**
+ * Ripara un consuntivo con righe doppie, lascito della corsa descritta
+ * sopra. Accorpa solo le righe di distinta — non le extra, dove due voci
+ * uguali possono essere volute — e solo quando al massimo una del gruppo
+ * e' gia' stata compilata: se ci fosse lavoro su piu' copie, cancellarne
+ * una in silenzio sarebbe peggio del duplicato.
+ *
+ * @returns {Promise<{rimosse:number, ambigue:number}>}
+ */
+export async function ripuliDuplicatiConsuntivo(progettoId, righe) {
+  const gruppi = new Map();
+  (righe || [])
+    .filter((r) => !r.extra)
+    .forEach((r) => {
+      const chiave = `${r.codice || ''}|${r.descrizione || ''}`;
+      if (!gruppi.has(chiave)) gruppi.set(chiave, []);
+      gruppi.get(chiave).push(r);
+    });
+
+  const daRimuovere = [];
+  let ambigue = 0;
+
+  gruppi.forEach((gruppo) => {
+    if (gruppo.length < 2) return;
+    const compilate = gruppo.filter((r) => r.q_usata !== null && r.q_usata !== undefined);
+    if (compilate.length > 1) {
+      ambigue += 1;
+      return; // c'e' lavoro su piu' copie: non tocco niente
+    }
+    const tenere = compilate[0] || gruppo.slice().sort((a, b) => a.ordine - b.ordine)[0];
+    gruppo.filter((r) => r.id !== tenere.id).forEach((r) => daRimuovere.push(r.id));
+  });
+
+  if (daRimuovere.length > 0) {
+    const { error } = await supabase.from('az_consuntivo').delete().in('id', daRimuovere);
+    if (error) throw error;
+  }
+  return { rimosse: daRimuovere.length, ambigue };
 }
 
 /** Riscrive per intero il consuntivo, incluse le righe extra del tecnico. */

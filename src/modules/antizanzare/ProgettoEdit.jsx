@@ -206,42 +206,59 @@ export default function ProgettoEdit({ operatore, progettoId, onIndietro }) {
      documento; la data di montaggio serve da quando diventa ordine */
   const montaggioRilevante = ['ordine', 'montato', 'chiuso'].includes(testata.stato);
 
-  /* ── salvataggio ── */
+  /* ── salvataggio ──
+     Due salvataggi contemporanei su un progetto ancora senza id creerebbero
+     due progetti: il secondo troverebbe il numero occupato e ne prenderebbe
+     uno nuovo invece di aggiornare il primo. Capita piu' facilmente di
+     quanto sembri — l'autosave che parte mentre si carica la foto, un doppio
+     clic su Salva — quindi le chiamate sovrapposte condividono la stessa
+     promessa. */
+  const salvataggioInCorso = useRef(null);
+
   const salva = useCallback(
-    async (silenzioso = false) => {
+    (silenzioso = false) => {
+      if (salvataggioInCorso.current) return salvataggioInCorso.current;
+
       if (!testata.cliente_nome.trim()) {
         if (!silenzioso) setErrore('Il nome cliente è obbligatorio.');
-        return null;
+        return Promise.resolve(null);
       }
       setSalvando(true);
       setErrore('');
-      try {
-        const nuovoId = await salvaProgetto(
-          {
-            id,
-            ...testata,
-            data_preventivo: testata.data_preventivo || null,
-            data_montaggio: testata.data_montaggio || null,
-            prezzo_cliente: testata.prezzo_cliente === '' ? null : Number(testata.prezzo_cliente),
-            operatore: operatore?.nome,
-            brand: cfg.brand,
-            macchina_code: (cfg.voci?.macchine || [])[0]?.code || null,
-            config: cfg,
-            risultato: risultato?.errore ? null : risultato,
-          },
-          linee
-        );
-        setId(nuovoId);
-        setModificato(false);
-        // Alimenta l'archivio delle voci fuori listino, senza bloccare il salvataggio
-        registraVociExtra(cfg.extra, operatore?.nome).catch(() => {});
-        return nuovoId;
-      } catch (e) {
-        setErrore(e.message || 'Salvataggio fallito');
-        return null;
-      } finally {
-        setSalvando(false);
-      }
+
+      const lavoro = salvaProgetto(
+        {
+          id,
+          ...testata,
+          data_preventivo: testata.data_preventivo || null,
+          data_montaggio: testata.data_montaggio || null,
+          prezzo_cliente: testata.prezzo_cliente === '' ? null : Number(testata.prezzo_cliente),
+          operatore: operatore?.nome,
+          brand: cfg.brand,
+          macchina_code: (cfg.voci?.macchine || [])[0]?.code || null,
+          config: cfg,
+          risultato: risultato?.errore ? null : risultato,
+        },
+        linee
+      )
+        .then((nuovoId) => {
+          setId(nuovoId);
+          setModificato(false);
+          // Alimenta l'archivio delle voci fuori listino, senza bloccare il salvataggio
+          registraVociExtra(cfg.extra, operatore?.nome).catch(() => {});
+          return nuovoId;
+        })
+        .catch((e) => {
+          setErrore(e.message || 'Salvataggio fallito');
+          return null;
+        })
+        .finally(() => {
+          setSalvando(false);
+          salvataggioInCorso.current = null;
+        });
+
+      salvataggioInCorso.current = lavoro;
+      return lavoro;
     },
     [id, testata, cfg, linee, risultato, operatore]
   );

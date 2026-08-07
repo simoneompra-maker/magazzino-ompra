@@ -70,7 +70,8 @@ export const C = {
         {code:"4253", label:"Anti-gocc. 135°",     priceRaw:4.75, costRaw:3.48, div:1},
       ],
       porta:[
-        {code:"4236", label:"Dritto Ø6", priceRaw:0.78, costRaw:0.57, div:1, kind:"d"},
+        {code:"4236", label:"Dritto Ø6 (sfuso)", priceRaw:0.78, costRaw:0.57, div:1, kind:"d"},
+        {code:"4207", label:"Dritto Ø6 (conf. 5 pz)", priceRaw:4.80, costRaw:3.51, div:5, kind:"d"},
         {code:"4220", label:"90° Ø6",    priceRaw:0.70, costRaw:0.51, div:1, kind:"a"},
         {code:"4238", label:"135° Ø6",   priceRaw:1.56, costRaw:1.14, div:1, kind:"a"},
       ],
@@ -79,10 +80,11 @@ export const C = {
         {code:"4245", label:"T Ø8-6-8 riduz.", priceRaw:1.15, costRaw:0.84, div:1},
         {code:"4240", label:"T Ø8",            priceRaw:1.15, costRaw:0.84, div:1},
       ],
-      /* Il calcolatore originale usava come tappo l'art. 4207, che nel
-         listino Stocker e' "Raccordo dritto Ø6" — un manicotto, non una
-         chiusura — con il prezzo gia' diviso per 5. Il tappo vero e'
-         il 4215, confezione da 5 a 3,65 EUR: 0,73 EUR a pezzo. */
+      /* Il calcolatore originale usava come tappo l'art. 4207, che e'
+         invece un raccordo dritto: serve a giuntare due spezzoni di tubo
+         o come portaugello dritto. Il tappo e' il 4215.
+         In cantiere 4215 + 4207 insieme fanno una chiusura di fine linea:
+         se serve come voce unica si aggiungera' piu' avanti. */
       tappo:{code:"4215", label:"Tappo chiusura Ø6 (conf. 5 pz)", priceRaw:3.65, costRaw:2.67, div:5},
       // Il T Ø8-6-8 riduce da solo: nessun raccordo di riduzione separato
       riduzioni:[],
@@ -100,6 +102,7 @@ export const C = {
         {code:"4205", label:"Asta prolungamento 40 cm (5 pz)", priceRaw:9.47, costRaw:6.93, div:1},
         {code:"4237", label:"Asta prolungamento 40 cm (sfuso)", priceRaw:0.53, costRaw:0.39, div:1},
         {code:"4218", label:"Raccordo 135° Ø6", priceRaw:8.77, costRaw:6.42, div:1},
+        {code:"4207", label:"Raccordo dritto Ø6 giuntatubo (conf. 5 pz)", priceRaw:4.80, costRaw:3.51, div:5},
         {code:"4239", label:"Raccordo 90° Ø8 (sfuso)",   priceRaw:0.78, costRaw:0.57, div:1},
         {code:"4243", label:"Raccordo 90° Ø6-8 (sfuso)", priceRaw:0.94, costRaw:0.69, div:1},
         {code:"4241", label:"Raccordo dritto Ø8 (sfuso)",   priceRaw:0.74, costRaw:0.54, div:1},

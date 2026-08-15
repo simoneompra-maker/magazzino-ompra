@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict p4gmGWbv4mmjlYGtBFnCvUVUnkRu0apU9wfb3oRl6Mg3nhEEChNrbBjj1063f1f
+\restrict ihqdhav7mcYwdDulmKCc9dd8TZ7WmheezoAs7oxUfsap40qttizgdpjDeqSDUve
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
+-- Dumped by pg_dump version 17.11 (Ubuntu 17.11-1.pgdg24.04+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -27,6 +27,10 @@ DROP EVENT TRIGGER IF EXISTS issue_pg_cron_access;
 DROP EVENT TRIGGER IF EXISTS issue_graphql_placeholder;
 DROP PUBLICATION IF EXISTS supabase_realtime_messages_publication;
 DROP PUBLICATION IF EXISTS supabase_realtime;
+DROP POLICY IF EXISTS az_foto_upload ON storage.objects;
+DROP POLICY IF EXISTS az_foto_update ON storage.objects;
+DROP POLICY IF EXISTS az_foto_lettura ON storage.objects;
+DROP POLICY IF EXISTS az_foto_delete ON storage.objects;
 DROP POLICY IF EXISTS tmp_allow_all_auth ON public.sopralluoghi;
 DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_prodotti;
 DROP POLICY IF EXISTS tmp_allow_all_auth ON public.pv_preventivo_righe;
@@ -68,6 +72,11 @@ DROP POLICY IF EXISTS "Enable all access for now" ON public.inventory;
 DROP POLICY IF EXISTS "Enable all access" ON public.pricing_policies;
 DROP POLICY IF EXISTS "Allow all operations on commissioni" ON public.commissioni;
 DROP POLICY IF EXISTS "Allow all operations on clienti" ON public.clienti;
+DROP POLICY IF EXISTS "Allow all operations on az_voci_extra" ON public.az_voci_extra;
+DROP POLICY IF EXISTS "Allow all operations on az_progetti" ON public.az_progetti;
+DROP POLICY IF EXISTS "Allow all operations on az_listino" ON public.az_listino;
+DROP POLICY IF EXISTS "Allow all operations on az_linee" ON public.az_linee;
+DROP POLICY IF EXISTS "Allow all operations on az_consuntivo" ON public.az_consuntivo;
 DROP POLICY IF EXISTS "Allow all on stock_thresholds" ON public.stock_thresholds;
 DROP POLICY IF EXISTS "Allow all on app_config" ON public.app_config;
 DROP POLICY IF EXISTS "Allow all" ON public.pratovivo_archivio;
@@ -97,6 +106,9 @@ ALTER TABLE IF EXISTS ONLY public.pv_intervento_prodotti DROP CONSTRAINT IF EXIS
 ALTER TABLE IF EXISTS ONLY public.pv_interventi DROP CONSTRAINT IF EXISTS pv_interventi_piano_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_listini DROP CONSTRAINT IF EXISTS noleggio_listini_macchina_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.noleggio_archivio DROP CONSTRAINT IF EXISTS noleggio_archivio_sopralluogo_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.az_progetti DROP CONSTRAINT IF EXISTS az_progetti_cliente_fk;
+ALTER TABLE IF EXISTS ONLY public.az_linee DROP CONSTRAINT IF EXISTS az_linee_progetto_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.az_consuntivo DROP CONSTRAINT IF EXISTS az_consuntivo_progetto_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_sku_piccolo_fkey;
 ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_sku_grande_fkey;
 ALTER TABLE IF EXISTS ONLY auth.webauthn_credentials DROP CONSTRAINT IF EXISTS webauthn_credentials_user_id_fkey;
@@ -125,6 +137,7 @@ DROP TRIGGER IF EXISTS tr_check_filters ON realtime.subscription;
 DROP TRIGGER IF EXISTS stock_thresholds_updated_at ON public.stock_thresholds;
 DROP TRIGGER IF EXISTS inventory_auto_threshold ON public.inventory;
 DROP TRIGGER IF EXISTS clienti_updated_at ON public.clienti;
+DROP TRIGGER IF EXISTS az_progetti_touch ON public.az_progetti;
 DROP INDEX IF EXISTS storage.vector_indexes_name_bucket_id_idx;
 DROP INDEX IF EXISTS storage.name_prefix_search;
 DROP INDEX IF EXISTS storage.idx_objects_bucket_id_name_lower;
@@ -166,6 +179,17 @@ DROP INDEX IF EXISTS public.idx_catalogo_attivo;
 DROP INDEX IF EXISTS public.idx_audit_operatore;
 DROP INDEX IF EXISTS public.idx_audit_creato_il;
 DROP INDEX IF EXISTS public.idx_audit_agente;
+DROP INDEX IF EXISTS public.az_voci_extra_ordine_idx;
+DROP INDEX IF EXISTS public.az_voci_extra_desc_uniq;
+DROP INDEX IF EXISTS public.az_progetti_tecnico_idx;
+DROP INDEX IF EXISTS public.az_progetti_stato_idx;
+DROP INDEX IF EXISTS public.az_progetti_creato_idx;
+DROP INDEX IF EXISTS public.az_progetti_cliente_idx;
+DROP INDEX IF EXISTS public.az_listino_ricerca_idx;
+DROP INDEX IF EXISTS public.az_listino_marca_idx;
+DROP INDEX IF EXISTS public.az_listino_codice_idx;
+DROP INDEX IF EXISTS public.az_linee_progetto_idx;
+DROP INDEX IF EXISTS public.az_consuntivo_progetto_idx;
 DROP INDEX IF EXISTS auth.webauthn_credentials_user_id_idx;
 DROP INDEX IF EXISTS auth.webauthn_credentials_credential_id_key;
 DROP INDEX IF EXISTS auth.webauthn_challenges_user_id_idx;
@@ -220,6 +244,8 @@ DROP INDEX IF EXISTS auth.custom_oauth_providers_enabled_idx;
 DROP INDEX IF EXISTS auth.custom_oauth_providers_created_at_idx;
 DROP INDEX IF EXISTS auth.confirmation_token_idx;
 DROP INDEX IF EXISTS auth.audit_logs_instance_id_idx;
+ALTER TABLE IF EXISTS ONLY supabase_migrations.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
+ALTER TABLE IF EXISTS ONLY supabase_migrations.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_idempotency_key_key;
 ALTER TABLE IF EXISTS ONLY storage.vector_indexes DROP CONSTRAINT IF EXISTS vector_indexes_pkey;
 ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads DROP CONSTRAINT IF EXISTS s3_multipart_uploads_pkey;
 ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads_parts DROP CONSTRAINT IF EXISTS s3_multipart_uploads_parts_pkey;
@@ -232,13 +258,13 @@ ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS b
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
 ALTER TABLE IF EXISTS realtime.messages DROP CONSTRAINT IF EXISTS messages_payload_exclusive;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_03 DROP CONSTRAINT IF EXISTS messages_2026_08_03_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_02 DROP CONSTRAINT IF EXISTS messages_2026_08_02_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_01 DROP CONSTRAINT IF EXISTS messages_2026_08_01_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_31 DROP CONSTRAINT IF EXISTS messages_2026_07_31_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_30 DROP CONSTRAINT IF EXISTS messages_2026_07_30_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_29 DROP CONSTRAINT IF EXISTS messages_2026_07_29_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_07_28 DROP CONSTRAINT IF EXISTS messages_2026_07_28_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_17 DROP CONSTRAINT IF EXISTS messages_2026_08_17_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_16 DROP CONSTRAINT IF EXISTS messages_2026_08_16_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_15 DROP CONSTRAINT IF EXISTS messages_2026_08_15_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_14 DROP CONSTRAINT IF EXISTS messages_2026_08_14_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_13 DROP CONSTRAINT IF EXISTS messages_2026_08_13_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_12 DROP CONSTRAINT IF EXISTS messages_2026_08_12_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_11 DROP CONSTRAINT IF EXISTS messages_2026_08_11_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -282,6 +308,12 @@ ALTER TABLE IF EXISTS ONLY public.commissioni DROP CONSTRAINT IF EXISTS commissi
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_search_text_unique;
 ALTER TABLE IF EXISTS ONLY public.clienti DROP CONSTRAINT IF EXISTS clienti_pkey;
 ALTER TABLE IF EXISTS ONLY public.catalogo_prodotti DROP CONSTRAINT IF EXISTS catalogo_prodotti_pkey;
+ALTER TABLE IF EXISTS ONLY public.az_voci_extra DROP CONSTRAINT IF EXISTS az_voci_extra_pkey;
+ALTER TABLE IF EXISTS ONLY public.az_progetti DROP CONSTRAINT IF EXISTS az_progetti_pkey;
+ALTER TABLE IF EXISTS ONLY public.az_progetti DROP CONSTRAINT IF EXISTS az_progetti_numero_key;
+ALTER TABLE IF EXISTS ONLY public.az_listino DROP CONSTRAINT IF EXISTS az_listino_pkey;
+ALTER TABLE IF EXISTS ONLY public.az_linee DROP CONSTRAINT IF EXISTS az_linee_pkey;
+ALTER TABLE IF EXISTS ONLY public.az_consuntivo DROP CONSTRAINT IF EXISTS az_consuntivo_pkey;
 ALTER TABLE IF EXISTS ONLY public.app_config DROP CONSTRAINT IF EXISTS app_config_pkey;
 ALTER TABLE IF EXISTS ONLY public.agro_mapping DROP CONSTRAINT IF EXISTS agro_mapping_pkey;
 ALTER TABLE IF EXISTS ONLY public.agro_listino DROP CONSTRAINT IF EXISTS agro_listino_pkey;
@@ -324,6 +356,7 @@ ALTER TABLE IF EXISTS public.noleggio_listini ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.noleggio_abbonamenti ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.inventory ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS auth.refresh_tokens ALTER COLUMN id DROP DEFAULT;
+DROP TABLE IF EXISTS supabase_migrations.schema_migrations;
 DROP TABLE IF EXISTS storage.vector_indexes;
 DROP TABLE IF EXISTS storage.s3_multipart_uploads_parts;
 DROP TABLE IF EXISTS storage.s3_multipart_uploads;
@@ -334,13 +367,13 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_08_03;
-DROP TABLE IF EXISTS realtime.messages_2026_08_02;
-DROP TABLE IF EXISTS realtime.messages_2026_08_01;
-DROP TABLE IF EXISTS realtime.messages_2026_07_31;
-DROP TABLE IF EXISTS realtime.messages_2026_07_30;
-DROP TABLE IF EXISTS realtime.messages_2026_07_29;
-DROP TABLE IF EXISTS realtime.messages_2026_07_28;
+DROP TABLE IF EXISTS realtime.messages_2026_08_17;
+DROP TABLE IF EXISTS realtime.messages_2026_08_16;
+DROP TABLE IF EXISTS realtime.messages_2026_08_15;
+DROP TABLE IF EXISTS realtime.messages_2026_08_14;
+DROP TABLE IF EXISTS realtime.messages_2026_08_13;
+DROP TABLE IF EXISTS realtime.messages_2026_08_12;
+DROP TABLE IF EXISTS realtime.messages_2026_08_11;
 DROP TABLE IF EXISTS realtime.messages;
 DROP VIEW IF EXISTS public.v_riepilogo_trimestrale;
 DROP VIEW IF EXISTS public.v_vendite_dettaglio;
@@ -378,6 +411,11 @@ DROP TABLE IF EXISTS public.inventory;
 DROP TABLE IF EXISTS public.commissioni;
 DROP TABLE IF EXISTS public.clienti;
 DROP TABLE IF EXISTS public.catalogo_prodotti;
+DROP TABLE IF EXISTS public.az_voci_extra;
+DROP TABLE IF EXISTS public.az_progetti;
+DROP TABLE IF EXISTS public.az_listino;
+DROP TABLE IF EXISTS public.az_linee;
+DROP TABLE IF EXISTS public.az_consuntivo;
 DROP TABLE IF EXISTS public.app_config;
 DROP TABLE IF EXISTS public.agro_mapping;
 DROP TABLE IF EXISTS public.agro_listino;
@@ -442,6 +480,11 @@ DROP FUNCTION IF EXISTS public.update_updated_at();
 DROP FUNCTION IF EXISTS public.update_stock_threshold_updated_at();
 DROP FUNCTION IF EXISTS public.stihl_promo_attive();
 DROP FUNCTION IF EXISTS public.ompra_classifica_categoria(testo text);
+DROP FUNCTION IF EXISTS public.az_touch_updated_at();
+DROP FUNCTION IF EXISTS public.az_registra_voce_extra(p_descrizione text, p_codice text, p_um text, p_costo numeric, p_prezzo numeric, p_operatore text);
+DROP FUNCTION IF EXISTS public.az_prossimo_numero();
+DROP FUNCTION IF EXISTS public.az_elimina_voce_extra(p_descrizione text);
+DROP FUNCTION IF EXISTS public.az_cerca_voci(p_testo text, p_limite integer);
 DROP FUNCTION IF EXISTS public.auto_create_stock_threshold();
 DROP FUNCTION IF EXISTS pgbouncer.get_auth(p_usename text);
 DROP FUNCTION IF EXISTS graphql_public.graphql("operationName" text, query text, variables jsonb, extensions jsonb);
@@ -475,6 +518,7 @@ DROP EXTENSION IF EXISTS supabase_vault;
 DROP EXTENSION IF EXISTS pgcrypto;
 DROP EXTENSION IF EXISTS pg_stat_statements;
 DROP SCHEMA IF EXISTS vault;
+DROP SCHEMA IF EXISTS supabase_migrations;
 DROP SCHEMA IF EXISTS storage;
 DROP SCHEMA IF EXISTS realtime;
 DROP SCHEMA IF EXISTS pgbouncer;
@@ -529,6 +573,13 @@ CREATE SCHEMA realtime;
 --
 
 CREATE SCHEMA storage;
+
+
+--
+-- Name: supabase_migrations; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA supabase_migrations;
 
 
 --
@@ -1220,6 +1271,141 @@ BEGIN
   ON CONFLICT (brand, model) DO NOTHING;
   RETURN NEW;
 END;
+$$;
+
+
+--
+-- Name: az_cerca_voci(text, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.az_cerca_voci(p_testo text, p_limite integer DEFAULT 12) RETURNS TABLE(fonte text, codice text, descrizione text, marca text, categoria text, um text, costo numeric, prezzo numeric, usi integer)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  with q as (select lower(btrim(coalesce(p_testo, ''))) as t)
+  (
+    select 'archivio'::text,
+           v.codice, v.descrizione, null::text, null::text,
+           coalesce(v.um, 'pz'), v.costo, v.prezzo, v.usi
+      from public.az_voci_extra v, q
+     where q.t = '' or lower(v.descrizione) like '%' || q.t || '%'
+     order by v.usi desc, v.ultimo_uso desc
+     limit greatest(p_limite / 3, 3)
+  )
+  union all
+  (
+    select 'listino'::text,
+           l.codice, l.descrizione, l.marca, l.categoria,
+           coalesce(l.um, 'pz'),
+           coalesce(
+             l.costo,
+             case upper(coalesce(l.marca, ''))
+               when 'ZANZERO'  then round(l.listino * 0.70, 2)
+               when 'FREEZANZ' then round(l.listino * 0.70, 2)
+               else null
+             end
+           ),
+           l.listino,
+           0
+      from public.az_listino l, q
+     where q.t <> '' and l.ricerca like '%' || q.t || '%'
+     order by
+       case when lower(l.codice) = q.t then 0
+            when lower(l.codice) like q.t || '%' then 1
+            when lower(l.descrizione) like q.t || '%' then 2
+            else 3 end,
+       l.descrizione
+     limit p_limite
+  );
+$$;
+
+
+--
+-- Name: az_elimina_voce_extra(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.az_elimina_voce_extra(p_descrizione text) RETURNS integer
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+declare
+  n int;
+begin
+  delete from public.az_voci_extra
+   where lower(btrim(descrizione)) = lower(btrim(coalesce(p_descrizione, '')));
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+
+
+--
+-- Name: az_prossimo_numero(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.az_prossimo_numero() RETURNS text
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $_$
+declare
+  anno text := to_char(now(), 'YYYY');
+  n    int;
+begin
+  select coalesce(max(substring(numero from '\d+$')::int), 0) + 1
+    into n
+    from public.az_progetti
+   where numero like 'AZ-' || anno || '-%';
+
+  return 'AZ-' || anno || '-' || lpad(n::text, 3, '0');
+end;
+$_$;
+
+
+--
+-- Name: az_registra_voce_extra(text, text, text, numeric, numeric, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.az_registra_voce_extra(p_descrizione text, p_codice text DEFAULT NULL::text, p_um text DEFAULT 'pz'::text, p_costo numeric DEFAULT NULL::numeric, p_prezzo numeric DEFAULT NULL::numeric, p_operatore text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+declare
+  v_id uuid;
+begin
+  if p_descrizione is null or btrim(p_descrizione) = '' then
+    return null;
+  end if;
+
+  insert into public.az_voci_extra (descrizione, codice, um, costo, prezzo, creata_da)
+  values (btrim(p_descrizione), nullif(btrim(coalesce(p_codice,'')),''), coalesce(p_um,'pz'),
+          p_costo, p_prezzo, p_operatore)
+  on conflict (lower(btrim(descrizione))) do update
+    set codice     = coalesce(excluded.codice, public.az_voci_extra.codice),
+        um         = coalesce(excluded.um, public.az_voci_extra.um),
+        costo      = coalesce(excluded.costo, public.az_voci_extra.costo),
+        prezzo     = coalesce(excluded.prezzo, public.az_voci_extra.prezzo),
+        usi        = public.az_voci_extra.usi + 1,
+        ultimo_uso = now(),
+        updated_at = now()
+  returning id into v_id;
+
+  return v_id;
+end;
+$$;
+
+
+--
+-- Name: az_touch_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.az_touch_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+begin
+  new.updated_at = now();
+  return new;
+end;
 $$;
 
 
@@ -3818,6 +4004,157 @@ CREATE TABLE public.app_config (
 
 
 --
+-- Name: az_consuntivo; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.az_consuntivo (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    progetto_id uuid NOT NULL,
+    ordine integer DEFAULT 0 NOT NULL,
+    codice text,
+    descrizione text NOT NULL,
+    um text DEFAULT 'pz'::text,
+    q_prevista numeric,
+    q_usata numeric,
+    extra boolean DEFAULT false NOT NULL,
+    note text,
+    compilato_da text,
+    compilato_at timestamp with time zone
+);
+
+
+--
+-- Name: az_linee; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.az_linee (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    progetto_id uuid NOT NULL,
+    ordine integer DEFAULT 0 NOT NULL,
+    etichetta text,
+    metri numeric DEFAULT 0 NOT NULL,
+    passo numeric DEFAULT 4 NOT NULL,
+    ugelli integer,
+    polilinea jsonb,
+    note text,
+    metodi jsonb DEFAULT '{}'::jsonb NOT NULL,
+    metri_tronco numeric DEFAULT 0 NOT NULL,
+    anello boolean DEFAULT true NOT NULL,
+    CONSTRAINT az_linee_tronco_chk CHECK (((metri_tronco >= (0)::numeric) AND (metri_tronco <= metri)))
+);
+
+
+--
+-- Name: COLUMN az_linee.metodi; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_linee.metodi IS 'Ripartizione ugelli per metodo, es. {"m1d":40,"m3d":23}. m1d = T + portaugello dritto | m1a = T + portaugello 90 | m2q = in linea senza T | m3d = riser + dritto | m3a = riser + 90. La somma dovrebbe coincidere con la colonna ugelli; se non coincide l app mostra un avviso ma consente il salvataggio.';
+
+
+--
+-- Name: COLUMN az_linee.metri_tronco; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_linee.metri_tronco IS 'Quanti dei metri della linea corrono in diametro maggiore. Compresi in metri, non aggiuntivi.';
+
+
+--
+-- Name: COLUMN az_linee.anello; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_linee.anello IS 'true = circuito chiuso ad anello, nessun tappo. false = linea aperta, due tappi.';
+
+
+--
+-- Name: az_listino; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.az_listino (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    riga_id text,
+    codice text NOT NULL,
+    descrizione text NOT NULL,
+    marca text,
+    linea text,
+    categoria text,
+    sistema text,
+    um text DEFAULT 'pz'::text,
+    listino numeric,
+    listino_iva numeric,
+    costo numeric,
+    stato text,
+    note text,
+    ricerca text,
+    importato_il timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: az_progetti; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.az_progetti (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    numero text,
+    cliente_nome text NOT NULL,
+    cliente_id uuid,
+    indirizzo text,
+    telefono text,
+    riferimento text,
+    stato text DEFAULT 'bozza'::text NOT NULL,
+    operatore text,
+    tecnico text,
+    data_montaggio date,
+    foto_path text,
+    foto_scala numeric,
+    brand text,
+    macchina_code text,
+    config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    risultato jsonb,
+    prezzo_cliente numeric,
+    descrizione_prev text,
+    note text,
+    data_preventivo date DEFAULT CURRENT_DATE,
+    CONSTRAINT az_progetti_stato_chk CHECK ((stato = ANY (ARRAY['bozza'::text, 'preventivo'::text, 'ordine'::text, 'montato'::text, 'chiuso'::text])))
+);
+
+
+--
+-- Name: COLUMN az_progetti.cliente_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_progetti.cliente_id IS 'Riferimento facoltativo alla rubrica. Il nome resta comunque in cliente_nome.';
+
+
+--
+-- Name: COLUMN az_progetti.data_preventivo; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_progetti.data_preventivo IS 'Data del documento. La data_montaggio serve solo da quando si passa a ordine.';
+
+
+--
+-- Name: az_voci_extra; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.az_voci_extra (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    descrizione text NOT NULL,
+    codice text,
+    um text DEFAULT 'pz'::text,
+    costo numeric,
+    prezzo numeric,
+    usi integer DEFAULT 1 NOT NULL,
+    ultimo_uso timestamp with time zone DEFAULT now(),
+    creata_da text
+);
+
+
+--
 -- Name: catalogo_prodotti; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4131,8 +4468,25 @@ CREATE TABLE public.note_clienti (
 CREATE TABLE public.operatori (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     nome text NOT NULL,
-    creato_il timestamp with time zone DEFAULT now()
+    creato_il timestamp with time zone DEFAULT now(),
+    ruolo text DEFAULT 'commerciale'::text NOT NULL,
+    moduli text[],
+    CONSTRAINT operatori_ruolo_chk CHECK ((ruolo = ANY (ARRAY['admin'::text, 'commerciale'::text, 'tecnico'::text])))
 );
+
+
+--
+-- Name: COLUMN operatori.ruolo; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.operatori.ruolo IS 'admin | commerciale | tecnico. Governa la visibilita di costi, prezzi e margini.';
+
+
+--
+-- Name: COLUMN operatori.moduli; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.operatori.moduli IS 'NULL = default del ruolo. Array valorizzato = whitelist esplicita di moduli/sottomoduli.';
 
 
 --
@@ -4717,10 +5071,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_07_28; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_11; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_07_28 (
+CREATE TABLE realtime.messages_2026_08_11 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4735,10 +5089,10 @@ CREATE TABLE realtime.messages_2026_07_28 (
 
 
 --
--- Name: messages_2026_07_29; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_12; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_07_29 (
+CREATE TABLE realtime.messages_2026_08_12 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4753,10 +5107,10 @@ CREATE TABLE realtime.messages_2026_07_29 (
 
 
 --
--- Name: messages_2026_07_30; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_13; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_07_30 (
+CREATE TABLE realtime.messages_2026_08_13 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4771,10 +5125,10 @@ CREATE TABLE realtime.messages_2026_07_30 (
 
 
 --
--- Name: messages_2026_07_31; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_14; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_07_31 (
+CREATE TABLE realtime.messages_2026_08_14 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4789,10 +5143,10 @@ CREATE TABLE realtime.messages_2026_07_31 (
 
 
 --
--- Name: messages_2026_08_01; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_15; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_01 (
+CREATE TABLE realtime.messages_2026_08_15 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4807,10 +5161,10 @@ CREATE TABLE realtime.messages_2026_08_01 (
 
 
 --
--- Name: messages_2026_08_02; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_16; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_02 (
+CREATE TABLE realtime.messages_2026_08_16 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -4825,10 +5179,10 @@ CREATE TABLE realtime.messages_2026_08_02 (
 
 
 --
--- Name: messages_2026_08_03; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_17; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_03 (
+CREATE TABLE realtime.messages_2026_08_17 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5030,52 +5384,66 @@ CREATE TABLE storage.vector_indexes (
 
 
 --
--- Name: messages_2026_07_28; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: schema_migrations; Type: TABLE; Schema: supabase_migrations; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_28 FOR VALUES FROM ('2026-07-28 00:00:00') TO ('2026-07-29 00:00:00');
-
-
---
--- Name: messages_2026_07_29; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_29 FOR VALUES FROM ('2026-07-29 00:00:00') TO ('2026-07-30 00:00:00');
-
-
---
--- Name: messages_2026_07_30; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_30 FOR VALUES FROM ('2026-07-30 00:00:00') TO ('2026-07-31 00:00:00');
+CREATE TABLE supabase_migrations.schema_migrations (
+    version text NOT NULL,
+    statements text[],
+    name text,
+    created_by text,
+    idempotency_key text,
+    rollback text[]
+);
 
 
 --
--- Name: messages_2026_07_31; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_11; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_07_31 FOR VALUES FROM ('2026-07-31 00:00:00') TO ('2026-08-01 00:00:00');
-
-
---
--- Name: messages_2026_08_01; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_01 FOR VALUES FROM ('2026-08-01 00:00:00') TO ('2026-08-02 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_11 FOR VALUES FROM ('2026-08-11 00:00:00') TO ('2026-08-12 00:00:00');
 
 
 --
--- Name: messages_2026_08_02; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_12; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_02 FOR VALUES FROM ('2026-08-02 00:00:00') TO ('2026-08-03 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_12 FOR VALUES FROM ('2026-08-12 00:00:00') TO ('2026-08-13 00:00:00');
 
 
 --
--- Name: messages_2026_08_03; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_13; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_03 FOR VALUES FROM ('2026-08-03 00:00:00') TO ('2026-08-04 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_13 FOR VALUES FROM ('2026-08-13 00:00:00') TO ('2026-08-14 00:00:00');
+
+
+--
+-- Name: messages_2026_08_14; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_14 FOR VALUES FROM ('2026-08-14 00:00:00') TO ('2026-08-15 00:00:00');
+
+
+--
+-- Name: messages_2026_08_15; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_15 FOR VALUES FROM ('2026-08-15 00:00:00') TO ('2026-08-16 00:00:00');
+
+
+--
+-- Name: messages_2026_08_16; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_16 FOR VALUES FROM ('2026-08-16 00:00:00') TO ('2026-08-17 00:00:00');
+
+
+--
+-- Name: messages_2026_08_17; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_17 FOR VALUES FROM ('2026-08-17 00:00:00') TO ('2026-08-18 00:00:00');
 
 
 --
@@ -5459,6 +5827,412 @@ Humifitos + Micosat F	Humifitos 5kg	5	Humifitos 25kg	25	3	2026-03-30 06:03:54.89
 
 COPY public.app_config (key, value) FROM stdin;
 stock_alerts_enabled	false
+\.
+
+
+--
+-- Data for Name: az_consuntivo; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.az_consuntivo (id, progetto_id, ordine, codice, descrizione, um, q_prevista, q_usata, extra, note, compilato_da, compilato_at) FROM stdin;
+30da0e17-e4b9-4f11-9e8e-8a6433747b0d	759e3165-8750-4c61-b16a-a39df8ead8bb	0	415	Centralina — Geyser Pro (240 m)	pz	1	\N	f	\N	\N	\N
+39cc72f5-dc1b-4ecf-9e92-56c999b9f9c1	759e3165-8750-4c61-b16a-a39df8ead8bb	1	4213	Tubo Ø6 — Ø6 nero 100 m	m	321	\N	f	\N	\N	\N
+bd2c54fa-2245-415b-b62a-3353ffa07edd	759e3165-8750-4c61-b16a-a39df8ead8bb	2	4248	Tubo Ø8 — Ø8 nero 100 m	m	25	\N	f	\N	\N	\N
+1b26a619-cbfa-4c1c-80e4-12ce6482c456	759e3165-8750-4c61-b16a-a39df8ead8bb	3	4219	Ugelli — Anti-gocc. standard	pz	58	\N	f	\N	\N	\N
+ac96f3b3-5527-4763-9787-e49ed765d07e	759e3165-8750-4c61-b16a-a39df8ead8bb	4	4220	Portaugelli angolati — 90° Ø6	pz	58	\N	f	\N	\N	\N
+09b808c1-49ee-4ff1-9282-ba2a6b1cf983	759e3165-8750-4c61-b16a-a39df8ead8bb	5	4222	Raccordi a T — T Ø6	pz	58	\N	f	\N	\N	\N
+2d0b08d4-53f2-4e06-bcc5-cd346d05b37f	759e3165-8750-4c61-b16a-a39df8ead8bb	6	4207	Tappi fine linea — Chiusura fine linea Ø6	pz	1	\N	f	\N	\N	\N
+8fff7288-b51a-469d-acbe-0d06f615540e	759e3165-8750-4c61-b16a-a39df8ead8bb	7	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	pz	58	\N	f	\N	\N	\N
+217df175-196a-4038-aba6-986871d92c18	759e3165-8750-4c61-b16a-a39df8ead8bb	0	415	Centralina — Geyser Pro (240 m)	pz	1	\N	f	\N	\N	\N
+81e36a2d-0031-452b-b8f9-6018f9a3a897	759e3165-8750-4c61-b16a-a39df8ead8bb	1	4213	Tubo Ø6 — Ø6 nero 100 m	m	321	\N	f	\N	\N	\N
+bfc33ab5-b98e-4ae2-ad51-ced055699a0c	759e3165-8750-4c61-b16a-a39df8ead8bb	2	4248	Tubo Ø8 — Ø8 nero 100 m	m	25	\N	f	\N	\N	\N
+a1a9c5f4-3cfc-4b36-9a18-4339bcb9e471	759e3165-8750-4c61-b16a-a39df8ead8bb	3	4219	Ugelli — Anti-gocc. standard	pz	58	\N	f	\N	\N	\N
+5264559b-9f81-418e-92b0-56c371551201	759e3165-8750-4c61-b16a-a39df8ead8bb	4	4220	Portaugelli angolati — 90° Ø6	pz	58	\N	f	\N	\N	\N
+cf8fcef9-7b70-448d-be01-9a4ccba5b77b	759e3165-8750-4c61-b16a-a39df8ead8bb	5	4222	Raccordi a T — T Ø6	pz	58	\N	f	\N	\N	\N
+2d17d10b-7f26-476a-b48c-8950464b3a8a	759e3165-8750-4c61-b16a-a39df8ead8bb	6	4207	Tappi fine linea — Chiusura fine linea Ø6	pz	1	\N	f	\N	\N	\N
+027c6b6b-ca13-4d38-a795-a6f3100693af	759e3165-8750-4c61-b16a-a39df8ead8bb	7	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	pz	58	\N	f	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: az_linee; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.az_linee (id, progetto_id, ordine, etichetta, metri, passo, ugelli, polilinea, note, metodi, metri_tronco, anello) FROM stdin;
+8eb29244-7197-4dac-b511-a0a7cad5f85f	2e9dfeff-f1e2-4c2b-8003-54ad98ac926c	0	linea 2 repellente/insett. giardino	160	4	40	\N	\N	{"m1a": 40}	0	f
+0a85d688-e2f2-4efd-b566-470fa68970a0	2e9dfeff-f1e2-4c2b-8003-54ad98ac926c	1	linea 1 repellente casa	140	4	35	\N	\N	{"m1a": 35}	0	t
+9de4424f-7761-49d1-9c26-975ecc349dfe	fe473ebe-b839-436e-a1e0-afa4a5e4a3dc	0	repellente	50	2.5	20	\N	\N	{"m1d": 1, "m2q": 12}	0	t
+06dafba1-3d9a-4987-b2e1-f2f23d741bcd	fe473ebe-b839-436e-a1e0-afa4a5e4a3dc	1	Raffrescamento	50	1.2	42	\N	\N	{"m1a": 2, "m1d": 40}	0	t
+3689e3be-25c1-4fac-9308-729aa7784ea0	759e3165-8750-4c61-b16a-a39df8ead8bb	0	Linea	230	4	58	\N	\N	{"m3a": 58}	25	t
+\.
+
+
+--
+-- Data for Name: az_listino; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.az_listino (id, riga_id, codice, descrizione, marca, linea, categoria, sistema, um, listino, listino_iva, costo, stato, note, ricerca, importato_il) FROM stdin;
+768b85d9-72ed-46ed-a4d9-c4a03b1ce410	A0001	8055323801041	Zhalt Portable Connect	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	368.03	449	\N	In dismissione	EAN	8055323801041 zhalt portable connect freezanz	2026-08-07 13:30:09.904214+00
+730aa61d-20ee-4bf9-89cd-939bddda5a96	A0002	8055323802024	kit garden extension 3 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	138.52	169	\N	In dismissione	EAN	8055323802024 kit garden extension 3 ugelli freezanz	2026-08-07 13:30:09.904214+00
+4f5d85b8-ee8f-478a-8271-0eb80a19ef72	A0003	8055323802048	kit garden extension 9 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	236.07	288	\N	In dismissione	EAN	8055323802048 kit garden extension 9 ugelli freezanz	2026-08-07 13:30:09.904214+00
+47162902-9ff2-4ba7-8af9-65555f9b1182	A0004	8055323801119	Zhalt Evolution Connect	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	1228.69	1499	\N	In dismissione	EAN	8055323801119 zhalt evolution connect freezanz	2026-08-07 13:30:09.904214+00
+1aeb1491-eb5b-4548-bdc6-d6f0550c6e0b	A0005	8055323802208	kit expanding 10 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	222.13	271	\N	In dismissione	EAN	8055323802208 kit expanding 10 ugelli freezanz	2026-08-07 13:30:09.904214+00
+193b7b25-3ec6-49bd-b914-82414ce165cc	A0006	8055323803021	Estensore ugello (conf. 3 pz) 30 cm	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	39.26	47.9	\N	In dismissione	EAN	8055323803021 estensore ugello (conf. 3 pz) 30 cm freezanz	2026-08-07 13:30:09.904214+00
+a4afd04c-5dd0-46a6-9fdd-b8b07c7d5dca	A0007	8055323803014	Estensore ugello (conf. 3 pz) 40 cm	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	40.9	49.9	\N	In dismissione	EAN	8055323803014 estensore ugello (conf. 3 pz) 40 cm freezanz	2026-08-07 13:30:09.904214+00
+531cb99d-9a5b-4580-a51f-99558f7268aa	A0008	8055323802031	Roccia copertura Zhalt	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	327.05	399	\N	In dismissione	EAN	8055323802031 roccia copertura zhalt freezanz	2026-08-07 13:30:09.904214+00
+d518f06b-ddf6-456a-9e4f-47f798096edc	A0009	8055323809016	Tetrapiù (insetticida per Zhalt portable) tanica 5 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	19.59	23.9	\N	Attivo	\N	8055323809016 tetrapiù (insetticida per zhalt portable) tanica 5 lt freezanz	2026-08-07 13:30:09.904214+00
+a435aeed-9b10-4e41-941f-65ace834532a	A0010	8055323804011	Natural Green (repellente per Zhalt Portable) flacone 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	21.23	25.9	\N	Attivo	\N	8055323804011 natural green (repellente per zhalt portable) flacone 1 lt freezanz	2026-08-07 13:30:09.904214+00
+da63c11f-31f3-46dd-9f64-f302bc7e1a21	A0011	8055323809115	Professional PMC (insetticida per Zhalt Evolution) fl. 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	44.75	54.6	\N	Attivo	\N	8055323809115 professional pmc (insetticida per zhalt evolution) fl. 1 lt freezanz	2026-08-07 13:30:09.904214+00
+d38db79e-065e-44f8-9381-efa9fbe1f5f1	A0012	8055323804059	Natural Green + (repellente per Zhalt Evolution) tan. 5 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	130.33	159	\N	Attivo	\N	8055323804059 natural green + (repellente per zhalt evolution) tan. 5 lt freezanz	2026-08-07 13:30:09.904214+00
+d5df64a0-41ca-4737-945e-4e91f53a55ed	A0013	8055323804028	Natural Blu fl. 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	25.33	30.9	\N	Attivo	\N	8055323804028 natural blu fl. 1 lt freezanz	2026-08-07 13:30:09.904214+00
+cecaccf1-31c3-4268-bcba-d612f7f29ccf	A0014	8055323810012	Ugello Zhalt Portable	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	7.38	9	\N	Attivo	\N	8055323810012 ugello zhalt portable freezanz	2026-08-07 13:30:09.904214+00
+1a5b3830-dbd3-49ec-aac6-0683f6d1837b	A0015	8055323810166	Raccordo T intermedio	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.41	6.6	\N	Attivo	\N	8055323810166 raccordo t intermedio freezanz	2026-08-07 13:30:09.904214+00
+915e4c1a-d43b-43cc-8ddf-dc8c6d8e32a3	A0016	8055323810173	Raccordo L porta ugello	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.44	4.2	\N	Attivo	\N	8055323810173 raccordo l porta ugello freezanz	2026-08-07 13:30:09.904214+00
+8452628b-7b88-4e95-8dc8-e89983ae41ef	A0017	8055323810203	Tappo a vite	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.46	3	\N	Attivo	\N	8055323810203 tappo a vite freezanz	2026-08-07 13:30:09.904214+00
+191d9d24-0b92-4d8c-8c5f-9672406ab58b	A0018	8055323810364	Raccordo metallo uscita	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	7.38	9	\N	Attivo	\N	8055323810364 raccordo metallo uscita freezanz	2026-08-07 13:30:09.904214+00
+45045ac6-cc75-435b-915e-14c3df8a591b	A0019	F01TU101N	tubazione 1/4 nero 100 mt	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	86.89	106	\N	Attivo	\N	f01tu101n tubazione 1/4 nero 100 mt freezanz	2026-08-07 13:30:09.904214+00
+e40d052e-b82d-4e72-a9cf-b7e3650b78ce	A0020	F01RA1001	raccordo di giunzione intermedio diritto 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.85	4.7	\N	Attivo	\N	f01ra1001 raccordo di giunzione intermedio diritto 1/4" freezanz	2026-08-07 13:30:09.904214+00
+9dd00e83-b721-4908-826d-5689e2f94165	A0021	F01RA1011	adattatore per ugello diritto 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	\N	f01ra1011 adattatore per ugello diritto 1/4" freezanz	2026-08-07 13:30:09.904214+00
+0dfb23f1-85ad-4c79-a27d-8d2a5b505852	A0022	MQ300126	raccordo inizio 1/4" tubo x 1/4" M	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.18	5.1	\N	Attivo	\N	mq300126 raccordo inizio 1/4" tubo x 1/4" m freezanz	2026-08-07 13:30:09.904214+00
+ccf7594d-b7f6-40b6-8d9d-a58cb442255e	A0023	MQ300109	tappo di fine linea daa 1/4" ad incastro	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	1.89	2.3	\N	Attivo	\N	mq300109 tappo di fine linea daa 1/4" ad incastro freezanz	2026-08-07 13:30:09.904214+00
+77700a41-d18d-4227-a207-7e7e58c923a0	A0024	MQ400109	valvola di intercettazione da 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.99	15.85	\N	Attivo	\N	mq400109 valvola di intercettazione da 1/4" freezanz	2026-08-07 13:30:09.904214+00
+fbb4de93-d34a-4fb6-a506-767828439965	A0025	MQ300110	adattatore per ugello 45° 1/4" x 10/24"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.18	5.1	\N	Attivo	\N	mq300110 adattatore per ugello 45° 1/4" x 10/24" freezanz	2026-08-07 13:30:09.904214+00
+453a48e8-d4d7-4efb-8ab4-a947ad5aa01a	A0026	EC080007	tappo esclusione ugello in ottone nichelato 10/24"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	1.31	1.6	\N	Attivo	\N	ec080007 tappo esclusione ugello in ottone nichelato 10/24" freezanz	2026-08-07 13:30:09.904214+00
+61941e5f-f78c-4570-bfcc-608f62181a64	A0027	MQ300103	raccordo giunzione tubo da 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5	6.1	\N	Attivo	\N	mq300103 raccordo giunzione tubo da 1/4" freezanz	2026-08-07 13:30:09.904214+00
+a926d5af-5705-445f-afc9-945a2d16b9d8	A0028	MQ300105	raccordo curva L 90° 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.27	7.65	\N	Attivo	\N	mq300105 raccordo curva l 90° 1/4" freezanz	2026-08-07 13:30:09.904214+00
+00c77d39-d054-44ec-98ca-7c6fe20ec11f	A0029	MQ300139	raccordo tappo fine lineatubo 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.77	4.6	\N	Attivo	\N	mq300139 raccordo tappo fine lineatubo 1/4" freezanz	2026-08-07 13:30:09.904214+00
+f78021b1-7fba-4f82-9017-26dfa50ea8ab	A0030	MQ400114	tubo Mister Mosquito nero 1/4 - 40 bar 50 mt	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	68.85	84	\N	Attivo	\N	mq400114 tubo mister mosquito nero 1/4 - 40 bar 50 mt freezanz	2026-08-07 13:30:09.904214+00
+5c059c46-fbf1-46d0-a4e6-d8a900bff81c	A0031	ZA10	ZA10 con KIT 10 ugelli	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1022.13	1247	\N	Attivo	\N	za10 za10 con kit 10 ugelli zanzero	2026-08-07 13:30:09.904214+00
+728ce33f-59d9-4aae-af04-46fd2062f397	A0032	ZA18	ZA18 con KIT 20 ugelli	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1235.25	1507	\N	Attivo	\N	za18 za18 con kit 20 ugelli zanzero	2026-08-07 13:30:09.904214+00
+e87f1e45-4829-420c-8ec9-50f05679e3b0	A0033	ZA18SD.LT	ZA18 con KIT 20 ugelli - 2 PRODOTTI 1 USCITA	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1533.61	1871	\N	Attivo	\N	za18sd.lt za18 con kit 20 ugelli - 2 prodotti 1 uscita zanzero	2026-08-07 13:30:09.904214+00
+9608cc02-6c98-46d8-a9e8-edc9975868f0	A0034	ZA18 SD	ZA18 con KIT 40 ugelli - 2 PRODOTTI 2 USCITE	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1704.1	2079	\N	Attivo	\N	za18 sd za18 con kit 40 ugelli - 2 prodotti 2 uscite zanzero	2026-08-07 13:30:09.904214+00
+11addbc8-a7fd-4ca2-8e1f-58a7733794b2	A0035	ZA10 SLIM	ZA10 SLIM - centralina Smart monoprodotto compatta	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	690	841.8	\N	Attivo	\N	za10 slim za10 slim - centralina smart monoprodotto compatta zanzero	2026-08-07 13:30:09.904214+00
+3e5624e2-635a-4554-86fb-b8468f9ee62b	A0036	KTZA1005P	KIT estensione 5 spot  T e Portaugelli POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	81.15	99	\N	Attivo	\N	ktza1005p kit estensione 5 spot  t e portaugelli pom zanzero	2026-08-07 13:30:09.904214+00
+3b574634-e2d8-4988-b6f0-b6244da85681	A0037	KTZA1015P	KIT estensione 15 spot  T e Portaugelli POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	234.43	286	\N	Attivo	\N	ktza1015p kit estensione 15 spot  t e portaugelli pom zanzero	2026-08-07 13:30:09.904214+00
+3db7fecd-de36-4850-9dce-006b4b3bb5e7	A0038	AI14025N	Tubo mandata nero 25 mt.	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	34.43	42	\N	Attivo	\N	ai14025n tubo mandata nero 25 mt. zanzero	2026-08-07 13:30:09.904214+00
+bc9c0b31-9128-4bca-b0e0-11b0aba1fc6e	A0039	KT040302.5	KIT 5 ugelli 0,15	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt040302.5 kit 5 ugelli 0,15 zanzero	2026-08-07 13:30:09.904214+00
+e84b00ca-b399-4a9f-96b4-eaf4878ff7de	A0040	KT519014.5	KIT 5 portaugelli 90°	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt519014.5 kit 5 portaugelli 90° zanzero	2026-08-07 13:30:09.904214+00
+01b341ff-8cd3-44b5-9b11-2da72910e3cf	A0041	KT519014P.5	KIT 5 portaugelli 90° POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	12.79	15.6	\N	Attivo	\N	kt519014p.5 kit 5 portaugelli 90° pom zanzero	2026-08-07 13:30:09.904214+00
+fc1208d2-a056-49a3-9872-ef0cfd418f17	A0042	KT191414.5	KIT 5 raccordi a "T"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt191414.5 kit 5 raccordi a "t" zanzero	2026-08-07 13:30:09.904214+00
+843987fa-d263-4ce2-b40e-fa76b93b1748	A0043	KT191414P.5	KIT 5 raccordi a "T" POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	14.92	18.2	\N	Attivo	\N	kt191414p.5 kit 5 raccordi a "t" pom zanzero	2026-08-07 13:30:09.904214+00
+9b611bf8-c945-499f-bab5-9eab8458872b	A0044	KT529014.5	KIT 5 portaugelli dritto 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt529014.5 kit 5 portaugelli dritto 1/4" zanzero	2026-08-07 13:30:09.904214+00
+18764dd8-19a8-4c47-9140-d46ec3b86a4c	A0045	KT501414.5	KIT 5 portaugelli linea tubo/tubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt501414.5 kit 5 portaugelli linea tubo/tubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+feb9e55b-1e7d-4fbd-896e-6416aaeb66fa	A0046	KT501414P.5	KIT 5 portaugelli linea tubo/tubo 1/4" POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	14.92	18.2	\N	Attivo	\N	kt501414p.5 kit 5 portaugelli linea tubo/tubo 1/4" pom zanzero	2026-08-07 13:30:09.904214+00
+811b5303-9e23-484c-9ddc-fe58d9958305	A0047	KT514514.5	KIT 5 portaugello a 45° 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	17.21	21	\N	Attivo	\N	kt514514.5 kit 5 portaugello a 45° 1/4" zanzero	2026-08-07 13:30:09.904214+00
+d618a885-5b09-4f5b-947a-7fd50c6dd1af	A0048	KT161414.5	KIT 5 manicotto tubo/tubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt161414.5 kit 5 manicotto tubo/tubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+c624dec5-1d05-42f5-91a9-a3eda867ff5a	A0049	KT181414.5	KIT 5 gomito 90° 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt181414.5 kit 5 gomito 90° 1/4" zanzero	2026-08-07 13:30:09.904214+00
+a7c0311d-23b3-4128-85cd-b5dc3d777eee	A0050	KT300014.5	KIT 5 tappo fine linea 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	15.41	18.8	\N	Attivo	\N	kt300014.5 kit 5 tappo fine linea 1/4" zanzero	2026-08-07 13:30:09.904214+00
+c209af02-7a5c-40e9-bdc4-fcffeca43b35	A0051	KTC900014.25	KIT 25 collare fissatubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	ktc900014.25 kit 25 collare fissatubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+df27169b-0773-4e34-a69c-22b24aa3f109	A0052	KT900014	Kit Filtro Completo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	57.38	70	\N	Attivo	\N	kt900014 kit filtro completo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+4786e78f-8259-4047-90f8-56caefe647d2	A0053	AC99TTR2.20	Tagliatubo	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	7.3	8.9	\N	Attivo	\N	ac99ttr2.20 tagliatubo zanzero	2026-08-07 13:30:09.904214+00
+f2719b54-99b6-4084-b838-164c958cbdc2	A0054	AC300010	Sonda di livello  (serbatoio già incluso nella centralina)	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	34.02	41.5	\N	Attivo	\N	ac300010 sonda di livello  (serbatoio già incluso nella centralina) zanzero	2026-08-07 13:30:09.904214+00
+db62b011-6b56-4b34-842e-8a5fd37929b0	A0055	ZA100	ZA100 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	959.02	1170	\N	Attivo	Tipo BASIC; max 35 ugelli	za100 za100 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+d42f1d72-c52d-41c7-8487-d8739cfef777	A0056	ZA150	ZA150 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1000	1220	\N	Attivo	Tipo BASIC; max 50 ugelli	za150 za150 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+c0a8ff81-9f31-4cea-89c7-6588a660b30f	A0057	ZA200	ZA200 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1040.98	1270	\N	Attivo	Tipo BASIC; max 70 ugelli	za200 za200 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+2cf8b02d-3e96-49ad-8ee8-042111a13dcb	A0058	ZA350	ZA350 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1131.15	1380	\N	Attivo	Tipo BASIC; max 120 ugelli	za350 za350 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+ea31213b-d76e-4632-af06-8ddd869843b5	A0059	ZA100WIFI	ZA100WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1147.54	1400	\N	Attivo	Tipo ADVANCE; max 35 ugelli	za100wifi za100wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+5fe56af5-5307-4777-b95f-63809ef0267e	A0060	ZA150WIFI	ZA150WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1188.52	1450	\N	Attivo	Tipo ADVANCE; max 50 ugelli	za150wifi za150wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+c7823b13-a60b-41e8-971b-0382799047fe	A0061	ZA200WIFI	ZA200WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1229.51	1500	\N	Attivo	Tipo ADVANCE; max 70 ugelli	za200wifi za200wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+47adeb5d-a787-4718-9992-7308195c14ab	A0062	ZA350WIFI	ZA350WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1311.48	1600	\N	Attivo	Tipo ADVANCE; max 120 ugelli	za350wifi za350wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+d4dfe1cf-9666-4507-85ab-92aa50a76613	A0063	ZA100DUAL	ZA100DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1475.41	1800	\N	Attivo	Tipo ADVANCE; max 35 ugelli	za100dual za100dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+90fb6799-f8f0-41eb-bfe5-e39d527ea3e7	A0064	ZA150DUAL	ZA150DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1557.38	1900	\N	Attivo	Tipo ADVANCE; max 50 ugelli	za150dual za150dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+fb58f331-235a-4c0e-b09b-14dc5cb7fa02	A0065	ZA200DUAL	ZA200DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1639.34	2000	\N	Attivo	Tipo ADVANCE; max 70 ugelli	za200dual za200dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+ab5cc2b9-f487-467b-b526-06f36e1f1313	A0066	ZA350DUAL	ZA350DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1721.31	2100	\N	Attivo	Tipo ADVANCE; max 120 ugelli	za350dual za350dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+1237cfe9-2b8b-495c-b999-3ad8940a649c	A0067	ZA150P.DUAL.PLUS	ZA150 Premium 2 Linee (con sonde livello)	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	2250	2745	\N	Attivo	Tipo PREMIUM; max 50 ugelli	za150p.dual.plus za150 premium 2 linee (con sonde livello) zanzero	2026-08-07 13:30:09.904214+00
+0631a32a-4141-440a-a879-05d76f7b2c16	A0068	AC300010	SONDA LIVELLO PRODOTTO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	39.9	48.68	\N	Attivo	OPTIONAL PER CENTRALINE	ac300010 sonda livello prodotto zanzero	2026-08-07 13:30:09.904214+00
+8c6e776b-351e-41cf-b430-f96d33a34ddc	A0069	AC300020	SENSORE PIOGGIA	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	43.6	53.19	\N	Attivo	OPTIONAL PER CENTRALINE	ac300020 sensore pioggia zanzero	2026-08-07 13:30:09.904214+00
+d6f7fb54-0467-4e3f-827a-4ea3a6dea36f	A0070	AC300030	SENSORE VENTO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	120	146.4	\N	Attivo	OPTIONAL PER CENTRALINE	ac300030 sensore vento zanzero	2026-08-07 13:30:09.904214+00
+df79d1fb-7d0a-4060-b0e9-8977ad057052	A0071	AC200002	SERBATOIO 2 LT * necessario per sonda livello AC300010	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.5	6.71	\N	Attivo	OPTIONAL PER CENTRALINE	ac200002 serbatoio 2 lt * necessario per sonda livello ac300010 zanzero	2026-08-07 13:30:09.904214+00
+7d0599fa-899b-45a9-af96-ae6163f457ee	A0072	AC200005	SERBATOIO 5 LT	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.2	6.34	\N	Attivo	OPTIONAL PER CENTRALINE	ac200005 serbatoio 5 lt zanzero	2026-08-07 13:30:09.904214+00
+9d7fe5f1-493b-488b-aad6-a14e3db995cc	A0073	AC400012	CAVALLETTO DI SUPPORTO  MONOPRODOTTO per ZA20	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	53.33	65.06	\N	Attivo	OPTIONAL PER CENTRALINE	ac400012 cavalletto di supporto  monoprodotto per za20 zanzero	2026-08-07 13:30:09.904214+00
+3c871958-75ae-4436-8397-ca954f5cd5a3	A0074	AC400011	CAVALLETTO DI SUPPORTO  MONOPRODOTTO da ZA100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	66.7	81.37	\N	Attivo	OPTIONAL PER CENTRALINE	ac400011 cavalletto di supporto  monoprodotto da za100 zanzero	2026-08-07 13:30:09.904214+00
+71c5ee69-8576-487f-8f87-46426ea438aa	A0075	AC400022	CAVALLETTO DI SUPPORTO DUAL E MULTIZONA	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	82	100.04	\N	Attivo	OPTIONAL PER CENTRALINE	ac400022 cavalletto di supporto dual e multizona zanzero	2026-08-07 13:30:09.904214+00
+5ddf2fc6-a451-4c8f-b131-c0e83e972c46	A0076	AI040303	UGELLO ANTIGOCCIA 0.4	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.3	6.47	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai040303 ugello antigoccia 0.4 zanzero	2026-08-07 13:30:09.904214+00
+18018216-d737-4d9d-9787-d4899b2682c2	A0077	AI040302	UGELLO STANDARD	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.1	6.22	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai040302 ugello standard zanzero	2026-08-07 13:30:09.904214+00
+0f83b7ed-139a-436d-a6fa-3a54050cc355	A0078	AI191414	RACCORDO "T"  1/4"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.75	7.01	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai191414 raccordo "t"  1/4" zanzero	2026-08-07 13:30:09.904214+00
+e025197b-c676-49e2-9b9b-23e07c61ad9c	A0079	AI193838	RACCORDO "T"  3/8"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	10.5	12.81	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai193838 raccordo "t"  3/8" zanzero	2026-08-07 13:30:09.904214+00
+3cef5da9-db41-4787-83ba-05674789e7c7	A0080	AI519014	PORTAUGELLO 1/4" A 90°	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.3	5.25	\N	Attivo	Raccordi portaugello su tubo:	ai519014 portaugello 1/4" a 90° zanzero	2026-08-07 13:30:09.904214+00
+9d0d8cd6-63db-4fa1-8bce-86b6f8ff7725	A0081	AI529014	PORTAUGELLO 1/4" DRITTO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	Raccordi portaugello su tubo:	ai529014 portaugello 1/4" dritto zanzero	2026-08-07 13:30:09.904214+00
+0e6c9ebc-00fc-42d5-9293-2e7949e16c93	A0082	AI501414	PORTAUGELLO LINEA TUBO/TUBO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.6	6.83	\N	Attivo	Raccordi portaugello su tubo:	ai501414 portaugello linea tubo/tubo zanzero	2026-08-07 13:30:09.904214+00
+87085894-7052-4a5e-9c77-589e07e709fc	A0083	AI510514	PORTAUGELLO PIEGHEVOLE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.78	5.83	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ai510514 portaugello pieghevole 1/4" zanzero	2026-08-07 13:30:09.904214+00
+ddeabdd0-cc2e-4e1b-8eff-e477eac6c508	A0084	AI510314	PORTAUGELLO A 3 VIE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.3	7.69	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ai510314 portaugello a 3 vie zanzero	2026-08-07 13:30:09.904214+00
+76faaae2-5f7c-4cc7-8786-133e3340de13	A0085	AC100015	PROLUNGA PIEGHEVOLE PER UGELLO cm. 15	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.3	6.47	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100015 prolunga pieghevole per ugello cm. 15 zanzero	2026-08-07 13:30:09.904214+00
+cd97fab3-4448-4d91-a0b6-e1a11079a37e	A0086	AC100025	PROLUNGA PIEGHEVOLE PER UGELLO cm. 25	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100025 prolunga pieghevole per ugello cm. 25 zanzero	2026-08-07 13:30:09.904214+00
+145efdf2-f493-4419-8648-bd1d8ab69ab3	A0087	AC100040	PROLUNGA PIEGHEVOLE PER UGELLO cm. 40	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	9	10.98	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100040 prolunga pieghevole per ugello cm. 40 zanzero	2026-08-07 13:30:09.904214+00
+a4497e6f-0f6d-4e37-850b-b237f2433b21	A0088	AI510014	PORTAUGELLO DIRITTO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	Raccordi portaugello a innesto:	ai510014 portaugello diritto 1/4" zanzero	2026-08-07 13:30:09.904214+00
+8f67e1f2-2da8-4336-a730-12c77e589af1	A0089	AI514514	PORTAUGELLO A 45°	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.91	3.55	\N	Attivo	Raccordi portaugello a innesto:	ai514514 portaugello a 45° zanzero	2026-08-07 13:30:09.904214+00
+edbcb9d6-5fa9-44ed-99f9-90cebd0fac41	A0090	AI161414	MANICOTTO TUBO/TUBO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	Raccordi portaugello a innesto:	ai161414 manicotto tubo/tubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+f32af3d5-3372-40cd-8545-9da7fcf36349	A0091	AI163838	MANICOTTO TUBO/TUBO 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai163838 manicotto tubo/tubo 3/8" zanzero	2026-08-07 13:30:09.904214+00
+097ebdf1-4deb-4e3c-bd86-090656a07de5	A0092	AI161438	MANICOTTO RIDUZIONE 3/8"-1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai161438 manicotto riduzione 3/8"-1/4" zanzero	2026-08-07 13:30:09.904214+00
+973f8071-b034-4d9e-b259-ee47efc5ffdc	A0093	AI181414	GOMITO 90° 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.7	5.73	\N	Attivo	Raccordi portaugello a innesto:	ai181414 gomito 90° 1/4" zanzero	2026-08-07 13:30:09.904214+00
+26b19634-94ff-491e-97ee-53b3da9c68ab	A0094	AI183838	GOMITO 90° 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	14.2	17.32	\N	Attivo	Raccordi portaugello a innesto:	ai183838 gomito 90° 3/8" zanzero	2026-08-07 13:30:09.904214+00
+780d566d-af49-44fd-a494-d8065f9c75a4	A0095	AI360014	CROCE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	11.15	13.6	\N	Attivo	Raccordi portaugello a innesto:	ai360014 croce 1/4" zanzero	2026-08-07 13:30:09.904214+00
+874cff88-1756-414f-9ace-0614e54d7016	A0096	AI360038	CROCE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	14	17.08	\N	Attivo	Raccordi portaugello a innesto:	ai360038 croce 3/8" zanzero	2026-08-07 13:30:09.904214+00
+5f5176a1-1a06-43fa-ae69-3da85184b8fd	A0097	AI251438	RIDUZIONE INNESTO 3/8"-1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	8.2	10	\N	Attivo	Raccordi portaugello a innesto:	ai251438 riduzione innesto 3/8"-1/4" zanzero	2026-08-07 13:30:09.904214+00
+9782f2ac-86e7-4321-8966-1c88d9904578	A0098	AI300014	TAPPO FINE LINEA 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	Raccordi portaugello a innesto:	ai300014 tappo fine linea 1/4" zanzero	2026-08-07 13:30:09.904214+00
+cd567c93-28e9-4406-ae4e-e7e09ab4bbdd	A0099	AI300038	TAPPO FINE LINEA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai300038 tappo fine linea 3/8" zanzero	2026-08-07 13:30:09.904214+00
+d162a140-fe75-4aa0-b994-54e9b6b6f0de	A0100	AI14100N	TUBO MANDATA 1/4" - NERO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100n tubo mandata 1/4" - nero zanzero	2026-08-07 13:30:09.904214+00
+01e357a6-cc5c-439a-9df0-453a0a81562c	A0101	AI14100V	TUBO MANDATA 1/4" - VERDE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100v tubo mandata 1/4" - verde zanzero	2026-08-07 13:30:09.904214+00
+d5de4a29-9664-4ad2-876c-841987a85cf4	A0102	AI14100G	TUBO MANDATA 1/4" - GRIGIO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100g tubo mandata 1/4" - grigio zanzero	2026-08-07 13:30:09.904214+00
+65aa6d28-a9d9-4bb9-b56f-b2e438165b94	A0103	AI14100M	TUBO MANDATA 1/4" - MARRONE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100m tubo mandata 1/4" - marrone zanzero	2026-08-07 13:30:09.904214+00
+ae274765-8780-4e0b-9731-b6a976a43e6f	A0104	AI14100B	TUBO MANDATA 1/4" - BIANCO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100b tubo mandata 1/4" - bianco zanzero	2026-08-07 13:30:09.904214+00
+5105b429-49ad-4b7e-8cde-bdfc687d9d8d	A0105	AI38100N	TUBO MANDATA 3/8" NERO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	3.95	4.82	\N	Attivo	TUBAZIONI	ai38100n tubo mandata 3/8" nero zanzero	2026-08-07 13:30:09.904214+00
+eb8a52d0-7b23-4ff4-9d3a-d84447d498b1	A0106	AI38100T	TUBO ASPIRAZIONE ACQUA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	2.9	3.54	\N	Attivo	TUBAZIONI	ai38100t tubo aspirazione acqua 3/8" zanzero	2026-08-07 13:30:09.904214+00
+e4827231-fae5-4255-bdba-a347d2e08add	A0107	RC333838	RACCORDO ACQUA FIL./INN. 3/8" CON VALV. NON RITORNO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	27	32.94	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	rc333838 raccordo acqua fil./inn. 3/8" con valv. non ritorno zanzero	2026-08-07 13:30:09.904214+00
+695be055-87dd-473d-a0df-1b2718c3c288	A0108	AI401438	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 1/4'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai401438 raccordo alimentazione acqua inn./fil. 1/4'- 3/8' zanzero	2026-08-07 13:30:09.904214+00
+b315b496-05b5-48c7-895c-769ce200f3c4	A0109	AI403838	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 3/8'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai403838 raccordo alimentazione acqua inn./fil. 3/8'- 3/8' zanzero	2026-08-07 13:30:09.904214+00
+65460218-0bc6-43e7-afe3-72f97170e278	A0110	AI403812	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 1/2'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	13.5	16.47	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai403812 raccordo alimentazione acqua inn./fil. 1/2'- 3/8' zanzero	2026-08-07 13:30:09.904214+00
+8d427ba1-c0ec-40e5-b272-8aed1ffec953	A0111	KT800038	KIT ATTACCO RAPIDO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	22	26.84	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	kt800038 kit attacco rapido zanzero	2026-08-07 13:30:09.904214+00
+0059819d-9c0a-4471-8261-76193a4a136f	A0112	AI700014	RIDUTTORE DI PRESSIONE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	36	43.92	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai700014 riduttore di pressione 1/4" zanzero	2026-08-07 13:30:09.904214+00
+a1cc5aa5-db19-433d-be8a-f4138e193ee6	A0113	AI700038	RIDUTTORE DI PRESSIONE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	36	43.92	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai700038 riduttore di pressione 3/8" zanzero	2026-08-07 13:30:09.904214+00
+5d7b457d-1c66-442f-b2ec-9453fa5c8e81	A0114	AI303838	RUBINETTO A SFERA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	8.3	10.13	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai303838 rubinetto a sfera 3/8" zanzero	2026-08-07 13:30:09.904214+00
+62918c9f-c4ca-4c65-8d7f-0b2009131194	A0115	KT900014	KIT FILTRO COMPLETO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	67	81.74	\N	Attivo	FILTRAZIONE ACQUA	kt900014 kit filtro completo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+d5e6ed5b-f296-42d2-8a12-0aa8a0259247	A0116	KT900038	KIT FILTRO COMPLETO 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	53	64.66	\N	Attivo	FILTRAZIONE ACQUA	kt900038 kit filtro completo 3/8" zanzero	2026-08-07 13:30:09.904214+00
+6e64b699-752c-48bc-835f-e4294b595246	A0117	KT901114	KIT CASSETTA FILTRO ASPIRAZIONE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	185	225.7	\N	Attivo	FILTRAZIONE ACQUA	kt901114 kit cassetta filtro aspirazione 1/4" zanzero	2026-08-07 13:30:09.904214+00
+1f50b84e-c2dd-46d1-9484-6da651d2a87d	A0118	KT901138	KIT CASSETTA FILTRO ASPIRAZIONE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	175	213.5	\N	Attivo	FILTRAZIONE ACQUA	kt901138 kit cassetta filtro aspirazione 3/8" zanzero	2026-08-07 13:30:09.904214+00
+8fe76e10-cedd-4bce-b254-612eaa531a31	A0119	RC900001	CARTUCCIA FILO PER FILTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	FILTRAZIONE ACQUA	rc900001 cartuccia filo per filtro zanzero	2026-08-07 13:30:09.904214+00
+04f73e06-bf1f-4d98-a05c-e9f36b4753d9	A0120	RC900002	CONTENITORE FILTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	20.46	24.96	\N	Attivo	FILTRAZIONE ACQUA	rc900002 contenitore filtro zanzero	2026-08-07 13:30:09.904214+00
+5515d649-19ea-41f3-bc8b-0f162a1ab3bd	A0121	AC99TTR2.20	TAGLIATUBO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	8.8	10.74	\N	Attivo	ACCESSORI	ac99ttr2.20 tagliatubo zanzero	2026-08-07 13:30:09.904214+00
+dac03498-0596-40cf-b7cc-29c18a6418ba	A0122	KT905000	CASSETTA MANUTENZIONE (77 PEZZI)	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	400	488	\N	Attivo	ACCESSORI	kt905000 cassetta manutenzione (77 pezzi) zanzero	2026-08-07 13:30:09.904214+00
+a415236c-0fbb-4c92-8215-5f310ac9e0a5	A0123	AC101005	TUBOLARE INOX cm. 50	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	ACCESSORI	ac101005 tubolare inox cm. 50 zanzero	2026-08-07 13:30:09.904214+00
+2e7b6cc4-610b-41f9-98a4-9ca3b6063a1e	A0124	AC101010	TUBOLARE INOX cm. 100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	18.9	23.06	\N	Attivo	ACCESSORI	ac101010 tubolare inox cm. 100 zanzero	2026-08-07 13:30:09.904214+00
+12d1618d-db6a-4f47-a692-fd5c63423cdc	A0125	AC101015	TUBOLARE INOX cm. 150	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	23.4	28.55	\N	Attivo	ACCESSORI	ac101015 tubolare inox cm. 150 zanzero	2026-08-07 13:30:09.904214+00
+b30fe0ee-e682-41f9-8fd2-0828eb1568eb	A0126	AC101109	TUBOLARE PVC TIPO BAMBU cm. 50	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	4.32	5.27	\N	Attivo	ACCESSORI	ac101109 tubolare pvc tipo bambu cm. 50 zanzero	2026-08-07 13:30:09.904214+00
+74b14956-9899-48e0-ab30-5f498c7919cf	A0127	AC101110	TUBOLARE PVC TIPO BAMBU cm. 100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	3.12	3.81	\N	Attivo	ACCESSORI	ac101110 tubolare pvc tipo bambu cm. 100 zanzero	2026-08-07 13:30:09.904214+00
+ae346dbf-9cf4-446e-b2ef-3379c657e344	A0128	AC900114	PICCHETTO FISSAGGIO TUBO A TERRA MARRONE	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	0.3	0.37	\N	Attivo	ACCESSORI	ac900114 picchetto fissaggio tubo a terra marrone zanzero	2026-08-07 13:30:09.904214+00
+e3e97ccc-3b5c-4ee1-9882-443a9439a455	A0129	AC900014	COLLARE FISSATUBO 1/4"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	1.4	1.71	\N	Attivo	ACCESSORI	ac900014 collare fissatubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+501ec444-409d-4376-b810-1f37b8af6d7f	A0130	AC900038	COLLARE FISSATUBO 3/8"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	1.4	1.71	\N	Attivo	ACCESSORI	ac900038 collare fissatubo 3/8" zanzero	2026-08-07 13:30:09.904214+00
+fd7aad17-34cc-426d-bf51-b82f2066df74	A0131	AI14100N-N	TUBO MANDATA 1/4" NERO NEUTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100n-n tubo mandata 1/4" nero neutro zanzero	2026-08-07 13:30:09.904214+00
+d845bddd-e4f9-4955-ae5f-58e10b4a4654	A0132	AC101111	SOVRAPPREZZO FORO TUBOLARE PVC	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	0.93	1.13	\N	Attivo	ACCESSORI	ac101111 sovrapprezzo foro tubolare pvc zanzero	2026-08-07 13:30:09.904214+00
+f5e65220-c60e-4a6b-a07f-511f9665069a	A0133	A0133	VAPO CIPER - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	32.79	40	\N	Attivo	\N	a0133 vapo ciper - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+0530edda-143b-46a3-b398-3c24a2248969	A0134	A0134	VAPO CIPER - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	143.44	175	\N	Attivo	\N	a0134 vapo ciper - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+f9c9795a-9b13-45b3-9b98-c2ded3d156d4	A0135	A0135	VAPO CIPER - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	271.31	331	\N	Attivo	\N	a0135 vapo ciper - confezione da 10 lt zanzero	2026-08-07 13:30:09.904214+00
+3812d5bd-b724-49dc-8ea1-fcf8df0169e6	A0136	A0136	VAPO PERM PLUS TRI ACTIVE - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	59.02	72	\N	Attivo	\N	a0136 vapo perm plus tri active - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+2eb24000-d5aa-4b44-b562-ce0af90887c0	A0137	A0137	VAPO PERM PLUS TRI ACTIVE - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	277.87	339	\N	Attivo	\N	a0137 vapo perm plus tri active - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+3463049b-01c4-494b-96fd-11684895ce41	A0138	A0138	VAPO PERM PLUS TRI ACTIVE - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	540.16	659	\N	Attivo	\N	a0138 vapo perm plus tri active - confezione da 10 lt zanzero	2026-08-07 13:30:09.904214+00
+e86f40e1-16f5-4c05-8f66-9dd5a14e2dd9	A0139	A0139	VAPO SILVE SHIELD - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	46.72	57	\N	Attivo	\N	a0139 vapo silve shield - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+3951ee63-5591-4e4d-86cd-22a569fe167d	A0140	A0140	VAPO SILVE SHIELD - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	227.05	277	\N	Attivo	\N	a0140 vapo silve shield - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+866db77c-8e52-4ac8-86e4-1415c2ec1a3c	A0141	A0141	VAPO NATURE - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	46.72	57	\N	Attivo	\N	a0141 vapo nature - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+9fa23686-b53a-40ad-9ba1-25e7f459c09f	A0142	A0142	VAPO NATURE - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	227.05	277	\N	Attivo	\N	a0142 vapo nature - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+1c6edcac-ff84-4883-8f5c-db7788907dc4	A0143	A0143	VAPO NATURE - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	442.62	540	\N	Attivo	\N	a0143 vapo nature - confezione da 10 lt zanzero	2026-08-07 13:30:09.904214+00
+410c5c5a-66c1-4dc5-87f9-9fdbad80f060	A0144	VPPM1000	VAPO PERM PLUS Insetticida - 1 lt	ZANZERO	Professional	Consumabile	\N	pz	40.98	50	\N	Attivo	\N	vppm1000 vapo perm plus insetticida - 1 lt zanzero	2026-08-07 13:30:09.904214+00
+e084194d-b6bf-4432-b39d-13f204a4fb6a	A0145	VPPM5000	VAPO PERM PLUS Insetticida - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	194.26	237	\N	Attivo	\N	vppm5000 vapo perm plus insetticida - 5 lt zanzero	2026-08-07 13:30:09.904214+00
+ff7384fa-b08b-4d79-a8bf-0171169adc87	A0146	VPSS10TR	VAPO SILVER SHIELD Tea Tree/Rosmarino Disabituante - 1 lt	ZANZERO	Professional	Consumabile	\N	pz	32.79	40	\N	Attivo	\N	vpss10tr vapo silver shield tea tree/rosmarino disabituante - 1 lt zanzero	2026-08-07 13:30:09.904214+00
+c5b92323-b69d-4ec9-a030-e3d1cd725217	A0147	VPSS05LC	VAPO SILVER SHIELD Limone/Cedro Disabituante - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	155.44	189.64	\N	Attivo	\N	vpss05lc vapo silver shield limone/cedro disabituante - 5 lt zanzero	2026-08-07 13:30:09.904214+00
+37bfc1ec-81cd-4c8a-a823-8ea259debb19	A0148	VPNA5000	VAPO NATURE Disabituante Naturale Rosmarino - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	159.32	194.37	\N	Attivo	\N	vpna5000 vapo nature disabituante naturale rosmarino - 5 lt zanzero	2026-08-07 13:30:09.904214+00
+d439f161-2e71-4a12-a6fd-89c6ee153239	A0149	446	Geyser Pro Dual	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	1456.56	1777	1066.2	Attivo	NEBULIZZATORE ELETTRICO	446 geyser pro dual stocker	2026-08-07 13:30:09.904214+00
+59e2782d-1b67-4b8c-bb41-b1f845ef4b1f	A0150	415	Geyser Pro	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	1331.97	1625	975	Attivo	NEBULIZZATORE ELETTRICO	415 geyser pro stocker	2026-08-07 13:30:09.904214+00
+15f37bd3-9d7d-40f9-889b-b950ac6e985b	A0151	436	Geyser Pro Lite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	963.93	1176	705.6	Attivo	NEBULIZZATORE ELETTRICO	436 geyser pro lite stocker	2026-08-07 13:30:09.904214+00
+2b9a6a12-7612-4c52-a2f7-e36b26d1f00d	A0152	327	Alimentatore Geyser AC 220 V - DC 21 V	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	105.74	129	77.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	327 alimentatore geyser ac 220 v - dc 21 v stocker	2026-08-07 13:30:09.904214+00
+056bf850-b682-4368-b3ec-10c1eaf4ab10	A0153	4262	Staffa montante a L per Geyser 2 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	36.23	44.2	26.52	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4262 staffa montante a l per geyser 2 pz stocker	2026-08-07 13:30:09.904214+00
+ed1a4fc8-29c3-4173-ac08-8fe89b7430a0	A0154	439	Geyser Nebulizzatore verde E-25 MI 21 V 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	242.62	296	177.6	Attivo	NEBULIZZATORE ELETTRICO	439 geyser nebulizzatore verde e-25 mi 21 v 5 bar stocker	2026-08-07 13:30:09.904214+00
+02a3bb18-76fd-47bc-ae24-acb324eeefed	A0155	443	Cappuccio protettivo per Geyser 25 L per Art. 414, 432, 439	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	8.69	10.6	6.36	Attivo	NEBULIZZATORE ELETTRICO	443 cappuccio protettivo per geyser 25 l per art. 414, 432, 439 stocker	2026-08-07 13:30:09.904214+00
+5dc1ceed-31aa-4e48-a242-0c44a05efe9f	A0156	438	Geyser Nebulizzatore verde 12 L Li-Ion 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	222.13	271	162.6	Attivo	NEBULIZZATORE ELETTRICO	438 geyser nebulizzatore verde 12 l li-ion 5 bar stocker	2026-08-07 13:30:09.904214+00
+92935585-eff0-460b-8a26-d321604367a1	A0157	442	Cappuccio protettivo per Geyser 12 L per Art. 411, 438	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	7.99	9.75	5.85	Attivo	NEBULIZZATORE ELETTRICO	442 cappuccio protettivo per geyser 12 l per art. 411, 438 stocker	2026-08-07 13:30:09.904214+00
+93816072-27db-4508-9f9c-b4c150f9d348	A0158	437	Geyser Nebulizzatore verde 4 L Li-Ion 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	161.89	197.5	118.5	Attivo	NEBULIZZATORE ELETTRICO	437 geyser nebulizzatore verde 4 l li-ion 5 bar stocker	2026-08-07 13:30:09.904214+00
+ee710e0a-6484-40be-bea5-50cdcdd9863b	A0159	441	Cappuccio protettivo per Geyser 4 L per Art. 410, 437	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	7.34	8.95	5.37	Attivo	NEBULIZZATORE ELETTRICO	441 cappuccio protettivo per geyser 4 l per art. 410, 437 stocker	2026-08-07 13:30:09.904214+00
+52b7691d-a67e-443e-b377-41b18c002039	A0160	440	Geyser Nebulizzatore Portatile verde 2 L Li-Ion 2,5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	34.59	42.2	25.32	Attivo	NEBULIZZATORE ELETTRICO	440 geyser nebulizzatore portatile verde 2 l li-ion 2,5 bar stocker	2026-08-07 13:30:09.904214+00
+79852eb9-43ff-4f53-989d-4ed625d518ae	A0161	4201	Kit Geyser Nebulizzatore Mini 2 L con Florifens 100 ml - PAESI DI VENDITA: IT	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	32.99	40.25	24.15	Attivo	NEBULIZZATORE ELETTRICO	4201 kit geyser nebulizzatore mini 2 l con florifens 100 ml - paesi di vendita: it stocker	2026-08-07 13:30:09.904214+00
+73476ec8-eee4-4eaf-a603-54f01990b757	A0162	4249	Kit Geyser Nebulizzatore Portatile verde 2 L con Nebuzan DE/AT/FR 200 ml, 10 m di tubo, 3 ugelli, 3 raccordi a T, 1 tappo, 5 fermatubo - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	56.8	69.3	41.58	Attivo	NEBULIZZATORE ELETTRICO	4249 kit geyser nebulizzatore portatile verde 2 l con nebuzan de/at/fr 200 ml, 10 m di tubo, 3 ugelli, 3 raccordi a t, 1 tappo, 5 fermatubo - paesi di vendita: fr - at - de stocker	2026-08-07 13:30:09.904214+00
+86edbe61-dfec-4f49-bfdb-f48712a48b91	A0163	4440	Kit Geyser Nebulizzatore Portatile verde 2 L con Florifens IT 100 ml, 10 m di tubo, 3 ugelli, 3 raccordi a T, 2 tappi, 5 fermatubo - PAESI DI VENDITA: IT	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	55.25	67.4	40.44	Attivo	NEBULIZZATORE ELETTRICO	4440 kit geyser nebulizzatore portatile verde 2 l con florifens it 100 ml, 10 m di tubo, 3 ugelli, 3 raccordi a t, 2 tappi, 5 fermatubo - paesi di vendita: it stocker	2026-08-07 13:30:09.904214+00
+125d14c0-ad96-47bc-92f7-c775f916041b	A0164	409	Geyser Nebulizzatore Mini 2 L per piccioni 2,5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	32.99	40.25	24.15	Attivo	NEBULIZZATORE ELETTRICO	409 geyser nebulizzatore mini 2 l per piccioni 2,5 bar stocker	2026-08-07 13:30:09.904214+00
+c3d76aa7-426d-425f-8428-ae3fcf7b4efb	A0165	4264	Kit Geyser Pro 100 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	140.98	172	103.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4264 kit geyser pro 100 m ø 6-8 mm stocker	2026-08-07 13:30:09.904214+00
+29c53d33-d630-48fb-84e1-334149eb0316	A0166	4265	Kit Geyser Pro 150 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	184.43	225	135	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4265 kit geyser pro 150 m ø 6-8 mm stocker	2026-08-07 13:30:09.904214+00
+c7c17b47-ea8a-468f-bcb3-03c272c6bdd1	A0167	4266	Kit Geyser Pro 240 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	300.82	367	220.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4266 kit geyser pro 240 m ø 6-8 mm stocker	2026-08-07 13:30:09.904214+00
+0a1b6bbd-84da-426a-b9c6-12df2c53b922	A0168	4212	KIT BALCONE GEYSER 10 m ø 6 mm 10 m tubo, 3 ugelli, 3 raccordi T, 1 tappo, 5 fermatubo, 6 chiodi di fissggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	13.85	16.9	10.14	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4212 kit balcone geyser 10 m ø 6 mm 10 m tubo, 3 ugelli, 3 raccordi t, 1 tappo, 5 fermatubo, 6 chiodi di fissggio stocker	2026-08-07 13:30:09.904214+00
+8110a060-39a2-42df-ba32-c74642c9d1e3	A0169	4211	KIT GEYSER 25 m  ø 6 mm 25 m di tubo, 10 ugelli, 10 raccordi a T, 3 tappi di chiusura, 5 fermatubo, 10 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	33.36	40.7	24.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4211 kit geyser 25 m  ø 6 mm 25 m di tubo, 10 ugelli, 10 raccordi a t, 3 tappi di chiusura, 5 fermatubo, 10 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+490d83d8-0e65-433e-b5fa-d768659e2f90	A0170	4210	KIT GEYSER 100 m ø 6 mm 100 m di tubo, 40 ugelli, 40 raccordi a T, 5 raccordi a L, 5 raccordi dritti, 5 tappi di chiusura, 85 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	127.05	155	93	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4210 kit geyser 100 m ø 6 mm 100 m di tubo, 40 ugelli, 40 raccordi a t, 5 raccordi a l, 5 raccordi dritti, 5 tappi di chiusura, 85 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+b5a6b700-6b9b-4f75-9a20-771a0f8fce6b	A0171	4219	Ugelli  anti-gocciolamento sfusi  Ø 6 mm per Geyser 50 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	2.75	3.35	2.01	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4219 ugelli  anti-gocciolamento sfusi  ø 6 mm per geyser 50 pz. stocker	2026-08-07 13:30:09.904214+00
+c2898c97-f400-4c18-932c-6f8a1c5f3cc5	A0172	4253	Ugelli anti-gocciolamento sfusi 135° Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.75	5.8	3.48	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4253 ugelli anti-gocciolamento sfusi 135° ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+eb1d190a-2dc3-4c4d-8037-8cdfb546d000	A0173	4203	Set ugelli e tappi di chiusura Ø 6 mm per Geyser 5 pz e 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	12.87	15.7	9.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4203 set ugelli e tappi di chiusura ø 6 mm per geyser 5 pz e 5 pz stocker	2026-08-07 13:30:09.904214+00
+a9601293-bc56-4799-b289-46f8b7317163	A0174	4215	Tappi di chiusura Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	3.65	4.45	2.67	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4215 tappi di chiusura ø 6 mm per geyser 5 pz stocker	2026-08-07 13:30:09.904214+00
+f2b9d0ef-2c11-431b-88bd-d9ea34a87068	A0175	4208	Raccordo a T Ø 6 mm per Geyser 5 pz, con 10 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4208 raccordo a t ø 6 mm per geyser 5 pz, con 10 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+de3163ed-6a59-4a27-b49d-c1f8dcddde89	A0176	4222	Raccordo a T sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.86	1.05	0.63	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4222 raccordo a t sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+d37ffd69-d35d-407f-a162-1a3a464de1f8	A0177	4240	Raccordo a T sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.15	1.4	0.84	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4240 raccordo a t sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+288c858c-72c2-4755-90b7-63336b7441e3	A0178	4242	Raccordo a T sfuso Ø 6-8-6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.19	1.45	0.87	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4242 raccordo a t sfuso ø 6-8-6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+afb4e77f-aebe-40e9-a200-7f3ef47efe17	A0179	4245	Raccordo a T sfuso Ø 8-6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.15	1.4	0.84	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4245 raccordo a t sfuso ø 8-6-8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+91b334c0-682d-43e9-8edd-b69a2d6bec72	A0180	4206	Raccordo a 90° Ø 6 mm per Geyser 5 pz, con 5 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.39	5.35	3.21	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4206 raccordo a 90° ø 6 mm per geyser 5 pz, con 5 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+05409a01-0495-4e15-b4ec-82847ca07838	A0181	4220	Raccordo a 90° sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.7	0.85	0.51	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4220 raccordo a 90° sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+5984cee8-12c9-4312-adfb-834b18b47a4d	A0182	4239	Raccordo a 90° sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.78	0.95	0.57	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4239 raccordo a 90° sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+562e6a7e-1054-424e-be39-05e4a854af77	A0183	4243	Raccordo a 90° sfuso Ø 6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.94	1.15	0.69	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4243 raccordo a 90° sfuso ø 6-8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+f59b4da1-b7e3-41ba-afc2-9a408260b265	A0184	4207	Raccordo dritto Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.8	5.85	3.51	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4207 raccordo dritto ø 6 mm per geyser 5 pz stocker	2026-08-07 13:30:09.904214+00
+04f30ce4-b2df-428f-b6de-06407cd2dcff	A0185	4236	Raccordo dritto sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.78	0.95	0.57	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4236 raccordo dritto sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+3a62cd3c-8f7e-445d-b86c-5b2e9ac514ba	A0186	4241	Raccordo dritto sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.74	0.9	0.54	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4241 raccordo dritto sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+b140ba12-3db1-4eed-a223-85ba7906d94b	A0187	4244	Raccordo dritto sfuso Ø 6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.82	1	0.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4244 raccordo dritto sfuso ø 6-8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+8a7841e3-d266-47c1-b352-95a0b2cc381b	A0188	4218	Raccordo a 135° Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	8.77	10.7	6.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4218 raccordo a 135° ø 6 mm per geyser stocker	2026-08-07 13:30:09.904214+00
+42363414-a953-4767-b52a-da7e07fd756d	A0189	4238	Raccordo a 135° sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.56	1.9	1.14	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4238 raccordo a 135° sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+6d8582cf-9bdd-46f7-99be-a7773bcb03ae	A0190	4205	Aste di prolungamento 40 cm Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	9.47	11.55	6.93	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4205 aste di prolungamento 40 cm ø 6 mm per geyser 5 pz stocker	2026-08-07 13:30:09.904214+00
+c243fd71-acb8-46aa-8fc4-894423e198cf	A0191	4237	Aste di prolungamento sfuso 40 cm Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4237 aste di prolungamento sfuso 40 cm ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+35f643ae-0149-4808-8859-26cab3e61d5a	A0192	4221	Kit direzionamento ugelli Geyser 2 Tubi flessibili 19 cm e Ø 8 mm, 2 raccordi a T Ø 6-8-6 mm, 2 raccordi dritti Ø 6-8 mm, senza ugelli	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4221 kit direzionamento ugelli geyser 2 tubi flessibili 19 cm e ø 8 mm, 2 raccordi a t ø 6-8-6 mm, 2 raccordi dritti ø 6-8 mm, senza ugelli stocker	2026-08-07 13:30:09.904214+00
+688d314f-67d5-46dd-92b8-984cc45f9551	A0193	4263	Kit direzionamento ugelli Geyser 50 cm 2 Tubi flessibili 50 cm e Ø 8 mm, 2 raccordi a T Ø 6-8-6 mm, 2 raccordi dritti Ø 6-8 mm, 2 picchetti fissatubo 20 cm, senza ugelli	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	12.25	14.95	8.97	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4263 kit direzionamento ugelli geyser 50 cm 2 tubi flessibili 50 cm e ø 8 mm, 2 raccordi a t ø 6-8-6 mm, 2 raccordi dritti ø 6-8 mm, 2 picchetti fissatubo 20 cm, senza ugelli stocker	2026-08-07 13:30:09.904214+00
+4fb8ec5d-d100-4e90-84f6-cbc67ee580ef	A0194	4258	Valvola di non ritorno sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	2.5	3.05	1.83	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4258 valvola di non ritorno sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+0382a238-b7e4-4bb6-8188-5d8a9f59329b	A0195	4259	Valvola di non ritorno sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.45	6.65	3.99	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4259 valvola di non ritorno sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+0282ed43-2262-4f54-b215-344913160f9c	A0196	4260	Valvola di non ritorno Ø 6 mm per Geyser 5 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.57	19	11.4	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4260 valvola di non ritorno ø 6 mm per geyser 5 pz. stocker	2026-08-07 13:30:09.904214+00
+01895022-98fe-486b-803c-467c7d437b3a	A0197	4261	Valvola di non ritorno Ø 8 mm per Geyser 5 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	29.55	36.05	21.63	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4261 valvola di non ritorno ø 8 mm per geyser 5 pz. stocker	2026-08-07 13:30:09.904214+00
+c48b09e8-291a-4bef-8931-40455f7e7cfa	A0198	4267	Raccordo rapido rubinetto Ø 8 mm 3/4" 1/2"	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	11.76	14.35	8.61	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4267 raccordo rapido rubinetto ø 8 mm 3/4" 1/2" stocker	2026-08-07 13:30:09.904214+00
+bb6efa20-f836-4a25-aa96-676e7a06b1bb	A0199	4268	Raccordo rapido valvola di entrata per Geyser Ø 8 mm 1/2"	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4268 raccordo rapido valvola di entrata per geyser ø 8 mm 1/2" stocker	2026-08-07 13:30:09.904214+00
+3be566fa-b9e9-4759-b0df-d745aeda7c91	A0200	4269	Filtro entrata acqua per Geyser Ø 8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	18.32	22.35	13.41	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4269 filtro entrata acqua per geyser ø 8 mm stocker	2026-08-07 13:30:09.904214+00
+46368293-44b0-4d71-b41d-446fe5c6b2c1	A0201	4213	Tubo nero 100 m ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	44.1	53.8	32.28	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4213 tubo nero 100 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+fc2ff684-c65f-4f47-afb5-73339aa81beb	A0202	4223	Tubo bianco 100 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	48.11	58.7	35.22	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4223 tubo bianco 100 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+2a446e95-5a30-414c-bced-a964bd67cb1a	A0203	4224	Tubo marrone 100 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	47.38	57.8	34.68	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4224 tubo marrone 100 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+79acabef-7252-42e6-9139-bc8c50dc71fb	A0204	4225	Tubo nero 25 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	13.24	16.15	9.69	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4225 tubo nero 25 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+febe7ed1-9808-4242-b854-ff3a4eff01f0	A0205	4248	Tubo nero 100 m Ø 8 mm per Geyser	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	75.66	92.3	55.38	Attivo	NEBULIZZATORE ELETTRICO	4248 tubo nero 100 m ø 8 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+65ac939d-1275-4e3e-8657-ebafe0cdf6aa	A0206	4271	Tubo nero 25 m Ø 8 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	19.8	24.15	14.49	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4271 tubo nero 25 m ø 8 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+b8fd7fc5-b052-43ee-a7d3-977d3963c495	A0207	4246	Fissatubo a P sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.45	0.55	0.33	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4246 fissatubo a p sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+7a0d2837-0b44-406e-95f9-be50e506ecb8	A0208	4250	Fissatubo a P sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4250 fissatubo a p sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+6108c51a-0e13-4aa1-a976-1b19307ffc1f	A0209	4247	Fissatubo a U sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4247 fissatubo a u sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+714d932a-8efa-42e1-a04d-23cb93065383	A0210	4251	Fissatubo a U sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4251 fissatubo a u sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+7c1d7613-224d-40a1-8243-dc3e96e0b367	A0211	4214	Fermatubo ø 6 mm per Geyser 10 pz, 6mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.35	1.65	0.99	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4214 fermatubo ø 6 mm per geyser 10 pz, 6mm stocker	2026-08-07 13:30:10.43876+00
+c9e30ba4-dea1-416b-88cb-686242b98e2e	A0212	4216	Picchetti fissatubo 20 cm per Geyser 10 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	3.28	4	2.4	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4216 picchetti fissatubo 20 cm per geyser 10 pz stocker	2026-08-07 13:30:10.43876+00
+9636413c-0aa1-45e1-8de2-e20a852c6e6f	A0213	4217	Fascette autobloccanti 30 cm per Geyser 10 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.19	1.45	0.87	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4217 fascette autobloccanti 30 cm per geyser 10 pz stocker	2026-08-07 13:30:10.43876+00
+859c8fef-fd42-4530-8f01-c2825d10fd8a	A0214	4270	Fascette autobloccanti 30 cm per Geyser 100 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	9.02	11	6.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4270 fascette autobloccanti 30 cm per geyser 100 pz stocker	2026-08-07 13:30:10.43876+00
+9ed72b0b-540a-458d-8f83-3f53db0994b4	A0215	4255	Palo innalzamento ugello 80 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.7	19.15	11.49	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4255 palo innalzamento ugello 80 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 13:30:10.43876+00
+1eacdeb0-c1cd-4664-886c-721473dd8689	A0216	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	17.21	21	12.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4256 palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 13:30:10.43876+00
+ec4e8002-567c-43d4-a67e-8ee3274f609b	A0217	4257	Palo innalzamento ugello 150 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	18.85	23	13.8	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4257 palo innalzamento ugello 150 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 13:30:10.43876+00
+d6e97419-2fb3-4d61-b0a7-be85b1368bb5	A0218	444	Cappuccio protettivo per Geyser Pro per Art. 415, 436	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.78	19.25	11.55	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	444 cappuccio protettivo per geyser pro per art. 415, 436 stocker	2026-08-07 13:30:10.43876+00
+4e5a5039-5a4c-435f-8630-b0212528b906	A0219	45135	Etokraft zanzaricida anti-zanzare 250 ml PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	13.89	16.95	10.17	Attivo	INSETTICIDI	45135 etokraft zanzaricida anti-zanzare 250 ml pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+cadb6691-8ac4-4d7e-9870-71790bf0bc08	A0220	45130	Etokraft zanzaricida anti-zanzare 1 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	38.4	46.85	28.11	Attivo	INSETTICIDI	45130 etokraft zanzaricida anti-zanzare 1 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+22502063-6296-4386-8410-1b56f8be009e	A0221	45147	Etokraft zanzaricida anti-zanzare 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	174.59	213	127.8	Attivo	INSETTICIDI	45147 etokraft zanzaricida anti-zanzare 5 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+13f9873e-bb94-4b5f-8bca-6c005a6c4604	A0222	45148	Pirekraft insetticida concentrato 500 ml PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	37.46	45.7	27.42	Attivo	INSETTICIDI	45148 pirekraft insetticida concentrato 500 ml pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+80b4169d-e072-4b3c-b60f-6f648dc87eba	A0223	45149	Pirekraft insetticida concentrato 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	287.7	351	210.6	Attivo	INSETTICIDI	45149 pirekraft insetticida concentrato 5 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+2fe7c0eb-917c-4e13-98c6-3e2102fa3944	A0224	45128	Nebuzan repellente anti-zanzare 1 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	34.34	41.9	25.14	Attivo	DISABITUANTI	45128 nebuzan repellente anti-zanzare 1 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+068d91ec-2ff0-4476-8167-57864aad2dfa	A0225	45138	Nebuzan repellente anti-zanzare 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	131.56	160.5	96.3	Attivo	DISABITUANTI	45138 nebuzan repellente anti-zanzare 5 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+5c4bb52c-a4ed-4445-8b97-155a0fa79a6a	A0226	45141	Nebuzan FREE AT-DE-FR 1 L con numero registrazione per Francia, Austria, Germania - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Consumabile	\N	pz	34.34	41.9	25.14	Attivo	DISABITUANTI	45141 nebuzan free at-de-fr 1 l con numero registrazione per francia, austria, germania - paesi di vendita: fr - at - de stocker	2026-08-07 13:30:10.43876+00
+50da3735-9ab9-4899-ae74-58ee6520f1bb	A0227	45143	Nebuzan FREE AT-DE-FR 5 L con numero registrazione per Francia, Austria, Germania - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Consumabile	\N	pz	131.56	160.5	96.3	Attivo	DISABITUANTI	45143 nebuzan free at-de-fr 5 l con numero registrazione per francia, austria, germania - paesi di vendita: fr - at - de stocker	2026-08-07 13:30:10.43876+00
+f2129795-f96e-4d9d-a56b-82fcf354189a	A0228	45129	Florifens disabituante zanzare 250 ml - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	11.11	13.55	8.13	Attivo	DISABITUANTI	45129 florifens disabituante zanzare 250 ml - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+90e81834-1410-421b-9e3c-303d7f796dc3	A0229	45124	Florifens disabituante zanzare 1 L - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	31.6	38.55	23.13	Attivo	DISABITUANTI	45124 florifens disabituante zanzare 1 l - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+7ba1470f-fb1c-40b9-b9fd-9d5ae0c1729e	A0230	45136	Florifens disabituante zanzare 5 L - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	125.41	153	91.8	Attivo	DISABITUANTI	45136 florifens disabituante zanzare 5 l - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+cbb21cf2-0d50-44c5-874c-5825a031e370	A0231	45139	Florifens profumazione 1 L - PAESI DI VENDITA: AT - DE - GB - ES - FR - PT	STOCKER	Geyser	Consumabile	\N	pz	31.6	38.55	23.13	Attivo	DISABITUANTI	45139 florifens profumazione 1 l - paesi di vendita: at - de - gb - es - fr - pt stocker	2026-08-07 13:30:10.43876+00
+5490a3d9-604b-4f06-a91c-c230909eda7c	A0232	45140	Florifens profumazione 5 L - PAESI DI VENDITA: AT - DE - GB - ES - FR - PT	STOCKER	Geyser	Consumabile	\N	pz	125.41	153	91.8	Attivo	DISABITUANTI	45140 florifens profumazione 5 l - paesi di vendita: at - de - gb - es - fr - pt stocker	2026-08-07 13:30:10.43876+00
+d5ae6c63-6b2c-4874-9aaf-30c0b7b74c03	A0233	45137	Florifens Larvicida zanzare 50 ml - PAESI DI VENDITA: IT - AT - DE - ES - GB	STOCKER	Geyser	Consumabile	\N	pz	11.93	14.55	8.73	Attivo	DISABITUANTI	45137 florifens larvicida zanzare 50 ml - paesi di vendita: it - at - de - es - gb stocker	2026-08-07 13:30:10.43876+00
+e623d614-d833-4dfa-bf08-1336dc7dca12	A0234	45132	Florifens disabituante piccioni 250 ml - PAESI DI VENDITA: IT - ES - PT - GB - PL - FR	STOCKER	Geyser	Consumabile	\N	pz	8.65	10.55	6.33	Attivo	DISABITUANTI	45132 florifens disabituante piccioni 250 ml - paesi di vendita: it - es - pt - gb - pl - fr stocker	2026-08-07 13:30:10.43876+00
+55ed9261-f512-46f4-a189-0df503ba733c	A0235	45131	Florifens disabituante piccioni 1 L - PAESI DI VENDITA: IT - ES - PT - GB - PL - FR	STOCKER	Geyser	Consumabile	\N	pz	28.24	34.45	20.67	Attivo	DISABITUANTI	45131 florifens disabituante piccioni 1 l - paesi di vendita: it - es - pt - gb - pl - fr stocker	2026-08-07 13:30:10.43876+00
+ae4e9246-9ffc-41f3-9a54-6e5e7093e0fa	A0236	2333	Espositore Geyser per lotta alla zanzara con Florifens completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2146.15	2618.3	1570.98	Attivo	NEBULIZZATORE ELETTRICO	2333 espositore geyser per lotta alla zanzara con florifens completo quantità assortite stocker	2026-08-07 13:30:10.43876+00
+a7117d90-1311-4fef-a7fc-090f634a87a6	A0237	2335	Espositore Geyser-1 AT/DE/FR per lotta alla zanzara con Nebuzan FREE completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2058.52	2511.4	1506.84	Attivo	NEBULIZZATORE ELETTRICO	2335 espositore geyser-1 at/de/fr per lotta alla zanzara con nebuzan free completo quantità assortite stocker	2026-08-07 13:30:10.43876+00
+5686bad6-68f4-407d-b64a-99138870920a	A0238	2331	Espositore Geyser-2 AT/DE/FR per lotta alla zanzara con Nebuzan FREE completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2214.26	2701.4	1620.84	Attivo	NEBULIZZATORE ELETTRICO	2331 espositore geyser-2 at/de/fr per lotta alla zanzara con nebuzan free completo quantità assortite stocker	2026-08-07 13:30:10.43876+00
+a6a971c5-b41e-4347-ad82-37cff2162e8f	A0239	415/1	Pompa a diaframma principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	149.18	182	109.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/1 pompa a diaframma principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+cf15bd2a-05cc-4187-9e44-ff0cf9abb942	A0240	415/2	Scheda di controllo principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	236.89	289	173.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/2 scheda di controllo principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+4c775cec-5a8a-408d-880a-778754390509	A0241	415/3	Pannello di controllo con LED e tasto di comando per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/3 pannello di controllo con led e tasto di comando per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+575cb2b6-2520-482f-8fd4-9d1ff02d8dca	A0242	415/4	Elettrovalvola di uscita per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	25.41	31	18.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/4 elettrovalvola di uscita per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+e4938e4b-469f-4635-93f4-07ce26202acc	A0243	415/5	Elettrovalvola di ingresso per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	25.41	31	18.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/5 elettrovalvola di ingresso per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+475ec4dd-9511-4dc5-bde6-9462d82d8623	A0244	415/6	Elettrovalvola di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	22.54	27.5	16.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/6 elettrovalvola di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+3c47905c-af16-4249-885a-9d11284eb37a	A0245	415/7	Pompa dosatrice peristaltica per tanica 1 - BLU per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/7 pompa dosatrice peristaltica per tanica 1 - blu per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+ecf5c410-7819-418d-90f9-465feb60e759	A0246	415/8	Pompa dosatrice peristaltica per tanica 2 per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/8 pompa dosatrice peristaltica per tanica 2 per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+b5696211-d3b9-4af5-88b2-ed3bab8ca996	A0247	415/9	Testa pompa dosatrice peristaltica - BLU per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.11	16	9.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/9 testa pompa dosatrice peristaltica - blu per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+e51c1ab3-9958-48ac-b962-e2f0e5cf768f	A0248	415/10	Sensore di livello per tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	36.07	44	26.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/10 sensore di livello per tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+26f506c6-5d70-4194-a56d-559fc063f085	A0249	415/11	Tappo con sensore di livello per taniche con cavo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	43.03	52.5	31.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/11 tappo con sensore di livello per taniche con cavo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+f21374b0-9c72-4808-9925-d5ef8ac80d5b	A0250	415/12	Cavo di segnale per sensori di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.51	5.5	3.3	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/12 cavo di segnale per sensori di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+711291bd-b610-4cf9-80aa-7fd2f528ac7c	A0251	415/13	Cavo di segnale per pannello di controllo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.92	6	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/13 cavo di segnale per pannello di controllo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+08f22bd7-dd54-4ea2-950c-4306ac15c97c	A0252	415/14	Cavo di alimentazione per pompa dosatrice peristaltica tanica 1 per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.38	9	5.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/14 cavo di alimentazione per pompa dosatrice peristaltica tanica 1 per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+869737d9-ee85-4f6d-90f4-ee1cd2c20c7e	A0253	415/15	Cavo di alimentazione per pompa dosatrice peristaltica tanica 2 per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.38	9	5.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/15 cavo di alimentazione per pompa dosatrice peristaltica tanica 2 per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+8a5c1863-e00e-4398-8c5a-f0bec78567fd	A0254	415/16	Interruttore per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	0.45	0.55	0.33	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/16 interruttore per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+82434c6d-b107-4ea1-8ede-b326bcaba113	A0255	415/17	Alloggiamento batteria con interruttore e cablaggio per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	28.89	35.25	21.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/17 alloggiamento batteria con interruttore e cablaggio per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+08d57982-2b5e-4a04-9acd-72e876f85bb7	A0256	415/18	Cavo di alimentazione pompa principale per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	24.8	30.25	18.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/18 cavo di alimentazione pompa principale per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+60e58756-8f77-43a6-bd7a-5aa44cdcf9f0	A0257	415/19	Coperchio vano scheda di controllo con guarnizione passa-cavi per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.48	14	8.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/19 coperchio vano scheda di controllo con guarnizione passa-cavi per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+c4bbf070-933c-4850-93b1-9b207c460c78	A0258	415/20	Guarnizione, diffusori LED e copri interruttore in gomma per pannello di comando per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.51	5.5	3.3	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/20 guarnizione, diffusori led e copri interruttore in gomma per pannello di comando per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+7ec32559-b1dd-4ceb-8aed-a6a8fb5d5235	A0259	415/21	Valvola meccanica con galleggiante per tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	17.42	21.25	12.75	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/21 valvola meccanica con galleggiante per tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+5c62a364-78d6-4d5d-b69d-200d628297a9	A0260	415/22	Set guide sensori tubolari per sensori di livello (1x tanica miscelazione 7 L, 2x taniche 5 L) per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.25	12.5	7.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/22 set guide sensori tubolari per sensori di livello (1x tanica miscelazione 7 l, 2x taniche 5 l) per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+c9aa7e3d-fbb1-49ba-b2c2-3e044ebbab5c	A0261	415/23	Tanica di miscelazione 7 litri con coperchio e porta sensore di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	22.54	27.5	16.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/23 tanica di miscelazione 7 litri con coperchio e porta sensore di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+0f9ae506-71e6-49e5-842a-95cf89782d9f	A0262	415/24	Ugello di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.62	3.2	1.92	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/24 ugello di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+d6275bd7-2293-4a7a-8fbc-3b020e7f33c7	A0263	432/9	Raccordo per ugello miscelazione interna con connettore rapido dritto per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.17	2.65	1.59	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/9 raccordo per ugello miscelazione interna con connettore rapido dritto per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+191b91b9-b55c-4b70-ae61-7966a60559c0	A0264	415/25	Set connettori rapidi e tubazioni interne per Art. 415, 445	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.27	13.75	8.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/25 set connettori rapidi e tubazioni interne per art. 415, 445 stocker	2026-08-07 13:30:10.43876+00
+1a8d97b0-0942-48d8-aea4-14374692a02c	A0265	415/26	Set connettori rapidi e tubazioni di mandata per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.15	7.5	4.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/26 set connettori rapidi e tubazioni di mandata per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+dc3d5df8-1c0c-4260-8953-b5a00aa6ea7f	A0266	415/27	Connettore rapido di uscita - BIANCO per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.92	6	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/27 connettore rapido di uscita - bianco per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+d787dd5d-e88d-4c56-8948-ae612740b39f	A0267	415/28	Set tubazioni e connettori per pompa peristaltica dosatrice (per una pompa) per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.71	5.75	3.45	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/28 set tubazioni e connettori per pompa peristaltica dosatrice (per una pompa) per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+893c4a41-6829-4daa-a6b1-409bfb601787	A0268	415/29	Tubo di mandata pompa principale, con fascette per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.71	5.75	3.45	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/29 tubo di mandata pompa principale, con fascette per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+26dafd5b-8862-4b91-8241-a0e234139569	A0269	415/30	Staffa supporto elettrovalvola di ingresso, con 4 viti per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.36	4.1	2.46	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/30 staffa supporto elettrovalvola di ingresso, con 4 viti per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+c7f847ea-52b3-45c6-a15e-ec79eac53bc3	A0270	415/31	Maniglia per coperchio frontale, in plastica per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.93	2.35	1.41	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/31 maniglia per coperchio frontale, in plastica per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+38c39880-5e4a-4bd9-b86a-6d8b6fb1da60	A0271	415/32	Serratura con chiave per coperchio frontale per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.17	8.75	5.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/32 serratura con chiave per coperchio frontale per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+dfafa064-da9a-4117-bcdd-24ff425ee8c5	A0272	415/33	Set accessori per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	34.84	42.5	25.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/33 set accessori per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+67ca8c24-f398-4b56-994a-d01da7076e51	A0273	415/34	Set viti interne per pompe dosatrici, pompa principale con staffa, staffa tanica di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.48	4.25	2.55	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/34 set viti interne per pompe dosatrici, pompa principale con staffa, staffa tanica di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+0d48f08e-fbed-4c87-afe1-06fa8d2287bf	A0274	415/35	Set viti per telaio per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.43	1.75	1.05	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/35 set viti per telaio per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+1ce6cdee-11ad-4afa-a7da-20628247b902	A0275	415/36	Set viti per scheda di controllo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	0.57	0.7	0.42	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/36 set viti per scheda di controllo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+b5f12e87-cc47-4d4b-b016-c461498941f7	A0276	415/37	Staffa di supporto tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	32.38	39.5	23.7	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/37 staffa di supporto tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+5de3f2a2-9fa0-4fd7-9691-bce782bf48dc	A0277	415/38	Coperchio frontale in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	77.87	95	57	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/38 coperchio frontale in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+53978075-a798-4747-b0c3-332ca7c6d6f0	A0278	415/39	Coperchio posteriore in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	77.87	95	57	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/39 coperchio posteriore in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+3592dc31-56b5-4c26-8e84-f5be43c0a484	A0279	415/40	Base telaio in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	79.92	97.5	58.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/40 base telaio in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+6714796e-60be-487c-8345-924b1bb00d7c	A0280	415/41	Telaio centrale in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	62.3	76	45.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/41 telaio centrale in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+4bbf339a-4d69-45a4-a6a2-10412cfaa220	A0281	415/42	Set guarnizioni pannelli laterali per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.25	12.5	7.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/42 set guarnizioni pannelli laterali per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+27a4dab2-e54c-453f-ac71-6c6d731b4725	A0282	415/43	Pannelli laterali (destro e sinistro), in plastica per Art. 415, 436, 445, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	90.16	110	66	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/43 pannelli laterali (destro e sinistro), in plastica per art. 415, 436, 445, 466 stocker	2026-08-07 13:30:10.43876+00
+3cd143fe-72d4-4f2e-8a49-53338fe70d5b	A0283	415/44	Staffa supporto pompa principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/44 staffa supporto pompa principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+14f02327-5978-4ee8-86d3-7d2d85de8032	A0284	415/45	Raccordo entrata motore per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.02	1.25	0.75	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/45 raccordo entrata motore per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+d72dd1aa-cdfc-4841-94d7-805d62e0fab6	A0285	415/46	Tubo grigio sensore tanica per art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.83	3.45	2.07	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/46 tubo grigio sensore tanica per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+a4703d7b-c1ab-4dc6-ba47-cb4ddb01e7fa	A0286	415/47	Testa pompa diaframma principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	12.79	15.6	9.36	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/47 testa pompa diaframma principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+20b7ef49-5373-457e-b06f-8447aa858cac	A0287	415/48	Sensore di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/48 sensore di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+e3456f75-eb96-47b9-820a-d5868dca1f1c	A0288	415/49	Testa pompa dosatrice peristaltica - NERO per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.93	17	10.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/49 testa pompa dosatrice peristaltica - nero per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+124435f9-7baf-4c10-9d28-6b998dd7f593	A0289	436/1	Pompa principale per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	40.16	49	29.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/1 pompa principale per art. 436, 466 stocker	2026-08-07 13:30:10.43876+00
+f2fb8b63-23ca-4515-8782-38d2e0bdf1e5	A0290	436/2	Staffa supporto pompa principale per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/2 staffa supporto pompa principale per art. 436, 466 stocker	2026-08-07 13:30:10.43876+00
+d9ce08a6-7e82-4576-93ea-4390fe9d01e7	A0291	436/3	Set connettori rapidi e tubazioni interne per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.72	14.3	8.58	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/3 set connettori rapidi e tubazioni interne per art. 436, 466 stocker	2026-08-07 13:30:10.43876+00
+c67f6105-7bad-42cd-851b-271d75c7d271	A0292	446/1	Elettrovalvola di uscita per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	26.23	32	19.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/1 elettrovalvola di uscita per art. 446 stocker	2026-08-07 13:30:10.43876+00
+ba9c9acf-661d-4658-bc0d-1ec9549a241a	A0293	446/2	Raccordo 3 vie per uscita motore per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.86	13.25	7.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/2 raccordo 3 vie per uscita motore per art. 446 stocker	2026-08-07 13:30:10.43876+00
+59a104db-3e62-4267-a73d-f8d4aede5378	A0294	446/3	Set connettori rapidi e tubazioni interne per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	21.93	26.75	16.05	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/3 set connettori rapidi e tubazioni interne per art. 446 stocker	2026-08-07 13:30:10.43876+00
+f71a4810-9e57-4910-87cf-a2435e0aa8b6	A0295	446/4	Connettore rapido di uscita - NERO per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.76	8.25	4.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/4 connettore rapido di uscita - nero per art. 446 stocker	2026-08-07 13:30:10.43876+00
+19a8ae8c-77c5-44fa-a134-a62a440f9232	A0296	446/5	Pannelli laterali (destro e sinistro), in plastica con doppia uscita per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	90.16	110	66	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/5 pannelli laterali (destro e sinistro), in plastica con doppia uscita per art. 446 stocker	2026-08-07 13:30:10.43876+00
+e765e674-539c-4962-aba8-3f83567f7f0d	A0297	439/1	Serbatoio verde 25 L per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	43.69	53.3	31.98	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	439/1 serbatoio verde 25 l per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+890e54d0-6ac8-4f4e-a966-3a1c3234e7c1	A0298	432/1	Motore per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	37.62	45.9	27.54	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/1 motore per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+28dd0507-1ff9-44d9-9c42-0d8752181593	A0299	432/2	Display di comando per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	46.56	56.8	34.08	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/2 display di comando per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+68772869-956d-41f7-82c7-b29b77216d5d	A0300	432/3	Alloggiamento per batteria con contatti in plast., per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.55	5.55	3.33	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/3 alloggiamento per batteria con contatti in plast., per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+def9d012-5073-49d9-b3e7-7064a14b3057	A0301	432/4	Coperchio vano batteria in plast., per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.25	6.4	3.84	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/4 coperchio vano batteria in plast., per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+5db921da-ce84-4d0d-8380-641f44225d89	A0302	432/5	Base serbatoio in plastica per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	20.2	24.65	14.79	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/5 base serbatoio in plastica per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+473740d2-19c8-480f-a80d-6a298a0b9772	A0303	432/6	Valvola magnetica per ugelli di nebulizzazione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	15.29	18.65	11.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/6 valvola magnetica per ugelli di nebulizzazione per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+93c934b2-21d9-4073-bd19-5c389a386ac8	A0304	432/7	Valvola magnetica per ugelli di miscelazione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	15.29	18.65	11.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/7 valvola magnetica per ugelli di miscelazione per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+9240b900-5bdf-404f-99e2-bd34a1a57f72	A0305	432/8	Set tubi di distribuzione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	19.14	23.35	14.01	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/8 set tubi di distribuzione per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+0a6e40a5-c7c2-40ec-8ade-8ea4752883ef	A0306	414/8	Ugello interno di miscelazione per Art. 414, 404, 405, 406, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.4	4.15	2.49	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/8 ugello interno di miscelazione per art. 414, 404, 405, 406, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+1fa7fc68-327c-4951-abc1-77586dcffc1c	A0307	414/6	Kit guarnizioni per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.21	2.7	1.62	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/6 kit guarnizioni per art. 414, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+c5f8efeb-4b2f-4439-b85a-6135a4518dcf	A0308	414/5	Set tubo mandata serbatoio per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.09	8.65	5.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/5 set tubo mandata serbatoio per art. 414, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+655d93a3-f5fa-4cb4-ba4a-d3513a742490	A0309	410/8	Set ugelli nebulizzazione ultra fine e tappi di chiusura 3 pz, per Art. 410, 411, 414, 420, 409, 432, 4201, 437, 438, 439, 440	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.8	8.3	4.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/8 set ugelli nebulizzazione ultra fine e tappi di chiusura 3 pz, per art. 410, 411, 414, 420, 409, 432, 4201, 437, 438, 439, 440 stocker	2026-08-07 13:30:10.43876+00
+c2104cac-e214-44cb-92bb-2211c24b1eed	A0310	410/7	Copertura plastica superiore per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.9	7.2	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/7 copertura plastica superiore per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 13:30:10.43876+00
+24df358e-1bd8-4af2-b609-6d32c907a41b	A0311	410/14	Filtro per art. 410, 411, 414, 432, 404, 405, 406, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.89	2.3	1.38	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/14 filtro per art. 410, 411, 414, 432, 404, 405, 406, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+c47ef0aa-c99a-4e51-be45-e2e27ffe7ef5	A0312	432/11	Piastra di fissaggio in inox motore per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.56	8	4.8	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/11 piastra di fissaggio in inox motore per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+e7450d2c-7ffc-483f-ab0c-4b159241499c	A0313	413	Treppiede in all., 49 cm, per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	48.36	59	35.4	Attivo	NEBULIZZATORE ELETTRICO	413 treppiede in all., 49 cm, per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 13:30:10.43876+00
+3c5c7c1c-5d71-443a-aa0e-8665a01a8b9d	A0314	437/1	Serbatoio verde 4 L per Art. 410, 437	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	12.3	15	9	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	437/1 serbatoio verde 4 l per art. 410, 437 stocker	2026-08-07 13:30:10.43876+00
+5222e67e-98e9-48dd-bbe1-18178019f31e	A0315	438/1	Serbatoio verde 12 L per Art. 411, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	21.19	25.85	15.51	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	438/1 serbatoio verde 12 l per art. 411, 438 stocker	2026-08-07 13:30:10.43876+00
+73e75632-aa92-423c-a56a-66e9753d1734	A0316	410/2	Motore per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	31.56	38.5	19.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/2 motore per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+255b6b2d-dd86-4220-975f-0cb919dfef5b	A0317	410/3	Display di comando per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	34.34	41.9	20.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/3 display di comando per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+0ed8f4eb-c916-4177-8f5d-3af0ab833927	A0318	410/4	Set tubi di distribuzione per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/4 set tubi di distribuzione per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+a817c394-b495-4aaa-a3f7-1d84040258f6	A0319	410/5	Set tubo mandata serbatoio con fascette e filtro per Art. 410, 437	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/5 set tubo mandata serbatoio con fascette e filtro per art. 410, 437 stocker	2026-08-07 13:30:10.43876+00
+a43b6ba1-e064-414f-be2f-7d9b45480e93	A0320	411/2	Set tubo mandata serbatoio con fascette e filtro per Art. 411, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.33	6.5	3.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	411/2 set tubo mandata serbatoio con fascette e filtro per art. 411, 438 stocker	2026-08-07 13:30:10.43876+00
+d19fb985-7da9-46bb-9c24-145c970c9108	A0321	410/6	Base serbatoio in plastica per Art. 410, 411, 414, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	16.39	20	10	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/6 base serbatoio in plastica per art. 410, 411, 414, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+a443fc1f-5cc4-4d58-902f-da298dfffa19	A0322	410/9	Kit guarnizioni per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.21	2.7	1.35	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/9 kit guarnizioni per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+e8a634bb-fab2-4e7e-be8d-7233123cc073	A0323	410/11	Cinghia per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/11 cinghia per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+f4d52540-017c-453f-ba16-0c76eadbbab1	A0324	410/12	Coperchio vano batteria per art. 410, 411, 414, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.28	4	2.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/12 coperchio vano batteria per art. 410, 411, 414, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+198e0b1e-1582-49ee-9226-a880ad762902	A0325	410/13	Alloggiamento per batteria con cavi per art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.66	3.25	1.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/13 alloggiamento per batteria con cavi per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+bb50e209-7a9d-408a-b47b-1bcfaae9019f	A0326	420/1	Testa per Art. 420, 4201, 440, 4440, 4249	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	23.52	28.7	17.22	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/1 testa per art. 420, 4201, 440, 4440, 4249 stocker	2026-08-07 13:30:10.43876+00
+8033fc72-6dec-4a83-8d30-6d3011ca096f	A0327	420/2	Set o-ring per Art. 409, 420, 4201, 440, 4440, 4249	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.84	2.25	1.35	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/2 set o-ring per art. 409, 420, 4201, 440, 4440, 4249 stocker	2026-08-07 13:30:10.43876+00
+b821be70-6ab6-40a8-bbbf-4dddf5dbcf68	A0328	440/1	Serbatoio verde 2 L per Art. 440, 4440, 44401	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.84	8.35	5.01	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	440/1 serbatoio verde 2 l per art. 440, 4440, 44401 stocker	2026-08-07 13:30:10.43876+00
+440af674-443a-4cb1-a71a-22834e41cb8b	A0329	420/3	Cavi USB Micro e USB Type C per Art. 409, 420, 4201, 2621, 440, 4440	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.34	2.85	1.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/3 cavi usb micro e usb type c per art. 409, 420, 4201, 2621, 440, 4440 stocker	2026-08-07 13:30:10.43876+00
+56b7879b-b658-4ac6-8705-799b3326edc0	A0330	409/1	Testa per art. 409	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	26.31	32.1	19.26	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	409/1 testa per art. 409 stocker	2026-08-07 13:30:10.43876+00
+1f4cdcf5-bceb-4e78-bcff-0a21d05421a0	A0331	409/2	Serbatoio 2 L per Art. 409	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.15	7.5	4.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	409/2 serbatoio 2 l per art. 409 stocker	2026-08-07 13:30:10.43876+00
+9270a6df-c440-444c-9d65-1c38212fed89	A0332	410/10	Protezione per display per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.05	2.5	1.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/10 protezione per display per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 13:30:10.43876+00
+57a91922-ef4c-442b-a84c-4b4779542169	A0333	414/1	Serbatoio 25 L arancione per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	39.75	48.5	29.1	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/1 serbatoio 25 l arancione per art. 414, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+95220880-80f2-4fba-ba72-5dcd6e4a8839	A0334	414/2	Motore per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	36.89	45	27	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/2 motore per art. 414 stocker	2026-08-07 13:30:10.43876+00
+22648f28-edad-4459-aa89-fdf50b21daba	A0335	414/3	Display di comando per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	44.92	54.8	32.88	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/3 display di comando per art. 414 stocker	2026-08-07 13:30:10.43876+00
+16bdf3e8-12c4-4932-978b-0dd419c844c1	A0336	414/4	Set tubi di distribuzione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.11	16	9.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/4 set tubi di distribuzione per art. 414 stocker	2026-08-07 13:30:10.43876+00
+08473d7d-1655-4112-a41e-be8535948836	A0337	414/7	Valvola magnetica per ugello di miscelazione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	14.63	17.85	10.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/7 valvola magnetica per ugello di miscelazione per art. 414 stocker	2026-08-07 13:30:10.43876+00
+1d8cf4cd-0bc7-44bb-8a0d-54a871d767c1	A0338	414/9	Alloggiamento per batteria con cavi per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.18	5.1	3.06	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/9 alloggiamento per batteria con cavi per art. 414 stocker	2026-08-07 13:30:10.43876+00
+69bd3bd8-a9f9-441c-b962-7312eac93b9b	A0339	414/10	Valvola magnetica per ugelli di nebulizzazione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	14.63	17.85	10.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/10 valvola magnetica per ugelli di nebulizzazione per art. 414 stocker	2026-08-07 13:30:10.43876+00
+\.
+
+
+--
+-- Data for Name: az_progetti; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.az_progetti (id, created_at, updated_at, numero, cliente_nome, cliente_id, indirizzo, telefono, riferimento, stato, operatore, tecnico, data_montaggio, foto_path, foto_scala, brand, macchina_code, config, risultato, prezzo_cliente, descrizione_prev, note, data_preventivo) FROM stdin;
+759e3165-8750-4c61-b16a-a39df8ead8bb	2026-08-07 08:56:27.234065+00	2026-08-07 16:23:39.779739+00	AZ-2026-006	Fabbio Luigino	\N	via Cardinal Callegari 2 Vascon di Carbonera			preventivo	Simone	Roberto	\N	progetti/759e3165-8750-4c61-b16a-a39df8ead8bb/1786093070525.png	\N	geyser	415	{"auto": {}, "voci": {"tappi": [], "ugelli": [{"q": 58, "code": "4219"}], "porta90": [{"q": 58, "code": "4220"}], "macchine": [{"q": 1, "code": "415"}], "raccordiT": [{"q": 58, "code": "4222"}], "tubiLinea": [{"q": 321, "code": "4213"}], "tubiTronco": [{"q": 25, "code": "4248"}]}, "brand": "geyser", "extra": [{"q": "58", "um": "pz", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "costo": 12.61, "codice": "4256", "prezzo": 17.21, "costoDaListino": true}], "consumi": [{"code": "45147", "tipo": "insetticida", "label": "Etokraft zanzaricida 5 L", "giorni": 150, "ugelli": 58, "_ugello": "4219", "litriConf": 5, "_pressione": 12, "prezzoConf": 174.59, "percentuale": "1", "portataLmin": 0.04, "minutiGiorno": "1", "_fontePortata": "dichiarata"}, {"code": "45138", "tipo": "repellente", "label": "Nebuzan repellente 5 L", "giorni": 150, "ugelli": 58, "_ugello": "4219", "litriConf": 5, "_pressione": 12, "prezzoConf": 131.56, "percentuale": "5", "portataLmin": 0.04, "minutiGiorno": "2", "_fontePortata": "dichiarata"}], "manoMac": "300", "margine": "30", "manoMode": "det", "manoRate": "28", "risalitaM": 2, "scontoAcq": 0, "consumabili": [{"q": 1, "code": "45147"}, {"q": 1, "code": "45138"}]}	{"N": 58, "bom": [{"q": 1, "tC": 975, "tP": 1331.97, "uC": 975, "uP": 1331.97, "um": "pz", "code": "415", "desc": "Centralina — Geyser Pro (240 m)", "categoria": "macchine"}, {"q": 321, "tC": 103.61880000000001, "tP": 141.561, "uC": 0.32280000000000003, "uP": 0.441, "um": "m", "code": "4213", "desc": "Tubo Ø6 — Ø6 nero 100 m", "categoria": "tubiLinea"}, {"q": 25, "tC": 13.845000000000002, "tP": 18.915, "uC": 0.5538000000000001, "uP": 0.7565999999999999, "um": "m", "code": "4248", "desc": "Tubo Ø8 — Ø8 nero 100 m", "categoria": "tubiTronco"}, {"q": 58, "tC": 116.57999999999998, "tP": 159.5, "uC": 2.01, "uP": 2.75, "um": "pz", "code": "4219", "desc": "Ugelli — Anti-gocc. standard", "categoria": "ugelli"}, {"q": 58, "tC": 29.580000000000002, "tP": 40.599999999999994, "uC": 0.51, "uP": 0.7, "um": "pz", "code": "4220", "desc": "Portaugelli angolati — 90° Ø6", "categoria": "porta90"}, {"q": 58, "tC": 36.54, "tP": 49.88, "uC": 0.63, "uP": 0.86, "um": "pz", "code": "4222", "desc": "Raccordi a T — T Ø6", "categoria": "raccordiT"}, {"q": 58, "tC": 731.38, "tP": 998.1800000000001, "uC": 12.61, "uP": 17.21, "um": "pz", "code": "4256", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "categoria": "extra"}, {"q": 1, "tC": 127.8, "tP": 174.59, "uC": 127.8, "uP": 174.59, "um": "pz", "code": "45147", "desc": "Kit prodotti — Etokraft zanzaricida 5 L", "categoria": "consumabili"}, {"q": 1, "tC": 96.3, "tP": 131.56, "uC": 96.3, "uP": 131.56, "um": "pz", "code": "45138", "desc": "Kit prodotti — Nebuzan repellente 5 L", "categoria": "consumabili"}], "tubo": {"linea": 321, "tronco": 25, "risalita": 116, "perimetro": 205}, "brand": "Geyser", "costi": {"kit": 224.1, "extra": 731.38, "totale": 2230.6438, "materiale": 1275.1637999999998}, "linee": [{"_i": 0, "metri": 230, "passo": 4, "anello": true, "metodi": {"m3a": 58}, "etichetta": "Linea", "metriTronco": 25, "ugelliMontati": 58, "ugelliPrevisti": 58}], "avvisi": [], "metodi": {"m1a": 0, "m1d": 0, "m2q": 0, "m3a": 58, "m3d": 0, "m4a": 0, "m4d": 0}, "nLinee": 1, "prezzi": {"iva": 1274.446316, "extra": 998.1800000000001, "totale": 5792.9378, "impianto": 5486.7878, "materiale": 1742.426, "totaleIva": 7067.384115999999, "imponibile": 5792.9378, "manodopera": 1924, "aliquotaIva": 22, "kitProdotti": 306.15, "venditaMateriale": 3562.7877999999996}, "totali": {"tappi": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "ugelli": {"q": 58, "costo": 116.57999999999998, "prezzo": 159.5, "suggerito": 58}, "inLinea": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "porta90": {"q": 58, "costo": 29.580000000000002, "prezzo": 40.599999999999994, "suggerito": 58}, "macchine": {"q": 1, "costo": 975, "prezzo": 1331.97, "suggerito": 1}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 58, "costo": 36.54, "prezzo": 49.88, "suggerito": 58}, "riduzioni": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 321, "costo": 103.61880000000001, "prezzo": 141.561, "suggerito": 321}, "tubiTronco": {"q": 25, "costo": 13.845000000000002, "prezzo": 18.915, "suggerito": 25}, "consumabili": {"q": 2, "costo": 224.1, "prezzo": 306.15, "suggerito": null}, "portaDritti": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}}, "brandId": "geyser", "margine": 1638.2939999999999, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "415", "label": "Geyser Pro (240 m)", "lines": 1, "maxTot": 60, "perLine": 60}, "metriTot": 230, "suggeriti": {"tappi": 0, "ugelli": 58, "_metodi": {"m1a": 0, "m1d": 0, "m2q": 0, "m3a": 58, "m3d": 0, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 1, "inLinea": 0, "porta90": 58, "_mTronco": 25, "macchine": 1, "_metriTot": 230, "accessori": null, "raccordiT": 58, "riduzioni": 0, "tubiLinea": 321, "tubiTronco": 25, "portaDritti": 0, "_cambiDiametro": 1, "_risalitaMetri": 116, "_ugelliPrevisti": 58}, "manodopera": {"modo": "det", "totale": 1924, "ugelli": 58, "tariffaUgello": 28, "programmazione": 300}, "marginePct": 42.34480068405338, "ricaricoPct": 30, "ugelliMontati": 58, "scontoApplicato": 0}	\N	\N	Escluso tubo corrugato, scavi e rinterri	2026-08-07
+2e9dfeff-f1e2-4c2b-8003-54ad98ac926c	2026-08-10 09:30:59.00414+00	2026-08-10 14:33:00.3348+00	AZ-2026-007	Di Lenardo Filippo 	\N				preventivo	Simone		\N	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786370372310.png	\N	geyser	446	{"auto": {"tappi": false, "macchine": false, "accessori": false, "tubiLinea": true}, "voci": {"tappi": [{"q": 2, "code": "4215"}], "ugelli": [{"q": 75, "code": "4219"}], "porta90": [{"q": 75, "code": "4220"}], "macchine": [{"q": 1, "code": "446"}], "accessori": [{"q": 1, "code": "4259"}, {"q": 1, "code": "4269"}, {"q": 1, "code": "4267"}, {"q": 20, "code": "4263"}, {"q": 1, "code": "4262"}], "raccordiT": [{"q": 75, "code": "4222"}], "tubiLinea": [{"q": 300, "code": "4213"}], "tubiTronco": []}, "brand": "geyser", "extra": [{"q": "30", "um": "pz", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "costo": 12.61, "codice": "4256", "prezzo": 17.21, "costoDaListino": true}], "consumi": [], "manoMac": "250", "margine": "10", "manoMode": "det", "manoRate": "30", "risalitaM": 2, "scontoAcq": 0, "consumabili": [{"q": 1, "code": "ANTICALC-05L"}, {"q": 1, "code": "CHEF-BarrArom5L"}, {"q": 1, "code": "FIREWALL-Inse1L"}, {"q": 1, "code": "45147"}, {"q": 1, "code": "45138"}]}	{"N": 75, "bom": [{"q": 1, "tC": 1066.2, "tP": 1456.56, "uC": 1066.2, "uP": 1456.56, "um": "pz", "code": "446", "desc": "Centralina — Geyser Pro Dual (2×240 m)", "categoria": "macchine"}, {"q": 300, "tC": 96.84, "tP": 132.3, "uC": 0.32280000000000003, "uP": 0.441, "um": "m", "code": "4213", "desc": "Tubo Ø6 — Ø6 nero 100 m", "categoria": "tubiLinea"}, {"q": 75, "tC": 150.74999999999997, "tP": 206.25, "uC": 2.01, "uP": 2.75, "um": "pz", "code": "4219", "desc": "Ugelli — Anti-gocc. standard", "categoria": "ugelli"}, {"q": 75, "tC": 38.25, "tP": 52.5, "uC": 0.51, "uP": 0.7, "um": "pz", "code": "4220", "desc": "Portaugelli angolati — 90° Ø6", "categoria": "porta90"}, {"q": 75, "tC": 47.25, "tP": 64.5, "uC": 0.63, "uP": 0.86, "um": "pz", "code": "4222", "desc": "Raccordi a T — T Ø6", "categoria": "raccordiT"}, {"q": 2, "tC": 1.068, "tP": 1.46, "uC": 0.534, "uP": 0.73, "um": "pz", "code": "4215", "desc": "Tappi fine linea — Tappo chiusura Ø6 (conf. 5 pz)", "categoria": "tappi"}, {"q": 1, "tC": 3.99, "tP": 5.45, "uC": 3.99, "uP": 5.45, "um": "pz", "code": "4259", "desc": "Accessori — Valvola non ritorno Ø8 (sfuso)", "categoria": "accessori"}, {"q": 1, "tC": 13.41, "tP": 18.32, "uC": 13.41, "uP": 18.32, "um": "pz", "code": "4269", "desc": "Accessori — Filtro entrata acqua Ø8", "categoria": "accessori"}, {"q": 1, "tC": 8.61, "tP": 11.76, "uC": 8.61, "uP": 11.76, "um": "pz", "code": "4267", "desc": "Accessori — Raccordo rapido rubinetto Ø8", "categoria": "accessori"}, {"q": 20, "tC": 179.4, "tP": 245, "uC": 8.97, "uP": 12.25, "um": "pz", "code": "4263", "desc": "Accessori — Kit direzionamento ugelli 50 cm", "categoria": "accessori"}, {"q": 1, "tC": 26.52, "tP": 36.23, "uC": 26.52, "uP": 36.23, "um": "pz", "code": "4262", "desc": "Accessori — Staffa montante a L (2 pz)", "categoria": "accessori"}, {"q": 30, "tC": 378.29999999999995, "tP": 516.3000000000001, "uC": 12.61, "uP": 17.21, "um": "pz", "code": "4256", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "categoria": "extra"}, {"q": 1, "tC": 127.8, "tP": 174.59, "uC": 127.8, "uP": 174.59, "um": "pz", "code": "45147", "desc": "Kit prodotti — Etokraft zanzaricida 5 L", "categoria": "consumabili"}, {"q": 1, "tC": 96.3, "tP": 131.56, "uC": 96.3, "uP": 131.56, "um": "pz", "code": "45138", "desc": "Kit prodotti — Nebuzan repellente 5 L", "categoria": "consumabili"}], "tubo": {"linea": 300, "tronco": 0, "risalita": 0, "perimetro": 300}, "brand": "Stocker", "costi": {"kit": 224.1, "extra": 378.29999999999995, "totale": 2234.688, "materiale": 1632.288}, "linee": [{"_i": 0, "metri": 160, "passo": 4, "anello": false, "colore": "cyan", "metodi": {"m1a": 40}, "etichetta": "linea 2 repellente/insett. giardino", "metriTronco": 0, "ugelliMontati": 40, "ugelliPrevisti": 40}, {"_i": 1, "metri": 140, "passo": 4, "colore": "cyan", "metodi": {"m1a": 35}, "etichetta": "linea 1 repellente casa", "metriTronco": 0, "ugelliMontati": 35, "ugelliPrevisti": 35}], "avvisi": [], "metodi": {"m1a": 75, "m1d": 0, "m2q": 0, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "nLinee": 2, "prezzi": {"iva": 1282.0374600000002, "extra": 516.3000000000001, "totale": 5827.443000000001, "impianto": 5521.293000000001, "materiale": 2230.33, "totaleIva": 7109.480460000002, "imponibile": 5827.443000000001, "manodopera": 2500, "aliquotaIva": 22, "kitProdotti": 306.15, "venditaMateriale": 3021.2930000000006}, "totali": {"tappi": {"q": 2, "costo": 1.068, "prezzo": 1.46, "suggerito": 2}, "ugelli": {"q": 75, "costo": 150.74999999999997, "prezzo": 206.25, "suggerito": 75}, "inLinea": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "porta90": {"q": 75, "costo": 38.25, "prezzo": 52.5, "suggerito": 75}, "macchine": {"q": 1, "costo": 1066.2, "prezzo": 1456.56, "suggerito": 1}, "accessori": {"q": 24, "costo": 231.93, "prezzo": 316.76, "suggerito": null}, "raccordiT": {"q": 75, "costo": 47.25, "prezzo": 64.5, "suggerito": 75}, "riduzioni": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 300, "costo": 96.84, "prezzo": 132.3, "suggerito": 300}, "tubiTronco": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "consumabili": {"q": 2, "costo": 224.1, "prezzo": 306.15, "suggerito": null}, "portaDritti": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}}, "brandId": "geyser", "margine": 1092.7550000000006, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "446", "label": "Geyser Pro Dual (2×240 m)", "lines": 2, "maxTot": 120, "perLine": 60}, "metriTot": 300, "suggeriti": {"tappi": 2, "ugelli": 75, "_metodi": {"m1a": 75, "m1d": 0, "m2q": 0, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 2, "inLinea": 0, "porta90": 75, "_mTronco": 0, "macchine": 1, "_metriTot": 300, "accessori": null, "raccordiT": 75, "riduzioni": 0, "tubiLinea": 300, "tubiTronco": 0, "portaDritti": 0, "_cambiDiametro": 0, "_risalitaMetri": 0, "_ugelliPrevisti": 75}, "manodopera": {"modo": "det", "totale": 2500, "ugelli": 75, "tariffaUgello": 30, "programmazione": 250}, "marginePct": 32.840682770523806, "ricaricoPct": 10, "ugelliMontati": 75, "scontoApplicato": 0}	\N	\N		2026-08-10
+fe473ebe-b839-436e-a1e0-afa4a5e4a3dc	2026-08-10 15:45:57.366295+00	2026-08-10 15:51:48.921418+00	AZ-2026-008	De Menego Daniel	\N	via Lorenzo Celsi Treviso			preventivo	Simone		\N	\N	\N	gardheaven	Comfort02	{"auto": {"macchine": false, "tubiLinea": false}, "voci": {"tappi": [], "ugelli": [{"q": 55, "code": "UGEL0015"}], "inLinea": [{"q": 12, "code": "RACCPUD1/4"}], "porta90": [{"q": 2, "code": "BASINXUG1/4"}], "macchine": [{"q": 1, "code": "Comfort02"}], "raccordiT": [{"q": 43, "code": "RACCT1/4"}], "tubiLinea": [{"q": 80, "code": "TBPA30BAR1/4"}], "portaDritti": [{"q": 41, "code": "RACCPUD1/4"}]}, "brand": "gardheaven", "extra": [], "consumi": [], "manoMac": 0, "margine": 0, "manoMode": "det", "manoRate": 22, "risalitaM": 2, "scontoAcq": 50, "consumabili": []}	{"N": 62, "bom": [{"q": 1, "tC": 1870, "tP": 3740, "uC": 1870, "uP": 3740, "um": "pz", "code": "Comfort02", "desc": "Centralina — Comfort 02 Dual — 2 linee (150 ug./linea)", "categoria": "macchine"}, {"q": 80, "tC": 50, "tP": 100, "uC": 0.625, "uP": 1.25, "um": "m", "code": "TBPA30BAR1/4", "desc": "Tubo 1/4\\" — Tubo PA 1/4\\" 30 bar 100 m", "categoria": "tubiLinea"}, {"q": 55, "tC": 151.25, "tP": 302.5, "uC": 2.75, "uP": 5.5, "um": "pz", "code": "UGEL0015", "desc": "Ugelli — Ugello 0,15 mm", "categoria": "ugelli"}, {"q": 41, "tC": 135.29999999999998, "tP": 270.59999999999997, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Portaugelli dritti — Porta ugello dritto 1/4\\"", "categoria": "portaDritti"}, {"q": 2, "tC": 3.3, "tP": 6.6, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "BASINXUG1/4", "desc": "Portaugelli angolati — Base innesto 90° ugello 1/4\\"", "categoria": "porta90"}, {"q": 12, "tC": 39.599999999999994, "tP": 79.19999999999999, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Raccordi in linea — Raccordo dritto portaugello 6-6", "categoria": "inLinea"}, {"q": 43, "tC": 120.39999999999999, "tP": 240.79999999999998, "uC": 2.8, "uP": 5.6, "um": "pz", "code": "RACCT1/4", "desc": "Raccordi a T — Raccordo T 1/4\\"", "categoria": "raccordiT"}], "tubo": {"linea": 80, "tronco": 0, "risalita": 0, "perimetro": 100}, "brand": "Gardheaven", "costi": {"kit": 0, "extra": 0, "totale": 2369.8500000000004, "materiale": 2369.8500000000004}, "linee": [{"_i": 0, "metri": "50", "passo": "2.5", "anello": true, "metodi": {"m1d": 1, "m2q": 12}, "etichetta": "repellente", "metriTronco": "", "ugelliMontati": 13, "ugelliPrevisti": 20}, {"_i": 1, "metri": "50", "passo": "1.2", "anello": true, "metodi": {"m1a": 2, "m1d": 40}, "etichetta": "Raffrescamento", "metriTronco": "", "ugelliMontati": 42, "ugelliPrevisti": 42}], "avvisi": ["repellente: 13 ugelli ripartiti sui metodi, 20 previsti dai metri.", "Tubo 1/4\\": inseriti 80 m, il calcolo ne suggerisce 100."], "metodi": {"m1a": 2, "m1d": 41, "m2q": 12, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "nLinee": 2, "prezzi": {"iva": 1308.9340000000002, "extra": 0, "totale": 5949.700000000001, "impianto": 5949.700000000001, "materiale": 4739.700000000001, "totaleIva": 7258.634000000001, "imponibile": 5949.700000000001, "manodopera": 1210, "aliquotaIva": 22, "kitProdotti": 0, "venditaMateriale": 4739.700000000001}, "totali": {"tappi": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "ugelli": {"q": 55, "costo": 151.25, "prezzo": 302.5, "suggerito": 55}, "inLinea": {"q": 12, "costo": 39.599999999999994, "prezzo": 79.19999999999999, "suggerito": 12}, "porta90": {"q": 2, "costo": 3.3, "prezzo": 6.6, "suggerito": 2}, "macchine": {"q": 1, "costo": 1870, "prezzo": 3740, "suggerito": 1}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 43, "costo": 120.39999999999999, "prezzo": 240.79999999999998, "suggerito": 43}, "riduzioni": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 80, "costo": 50, "prezzo": 100, "suggerito": 100}, "tubiTronco": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "consumabili": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "portaDritti": {"q": 41, "costo": 135.29999999999998, "prezzo": 270.59999999999997, "suggerito": 41}}, "brandId": "gardheaven", "margine": 2369.8500000000004, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "Comfort02", "label": "Comfort 02 Dual — 2 linee (150 ug./linea)", "lines": 2, "maxTot": 300, "perLine": 150}, "metriTot": 100, "suggeriti": {"tappi": 0, "ugelli": 55, "_metodi": {"m1a": 2, "m1d": 41, "m2q": 12, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 2, "inLinea": 12, "porta90": 2, "_mTronco": 0, "macchine": 1, "_metriTot": 100, "accessori": null, "raccordiT": 43, "riduzioni": 0, "tubiLinea": 100, "tubiTronco": 0, "portaDritti": 41, "_cambiDiametro": 0, "_risalitaMetri": 0, "_ugelliPrevisti": 62}, "manodopera": {"modo": "det", "totale": 1210, "ugelli": 55, "tariffaUgello": 22, "programmazione": 0}, "marginePct": 50, "ricaricoPct": 0, "ugelliMontati": 55, "scontoApplicato": 50}	\N	\N		2026-08-10
+\.
+
+
+--
+-- Data for Name: az_voci_extra; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.az_voci_extra (id, created_at, updated_at, descrizione, codice, um, costo, prezzo, usi, ultimo_uso, creata_da) FROM stdin;
+7207b113-bb67-43ad-ad3b-f7acea179ac9	2026-08-05 07:51:07.547504+00	2026-08-05 07:51:07.547504+00	paletto	\N	pz	\N	\N	1	2026-08-05 07:51:07.547504+00	Admin
+15274695-7756-406a-9541-5be9faf1590b	2026-08-07 02:25:34.205548+00	2026-08-07 09:25:42.246017+00	palo	\N	pz	\N	\N	2	2026-08-07 09:25:42.246017+00	Admin
+9b6d9187-db9d-4031-babf-8353b587e491	2026-08-07 09:15:04.346713+00	2026-08-10 14:33:00.979303+00	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	4256	pz	12.61	17.21	27	2026-08-10 14:33:00.979303+00	Admin
 \.
 
 
@@ -6087,6 +6861,7 @@ recovered-124	2026-01-20 11:00:00+00	CORTESE MIRCO	\N	\N	Simone	[]	[{"nome": "PO
 1783441112813	2026-07-07 16:18:32.052+00	Popoiu Cristian	{"cf": "PPOCST77E11Z129O", "id": "e7d53c5d-3d23-49dd-a9d8-7212a5bf1304", "cap": "31050", "sdi": null, "nome": "Popoiu Cristian", "piva": null, "email": "cristianblackart@gmail.com", "nomeP": "Popoiu Cristian", "localita": "Povegliano", "telefono": "388 904 6698", "indirizzo": "via Postioma, 53", "provincia": "TV", "searchText": "popoiu cristian"}	388 904 6698	Admin	[{"brand": "TORO", "model": "Rasaerba Timemaster 76 cm 21815", "prezzo": 2000, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "418830692"}]	[]	2000	\N	\N	\N	scontrino	completed	2026-07-07 16:18:32.052+00	t	user_1770584612559	vendita	f	f	f	\N	\N
 recovered-129	2026-01-26 11:00:00+00	PAOLO BARBON	\N	\N	Simone	[]	[{"nome": "WEIBANG TRINCIAERBA CARDANO 3 VELOCITA WBBC537SCV", "prezzo": 1350, "quantita": 1, "aliquotaIva": 22}]	1350	100	contanti	cell. 3464744611	scontrino	completed	2026-01-26 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 1784822010184	2026-07-23 15:53:30.184+00	LOMBARDI PIETRO	\N	\N	Admin	[]	[{"id": 1784821999130, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-07-23 15:53:30.184+00	t	user_1771232846694	vendita	t	f	f	\N	\N
+1786375454326	2026-08-10 15:24:13.667+00	Cester Francesco 3282608027	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 120 R", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841754702"}]	[]	349	\N	\N	\N	scontrino	completed	2026-08-10 15:24:13.667+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1773068231847	2026-03-09 11:00:00+00	vivai lovisetto marco	\N	\N	Simone	[]	[{"id": 1773068091299, "nome": "MOLLA A TAZZA 40 X20,4X0,5", "prezzo": 1.56, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091300, "nome": "PERNO LAMA FD", "prezzo": 7.95, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091301, "nome": "LAMA PIATTO CLS9/CLS10/TRINCIA", "prezzo": 16.8, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091302, "nome": "RONDELLA 35 X 12,5 X 6", "prezzo": 2.05, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091303, "nome": "DADO 12X1,75 AUTUBL BASSO", "prezzo": 0.33, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	57.38	\N	\N	\N	fattura	completed	2026-03-09 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773338235441	2026-03-12 17:57:15.441+00	CENEDESE FABRIZIO	\N	\N	Simone	[]	[{"id": 1773338206431, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-12 17:57:15.441+00	t	user_1773313248876	vendita	f	f	f	in_attesa	\N
 1773419112396	2026-03-13 16:25:12.044+00	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	{"id": "511430", "cap": "31056", "nome": "Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS", "email": "amministrazione@castellodironcade.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3336023178 GEROMEL", "indirizzo": "VIA ROMA, 141- INT.8", "provincia": "TV", "searchText": "castello di roncade soc.agr.di ciani bassetti claudio e c.ss roncade ", "telefonoOriginale": "3336023178 GEROMEL"}	3336023178 GEROMEL	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105586"}]	[]	599	\N	\N	\N	fattura	completed	2026-03-13 16:25:12.044+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6110,6 +6885,7 @@ recovered-116	2026-01-10 11:00:00+00	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	
 recovered-115	2026-01-09 11:00:00+00	De Zottis sas	\N	\N	Simone	[]	[{"nome": "SOFFIATORE BGA 60 452325465", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK30 912721072", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATTERIE AL 101 702817745", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	369	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 recovered-105	2026-01-09 11:00:00+00	MICHELE GOLFETTO	\N	\N	Simone	[]	[{"nome": "TRONCARAMI RS 750", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}]	134	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 recovered-104	2026-01-07 11:00:00+00	Battistel Thomas	\N	\N	Simone	[{"brand": "STIHL", "model": "SOFFIATORI BGA 160", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "450906088"}]	[{"nome": "SPRAY SUPERCLEAN", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	360	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1786517131257	2026-08-12 06:45:31.256+00	Project Giudecca srl	\N	\N	Simone	[]	[{"id": 1786517117510, "nome": "Fornitura impianto di raffrescamento con modulo centralina Comfort 01 matr. GH_EABE44, completo di tubo, raccordi e ugelli", "brand": null, "prezzo": 3950, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3950	\N	\N	\N	fattura	completed	2026-08-12 06:45:31.256+00	f	user_1770584612559	vendita	t	f	f	\N	\N
 recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "SEGACCIO ARS 470mm", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "MANICO TELES. EXP 5.5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	190	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 1772270715735	2026-02-28 09:25:15.284+00	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRG466C1 SKEP", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1301493"}]	[]	669	\N	\N	\N	scontrino	completed	2026-02-28 09:25:15.284+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1783677642287	2026-07-10 10:00:41.264+00	De Longhi Davide	{"id": "503756", "cap": "31100", "nome": "De Longhi Davide", "email": "ildelo67@libero.it", "nomeP": "", "cognome": "", "contatto": "SIG.RA Galletti Carla", "localita": "TREVISO", "telefono": "3384031823", "indirizzo": "VIA SEITZ, 1", "provincia": "TV", "searchText": "de longhi davide treviso sig.ra galletti carla", "telefonoOriginale": "3384031823"}	3384031823	Simone	[{"brand": "Stihl", "model": "Batteria AP 300.0 S (280,80 Wh)", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "540786791"}]	[]	329	\N	\N	\N	scontrino	completed	2026-07-10 10:00:41.264+00	t	user_1775131564325	vendita	f	f	f	\N	\N
@@ -6148,6 +6924,7 @@ recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "
 1772698023760	2026-03-05 08:07:03.759+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1772697630789, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1772697650836, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697668935, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697688240, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1772697704749, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	654.9	\N	\N	\N	fattura	completed	2026-03-05 08:07:03.759+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1771857311156	2026-02-23 14:35:10.084+00	Cenedese Andrea	{"id": "500594", "cap": "31048", "nome": "Cenedese Andrea", "email": "andrea.cenedese@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[{"brand": "Volpi", "model": "Forbice elettronica KV360", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	299	\N	\N	\N	scontrino	completed	2026-02-23 14:35:10.084+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1784822385096	2026-07-23 15:59:44.599+00	Fontebasso Marcelino	{"id": "511588", "cap": "31030", "nome": "Fontebasso Marcelino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3488124088", "indirizzo": "VIA MONTEPERALBA N8", "provincia": "TV", "searchText": "fontebasso marcelino breda di piave ", "telefonoOriginale": "3488124088"}	3488124088	Simone	[{"brand": "Stihl", "model": "Motosega MS 162 3/8\\"P", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "840603456"}]	[]	199	\N	\N	\N	scontrino	completed	2026-07-23 15:59:44.599+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1786523557814	2026-08-12 08:32:37.185+00	Trevi SOCIETA' Agricola Semplice Di VIO' NICOLO'	{"id": "510377", "cap": "31100", "nome": "Trevi SOCIETA' Agricola Semplice Di VIO' NICOLO'", "email": "treviagricola@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3401079803", "indirizzo": "VIA A.G. LONGHIN, 1", "provincia": "TV", "searchText": "trevi societa' agricola semplice di vio' nicolo' treviso ", "telefonoOriginale": "3401079803"}	3401079803	Simone	[{"brand": "Echo", "model": "Motosega CS-280TES", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C75138082880"}]	[]	329	\N	\N	\N	fattura	completed	2026-08-12 08:32:37.185+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1773045271126	2026-03-09 11:00:00+00	BARBON IVAN	\N	\N	Simone	[]	[{"id": 1773045119753, "nome": "Universal Top 20 kg", "prezzo": 59.4, "quantita": 11, "matricola": null, "aliquotaIva": 4}]	653.4	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
 1773075750834	2026-03-09 17:02:30.833+00	BROLLO MARCO	{"cf": null, "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": null, "nome": "BROLLO MARCO", "piva": null, "email": null, "nomeP": "BROLLO MARCO", "localita": "SAN BIAGIO DI CALLALTA", "telefono": null, "indirizzo": "VIA FRIULI", "provincia": null, "searchText": "BROLLO MARCO"}	\N	Simone	[]	[{"id": 1773075593716, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773075700238, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	46.9	\N	\N	\N	scontrino	completed	2026-03-09 17:02:30.833+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
 1773244078788	2026-03-11 15:47:58.787+00	Romanello Umberto	{"id": "508068", "cap": "31048", "nome": "Romanello Umberto", "email": "umbe.roma@yahoo.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3463719100", "indirizzo": "VIA FORNASATTA, 5", "provincia": "TV", "searchText": "romanello umberto san biagio di callalta ", "telefonoOriginale": "3463719100"}	3463719100	Simone	[]	[{"id": 1773244071793, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-11 15:47:58.787+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6157,9 +6934,12 @@ recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "
 1773762228782	2026-03-17 15:43:48.782+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1773762180768, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773762223076, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	127.7	\N	\N	\N	fattura	completed	2026-03-17 15:43:48.782+00	t	user_1773757201306	vendita	f	f	f	in_attesa	\N
 1783761555628	2026-07-11 09:19:13.594+00	Forcellini Antonio	{"id": "511108", "cap": "31057", "nome": "Forcellini Antonio", "email": "forcellini.antonio@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "335474999", "indirizzo": "VIA NERBON 33F", "provincia": "TV", "searchText": "forcellini antonio silea ", "telefonoOriginale": "335474999"}	335474999	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLS 56", "prezzo": 385, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "944266182"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703447614"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948864182"}]	[]	385	\N	\N	\N	scontrino	completed	2026-07-11 09:19:13.594+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1784875085125	2026-07-24 06:38:04.173+00	Mazzega Paolo	{"id": "507910", "cap": "31056", "nome": "Mazzega Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3286491988", "indirizzo": "VIA MONTIRON, 2", "provincia": "TV", "searchText": "mazzega paolo roncade ", "telefonoOriginale": "3286491988"}	3286491988	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 120 R", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841754718"}]	[{"id": 1784875063994, "nome": "Lama Forestal", "brand": null, "prezzo": 7.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	356.5	\N	\N	\N	scontrino	completed	2026-07-24 06:38:04.173+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1785915571307	2026-08-05 10:00:00+00	Green Love di Rosolen Nicola Strada delle Bruscole 12 Conegliano	\N	\N	Simone	[{"_key": "69b505c0-feb1-4669-9bf8-3d5b0fb90db2", "brand": "Toro", "model": "minicaricatore cingolato Dingo TX525 usato, completo dei seguenti accessori", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "."}]	[{"id": 1785915366820, "_key": "14d7aac9-b6a3-4548-9f54-e081596ed327", "nome": "Benna liscia da 90 cm", "brand": null, "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785915388730, "_key": "ee2cf06c-c4ba-4176-bf38-d4c027287b20", "nome": "Pinza da legna con chele 5 denti", "brand": null, "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785915559471, "_key": "be1015b1-3806-40f7-b17c-a07d5c2d7764", "nome": "Interrasassi Dairon STH36", "brand": null, "prezzo": 39000, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	39000	\N	\N	\N	fattura	completed	2026-08-07 10:08:39.962+00	f	user_1770584612559	vendita	t	f	f	\N	\N
+1786526161569	2026-08-12 09:16:01.569+00	Marco	\N	\N	Simone	[]	[{"id": 1786526156701, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-08-12 09:16:01.569+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1773829190451	2026-03-18 10:19:49.852+00	Gheller Giovanni	{"id": "501565", "cap": "31030", "nome": "Gheller Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3493203938", "indirizzo": "VIA MASERADE, 23", "provincia": "TV", "searchText": "gheller giovanni breda di piave ", "telefonoOriginale": "3493203938"}	3493203938	Simone	[{"brand": "Stihl", "model": "Potatore GTA 40.0", "prezzo": 399, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449980336"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511941"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511944"}, {"brand": "STIHL", "model": "Caricabatteria AL 5-2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "709055579"}]	[]	399	\N	\N	\N	scontrino	completed	2026-03-18 10:19:49.852+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773841339358	2026-03-18 13:42:18.807+00	Bergamo Pietro	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416XBPEEA", "prezzo": 700, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCEF1003260"}, {"brand": "Honda", "model": "Batteria 4.0 li-Ion", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY-1002910"}, {"brand": "Honda", "model": "Caricabatteria CV3620XA EM", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027252"}]	[]	700	\N	\N	\N	scontrino	completed	2026-03-18 13:42:18.807+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773843081488	2026-03-18 14:11:21.488+00	Battistel Stefano	{"id": "508028", "cap": "31030", "nome": "Battistel Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3479082926", "indirizzo": "VIA DEL PASSO, 10 - SALETTO", "provincia": "TV", "searchText": "battistel stefano breda di piave ", "telefonoOriginale": "3479082926"}	3479082926	Simone	[]	[{"id": 1773843061461, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773843072195, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	103.82	\N	\N	\N	scontrino	completed	2026-03-18 14:11:21.488+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1786528562852	2026-08-12 09:56:02.047+00	Marchesin Sergio	{"id": "504828", "cap": "31030", "nome": "Marchesin Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3382949437", "indirizzo": "VIA PESCHIERETTE, 22", "provincia": "TV", "searchText": "marchesin sergio casier ", "telefonoOriginale": "3382949437"}	3382949437	Simone	[{"brand": "Volpi", "model": "Potatore KVS6000", "prezzo": 380, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SM3525.27NB"}]	[{"id": 1786528512814, "nome": "Catena ", "brand": null, "prezzo": 13.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	393.9	\N	\N	\N	scontrino	completed	2026-08-12 09:56:02.047+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1773846534889	2026-03-18 11:00:00+00	Collodo Vladimiro	{"id": "502882", "cap": "31021", "nome": "Collodo Vladimiro", "email": "vladimiro.collodo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MOGLIANO VENETO", "telefono": "041457189", "indirizzo": "VIA ROETTE, 5 - ZERMAN", "provincia": "TV", "searchText": "collodo vladimiro mogliano veneto ", "telefonoOriginale": "041457189"}	041457189	Simone	[{"brand": "ECHO", "model": "Tagliasiepi DHCA-310", "prezzo": 145, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E80435001582"}, {"brand": "ECHO", "model": "Caricabatteria LC-3604 EU35", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61535107521"}, {"brand": "ECHO", "model": "Batteria LBP-36-80 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61235054310"}]	[]	294	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773830769841	2026-03-18 11:00:00+00	Fontana Antonio	{"id": "512828", "cap": "31100", "nome": "Fontana Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3383385190", "indirizzo": "", "provincia": "TV", "searchText": "fontana antonio treviso ", "telefonoOriginale": "3383385190"}	3383385190	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0696N"}]	[]	179	\N	\N	Parrocchia S. Maria Ausiliatrice. Chiamare appena arriva	scontrino	completed	2026-03-27 11:07:22.782+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1773825316633	2026-03-18 11:00:00+00	Cavana 88	{"id": "514034", "cap": "30173", "nome": "Cavana 88", "email": "info@cavana88.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3772390407", "indirizzo": "VIA TRIESTINA, 54/24", "provincia": "VE", "searchText": "cavana 88 favaro veneto ", "telefonoOriginale": "3772390407"}	3394798537 Loris	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 4112 SZ", "prezzo": 3649, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "980361852"}]	[]	3649	\N	\N	Consegnare prima possibile. Chiamare Loris per consegna (Simone) Al ritorno scaricare il loro trattorino usato da un socio a Quarto d'Altino	fattura	completed	2026-03-27 14:06:13.924+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
@@ -6167,15 +6947,15 @@ recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "
 1773906930973	2026-03-19 11:00:00+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Simone	[]	[{"id": 1773906913033, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-19 11:00:00+00	f	user_1772446347578	vendita	f	f	f	in_attesa	\N
 recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HS82 R cm 75", "prezzo": 779, "aliquotaIva": 22, "serialNumber": "197814730"}, {"brand": "Stihl", "model": "TOSASIEPI HSA140R cm 75", "prezzo": 618.54, "aliquotaIva": 22, "serialNumber": "451286601"}]	[{"nome": "PALETTA MANUALE", "prezzo": 9.15, "quantita": 4, "aliquotaIva": 22}, {"nome": "MANICO ZM-V4", "prezzo": 81, "quantita": 3, "aliquotaIva": 22}]	1677.14	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 1783937267563	2026-07-13 10:07:47.226+00	Busana Giardini Di Busana Francesco	{"id": "510815", "cap": "31010", "nome": "Busana Giardini Di Busana Francesco", "email": "amministrazione@busanagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASER", "telefono": "3408334679", "indirizzo": "VIA CHIESA, 37", "provincia": "TV", "searchText": "busana giardini di busana francesco maser ", "telefonoOriginale": "3408334679"}	3408334679	Simone	[{"brand": "Stihl", "model": "AL 301-4", "prezzo": 275, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711199608"}]	[{"id": 1783936263792, "nome": "Coltello 600 mm 24\\"R 119-42377106053", "brand": null, "prezzo": 109.84, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1783936305900, "nome": "Protezione mano 48697909110", "brand": null, "prezzo": 10.41, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1783936607415, "nome": "Cavo di collegamento 48504001605", "brand": null, "prezzo": 119.67, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	624.76	\N	\N	\N	fattura	completed	2026-07-13 10:07:47.226+00	f	user_1770584612559	vendita	f	f	f	\N	\N
-1784911770117	2026-07-24 10:00:00+00	Stefano Porcellato 3285772836	\N	\N	Simone	[{"_key": "183fbd5c-5ca3-4e4e-9728-ebf1b73a53f4", "brand": "Stihl", "model": "Tosaerba RMA 243", "prezzo": 519, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449329860"}, {"_key": "b7b2464a-c97d-4150-bc75-c2a24a0cf6dd", "brand": "Stihl", "model": "Decespugliatore FSA 50", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "453026280"}, {"_key": "245f71b0-6703-41da-9e2a-ba25ab6bbbcf", "brand": "Stihl", "model": "Soffiatore BGA 50", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600047218"}, {"_key": "dc881abe-02ee-4ead-b2ac-2897d1ddaecc", "brand": "Stihl", "model": "Batteria AK30S", "prezzo": 150, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "550572789"}, {"_key": "a1adf52a-4207-49bb-af72-e059b4967323", "brand": "Stihl", "model": "Batteria AK30S", "prezzo": 150, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "550572775"}, {"_key": "81d661d9-bf78-4372-86d6-cf2cfe41153c", "brand": "Stihl ", "model": "Tosasiepi HSA 50.1", "_isNew": true, "prezzo": 169, "aliquotaIva": 22, "serialNumber": "943920194"}, {"_key": "4121ec49-853f-4b1d-b3eb-a877ff516106", "brand": "Stihl", "model": "Caricabatterie AL301", "_isNew": true, "prezzo": 125, "aliquotaIva": 22, "serialNumber": "718677487"}]	[]	1451	\N	\N	\N	scontrino	completed	2026-07-27 13:41:09.09+00	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
+1786098082353	2026-08-07 10:00:00+00	Taffarello Enrico	{"id": "512466", "cap": "31057", "nome": "Taffarello Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3482941460", "indirizzo": "", "provincia": "TV", "searchText": "taffarello enrico silea ", "telefonoOriginale": "3482941460"}	3482941460	Simone	[{"_key": "f31d221e-2b3a-43c6-8d74-166b89ea315f", "brand": "Echo", "model": "Motosega CS-4010", "prezzo": 489, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C91540010207"}]	[]	489	\N	\N	\N	scontrino	completed	2026-08-07 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1784033927229	2026-07-14 12:58:46.774+00	AZ. AGR.SEMPREVERDE Di Toffoli Sonia	{"id": "203622", "cap": "31016", "nome": "AZ. AGR.SEMPREVERDE Di Toffoli Sonia", "email": "vivaitoffolisempreverde@outlook.it", "nomeP": "", "cognome": "", "contatto": "CEL1 VITTORIO-CEL2 Sonia", "localita": "CORDIGNANO", "telefono": "3486001968", "indirizzo": "STRADA DELLE RONCADELLE, 10", "provincia": "TV", "searchText": "az. agr.sempreverde di toffoli sonia cordignano cel1 vittorio-cel2 sonia", "telefonoOriginale": "3486001968"}	3486001968	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMA 453.3 PV", "prezzo": 855, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450575050"}]	[]	855	\N	\N	\N	fattura	completed	2026-07-14 12:58:46.774+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1785315895409	2026-07-29 09:04:55.408+00	Ruberti Antonio	\N	\N	Simone	[]	[{"id": 1785315864745, "nome": "Zaino Volpi Vita 12", "brand": null, "prezzo": 110, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785315887547, "nome": "Freezanz Professional PMC (New) - Lt. 1", "brand": "FREEZANZ", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	164	\N	\N	\N	scontrino	completed	2026-07-29 09:04:55.408+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1786171952245	2026-08-08 06:52:31.779+00	Toninato Fabio	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540109948"}]	[]	239	\N	\N	\N	scontrino	completed	2026-08-08 06:52:31.779+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1773917546685	2026-03-19 11:00:00+00	Marcon Andrea Piazza 2 Giugno 7 Roncade 3474535632	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA 235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "956698916"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948817207"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644372"}]	[{"nome": "Decespugliatore FSA 50 MATR. 452391137", "prezzo": 179, "quantita": 1, "aliquotaIva": 22}]	567	\N	\N	\N	scontrino	completed	2026-03-31 09:10:34.306+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773851463035	2026-03-18 11:00:00+00	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	\N	\N	Simone	[{"brand": "STIHL", "model": "Forbice elettronica ASA 20.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955836076"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773932783539	2026-03-19 15:06:23.539+00	.	\N	\N	Simone	[]	[{"id": 1773932729267, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-03-19 15:06:23.539+00	t	user_1773914846608	vendita	f	f	f	in_attesa	\N
 1773936767474	2026-03-19 16:12:47.199+00	Pozzobon Johnny	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540013827"}]	[]	219	\N	\N	\N	scontrino	completed	2026-03-19 16:12:47.199+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773850831948	2026-03-18 11:00:00+00	Uliana Cesare	{"id": "512723", "cap": "", "nome": "Uliana Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA", "telefono": "3474435875", "indirizzo": "", "provincia": "", "searchText": "uliana cesare maserada ", "telefonoOriginale": "3474435875"}	3474435875	Simone	[{"brand": "Stihl", "model": "Motosega MSA 80", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452156493"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937882"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706053487"}]	[]	559	\N	\N	Affilatore 2 in 1 in omaggio	scontrino	completed	2026-03-19 16:26:03.002+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
-1784044436600	2026-07-14 15:53:56.6+00	Darisi Vittorio via Adige 35 Ca" Savio 338 5445402	\N	\N	Simone	[{"brand": "Toro", "model": "Arieggiatore 54610 albero lame mobili e molle", "prezzo": 680, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	680	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
 1774002466996	2026-03-20 10:27:46.995+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1774002417747, "nome": "Green 7 25 kg", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774002446843, "nome": "BOBINA DI FILO COD. R303612", "prezzo": 12, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774002460270, "nome": "CARCASSA TESTINA", "prezzo": 5.2, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	62.5	\N	\N	\N	scontrino	completed	2026-03-20 10:27:46.995+00	t	user_1773995761120	vendita	f	f	f	in_attesa	\N
 1774013807798	2026-03-20 13:36:47.184+00	Mariuzzo Francesco	{"id": "501909", "cap": "30020", "nome": "Mariuzzo Francesco", "email": "francesco.mariuzzo@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3358473755", "indirizzo": "VIA ROMA, 123", "provincia": "VE", "searchText": "mariuzzo francesco meolo ", "telefonoOriginale": "3358473755"}	3358473755	Simone	[{"brand": "STIHL", "model": "Forbice elettronica HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "942794191"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "949709835"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707132101"}]	[]	139	\N	\N	\N	scontrino	completed	2026-03-20 13:36:47.184+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774017494489	2026-03-20 14:38:14.3+00	Dossini Annalisa	{"id": "513303", "cap": "31030", "nome": "Dossini Annalisa", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3404622945", "indirizzo": "VICOLO TIEPOLO, 41", "provincia": "TV", "searchText": "dossini annalisa carbonera ", "telefonoOriginale": "3404622945"}	3404622945	Simone	[{"brand": "STIHL", "model": "Motosega MSA 70.0 C", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200582"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-20 14:38:14.3+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6183,6 +6963,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1785403959374	2026-07-30 09:32:39.374+00	Rizzo Giuseppina	\N	\N	Simone	[]	[{"id": 1785403954567, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-07-30 09:32:39.374+00	t	user_1770584612559	vendita	t	f	f	\N	\N
 1771837124604	2026-03-21 11:00:00+00	COOP. Sociale Idee Verdi	{"id": "501441", "cap": "35030", "nome": "COOP. Sociale Idee Verdi", "email": "areacontabile@ideeverdi.it", "nomeP": "", "cognome": "", "contatto": "CEL. Marco Neve", "localita": "SELVAZZANO DENTRO", "telefono": "3450914123", "indirizzo": "VIA GALVANI, 16", "provincia": "PD", "searchText": "coop. sociale idee verdi selvazzano dentro cel. marco neve", "telefonoOriginale": "3450914123"}	3450914123	Simone	[{"brand": "Altro", "model": "Trattorino Ferris ISX 3300", "prezzo": 20740, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "4002455332"}]	[{"id": 1772079631434, "nome": "Kit lame di ricambio ad alto lancio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	20740	1830	bonifico	Saldo prima della consegna	fattura	completed	2026-03-21 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1774077613580	2026-03-21 07:20:13.58+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774077608358, "nome": "Amino K 5 Kg 5 kg", "prezzo": 51, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	51	\N	\N	\N	fattura	completed	2026-03-21 07:20:13.58+00	f	user_1774077521447	vendita	f	f	f	in_attesa	\N
+1786345513344	2026-08-10 07:05:12.229+00	Taffarello Lara	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 26", "prezzo": 99, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943696273"}]	[]	99	\N	\N	\N	scontrino	completed	2026-08-10 07:05:12.229+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1774077856238	2026-03-21 07:24:15.812+00	Dametto Giulio	\N	\N	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "547285150"}]	[]	339	\N	\N	\N	scontrino	completed	2026-03-21 07:24:15.812+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1772794749226	2026-03-06 11:00:00+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[{"brand": "STIHL", "model": "Potatore HTA 86", "prezzo": 530, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449457136"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989674"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008377"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001603"}]	[{"id": 1772794630440, "nome": "Testina Polycut Stihl 28-2", "prezzo": 21, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772794675699, "nome": "Testina Autocut 27-2", "prezzo": 14.1, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"nome": "Ugello rotore", "prezzo": 21.8, "quantita": 1, "aliquotaIva": 22}]	1814.7800000000002	\N	\N	\N	fattura	completed	2026-03-06 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774084657146	2026-03-21 09:17:36.944+00	Bonotto Franco	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3611T", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65140005458"}]	[]	669	\N	\N	\N	scontrino	completed	2026-03-21 09:17:36.944+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6194,6 +6975,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1774284270579	2026-03-23 16:44:30.578+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774284258060, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-23 16:44:30.578+00	t	user_1774264782378	vendita	f	f	f	in_attesa	\N
 1774343996171	2026-03-24 09:19:55.237+00	Piovesan Aldo 3289160851 0422708651	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466XB", "prezzo": 630, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCDF1005757"}, {"brand": "Honda", "model": "Caricabatteria", "prezzo": 39, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027253"}, {"brand": "Honda", "model": "Batteria DP3640XA", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY1002444"}]	[]	818	\N	\N	\N	scontrino	completed	2026-03-24 09:19:55.237+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774880649187	2026-03-30 14:24:07.753+00	Tuon Adriano	{"id": "501316", "cap": "31030", "nome": "Tuon Adriano", "email": "adrianotuon@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3472767486", "indirizzo": "VIA DON A ANTONIO ASTI 49", "provincia": "TV", "searchText": "tuon adriano breda di piave ", "telefonoOriginale": "3472767486"}	3472767486	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-267", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U4843B006692"}]	[]	269	\N	\N	\N	scontrino	completed	2026-03-30 14:24:07.753+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1786351268963	2026-08-10 08:41:08.518+00	Ramon Marilena	\N	\N	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC3525.134NB"}]	[{"id": 1786351211112, "nome": "Olio catena Bioplus 1 litro ", "brand": null, "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1786351258050, "nome": "Filo decespugliatore ", "brand": null, "prezzo": 3.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	210	\N	\N	\N	scontrino	completed	2026-08-10 08:41:08.518+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1774364278232	2026-03-24 14:57:57.456+00	Deoni Giardinaggio S.R.L.	{"id": "203570", "cap": "31038", "nome": "Deoni Giardinaggio S.R.L.", "email": "info@deonigiardinaggio.it", "nomeP": "", "cognome": "", "contatto": "CEL:FRANCESCO/GIANLUCA/MANUELE-FIS.LUCIA", "localita": "PAESE", "telefono": "3497600981", "indirizzo": "VIA POSTUMIA, 49", "provincia": "TV", "searchText": "deoni giardinaggio s.r.l. paese cel:francesco/gianluca/manuele-fis.lucia", "telefonoOriginale": "3497600981"}	3497600981	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545073124"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997510"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997501"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "952262635"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245641"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008378"}]	[]	1814.76	\N	\N	\N	fattura	completed	2026-03-24 14:57:57.456+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774365827810	2026-03-24 15:23:47.16+00	Lava Edo Autotrasporti	{"id": "203026", "cap": "30020", "nome": "Lava Edo Autotrasporti", "email": "lavaedo@gmail.com", "nomeP": "", "cognome": "", "contatto": "1 -SABRINA Moglie 2 -MARITO", "localita": "MEOLO", "telefono": "3480998841", "indirizzo": "VIA DELLE BALDANE 1", "provincia": "VE", "searchText": "lava edo autotrasporti meolo 1 -sabrina moglie 2 -marito", "telefonoOriginale": "3480998841"}	3480998841	Simone	[{"brand": "STIHL", "model": " MS 212 3/8\\" P", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "837888152"}]	[{"id": 1774365578646, "nome": "Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774365621530, "nome": "Filo decespugliatore 2.7 mm", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	465.5	\N	\N	\N	fattura	completed	2026-03-24 15:23:47.16+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774373885963	2026-03-24 17:38:05.963+00	MATTIOLI ANDREA	\N	\N	Simone	[]	[{"id": 1774373868505, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 3, "matricola": null, "aliquotaIva": 4}, {"id": 1774373880492, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 3, "matricola": null, "aliquotaIva": 4}]	325.5	\N	\N	\N	scontrino	completed	2026-03-24 17:38:05.963+00	t	user_1774361283783	vendita	f	f	f	in_attesa	\N
@@ -6243,6 +7025,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1775549008029	2026-04-07 08:03:27.351+00	Santagà Elena via Grande 2 Rovaré di San Biagio di Callalta	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545377758"}]	[{"id": 1775548863814, "nome": "Tanica 5 litri", "prezzo": 7.4, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548879419, "nome": "Cuneo", "prezzo": 4.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548897670, "nome": "Catena 44 M", "prezzo": 14.4, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548944487, "nome": "Olio catena Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548966530, "nome": "Olio HP Ultra 1 litro", "prezzo": 21.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1775548981640, "nome": "Visiera", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	404.3	\N	\N	\N	scontrino	completed	2026-04-07 08:03:27.351+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1784535513943	2026-07-20 10:00:00+00	Ciani Bassetti Francesco	{"id": "512209", "cap": "31100", "nome": "Ciani Bassetti Francesco", "email": "francesco.cianibassetti@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3357075383", "indirizzo": "BORGO CAVOUR, 21", "provincia": "TV", "searchText": "ciani bassetti francesco treviso ", "telefonoOriginale": "3357075383"}	3357075383	Admin	[]	[{"id": 1784535502059, "_key": "4e18e77d-6f8b-4a50-8a71-58053f798a25", "nome": "Freezanz Natural Green+ - Lt. 5", "brand": "FREEZANZ", "prezzo": 158, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	159	\N	\N	\N	scontrino	completed	2026-07-20 10:00:00+00	t	user_1771232846694	vendita	f	f	f	\N	\N
 1775578363836	2026-04-07 16:12:43.835+00	Romanello Giulio Cesare	{"id": "210036", "cap": "31048", "nome": "Romanello Giulio Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3406175521", "indirizzo": "VIA MARIO DEL MONACO 4 - CAVRIE", "provincia": "TV", "searchText": "romanello giulio cesare san biagio di callalta ", "telefonoOriginale": "3406175521"}	3406175521	Simone	[]	[{"id": 1775578307588, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1775578313362, "nome": "Hurricane 1 kg", "prezzo": 13.75, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	61.45	\N	\N	\N	scontrino	completed	2026-04-07 16:12:43.835+00	t	user_1775577353749	vendita	f	f	f	in_attesa	\N
+1785508342103	2026-07-31 14:32:21.452+00	Spolaor Nicolò 393 7241105	\N	\N	Simone	[{"brand": "Stihl", "model": "Motosega MS151", "prezzo": 419, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "198189236"}]	[]	419	\N	\N	\N	scontrino	completed	2026-07-31 14:32:21.452+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1776072128511	2026-04-13 10:00:00+00	Cavezzan Ermes	\N	\N	Simone	[]	[{"id": 1776072106535, "nome": "Tornado 10 kg", "prezzo": 71, "quantita": 9, "matricola": null, "aliquotaIva": 10}, {"id": 1776072118551, "nome": "Albatros Vigor Active Kg 25 25 kg", "prezzo": 50.4, "quantita": 2, "matricola": null, "aliquotaIva": 4}]	739.8	\N	\N	\N	scontrino	completed	2026-04-13 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1775656456162	2026-04-08 13:54:16.162+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775656430952, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-04-08 13:54:16.162+00	t	user_1775655848781	vendita	f	f	f	in_attesa	\N
 1775726124789	2026-04-09 09:15:24.788+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1775726117028, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 2, "matricola": null, "aliquotaIva": 10}]	197.6	\N	\N	\N	scontrino	completed	2026-04-09 09:15:24.788+00	t	user_1775721113292	vendita	f	f	f	in_attesa	\N
@@ -6271,11 +7054,11 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1776431550867	2026-04-17 13:12:30.33+00	Comunello Marco	{"id": "513541", "cap": "31100", "nome": "Comunello Marco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3896551680", "indirizzo": "STRADA COMUNALE DI SAN VITALE 29/D", "provincia": "TV", "searchText": "comunello marco treviso ", "telefonoOriginale": "3896551680"}	3896551680	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600044355"}]	[]	159	\N	\N	\N	scontrino	completed	2026-04-17 13:12:30.33+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776432662014	2026-04-17 13:31:01.144+00	Bergamo Guglielmo	{"id": "506642", "cap": "31047", "nome": "Bergamo Guglielmo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PONTE DI PIAVE", "telefono": "3358325625", "indirizzo": "VIA MASARI, 36", "provincia": "TV", "searchText": "bergamo guglielmo ponte di piave ", "telefonoOriginale": "3358325625"}	3358325625	Simone	[{"brand": "Stihl", "model": "Irroratore SG51", "prezzo": 119, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "998234688"}]	[{"id": 1776432655365, "nome": "Olio motore HP Ultra 1L miscela 2T 1L", "prezzo": 13.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	132.5	\N	\N	\N	scontrino	completed	2026-04-17 13:31:01.144+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776437011471	2026-04-17 14:43:30.226+00	Possamai Manuel via Pantiera 58 G Roncade 3478940411	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943696310"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "936314966"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707687469"}]	[]	139	\N	\N	\N	scontrino	completed	2026-04-17 14:43:30.226+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
-1780662346023	2026-06-05 10:00:00+00	Buosi Mosè 389 6312244	\N	\N	Simone	[{"_key": "71782a5d-5875-458c-9385-63c2fdaf8ec7", "brand": "GRILLO", "model": "MOTOCOLTIVATORE G 85d, MOTORE HONDA GX 270", "_isNew": true, "prezzo": null, "aliquotaIva": 22, "serialNumber": "773056"}]	[{"id": 1780662307358, "_key": "7e199f7a-88cb-459f-85cd-b39045aa6379", "nome": "FRESA DOPPIA ROTAZIONE  CM E RUOTE 942412 4.00-10", "prezzo": 3750, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3750	1000	carta	Saldo alla consegna	scontrino	completed	2026-07-24 14:57:32.829+00	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
 1776438579416	2026-04-17 10:00:00+00	2S Service di Scala Simone 3495113803 2sservicescala@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "HRM 1500", "prezzo": 799, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCLF-1004003"}]	[]	799	\N	\N	Aggiungere bobina filo 200 metri da conteggiare a parte	fattura	completed	2026-04-17 15:20:06.094+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1776442349178	2026-04-17 16:12:27.294+00	Rosolen Mattia	{"id": "511101", "cap": "31015", "nome": "Rosolen Mattia", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CONEGLIANO", "telefono": "", "indirizzo": "VIA STRADA DELLE BRUSCOLE, 14", "provincia": "TV", "searchText": "rosolen mattia conegliano ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "Stihl", "model": "Motosega MSA 220.0T", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "445691105"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "917325889"}]	[]	878	\N	\N	\N	fattura	completed	2026-04-17 16:12:27.294+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776444271498	2026-04-17 16:44:30.871+00	Pietrobon Davide	{"id": "507888", "cap": "31033", "nome": "Pietrobon Davide", "email": "davidepietrobon28@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3349426642", "indirizzo": "VIA BORGO PADOVA, 129", "provincia": "TV", "searchText": "pietrobon davide castelfranco veneto ", "telefonoOriginale": "3349426642"}	3349426642	Simone	[{"brand": "Segway", "model": "Robot tosaerba Navimow i108", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "S4THA2519K2349"}]	[]	999	\N	\N	\N	scontrino	completed	2026-04-17 16:44:30.871+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1777446930679	2026-04-29 07:15:30.679+00	Cenedese Andrea	{"cf": "", "id": "244f09c0-9929-48c0-bad3-89de8885fc48", "cap": "31048", "sdi": "", "nome": "Cenedese Andrea", "piva": "", "email": "andrea.cenedese@alice.it", "nomeP": "Cenedese Andrea", "_fonte": "db", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta "}	3318200684	Simone	[]	[{"id": 1777446922776, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	103	\N	\N	\N	scontrino	completed	2026-04-29 07:15:30.679+00	t	user_1777446171055	vendita	f	f	f	in_attesa	\N
+1785512847514	2026-07-31 10:00:00+00	Adelio Costruzioni Srls	{"id": "508656", "cap": "31057", "nome": "Adelio Costruzioni Srls", "email": "info@adeliocostruzioni.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3701127522", "indirizzo": "VIA PANTIERA, 45", "provincia": "TV", "searchText": "adelio costruzioni srls silea ", "telefonoOriginale": "3701127522"}	3701127522	Simone	[{"_key": "2b569d9e-9b5a-41e1-81a0-c77a4ba47c33", "brand": "Echo", "model": "Decespugliatore SRM-301TES", "prezzo": 369, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U48738207881"}]	[{"_key": "34e7d23a-93ef-4a6e-9c94-ad9f6de1af6b", "nome": "Filo 2,7 mm quadro R303618", "prezzo": 13.6, "quantita": 1, "aliquotaIva": 22}]	382.6	\N	\N	\N	fattura	completed	2026-07-31 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1776445053514	2026-04-17 16:57:32.706+00	AZ.AGR Fregonese Di Brocchetto Maria	{"id": "506009", "cap": "30020", "nome": "AZ.AGR Fregonese Di Brocchetto Maria", "email": "gorghimarco@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FOSSALTA DI PIAVE", "telefono": "3403398354", "indirizzo": "VIA A. DE GASPERI, 19", "provincia": "VE", "searchText": "az.agr fregonese di brocchetto maria fossalta di piave ", "telefonoOriginale": "3403398354"}	3403398354	Simone	[{"brand": "Echo", "model": "Motosega CS-251", "prezzo": 459, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C74638145275"}]	[{"id": 1776444905998, "nome": "Zaino Vita 12 Volpi", "prezzo": 100, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1776444968651, "nome": "Olio catena Pro Up 2 litri", "prezzo": 11, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1776445006867, "nome": "Olio pro up mix 1 litro", "prezzo": 13.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	583.5	\N	\N	\N	fattura	completed	2026-04-17 16:57:32.706+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776497179891	2026-04-18 07:26:19.891+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1776497171945, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 5, "matricola": null, "aliquotaIva": 10}]	494	\N	\N	\N	fattura	completed	2026-04-18 07:26:19.891+00	t	user_1776494377078	vendita	f	f	f	in_attesa	\N
 1784620716731	2026-07-21 07:58:36.731+00	Mazzier Nicoletta	\N	\N	Simone	[]	[{"id": 1784620577528, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1784620620261, "nome": "Intervento di pulizia e avvio impianto antizanzare", "brand": null, "prezzo": 100, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	240	\N	\N	\N	scontrino	completed	2026-07-21 07:58:36.731+00	t	user_1770584612559	vendita	t	f	f	\N	\N
@@ -6291,6 +7074,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1777020198874	2026-04-24 08:43:18.874+00	Ragonesi Paolo via Madonna della Salute, 1 Oderzo 345 2951398 paolo.ragonesi@icloud.com	\N	\N	Simone	[{"brand": "Grillo", "model": "Climber 7.18", "prezzo": 7000, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	7000	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1777023598898	2026-04-24 09:39:57.7+00	Amenta Enrico	{"id": "504113", "cap": "31052", "nome": "Amenta Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3807707724", "indirizzo": "VICOLO CACCIANIGA, 24", "provincia": "TV", "searchText": "amenta enrico maserada sul piave ", "telefonoOriginale": "3807707724"}	3807707724	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMA 248 T", "prezzo": 679, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452754472"}, {"brand": "Stihl", "model": "Batteria AK 30.0 S", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "913799159"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703487143"}]	[{"id": 1777023582099, "nome": "Ritiro vs rasaerba usato", "prezzo": -120, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	748	\N	\N	\N	scontrino	completed	2026-04-24 09:39:57.7+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1777037099496	2026-04-24 13:24:59.495+00	Frizzerin Luca	{"id": "514057", "cap": "31057", "nome": "Frizzerin Luca", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3420166221", "indirizzo": "VIA PONTICELLI 13C", "provincia": "TV", "searchText": "frizzerin luca silea ", "telefonoOriginale": "3420166221"}	3420166221	Simone	[]	[{"id": 1777037042139, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-04-24 13:24:59.495+00	t	user_1777014451935	vendita	f	f	f	in_attesa	\N
+1785570144733	2026-08-01 07:42:23.194+00	Feltrin Giacomo	\N	\N	Simone	[{"brand": "Stihl", "model": "Tosaerba RMA 239 C", "prezzo": 359, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452892075"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": 135, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452040065"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706424826"}]	[]	494	\N	\N	\N	scontrino	completed	2026-08-01 07:42:23.194+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1777037889396	2026-04-24 10:00:00+00	Global Service Di Salvalaio Denis	{"id": "501590", "cap": "30013", "nome": "Global Service Di Salvalaio Denis", "email": "salvalaiodenis76@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CAVALLINO-TREPORTI", "telefono": "3384199774", "indirizzo": "VIA DELLA FONTE 9", "provincia": "VE", "searchText": "global service di salvalaio denis cavallino-treporti ", "telefonoOriginale": "3384199774"}	3384199774	Simone	[]	[{"id": 1777037509896, "nome": "Supporto a zaino Elephant Trunk", "prezzo": 375, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	375	\N	\N	\N	fattura	completed	2026-04-24 10:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1777048963002	2026-04-24 16:42:43.002+00	A.S.D. Albaredo Insieme	{"id": "513092", "cap": "31050", "nome": "A.S.D. Albaredo Insieme", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "VEDELAGO", "telefono": "", "indirizzo": "VIA STORTE, 4", "provincia": "TV", "searchText": "a.s.d. albaredo insieme vedelago ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1777048860506, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 99, "quantita": 24, "matricola": null, "aliquotaIva": 10}, {"id": 1777048920912, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1777048936930, "nome": "Humifitos 25 Kg ", "prezzo": 135.2, "quantita": 6, "matricola": null, "aliquotaIva": 4}]	3327.6	\N	\N	\N	fattura	completed	2026-04-24 16:42:43.002+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1772785776569	2026-03-06 11:00:00+00	Taffarello Giuliano	{"id": "504173", "cap": "31030", "nome": "Taffarello Giuliano", "email": "giuliano.taffarello@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3356947922", "indirizzo": "VIA GRANDE DI MIGNAGOLA, 73", "provincia": "TV", "searchText": "taffarello giuliano carbonera ", "telefonoOriginale": "3356947922"}	3356947922	Simone	[{"brand": "Segway", "model": "Robot tosaerba X430E", "prezzo": 3500, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "22AAD2602Y0439"}]	[]	3500	500	pos	\N	scontrino	completed	2026-04-28 16:11:56.788+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
@@ -6326,12 +7110,14 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1778321071952	2026-05-09 10:04:30.717+00	Tavella Viviana	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 80.R", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "549757103"}, {"brand": "Stihl", "model": "Batteria AK 30.0S", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948345039"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703557002"}]	[{"id": 1778321062593, "nome": "Filo decespugliatore ", "prezzo": 4, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	553	\N	\N	\N	scontrino	completed	2026-05-09 10:04:30.717+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1778321252892	2026-05-09 10:07:32.071+00	Gli Ulivi Del Sole Di Feletto Stefano	{"id": "501139", "cap": "31048", "nome": "Gli Ulivi Del Sole Di Feletto Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3478105447", "indirizzo": "VIA BELLUNO 3 - OLMI", "provincia": "TV", "searchText": "gli ulivi del sole di feletto stefano san biagio di callalta ", "telefonoOriginale": "3478105447"}	3478105447	Simone	[{"brand": "Weibang", "model": "Rasaerba WB537SC V-M", "prezzo": 1089, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "W537SC/LV/M021M&250109002"}]	[]	1089	\N	\N	\N	fattura	completed	2026-05-09 10:07:32.071+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1778486928291	2026-05-11 08:08:47.72+00	Bassetto Tiziano	{"id": "501470", "cap": "31048", "nome": "Bassetto Tiziano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3471306874", "indirizzo": "VIA BREDARIOL, 2", "provincia": "TV", "searchText": "bassetto tiziano san biagio di callalta ", "telefonoOriginale": "3471306874"}	3471306874	Simone	[{"brand": "Echo", "model": "Tagliasiepi S27-25A", "prezzo": 699, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U18938102501"}]	[]	699	\N	\N	\N	scontrino	completed	2026-05-11 08:08:47.72+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
+1785570889010	2026-08-01 10:00:00+00	Gatti Luciano 331 9163048	\N	\N	Simone	[{"_key": "4ca79d37-2a70-4763-96f8-3940477cd5c4", "brand": "Honda", "model": "Rasaerba HRN536C2", "prezzo": 960, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1029192"}]	[]	960	50	carta	RITIRA LUNEDI' - MACCHINA IN ESPOSIZIONE	scontrino	completed	2026-08-01 10:00:00+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1778578895023	2026-05-12 10:00:00+00	Ferro Michele 3802547413	\N	\N	Simone	[{"brand": "Grillo", "model": "Motocoltivatore G46", "prezzo": 2250, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "774538"}]	[]	2250	\N	\N	Acconto alla consegna 1800€\nSaldo a 30 giorni 450 €\nChiamare il cliente appena pronto per il ritiro in sede	scontrino	completed	2026-05-12 13:22:15.206+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1778762925889	2026-05-14 12:48:45.446+00	Eraclea Patrimonio E Servizi Srl	{"id": "203200", "cap": "30020", "nome": "Eraclea Patrimonio E Servizi Srl", "email": "segreteria@eracleapatrimonio.it", "nomeP": "", "cognome": "", "contatto": "Raffaella", "localita": "ERACLEA", "telefono": "3512608524", "indirizzo": "PIAZZA GARIBALDI 54", "provincia": "VE", "searchText": "eraclea patrimonio e servizi srl eraclea raffaella", "telefonoOriginale": "3512608524"}	3512608524	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416C1", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCBF1141185"}]	[]	339	\N	\N	\N	fattura	completed	2026-05-14 12:48:45.446+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1778687169453	2026-05-13 10:00:00+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1778687162059, "nome": "Green 7 25 kg", "prezzo": 43, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	43	\N	\N	\N	scontrino	completed	2026-05-13 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1778685954948	2026-05-13 10:00:00+00	Gemma Giardini Di Andrea Geminian	{"id": "508586", "cap": "31030", "nome": "Gemma Giardini Di Andrea Geminian", "email": "andrea.geminian@yahoo.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3403901383", "indirizzo": "VIA 4 NOVEMBRE, 46", "provincia": "TV", "searchText": "gemma giardini di andrea geminian carbonera ", "telefonoOriginale": "3403901383"}	3403901383	Simone	[]	[{"id": 1778685950565, "nome": "Humifitos 5 Kg 5 kg", "prezzo": 30.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	30.8	\N	\N	\N	scontrino	completed	2026-05-13 10:00:00+00	t	user_1771232846694	vendita	f	f	f	in_attesa	\N
 1778912688111	2026-05-16 06:24:48.111+00	Pillon Giovanni	{"id": "500791", "cap": "31032", "nome": "Pillon Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASALE SUL SILE", "telefono": "0422785031", "indirizzo": "VIA PESCHIERE 108 - CONSCIO", "provincia": "TV", "searchText": "pillon giovanni casale sul sile ", "telefonoOriginale": "0422785031"}	0422785031	Simone	[]	[{"id": 1778912672746, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-05-16 06:24:48.111+00	t	user_1778911488203	vendita	f	f	f	in_attesa	\N
 1778923420712	2026-05-16 09:23:40.712+00	GUMIERO DAMIANO	\N	\N	Simone	[]	[{"id": 1778923379140, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1778923386396, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	108.5	\N	\N	\N	scontrino	completed	2026-05-16 09:23:40.712+00	t	user_1778911488203	vendita	f	f	f	in_attesa	\N
+1785582164315	2026-08-01 11:02:44.315+00	Moro David	{"id": "512347", "cap": "31100", "nome": "Moro David", "email": "monicaberna@studiosaccardi.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "", "indirizzo": "VIA LOVERA, 6", "provincia": "TV", "searchText": "moro david treviso ", "telefonoOriginale": ""}	\N	Simone	[]	[{"id": 1785582140945, "nome": "Freezanz Professional PMC (New) - Lt. 1", "brand": "FREEZANZ", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785582159527, "nome": "Freezanz Natural Green+ - Lt. 5", "brand": "FREEZANZ", "prezzo": 158, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	212	\N	\N	\N	scontrino	completed	2026-08-01 11:02:44.315+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1779461468072	2026-05-22 14:51:08.072+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Simone	[]	[{"id": 1779461458629, "nome": "Palo iniettore con contalitri", "prezzo": 325, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	325	\N	\N	\N	scontrino	completed	2026-05-22 14:51:08.072+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1779466805441	2026-05-22 16:20:05.021+00	Barison Michele	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRN536C2", "prezzo": 839, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCSF1077924"}]	[]	839	\N	\N	\N	scontrino	completed	2026-05-22 16:20:05.021+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1779466950557	2026-05-22 16:22:30.556+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1779466927509, "nome": "Renovate Sport (Rigenerazione) 10 kg", "prezzo": 89.3, "quantita": 3, "matricola": null, "aliquotaIva": 10}]	267.9	\N	\N	\N	fattura	completed	2026-05-22 16:22:30.556+00	t	user_1779453953714	vendita	f	f	f	in_attesa	\N
@@ -6396,6 +7182,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1781877159411	2026-06-19 13:52:39.41+00	Privato	\N	\N	Simone	[]	[{"id": 1781877141570, "nome": "Freezanz Natural Green+ - Lt. 5 Lt. 5", "prezzo": 158, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	158	\N	\N	\N	scontrino	completed	2026-06-19 13:52:39.41+00	t	user_1770584612559	vendita	t	f	f	\N	\N
 1784736847263	2026-07-22 16:14:07.263+00	Asin Giampiero	{"id": "506117", "cap": "31057", "nome": "Asin Giampiero", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3351828221", "indirizzo": "VIA BEATO LONGHIN 37", "provincia": "TV", "searchText": "asin giampiero silea ", "telefonoOriginale": "3351828221"}	3351828221	Admin	[]	[{"id": 1784736841181, "nome": "Freezanz Natural Green - Lt. 1", "brand": "FREEZANZ", "prezzo": 25.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	25.9	\N	\N	\N	scontrino	completed	2026-07-22 16:14:07.263+00	t	user_1771232846694	vendita	f	f	f	\N	\N
 1767295735235	2026-01-01 11:00:00+00	De Vido S.R.L.	{"id": "200001", "cap": "31056", "nome": "De Vido S.R.L.", "email": "devidosrl@gmail.com", "nomeP": "", "cognome": "", "contatto": "CELL. SIG. Maurizio", "localita": "RONCADE", "telefono": "3402329227", "indirizzo": "VIA CA'MORELLI 74", "provincia": "TV", "searchText": "de vido s.r.l. roncade cell. sig. maurizio", "telefonoOriginale": "3402329227"}	3402329227	Simone	[{"_key": "13e152c7-3d92-4fb4-9c06-520fa0c213b2", "brand": "STIHL", "model": "BGA 250.0", "prezzo": 340, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450791430"}, {"_key": "22e0cc2f-a061-41da-be00-a28499077ebf", "brand": "Volpi", "model": "kv390", "prezzo": 465, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SN"}]	[]	805	105	contanti	ritira il cliente	scontrino	completed	2026-07-27 13:42:20.543+00	t	user_1766487104450	vendita	f	f	f	\N	\N
+1785752255140	2026-08-03 10:17:35.14+00	Bortolin Francesco via Piave 10/a Istrana CF BRTFNC72A09G888V	\N	\N	Simone	[]	[{"id": 1785752098878, "nome": "Fornitura e montaggio di un impianto antizanzare Stocker Geyser Pro Dual, completo di tubi e raccorderia. Impianto collaudato e funzionante Matr. 2544614465717", "brand": null, "prezzo": 7200, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	7200	\N	\N	Pagamento a vista con bonifico bancario.  348 140 7002 francesco.bortolin@gmail.com	fattura	completed	2026-08-03 10:17:35.14+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1781942290317	2026-06-20 07:58:09.924+00	Zanon Paolo	{"id": "513747", "cap": "20100", "nome": "Zanon Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MILANO", "telefono": "3274308540", "indirizzo": "VIA BARTOLIN LORENZO, 29", "provincia": "MI", "searchText": "zanon paolo milano ", "telefonoOriginale": "3274308540"}	3274308540	Simone	[{"brand": "Weibang", "model": "Rasaerba WB537SC V-M", "prezzo": 1089, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "W537SCV/LV/M021M&251215017"}]	[]	1089	\N	\N	\N	scontrino	completed	2026-06-20 07:58:09.924+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1781945263353	2026-06-20 08:47:42.447+00	Gira Mihaij via Monte Bianco 70 Quinto di Treviso 389 5147281	\N	\N	Simone	[{"brand": "Stihl", "model": " RME 339.0", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452820108"}]	[]	269	\N	\N	\N	scontrino	completed	2026-06-20 08:47:42.447+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1782122911323	2026-06-22 10:08:31.323+00	Pietrobon Andrea	\N	\N	Simone	[]	[{"id": 1782122906793, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "prezzo": 140, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	280	\N	\N	\N	scontrino	completed	2026-06-22 10:08:31.323+00	t	user_1775131564325	vendita	t	f	f	\N	\N
@@ -6426,6 +7213,8 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1783155816849	2026-07-04 09:03:36.477+00	Gardin Roberta	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 50.1", "prezzo": 170, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943919998"}]	[{"id": 1783155805701, "nome": "Spray Dirty Killer", "prezzo": 5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	175	\N	\N	\N	scontrino	completed	2026-07-04 09:03:36.477+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1783156625518	2026-07-04 09:17:05.155+00	DOLFATO PAOLO	{"cf": "DLFPLA73E17L407E", "id": "3afd36bd-c083-403a-8bf8-c3320d96f9a9", "cap": null, "sdi": null, "nome": "DOLFATO PAOLO", "piva": null, "email": "dolfatopaolo@libero.it", "nomeP": "DOLFATO PAOLO", "localita": "Villorba", "telefono": "3387967230", "indirizzo": "Via San Pio X", "provincia": "TV", "searchText": "dolfato paolo"}	3387967230	Simone	[{"brand": "Stihl", "model": "Soffiatore BG 56", "prezzo": 290, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "615222327"}]	[]	290	\N	\N	\N	scontrino	completed	2026-07-04 09:17:05.155+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1784821868305	2026-07-23 15:51:06.787+00	Bortolato Franco	{"id": "512977", "cap": "30173", "nome": "Bortolato Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3461355202", "indirizzo": "VIA CA' FORNONI, 84", "provincia": "VE", "searchText": "bortolato franco favaro veneto ", "telefonoOriginale": "3461355202"}	3461355202	Simone	[{"brand": "Stihl", "model": "Forbice elettronica ASA 20.0", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955937999"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511320"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707736671"}]	[]	219	\N	\N	\N	scontrino	completed	2026-07-23 15:51:06.787+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1785914739980	2026-08-05 07:25:39.98+00	F.lli Zanette Real Green S.n.c. Di Zanette Giuseppe & C.	{"id": "511034", "cap": "31020", "nome": "F.lli Zanette Real Green S.n.c. Di Zanette Giuseppe & C.", "email": "vivaizanette@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "0438768444", "indirizzo": "VIA STORTAN, 2/B - CASTELLO ROGANZUOLO", "provincia": "TV", "searchText": "f.lli zanette real green s.n.c. di zanette giuseppe & c. san fior ", "telefonoOriginale": "0438768444"}	0438768444	Simone	[]	[{"id": 1785914722843, "nome": "Fresaceppi usato per Toro Dingo", "brand": null, "prezzo": 4000, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	4000	\N	\N	\N	fattura	completed	2026-08-05 07:25:39.98+00	f	user_1770584612559	vendita	f	f	f	\N	\N
+1786369404339	2026-08-10 13:43:19.207+00	Arbo srl	\N	\N	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600046324"}, {"brand": "Stihl", "model": "Tagliasiepi HSA 60.1", "prezzo": 289, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452958643"}, {"brand": "Stihl", "model": "Batteria AK 10", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919717858"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948385491"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703447237"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703447239"}]	[]	588	\N	\N	\N	fattura	completed	2026-08-10 13:43:19.207+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 \.
 
 
@@ -6602,6 +7391,7 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 805	2026-07-22 07:01:40.499+00	CARICO	Stih	Tosaerba RMA 443.2	447069627	\N	\N	\N	available	user_1775131564325	Coz	f
 802	2026-07-22 07:01:40.499+00	CARICO	STIHL	Tosaerba RMA 2.2 RV	445827869	\N	\N	\N	available	user_1775131564325	Coz	f
 804	2026-07-22 07:01:40.499+00	CARICO	STIHL	Tosaerba RMA 253.0	444004202	\N	\N	\N	available	user_1775131564325	Coz	f
+890	2026-08-01 07:42:23.816+00	SCARICO	Stihl	Batteria AK 20	452040065	Feltrin Giacomo	0	0	sold	user_1775131564325	main	f
 856	2026-07-22 08:07:07.763+00	CARICO	HONDA	Motozappa FG320 DE 2H	FAEF1062966	\N	\N	\N	available	user_1775131564325	Coz	f
 843	2026-07-22 08:02:39.21+00	CARICO	HONDA	Tosaerba HRG466C1 SKEP	MCCF1301497	\N	\N	\N	available	user_1775131564325	Coz	f
 857	2026-07-22 08:07:07.763+00	CARICO	Honda	Tosaerba HRG416XB	MCEF1012148	\N	\N	\N	available	user_1775131564325	Coz	f
@@ -6638,6 +7428,42 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 880	2026-07-23 15:59:44.599+00	SCARICO	Stihl	Motosega MS 162 3/8"P	840603456	Fontebasso Marcelino	0	0	sold	user_1775131564325	main	f
 881	2026-07-24 06:36:49.785+00	CARICO	Stihl	Decespugliatore FS 120 R	841754718	\N	\N	\N	available	user_1775131564325	main	t
 882	2026-07-24 06:38:04.174+00	SCARICO	Stihl	Decespugliatore FS 120 R	841754718	Mazzega Paolo	0	0	sold	user_1775131564325	main	f
+883	2026-07-31 14:31:58.282+00	CARICO	Stihl	Motosega MS151	198189236	\N	\N	\N	available	user_1775131564325	main	t
+884	2026-07-31 14:32:21.452+00	SCARICO	Stihl	Motosega MS151	198189236	Spolaor Nicolò 393 7241105	0	0	sold	user_1775131564325	main	f
+885	2026-07-31 15:46:53.085+00	CARICO	Echo	Decespugliatore SRM-301TES	U48738207881	\N	\N	\N	available	user_1775131564325	main	t
+886	2026-07-31 15:47:26.961+00	SCARICO	Echo	Decespugliatore SRM-301TES	U48738207881	Adelio Costruzioni Srls	0	0	sold	user_1775131564325	main	f
+887	2026-08-01 07:40:55.936+00	CARICO	Stihl	Batteria AK 20	452040065	\N	\N	\N	available	user_1775131564325	main	t
+888	2026-08-01 07:41:41.333+00	CARICO	Stihl	Caricabatteria AL 101	706424826	\N	\N	\N	available	user_1775131564325	main	t
+889	2026-08-01 07:42:23.194+00	SCARICO	Stihl	Tosaerba RMA 239 C	452892075	Feltrin Giacomo	0	0	sold	user_1775131564325	main	f
+891	2026-08-01 07:42:24.333+00	SCARICO	Stihl	Caricabatteria AL 101	706424826	Feltrin Giacomo	0	0	sold	user_1775131564325	main	f
+892	2026-08-01 07:53:57.423+00	CARICO	Honda	Rasaerba HRN536C2	MCSF1029192	\N	\N	\N	available	user_1775131564325	main	t
+893	2026-08-01 07:54:47.92+00	SCARICO	Honda	Rasaerba HRN536C2	MCSF1029192	Gatti Luciano 331 9163048	0	0	sold	user_1775131564325	main	f
+894	2026-08-07 10:20:44.963+00	CARICO	Echo	Motosega CS-4010	C91540010207	\N	\N	\N	available	user_1775131564325	main	t
+895	2026-08-07 10:21:21.412+00	SCARICO	Echo	Motosega CS-4010	C91540010207	Taffarello Enrico	0	0	sold	user_1775131564325	main	f
+896	2026-08-08 06:52:09.87+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540109948	\N	\N	\N	available	user_1775131564325	main	t
+897	2026-08-08 06:52:31.779+00	SCARICO	Echo	Decespugliatore SRM-222ES	U64540109948	Toninato Fabio	0	0	sold	user_1775131564325	main	f
+898	2026-08-10 07:04:46.864+00	CARICO	Stihl	Tagliasiepi HSA 26	943696273	\N	\N	\N	available	user_1775131564325	main	t
+899	2026-08-10 07:05:12.23+00	SCARICO	Stihl	Tagliasiepi HSA 26	943696273	Taffarello Lara	0	0	sold	user_1775131564325	main	f
+900	2026-08-10 08:38:49.213+00	CARICO	Volpi	Potatore KVS5100	SC3525.134NB	\N	\N	\N	available	user_1775131564325	main	t
+901	2026-08-10 08:41:08.518+00	SCARICO	Volpi	Potatore KVS5100	SC3525.134NB	Ramon Marilena	0	0	sold	user_1775131564325	main	f
+902	2026-08-10 13:38:30.633+00	CARICO	Stihl	Soffiatore BGA 50.0	600046324	\N	\N	\N	available	user_1775131564325	main	t
+903	2026-08-10 13:39:01.282+00	CARICO	Stihl	Tagliasiepi HSA 60.1	452958643	\N	\N	\N	available	user_1775131564325	main	t
+904	2026-08-10 13:41:10.072+00	CARICO	Stihl	Batteria AK 10	919717858	\N	\N	\N	available	user_1775131564325	main	t
+905	2026-08-10 13:42:20.99+00	CARICO	Stihl	Batteria AK 20	948385491	\N	\N	\N	available	user_1775131564325	main	t
+906	2026-08-10 13:42:47.297+00	CARICO	Stihl	Caricabatteria AL 101	703447237	\N	\N	\N	available	user_1775131564325	main	t
+907	2026-08-10 13:43:03.487+00	CARICO	Stihl	Caricabatteria AL 101	703447239	\N	\N	\N	available	user_1775131564325	main	t
+908	2026-08-10 13:43:19.207+00	SCARICO	Stihl	Soffiatore BGA 50.0	600046324	Arbo srl	0	0	sold	user_1775131564325	main	f
+909	2026-08-10 13:43:20.726+00	SCARICO	Stihl	Tagliasiepi HSA 60.1	452958643	Arbo srl	0	0	sold	user_1775131564325	main	f
+910	2026-08-10 13:43:21.807+00	SCARICO	Stihl	Batteria AK 10	919717858	Arbo srl	0	0	sold	user_1775131564325	main	f
+911	2026-08-10 13:43:22.706+00	SCARICO	Stihl	Batteria AK 20	948385491	Arbo srl	0	0	sold	user_1775131564325	main	f
+912	2026-08-10 13:43:23.086+00	SCARICO	Stihl	Caricabatteria AL 101	703447237	Arbo srl	0	0	sold	user_1775131564325	main	f
+913	2026-08-10 13:43:23.787+00	SCARICO	Stihl	Caricabatteria AL 101	703447239	Arbo srl	0	0	sold	user_1775131564325	main	f
+914	2026-08-10 15:23:57.959+00	CARICO	Stihl	Decespugliatore FS 120 R	841754702	\N	\N	\N	available	user_1775131564325	main	t
+915	2026-08-10 15:24:13.667+00	SCARICO	Stihl	Decespugliatore FS 120 R	841754702	Cester Francesco 3282608027	0	0	sold	user_1775131564325	main	f
+916	2026-08-12 08:29:10.029+00	CARICO	Echo	Motosega CS-280TES	C75138082880	\N	\N	\N	available	user_1775131564325	main	t
+917	2026-08-12 08:32:37.186+00	SCARICO	Echo	Motosega CS-280TES	C75138082880	Trevi SOCIETA' Agricola Semplice Di VIO' NICOLO'	0	0	sold	user_1775131564325	main	f
+918	2026-08-12 09:53:45.703+00	CARICO	Volpi	Potatore KVS6000	SM3525.27NB	\N	\N	\N	available	user_1775131564325	main	t
+919	2026-08-12 09:56:02.047+00	SCARICO	Volpi	Potatore KVS6000	SM3525.27NB	Marchesin Sergio	0	0	sold	user_1775131564325	main	f
 \.
 
 
@@ -10116,10 +10942,10 @@ COPY public.note_clienti (id, cliente_key, testo, created_at, updated_at) FROM s
 -- Data for Name: operatori; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.operatori (id, nome, creato_il) FROM stdin;
-df8d3983-3162-4978-97fc-915c5afd8065	Admin	2026-02-25 10:38:22.858904+00
-e89c805f-d43a-4154-b2b3-e45ece133ccf	Stefano	2026-02-25 16:45:11.378488+00
-40a165ad-7216-4a68-ae78-1c13594f1c76	Simone	2026-02-25 16:45:41.656089+00
+COPY public.operatori (id, nome, creato_il, ruolo, moduli) FROM stdin;
+e89c805f-d43a-4154-b2b3-e45ece133ccf	Stefano	2026-02-25 16:45:11.378488+00	commerciale	\N
+40a165ad-7216-4a68-ae78-1c13594f1c76	Simone	2026-02-25 16:45:41.656089+00	commerciale	\N
+df8d3983-3162-4978-97fc-915c5afd8065	Admin	2026-02-25 10:38:22.858904+00	admin	\N
 \.
 
 
@@ -10204,11 +11030,9 @@ bb6ac812-54db-415c-bbf8-d5138aa57aa6	FERRIS	Prezzo di listino. Scontistica da va
 fe2fea67-dc83-4f7a-a553-48386656de3c	FIABA	Max 5%	Dal 5% al 7%, fino ad un max del 10%	\N	\N	2026-02-22 05:26:20.424705+00
 e8a17109-a966-4588-9a5d-1de3fdd666ef	GRILLO	Listino OMPRA (ultima colonna) fino al modello FD450. Per modelli superiori usare il listino ufficiale della casa. Sconto massimo del 15% sulle macchine e del 10% sugli accessori. Il prezzo finale deve tener conto dell'eventuale ritiro dell'usato.	\N	\N	\N	2026-02-22 05:26:20.424705+00
 dd0f9847-a3e1-4950-937b-05c67b528d25	HONDA	Listino OMPRA (ultima colonna)	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna). In casi particolari, solo se serve a chiudere la trattativa e con chiari segnali di chiusura, posso scendere sotto allo sconto massimo.	Applicare prezzi della Promo indistintamente. In casi particolari posso aggiungere degli omaggi (olio, catena, filo, ecc). Finanziamenti Honda a tasso zero effettivo.	\N	2026-02-22 05:26:20.424705+00
-d695b209-7d75-4b1d-b4e9-27b92b06f637	MAITO	Sconto massimo del 5% sul listino ufficiale della casa	\N	\N	\N	2026-02-22 05:26:20.424705+00
 383406fb-e801-4b3d-95ca-9afc2a9dad53	M-C (CARBOGREEN)	Sconto massimo del 20% sul listino ufficiale della casa	Sconto massimo del 20% + 3% sul listino ufficiale della casa	\N	\N	2026-02-22 05:26:20.424705+00
 cfb1122e-5a6c-4830-b9fe-7fd342fc4b38	MM SPRAY	\N	\N	\N	\N	2026-02-22 05:26:20.424705+00
 3644ad5c-f190-4ff5-9b85-aca9bc94e137	MUGGIOLI	Listino B max 20% — Listino C max 10%	Listino C max 15%	\N	\N	2026-02-22 05:26:20.424705+00
-38e7a4a6-148c-4de6-8da3-93355748f052	MURATORI	Sconto massimo del 25% sul listino ufficiale della casa	\N	\N	\N	2026-02-22 05:26:20.424705+00
 e36494ea-324a-4f72-8a61-8b93d23e06a9	NEGRI	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna) su tutta la gamma hobbistica	Applicare sconto massimo del 10% dal listino ufficiale della casa.	\N	\N	2026-02-22 05:26:20.424705+00
 9a6dae9a-768d-423f-b055-64d8341e62df	PASQUALI	Listino OMPRA con possibilità di arrivare allo sconto massimo previsto (penultima colonna) su tutta la gamma hobbistica	Prezzo da valutare a seconda degli accessori. Listino della casa con sconto massimo. Il prezzo finale deve tener conto dell'eventuale ritiro dell'usato.	\N	\N	2026-02-22 05:26:20.424705+00
 b803e3a6-cc2d-4e1b-a24f-87d027715bd7	ROBOTICA / ROBOT	Listino OMPRA (ultima colonna). Prezzo indicativo da confermare aggiungendo i costi di installazione in base alla distanza, ai mq del giardino, disposizione aiuole, segnalazione del giardiniere. Offerta definitiva dopo sopralluogo.	\N	\N	\N	2026-02-22 05:26:20.424705+00
@@ -10221,7 +11045,9 @@ d9c69c17-9ea7-4194-9725-b8e52732b9ee	TORO	Sconto massimo del 8-10% sul listino u
 eb69ceb8-69e0-4eb8-b9d4-5a8b0c70aa72	VOLPI MY SPRAYERS	Listino ufficiale della casa + IVA, stornare IVA = prezzo in listino	Sconto massimo del 15-18% sul listino ufficiale della casa	\N	\N	2026-02-22 05:26:20.424705+00
 294f23f9-48ff-4226-b6e3-76e9486b51ae	WEIBANG	Sconto massimo del 20% sul listino ufficiale della casa + IVA	\N	\N	\N	2026-02-22 05:26:20.424705+00
 dd95d73a-ba9c-47b6-9fde-931a79a98617	FEMA	Listino A max 10% — Listino B max 14% — Listino C max 19%	\N	\N	\N	2026-02-22 05:37:00.063+00
-ba8c6a84-d6bc-422d-b7cd-03e982f3f90c	CAST GROUP	Sconto 25% dal listino ufficiale della casa	Sconto 15% dal listino + ulteriore 3% in trattativa	\N	\N	2026-05-30 16:24:44.683+00
+ba8c6a84-d6bc-422d-b7cd-03e982f3f90c	CAST GROUP	Sconto 25% dal listino ufficiale della casa sulla Castloaders + ulteriore 3% in trattativa	Sconto 15% dal listino sulla linea Workyquad	\N	\N	2026-07-31 15:32:32.704+00
+38e7a4a6-148c-4de6-8da3-93355748f052	MURATORI	Sconto massimo del 15% sul listino ufficiale della casa, aumentato del 5%  + ulteriore 5% max in trattativa	Sconto massimo del 15% sul listino ufficiale della casa, aumentato del 5% + ulteriore 5% max in trattativa	\N	\N	2026-07-31 15:56:49.281+00
+0874d3b7-0127-463c-aa75-c01a91fb8f7a	RINIERI	Sconto 15% dal listino ufficiale della casa aumentato del 4%. Ulteriore 5% max in trattativa	Sconto 15% dal listino ufficiale della casa aumentato del 4%. Ulteriore 5% max in trattativa	\N	\N	2026-07-31 15:57:24.856+00
 \.
 
 
@@ -11412,62 +12238,65 @@ b5b241aa-bdc7-47a4-8c04-7ee82cf2281a	Stihl	Batteria AP 500 S	1	2026-07-22 13:21:
 b53b34d0-d1cb-4f16-ba56-6dbec9676bb1	HONDA	Tosaerba UM536K3	1	2026-07-22 13:33:38.854662+00	2026-07-22 13:33:38.854662+00
 715ac319-f93c-406c-9892-656d8332fec9	Honda	Tosaerba HRG416C1	1	2026-07-22 13:33:38.854662+00	2026-07-22 13:33:38.854662+00
 e0a11f8e-e3a3-44cd-914c-7f7597899585	Stihl	Motosega MS 162 3/8"P	1	2026-07-23 15:58:43.48993+00	2026-07-23 15:58:43.48993+00
+04dc3574-8cad-46b6-abb2-5dc0a020cdd3	Stihl	Motosega MS151	1	2026-07-31 14:31:58.827802+00	2026-07-31 14:31:58.827802+00
+7b28227b-cf6a-4aa5-b512-3e9834f61578	Echo	Motosega CS-4010	1	2026-08-07 10:20:45.710806+00	2026-08-07 10:20:45.710806+00
+3f207c7b-bfd2-452b-92cc-f1bda279abeb	Volpi	Potatore KVS6000	1	2026-08-12 09:53:46.285046+00	2026-08-12 09:53:46.285046+00
 \.
 
 
 --
--- Data for Name: messages_2026_07_28; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_11; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_07_28 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_11 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_07_29; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_12; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_07_29 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_12 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_07_30; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_13; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_07_30 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_13 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_07_31; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_14; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_07_31 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_14 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_01; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_15; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_01 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_15 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_02; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_16; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_02 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_16 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_03; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_17; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_03 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_17 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
@@ -11565,12 +12394,6 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 --
 
 COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter, selected_columns) FROM stdin;
-11193	6b82fe16-8cdc-11f1-82c3-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-07-31 12:36:14.965998	*	\N
-11194	6b82f704-8cdc-11f1-818d-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-07-31 12:36:14.965998	*	\N
-11195	e34fc02a-8cdf-11f1-8d20-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-07-31 13:01:04.448338	*	\N
-11196	e34fb6d4-8cdf-11f1-8af5-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-07-31 13:01:04.448338	*	\N
-11183	4e134930-8cc8-11f1-a504-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-07-31 10:12:15.64327	*	\N
-11184	4e1342d2-8cc8-11f1-b36d-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-07-31 10:12:15.64327	*	\N
 \.
 
 
@@ -11579,6 +12402,7 @@ COPY realtime.subscription (id, subscription_id, entity, filters, claims, create
 --
 
 COPY storage.buckets (id, name, owner, created_at, updated_at, public, avif_autodetection, file_size_limit, allowed_mime_types, owner_id, type) FROM stdin;
+az-foto	az-foto	\N	2026-08-05 04:51:01.661719+00	2026-08-05 04:51:01.661719+00	t	f	15728640	{image/jpeg,image/png,image/webp,image/heic,image/heif}	\N	STANDARD
 \.
 
 
@@ -11672,6 +12496,12 @@ COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
 --
 
 COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_accessed_at, metadata, version, owner_id, user_metadata) FROM stdin;
+73a33dcf-29b3-40d0-96c1-8cacc00ddb0e	az-foto	progetti/759e3165-8750-4c61-b16a-a39df8ead8bb/1786093070525.png	\N	2026-08-07 08:58:01.79899+00	2026-08-07 08:58:01.79899+00	2026-08-07 08:58:01.79899+00	{"eTag": "\\"fd415c9c4d6aa4ee764a4e2dfc68ce35\\"", "size": 4103316, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T08:58:02.000Z", "contentLength": 4103316, "httpStatusCode": 200}	6276593f-d31b-4069-99e6-6215425976da	\N	{}
+fd23d4d1-7517-425a-adf0-293f6d491684	az-foto	progetti/09566d94-0ccc-41c9-824a-bb7ff8a467af/1786106308940.png	\N	2026-08-07 12:38:35.96055+00	2026-08-07 12:38:35.96055+00	2026-08-07 12:38:35.96055+00	{"eTag": "\\"48f93b5d6dc048264796314e53ef56c4\\"", "size": 3262200, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T12:38:36.000Z", "contentLength": 3262200, "httpStatusCode": 200}	4e1c5766-e503-45a5-b90e-9220fca06308	\N	{}
+817825d7-42ae-4bd8-b7d2-daa9c3d1bac6	az-foto	progetti/09566d94-0ccc-41c9-824a-bb7ff8a467af/1786106481341.png	\N	2026-08-07 12:41:33.160117+00	2026-08-07 12:41:33.160117+00	2026-08-07 12:41:33.160117+00	{"eTag": "\\"202cefe9eeba452cbfcede237bffa1b3\\"", "size": 5040104, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T12:41:34.000Z", "contentLength": 5040104, "httpStatusCode": 200}	0424bfe6-230b-496c-bf30-c16d8db6e750	\N	{}
+856e35dd-2b46-4d5f-9d5f-0da94af1ff5e	az-foto	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786354276962.png	\N	2026-08-10 09:31:27.920741+00	2026-08-10 09:31:27.920741+00	2026-08-10 09:31:27.920741+00	{"eTag": "\\"a0d7d8468dbf13bc8dd19adb1873ec08\\"", "size": 3378616, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-10T09:31:28.000Z", "contentLength": 3378616, "httpStatusCode": 200}	3efa4c2c-e25d-4cda-b4b8-54dc439dc776	\N	{}
+229537b9-16db-4584-b429-c920dfb8bad6	az-foto	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786355333258.png	\N	2026-08-10 09:49:01.412448+00	2026-08-10 09:49:01.412448+00	2026-08-10 09:49:01.412448+00	{"eTag": "\\"6537efa440855282cba1ba430f54aed7\\"", "size": 2582299, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-10T09:49:02.000Z", "contentLength": 2582299, "httpStatusCode": 200}	967723a8-d33b-484b-a4e6-4afc516627a3	\N	{}
+dd498592-d891-490e-af93-b58c9186dace	az-foto	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786370372310.png	\N	2026-08-10 13:59:39.04453+00	2026-08-10 13:59:39.04453+00	2026-08-10 13:59:39.04453+00	{"eTag": "\\"ea8e3c1f626fa680a0b46eb1cfb4cdbf\\"", "size": 3832367, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-10T13:59:39.000Z", "contentLength": 3832367, "httpStatusCode": 200}	25e0a4cd-9574-42a3-88fe-b01df8aaba5b	\N	{}
 \.
 
 
@@ -11700,6 +12530,26 @@ COPY storage.vector_indexes (id, name, bucket_id, data_type, dimension, distance
 
 
 --
+-- Data for Name: schema_migrations; Type: TABLE DATA; Schema: supabase_migrations; Owner: -
+--
+
+COPY supabase_migrations.schema_migrations (version, statements, name, created_by, idempotency_key, rollback) FROM stdin;
+20260805044914	{"alter table operatori\n  add column if not exists ruolo text not null default 'commerciale';\n\nalter table operatori\n  drop constraint if exists operatori_ruolo_chk;\nalter table operatori\n  add constraint operatori_ruolo_chk\n  check (ruolo in ('admin','commerciale','tecnico'));\n\nupdate operatori set ruolo = 'admin' where lower(nome) = 'admin';\n\nalter table operatori\n  add column if not exists moduli text[];\n\ncomment on column operatori.ruolo is\n  'admin | commerciale | tecnico. Governa la visibilita di costi, prezzi e margini.';\ncomment on column operatori.moduli is\n  'NULL = default del ruolo. Array valorizzato = whitelist esplicita di moduli/sottomoduli.';"}	az_ruoli_e_permessi_operatori	simone.ompra@gmail.com	\N	\N
+20260805044934	{"-- ── Progetti ────────────────────────────────────────────────\ncreate table if not exists az_progetti (\n  id               uuid primary key default gen_random_uuid(),\n  created_at       timestamptz not null default now(),\n  updated_at       timestamptz not null default now(),\n  numero           text unique,\n\n  cliente_nome     text not null,\n  cliente_id       bigint,\n  indirizzo        text,\n  telefono         text,\n  riferimento      text,\n\n  stato            text not null default 'bozza',\n  operatore        text,\n  tecnico          text,\n  data_montaggio   date,\n\n  foto_path        text,\n  foto_scala       numeric,\n\n  brand            text,\n  macchina_code    text,\n  config           jsonb not null default '{}'::jsonb,\n  risultato        jsonb,\n\n  prezzo_cliente   numeric,\n  descrizione_prev text,\n  note             text\n);\n\nalter table az_progetti drop constraint if exists az_progetti_stato_chk;\nalter table az_progetti add constraint az_progetti_stato_chk\n  check (stato in ('bozza','preventivo','ordine','montato','chiuso'));\n\ncreate index if not exists az_progetti_tecnico_idx on az_progetti (tecnico);\ncreate index if not exists az_progetti_stato_idx   on az_progetti (stato);\ncreate index if not exists az_progetti_cliente_idx on az_progetti (cliente_nome);\ncreate index if not exists az_progetti_creato_idx  on az_progetti (created_at desc);\n\n-- ── Linee ───────────────────────────────────────────────────\ncreate table if not exists az_linee (\n  id          uuid primary key default gen_random_uuid(),\n  progetto_id uuid not null references az_progetti(id) on delete cascade,\n  ordine      int  not null default 0,\n  etichetta   text,\n  metri       numeric not null default 0,\n  passo       numeric not null default 4,\n  metodo      text not null default 'm1d',\n  ugelli      int,\n  polilinea   jsonb,\n  note        text\n);\n\nalter table az_linee drop constraint if exists az_linee_metodo_chk;\nalter table az_linee add constraint az_linee_metodo_chk\n  check (metodo in ('m1d','m1a','m2q','m3d','m3a'));\n\ncomment on column az_linee.metodo is\n  'm1d = T + portaugello dritto | m1a = T + portaugello 90 | m2q = in linea senza T | m3d = riser + dritto | m3a = riser + 90';\n\ncreate index if not exists az_linee_progetto_idx on az_linee (progetto_id, ordine);\n\n-- ── Consuntivo ──────────────────────────────────────────────\ncreate table if not exists az_consuntivo (\n  id           uuid primary key default gen_random_uuid(),\n  progetto_id  uuid not null references az_progetti(id) on delete cascade,\n  ordine       int  not null default 0,\n  codice       text,\n  descrizione  text not null,\n  um           text default 'pz',\n  q_prevista   numeric,\n  q_usata      numeric,\n  extra        boolean not null default false,\n  note         text,\n  compilato_da text,\n  compilato_at timestamptz\n);\n\ncreate index if not exists az_consuntivo_progetto_idx on az_consuntivo (progetto_id, ordine);\n\n-- ── updated_at automatico ───────────────────────────────────\ncreate or replace function az_touch_updated_at()\nreturns trigger\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\nbegin\n  new.updated_at = now();\n  return new;\nend;\n$$;\n\ndrop trigger if exists az_progetti_touch on az_progetti;\ncreate trigger az_progetti_touch\n  before update on az_progetti\n  for each row execute function az_touch_updated_at();\n\n-- ── Numerazione progressiva ─────────────────────────────────\ncreate or replace function az_prossimo_numero()\nreturns text\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  anno text := to_char(now(), 'YYYY');\n  n    int;\nbegin\n  select coalesce(max(substring(numero from '\\\\d+$')::int), 0) + 1\n    into n\n    from public.az_progetti\n   where numero like 'AZ-' || anno || '-%';\n\n  return 'AZ-' || anno || '-' || lpad(n::text, 3, '0');\nend;\n$$;"}	az_tabelle_antizanzare	simone.ompra@gmail.com	\N	\N
+20260805045101	{"-- Bucket pubblico per le foto di progetto (Google Earth, scatti in cantiere)\ninsert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)\nvalues (\n  'az-foto',\n  'az-foto',\n  true,\n  15728640,                                   -- 15 MB\n  array['image/jpeg','image/png','image/webp','image/heic','image/heif']\n)\non conflict (id) do update\n  set public = excluded.public,\n      file_size_limit = excluded.file_size_limit,\n      allowed_mime_types = excluded.allowed_mime_types;\n\n-- Policy: l'app usa la anon key, su storage.objects c'e' RLS attivo\ndrop policy if exists \\"az_foto_lettura\\" on storage.objects;\ncreate policy \\"az_foto_lettura\\"\n  on storage.objects for select\n  to anon, authenticated\n  using (bucket_id = 'az-foto');\n\ndrop policy if exists \\"az_foto_upload\\" on storage.objects;\ncreate policy \\"az_foto_upload\\"\n  on storage.objects for insert\n  to anon, authenticated\n  with check (bucket_id = 'az-foto');\n\ndrop policy if exists \\"az_foto_update\\" on storage.objects;\ncreate policy \\"az_foto_update\\"\n  on storage.objects for update\n  to anon, authenticated\n  using (bucket_id = 'az-foto')\n  with check (bucket_id = 'az-foto');\n\ndrop policy if exists \\"az_foto_delete\\" on storage.objects;\ncreate policy \\"az_foto_delete\\"\n  on storage.objects for delete\n  to anon, authenticated\n  using (bucket_id = 'az-foto');"}	az_bucket_foto_e_policy	simone.ompra@gmail.com	\N	\N
+20260805045204	{"-- Stessa convenzione delle altre tabelle del progetto (clienti, commissioni,\n-- operatori): RLS attivo con policy permissiva. Non protegge dall'uso diretto\n-- della anon key, ma evita che le tabelle risultino completamente scoperte\n-- e allinea le az_* al resto dello schema.\n\nalter table az_progetti   enable row level security;\nalter table az_linee      enable row level security;\nalter table az_consuntivo enable row level security;\n\ndrop policy if exists \\"Allow all operations on az_progetti\\" on az_progetti;\ncreate policy \\"Allow all operations on az_progetti\\"\n  on az_progetti for all to anon, authenticated\n  using (true) with check (true);\n\ndrop policy if exists \\"Allow all operations on az_linee\\" on az_linee;\ncreate policy \\"Allow all operations on az_linee\\"\n  on az_linee for all to anon, authenticated\n  using (true) with check (true);\n\ndrop policy if exists \\"Allow all operations on az_consuntivo\\" on az_consuntivo;\ncreate policy \\"Allow all operations on az_consuntivo\\"\n  on az_consuntivo for all to anon, authenticated\n  using (true) with check (true);"}	az_rls_come_convenzione_esistente	simone.ompra@gmail.com	\N	\N
+20260805045835	{"-- clienti.id e' uuid, non bigint. La tabella az_progetti e' vuota,\n-- quindi il cambio di tipo e' sicuro.\nalter table az_progetti\n  alter column cliente_id type uuid using null;\n\nalter table az_progetti\n  drop constraint if exists az_progetti_cliente_fk;\nalter table az_progetti\n  add constraint az_progetti_cliente_fk\n  foreign key (cliente_id) references clienti(id) on delete set null;\n\ncomment on column az_progetti.cliente_id is\n  'Riferimento facoltativo alla rubrica. Il nome resta comunque in cliente_nome.';"}	az_fix_cliente_id_uuid	simone.ompra@gmail.com	\N	\N
+20260805065512	{"-- Una linea puo' usare piu' metodi di montaggio insieme:\n-- es. 40 ugelli su T+dritto e 23 su riser sulla stessa linea.\n-- La tabella e' vuota, la sostituzione della colonna e' sicura.\n\nalter table az_linee drop constraint if exists az_linee_metodo_chk;\nalter table az_linee drop column if exists metodo;\n\nalter table az_linee\n  add column if not exists metodi jsonb not null default '{}'::jsonb;\n\ncomment on column az_linee.metodi is\n  'Ripartizione ugelli per metodo, es. {\\"m1d\\":40,\\"m3d\\":23}. '\n  'm1d = T + portaugello dritto | m1a = T + portaugello 90 | '\n  'm2q = in linea senza T | m3d = riser + dritto | m3a = riser + 90. '\n  'La somma dovrebbe coincidere con la colonna ugelli; se non coincide '\n  'l app mostra un avviso ma consente il salvataggio.';"}	az_linee_metodi_multipli	simone.ompra@gmail.com	\N	\N
+20260805072811	{"-- Archivio delle voci fuori listino usate nei progetti.\n-- Si popola da solo: ogni voce salvata in un progetto finisce qui e\n-- diventa un suggerimento per i preventivi successivi.\n\ncreate table if not exists az_voci_extra (\n  id          uuid primary key default gen_random_uuid(),\n  created_at  timestamptz not null default now(),\n  updated_at  timestamptz not null default now(),\n  descrizione text not null,\n  codice      text,\n  um          text default 'pz',\n  costo       numeric,\n  prezzo      numeric,\n  usi         int not null default 1,      -- quante volte e' stata usata\n  ultimo_uso  timestamptz default now(),\n  creata_da   text\n);\n\n-- Una sola riga per descrizione: il confronto ignora maiuscole e spazi\ncreate unique index if not exists az_voci_extra_desc_uniq\n  on az_voci_extra (lower(btrim(descrizione)));\n\ncreate index if not exists az_voci_extra_ordine_idx\n  on az_voci_extra (usi desc, ultimo_uso desc);\n\nalter table az_voci_extra enable row level security;\n\ndrop policy if exists \\"Allow all operations on az_voci_extra\\" on az_voci_extra;\ncreate policy \\"Allow all operations on az_voci_extra\\" on az_voci_extra\n  for all to anon, authenticated using (true) with check (true);\n\n-- Registra una voce: se la descrizione esiste gia' aggiorna prezzi e contatore\ncreate or replace function az_registra_voce_extra(\n  p_descrizione text,\n  p_codice      text default null,\n  p_um          text default 'pz',\n  p_costo       numeric default null,\n  p_prezzo      numeric default null,\n  p_operatore   text default null\n) returns uuid\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  v_id uuid;\nbegin\n  if p_descrizione is null or btrim(p_descrizione) = '' then\n    return null;\n  end if;\n\n  insert into public.az_voci_extra (descrizione, codice, um, costo, prezzo, creata_da)\n  values (btrim(p_descrizione), nullif(btrim(coalesce(p_codice,'')),''), coalesce(p_um,'pz'),\n          p_costo, p_prezzo, p_operatore)\n  on conflict (lower(btrim(descrizione))) do update\n    set codice     = coalesce(excluded.codice, public.az_voci_extra.codice),\n        um         = coalesce(excluded.um, public.az_voci_extra.um),\n        costo      = coalesce(excluded.costo, public.az_voci_extra.costo),\n        prezzo     = coalesce(excluded.prezzo, public.az_voci_extra.prezzo),\n        usi        = public.az_voci_extra.usi + 1,\n        ultimo_uso = now(),\n        updated_at = now()\n  returning id into v_id;\n\n  return v_id;\nend;\n$$;"}	az_archivio_voci_extra	simone.ompra@gmail.com	\N	\N
+20260805190812	{"-- Copia del foglio \\"Anagrafica\\" di Listino_Unificato_Antizanzare.xlsx.\n-- Serve alla ricerca delle voci extra: qualunque articolo a listino\n-- deve poter entrare in un preventivo, non solo quelli gia' usati.\n--\n-- Nessun vincolo di unicita' sul codice: nel listino tre codici\n-- compaiono due volte (canale SMART e Professional, IVA diversa).\n\ncreate table if not exists az_listino (\n  id           uuid primary key default gen_random_uuid(),\n  riga_id      text,                 -- colonna ID del foglio (A0001…)\n  codice       text not null,\n  descrizione  text not null,\n  marca        text,\n  linea        text,\n  categoria    text,\n  sistema      text,\n  um           text default 'pz',\n  listino      numeric,              -- escl. IVA\n  listino_iva  numeric,              -- incl. IVA\n  costo        numeric,              -- escl. IVA, dove noto\n  stato        text,\n  note         text,\n  ricerca      text,                 -- codice + descrizione + marca, minuscolo\n  importato_il timestamptz not null default now()\n);\n\ncreate index if not exists az_listino_codice_idx  on az_listino (codice);\ncreate index if not exists az_listino_ricerca_idx on az_listino (ricerca text_pattern_ops);\ncreate index if not exists az_listino_marca_idx   on az_listino (marca);\n\nalter table az_listino enable row level security;\n\ndrop policy if exists \\"Allow all operations on az_listino\\" on az_listino;\ncreate policy \\"Allow all operations on az_listino\\" on az_listino\n  for all to anon, authenticated using (true) with check (true);"}	az_listino_unificato	simone.ompra@gmail.com	\N	\N
+20260805191229	{"-- Ricerca unica per le voci extra: prima l'archivio delle voci gia' usate\n-- (piu' pertinente), poi tutto il listino unificato.\n-- Il costo, dove non noto, si ricava applicando lo sconto d'acquisto del\n-- fornitore: Zanzero 30%, Gardheaven 50%, Stocker/Geyser ha il costo reale.\n\ncreate or replace function az_cerca_voci(p_testo text, p_limite int default 12)\nreturns table (\n  fonte       text,\n  codice      text,\n  descrizione text,\n  marca       text,\n  categoria   text,\n  um          text,\n  costo       numeric,\n  prezzo      numeric,\n  usi         int\n)\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with q as (select lower(btrim(coalesce(p_testo, ''))) as t)\n  (\n    select 'archivio'::text,\n           v.codice, v.descrizione, null::text, null::text,\n           coalesce(v.um, 'pz'), v.costo, v.prezzo, v.usi\n      from public.az_voci_extra v, q\n     where q.t = '' or lower(v.descrizione) like '%' || q.t || '%'\n     order by v.usi desc, v.ultimo_uso desc\n     limit greatest(p_limite / 3, 3)\n  )\n  union all\n  (\n    select 'listino'::text,\n           l.codice, l.descrizione, l.marca, l.categoria,\n           coalesce(l.um, 'pz'),\n           coalesce(\n             l.costo,\n             case upper(coalesce(l.marca, ''))\n               when 'ZANZERO'  then round(l.listino * 0.70, 2)\n               when 'FREEZANZ' then round(l.listino * 0.70, 2)\n               else null\n             end\n           ),\n           l.listino,\n           0\n      from public.az_listino l, q\n     where q.t <> '' and l.ricerca like '%' || q.t || '%'\n     order by\n       case when lower(l.codice) = q.t then 0\n            when lower(l.codice) like q.t || '%' then 1\n            when lower(l.descrizione) like q.t || '%' then 2\n            else 3 end,\n       l.descrizione\n     limit p_limite\n  );\n$$;"}	az_ricerca_voci_combinata	simone.ompra@gmail.com	\N	\N
+20260805203007	{"-- Il tubo tronco diventa una proprieta' della linea: quanti dei suoi metri\n-- corrono in diametro maggiore (Ø8 / 3-8\\"). Il totale del progetto si somma\n-- dalle linee, cosi' non puo' piu' andare fuori sincrono con i metri.\n--\n-- Come nel calcolatore originale questi metri sono COMPRESI nei metri della\n-- linea, non aggiuntivi: 60 m di cui 60 su tronco = 60 m di tubo Ø8, zero Ø6.\n\nalter table az_linee\n  add column if not exists metri_tronco numeric not null default 0;\n\nalter table az_linee drop constraint if exists az_linee_tronco_chk;\nalter table az_linee add constraint az_linee_tronco_chk\n  check (metri_tronco >= 0 and metri_tronco <= metri);\n\ncomment on column az_linee.metri_tronco is\n  'Quanti dei metri della linea corrono in diametro maggiore. Compresi in metri, non aggiuntivi.';"}	az_linee_metri_tronco	simone.ompra@gmail.com	\N	\N
+20260807024037	{"-- Cancellazione di una voce d'archivio sbagliata.\n-- Riguarda solo az_voci_extra: gli articoli del Listino Unificato non si\n-- toccano da qui, si aggiornano rilanciando l'import dal file.\n\ncreate or replace function az_elimina_voce_extra(p_descrizione text)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  n int;\nbegin\n  delete from public.az_voci_extra\n   where lower(btrim(descrizione)) = lower(btrim(coalesce(p_descrizione, '')));\n  get diagnostics n = row_count;\n  return n;\nend;\n$$;"}	az_elimina_voce_extra	simone.ompra@gmail.com	\N	\N
+20260807092853	{"-- Data del preventivo: finche' il progetto e' una bozza o un preventivo,\n-- la data che conta e' quella del documento, non quella di montaggio.\nalter table az_progetti\n  add column if not exists data_preventivo date default current_date;\n\nupdate az_progetti\n   set data_preventivo = created_at::date\n where data_preventivo is null;\n\ncomment on column az_progetti.data_preventivo is\n  'Data del documento. La data_montaggio serve solo da quando si passa a ordine.';\n\n-- Chiusura del circuito: se la linea torna alla centralina formando un\n-- anello non servono tappi; se resta aperta ne servono due, uno per\n-- estremita'. Il caso normale in cantiere e' l'anello chiuso.\nalter table az_linee\n  add column if not exists anello boolean not null default true;\n\ncomment on column az_linee.anello is\n  'true = circuito chiuso ad anello, nessun tappo. false = linea aperta, due tappi.';"}	az_data_preventivo_e_anello	simone.ompra@gmail.com	\N	\N
+\.
+
+
+--
 -- Data for Name: secrets; Type: TABLE DATA; Schema: vault; Owner: -
 --
 
@@ -11718,7 +12568,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 882, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 919, true);
 
 
 --
@@ -11746,7 +12596,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 327, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 11196, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 11780, true);
 
 
 --
@@ -12043,6 +12893,54 @@ ALTER TABLE ONLY public.agro_mapping
 
 ALTER TABLE ONLY public.app_config
     ADD CONSTRAINT app_config_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: az_consuntivo az_consuntivo_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_consuntivo
+    ADD CONSTRAINT az_consuntivo_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: az_linee az_linee_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_linee
+    ADD CONSTRAINT az_linee_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: az_listino az_listino_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_listino
+    ADD CONSTRAINT az_listino_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: az_progetti az_progetti_numero_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_progetti
+    ADD CONSTRAINT az_progetti_numero_key UNIQUE (numero);
+
+
+--
+-- Name: az_progetti az_progetti_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_progetti
+    ADD CONSTRAINT az_progetti_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: az_voci_extra az_voci_extra_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_voci_extra
+    ADD CONSTRAINT az_voci_extra_pkey PRIMARY KEY (id);
 
 
 --
@@ -12390,59 +13288,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_07_28 messages_2026_07_28_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_11 messages_2026_08_11_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_07_28
-    ADD CONSTRAINT messages_2026_07_28_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_07_29 messages_2026_07_29_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_07_29
-    ADD CONSTRAINT messages_2026_07_29_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_11
+    ADD CONSTRAINT messages_2026_08_11_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_07_30 messages_2026_07_30_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_12 messages_2026_08_12_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_07_30
-    ADD CONSTRAINT messages_2026_07_30_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_07_31 messages_2026_07_31_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_07_31
-    ADD CONSTRAINT messages_2026_07_31_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_12
+    ADD CONSTRAINT messages_2026_08_12_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_01 messages_2026_08_01_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_13 messages_2026_08_13_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_01
-    ADD CONSTRAINT messages_2026_08_01_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_02 messages_2026_08_02_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_02
-    ADD CONSTRAINT messages_2026_08_02_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_13
+    ADD CONSTRAINT messages_2026_08_13_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_03 messages_2026_08_03_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_14 messages_2026_08_14_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_03
-    ADD CONSTRAINT messages_2026_08_03_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_14
+    ADD CONSTRAINT messages_2026_08_14_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_15 messages_2026_08_15_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_15
+    ADD CONSTRAINT messages_2026_08_15_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_16 messages_2026_08_16_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_16
+    ADD CONSTRAINT messages_2026_08_16_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_17 messages_2026_08_17_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_17
+    ADD CONSTRAINT messages_2026_08_17_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -12539,6 +13437,22 @@ ALTER TABLE ONLY storage.s3_multipart_uploads
 
 ALTER TABLE ONLY storage.vector_indexes
     ADD CONSTRAINT vector_indexes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_idempotency_key_key; Type: CONSTRAINT; Schema: supabase_migrations; Owner: -
+--
+
+ALTER TABLE ONLY supabase_migrations.schema_migrations
+    ADD CONSTRAINT schema_migrations_idempotency_key_key UNIQUE (idempotency_key);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: supabase_migrations; Owner: -
+--
+
+ALTER TABLE ONLY supabase_migrations.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
 
 
 --
@@ -12934,6 +13848,83 @@ CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING
 
 
 --
+-- Name: az_consuntivo_progetto_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_consuntivo_progetto_idx ON public.az_consuntivo USING btree (progetto_id, ordine);
+
+
+--
+-- Name: az_linee_progetto_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_linee_progetto_idx ON public.az_linee USING btree (progetto_id, ordine);
+
+
+--
+-- Name: az_listino_codice_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_listino_codice_idx ON public.az_listino USING btree (codice);
+
+
+--
+-- Name: az_listino_marca_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_listino_marca_idx ON public.az_listino USING btree (marca);
+
+
+--
+-- Name: az_listino_ricerca_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_listino_ricerca_idx ON public.az_listino USING btree (ricerca text_pattern_ops);
+
+
+--
+-- Name: az_progetti_cliente_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_progetti_cliente_idx ON public.az_progetti USING btree (cliente_nome);
+
+
+--
+-- Name: az_progetti_creato_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_progetti_creato_idx ON public.az_progetti USING btree (created_at DESC);
+
+
+--
+-- Name: az_progetti_stato_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_progetti_stato_idx ON public.az_progetti USING btree (stato);
+
+
+--
+-- Name: az_progetti_tecnico_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_progetti_tecnico_idx ON public.az_progetti USING btree (tecnico);
+
+
+--
+-- Name: az_voci_extra_desc_uniq; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX az_voci_extra_desc_uniq ON public.az_voci_extra USING btree (lower(btrim(descrizione)));
+
+
+--
+-- Name: az_voci_extra_ordine_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX az_voci_extra_ordine_idx ON public.az_voci_extra USING btree (usi DESC, ultimo_uso DESC);
+
+
+--
 -- Name: idx_audit_agente; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -13158,52 +14149,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_07_28_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_11_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_07_28_inserted_at_topic_idx ON realtime.messages_2026_07_28 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_07_29_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_07_29_inserted_at_topic_idx ON realtime.messages_2026_07_29 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_11_inserted_at_topic_idx ON realtime.messages_2026_08_11 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_07_30_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_12_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_07_30_inserted_at_topic_idx ON realtime.messages_2026_07_30 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_07_31_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_07_31_inserted_at_topic_idx ON realtime.messages_2026_07_31 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_12_inserted_at_topic_idx ON realtime.messages_2026_08_12 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_01_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_13_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_01_inserted_at_topic_idx ON realtime.messages_2026_08_01 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_02_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_08_02_inserted_at_topic_idx ON realtime.messages_2026_08_02 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_13_inserted_at_topic_idx ON realtime.messages_2026_08_13 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_03_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_14_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_03_inserted_at_topic_idx ON realtime.messages_2026_08_03 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_14_inserted_at_topic_idx ON realtime.messages_2026_08_14 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_08_15_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_08_15_inserted_at_topic_idx ON realtime.messages_2026_08_15 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_08_16_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_08_16_inserted_at_topic_idx ON realtime.messages_2026_08_16 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_08_17_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_08_17_inserted_at_topic_idx ON realtime.messages_2026_08_17 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -13270,101 +14261,108 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_07_28_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_11_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_28_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_07_28_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_28_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_11_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_07_29_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_11_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_29_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_07_29_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_29_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_11_pkey;
 
 
 --
--- Name: messages_2026_07_30_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_12_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_30_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_07_30_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_30_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_12_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_07_31_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_12_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_07_31_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_07_31_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_07_31_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_12_pkey;
 
 
 --
--- Name: messages_2026_08_01_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_13_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_01_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_01_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_01_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_13_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_02_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_13_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_02_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_02_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_02_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_13_pkey;
 
 
 --
--- Name: messages_2026_08_03_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_14_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_03_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_14_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_03_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_14_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_03_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_14_pkey;
+
+
+--
+-- Name: messages_2026_08_15_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_15_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_15_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_15_pkey;
+
+
+--
+-- Name: messages_2026_08_16_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_16_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_16_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_16_pkey;
+
+
+--
+-- Name: messages_2026_08_17_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_17_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_17_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_17_pkey;
+
+
+--
+-- Name: az_progetti az_progetti_touch; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER az_progetti_touch BEFORE UPDATE ON public.az_progetti FOR EACH ROW EXECUTE FUNCTION public.az_touch_updated_at();
 
 
 --
@@ -13581,6 +14579,30 @@ ALTER TABLE ONLY public.agro_mapping
 
 ALTER TABLE ONLY public.agro_mapping
     ADD CONSTRAINT agro_mapping_sku_piccolo_fkey FOREIGN KEY (sku_piccolo) REFERENCES public.agro_listino(sku);
+
+
+--
+-- Name: az_consuntivo az_consuntivo_progetto_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_consuntivo
+    ADD CONSTRAINT az_consuntivo_progetto_id_fkey FOREIGN KEY (progetto_id) REFERENCES public.az_progetti(id) ON DELETE CASCADE;
+
+
+--
+-- Name: az_linee az_linee_progetto_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_linee
+    ADD CONSTRAINT az_linee_progetto_id_fkey FOREIGN KEY (progetto_id) REFERENCES public.az_progetti(id) ON DELETE CASCADE;
+
+
+--
+-- Name: az_progetti az_progetti_cliente_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.az_progetti
+    ADD CONSTRAINT az_progetti_cliente_fk FOREIGN KEY (cliente_id) REFERENCES public.clienti(id) ON DELETE SET NULL;
 
 
 --
@@ -13903,6 +14925,41 @@ CREATE POLICY "Allow all on stock_thresholds" ON public.stock_thresholds USING (
 
 
 --
+-- Name: az_consuntivo Allow all operations on az_consuntivo; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow all operations on az_consuntivo" ON public.az_consuntivo TO authenticated, anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: az_linee Allow all operations on az_linee; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow all operations on az_linee" ON public.az_linee TO authenticated, anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: az_listino Allow all operations on az_listino; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow all operations on az_listino" ON public.az_listino TO authenticated, anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: az_progetti Allow all operations on az_progetti; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow all operations on az_progetti" ON public.az_progetti TO authenticated, anon USING (true) WITH CHECK (true);
+
+
+--
+-- Name: az_voci_extra Allow all operations on az_voci_extra; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Allow all operations on az_voci_extra" ON public.az_voci_extra TO authenticated, anon USING (true) WITH CHECK (true);
+
+
+--
 -- Name: clienti Allow all operations on clienti; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -13995,6 +15052,36 @@ CREATE POLICY allow_all_noleggio_macchine ON public.noleggio_macchine USING (tru
 --
 
 ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: az_consuntivo; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.az_consuntivo ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: az_linee; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.az_linee ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: az_listino; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.az_listino ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: az_progetti; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.az_progetti ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: az_voci_extra; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.az_voci_extra ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: catalogo_prodotti; Type: ROW SECURITY; Schema: public; Owner: -
@@ -14400,6 +15487,34 @@ CREATE POLICY tmp_allow_all_auth ON public.sopralluoghi TO authenticated USING (
 ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: objects az_foto_delete; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY az_foto_delete ON storage.objects FOR DELETE TO authenticated, anon USING ((bucket_id = 'az-foto'::text));
+
+
+--
+-- Name: objects az_foto_lettura; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY az_foto_lettura ON storage.objects FOR SELECT TO authenticated, anon USING ((bucket_id = 'az-foto'::text));
+
+
+--
+-- Name: objects az_foto_update; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY az_foto_update ON storage.objects FOR UPDATE TO authenticated, anon USING ((bucket_id = 'az-foto'::text)) WITH CHECK ((bucket_id = 'az-foto'::text));
+
+
+--
+-- Name: objects az_foto_upload; Type: POLICY; Schema: storage; Owner: -
+--
+
+CREATE POLICY az_foto_upload ON storage.objects FOR INSERT TO authenticated, anon WITH CHECK ((bucket_id = 'az-foto'::text));
+
+
+--
 -- Name: buckets; Type: ROW SECURITY; Schema: storage; Owner: -
 --
 
@@ -14538,5 +15653,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict p4gmGWbv4mmjlYGtBFnCvUVUnkRu0apU9wfb3oRl6Mg3nhEEChNrbBjj1063f1f
+\unrestrict ihqdhav7mcYwdDulmKCc9dd8TZ7WmheezoAs7oxUfsap40qttizgdpjDeqSDUve
 

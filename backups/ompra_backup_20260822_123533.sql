@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2GmhBTBrc0hnyrruSkplPPausVXtD4UYLs54LwFljJeXW3XWqsV8LFWHqxvmGrL
+\restrict uf2ed0OPn1IMuKrB6ve4eyizVnRW4Vvqt52tjlZUqJv1XEV1uE6Gt9NLrstBQBA
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
+-- Dumped by pg_dump version 17.11 (Ubuntu 17.11-1.pgdg24.04+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -258,14 +258,13 @@ ALTER TABLE IF EXISTS ONLY storage.buckets_analytics DROP CONSTRAINT IF EXISTS b
 ALTER TABLE IF EXISTS ONLY realtime.schema_migrations DROP CONSTRAINT IF EXISTS schema_migrations_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.subscription DROP CONSTRAINT IF EXISTS pk_subscription;
 ALTER TABLE IF EXISTS realtime.messages DROP CONSTRAINT IF EXISTS messages_payload_exclusive;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_10 DROP CONSTRAINT IF EXISTS messages_2026_08_10_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_09 DROP CONSTRAINT IF EXISTS messages_2026_08_09_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_08 DROP CONSTRAINT IF EXISTS messages_2026_08_08_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_07 DROP CONSTRAINT IF EXISTS messages_2026_08_07_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_06 DROP CONSTRAINT IF EXISTS messages_2026_08_06_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_05 DROP CONSTRAINT IF EXISTS messages_2026_08_05_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_04 DROP CONSTRAINT IF EXISTS messages_2026_08_04_pkey;
-ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_03 DROP CONSTRAINT IF EXISTS messages_2026_08_03_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_24 DROP CONSTRAINT IF EXISTS messages_2026_08_24_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_23 DROP CONSTRAINT IF EXISTS messages_2026_08_23_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_22 DROP CONSTRAINT IF EXISTS messages_2026_08_22_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_21 DROP CONSTRAINT IF EXISTS messages_2026_08_21_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_20 DROP CONSTRAINT IF EXISTS messages_2026_08_20_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_19 DROP CONSTRAINT IF EXISTS messages_2026_08_19_pkey;
+ALTER TABLE IF EXISTS ONLY realtime.messages_2026_08_18 DROP CONSTRAINT IF EXISTS messages_2026_08_18_pkey;
 ALTER TABLE IF EXISTS ONLY realtime.messages DROP CONSTRAINT IF EXISTS messages_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_thresholds DROP CONSTRAINT IF EXISTS stock_thresholds_brand_model_unique;
@@ -368,14 +367,13 @@ DROP TABLE IF EXISTS storage.buckets_analytics;
 DROP TABLE IF EXISTS storage.buckets;
 DROP TABLE IF EXISTS realtime.subscription;
 DROP TABLE IF EXISTS realtime.schema_migrations;
-DROP TABLE IF EXISTS realtime.messages_2026_08_10;
-DROP TABLE IF EXISTS realtime.messages_2026_08_09;
-DROP TABLE IF EXISTS realtime.messages_2026_08_08;
-DROP TABLE IF EXISTS realtime.messages_2026_08_07;
-DROP TABLE IF EXISTS realtime.messages_2026_08_06;
-DROP TABLE IF EXISTS realtime.messages_2026_08_05;
-DROP TABLE IF EXISTS realtime.messages_2026_08_04;
-DROP TABLE IF EXISTS realtime.messages_2026_08_03;
+DROP TABLE IF EXISTS realtime.messages_2026_08_24;
+DROP TABLE IF EXISTS realtime.messages_2026_08_23;
+DROP TABLE IF EXISTS realtime.messages_2026_08_22;
+DROP TABLE IF EXISTS realtime.messages_2026_08_21;
+DROP TABLE IF EXISTS realtime.messages_2026_08_20;
+DROP TABLE IF EXISTS realtime.messages_2026_08_19;
+DROP TABLE IF EXISTS realtime.messages_2026_08_18;
 DROP TABLE IF EXISTS realtime.messages;
 DROP VIEW IF EXISTS public.v_riepilogo_trimestrale;
 DROP VIEW IF EXISTS public.v_vendite_dettaglio;
@@ -485,6 +483,7 @@ DROP FUNCTION IF EXISTS public.ompra_classifica_categoria(testo text);
 DROP FUNCTION IF EXISTS public.az_touch_updated_at();
 DROP FUNCTION IF EXISTS public.az_registra_voce_extra(p_descrizione text, p_codice text, p_um text, p_costo numeric, p_prezzo numeric, p_operatore text);
 DROP FUNCTION IF EXISTS public.az_prossimo_numero();
+DROP FUNCTION IF EXISTS public.az_elimina_voce_extra(p_descrizione text);
 DROP FUNCTION IF EXISTS public.az_cerca_voci(p_testo text, p_limite integer);
 DROP FUNCTION IF EXISTS public.auto_create_stock_threshold();
 DROP FUNCTION IF EXISTS pgbouncer.get_auth(p_usename text);
@@ -1318,6 +1317,25 @@ CREATE FUNCTION public.az_cerca_voci(p_testo text, p_limite integer DEFAULT 12) 
        l.descrizione
      limit p_limite
   );
+$$;
+
+
+--
+-- Name: az_elimina_voce_extra(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.az_elimina_voce_extra(p_descrizione text) RETURNS integer
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+declare
+  n int;
+begin
+  delete from public.az_voci_extra
+   where lower(btrim(descrizione)) = lower(btrim(coalesce(p_descrizione, '')));
+  get diagnostics n = row_count;
+  return n;
+end;
 $$;
 
 
@@ -4021,6 +4039,7 @@ CREATE TABLE public.az_linee (
     note text,
     metodi jsonb DEFAULT '{}'::jsonb NOT NULL,
     metri_tronco numeric DEFAULT 0 NOT NULL,
+    anello boolean DEFAULT true NOT NULL,
     CONSTRAINT az_linee_tronco_chk CHECK (((metri_tronco >= (0)::numeric) AND (metri_tronco <= metri)))
 );
 
@@ -4037,6 +4056,13 @@ COMMENT ON COLUMN public.az_linee.metodi IS 'Ripartizione ugelli per metodo, es.
 --
 
 COMMENT ON COLUMN public.az_linee.metri_tronco IS 'Quanti dei metri della linea corrono in diametro maggiore. Compresi in metri, non aggiuntivi.';
+
+
+--
+-- Name: COLUMN az_linee.anello; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_linee.anello IS 'true = circuito chiuso ad anello, nessun tappo. false = linea aperta, due tappi.';
 
 
 --
@@ -4090,6 +4116,7 @@ CREATE TABLE public.az_progetti (
     prezzo_cliente numeric,
     descrizione_prev text,
     note text,
+    data_preventivo date DEFAULT CURRENT_DATE,
     CONSTRAINT az_progetti_stato_chk CHECK ((stato = ANY (ARRAY['bozza'::text, 'preventivo'::text, 'ordine'::text, 'montato'::text, 'chiuso'::text])))
 );
 
@@ -4099,6 +4126,13 @@ CREATE TABLE public.az_progetti (
 --
 
 COMMENT ON COLUMN public.az_progetti.cliente_id IS 'Riferimento facoltativo alla rubrica. Il nome resta comunque in cliente_nome.';
+
+
+--
+-- Name: COLUMN az_progetti.data_preventivo; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.az_progetti.data_preventivo IS 'Data del documento. La data_montaggio serve solo da quando si passa a ordine.';
 
 
 --
@@ -5037,10 +5071,10 @@ PARTITION BY RANGE (inserted_at);
 
 
 --
--- Name: messages_2026_08_03; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_18; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_03 (
+CREATE TABLE realtime.messages_2026_08_18 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5055,10 +5089,10 @@ CREATE TABLE realtime.messages_2026_08_03 (
 
 
 --
--- Name: messages_2026_08_04; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_19; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_04 (
+CREATE TABLE realtime.messages_2026_08_19 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5073,10 +5107,10 @@ CREATE TABLE realtime.messages_2026_08_04 (
 
 
 --
--- Name: messages_2026_08_05; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_20; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_05 (
+CREATE TABLE realtime.messages_2026_08_20 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5091,10 +5125,10 @@ CREATE TABLE realtime.messages_2026_08_05 (
 
 
 --
--- Name: messages_2026_08_06; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_21; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_06 (
+CREATE TABLE realtime.messages_2026_08_21 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5109,10 +5143,10 @@ CREATE TABLE realtime.messages_2026_08_06 (
 
 
 --
--- Name: messages_2026_08_07; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_22; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_07 (
+CREATE TABLE realtime.messages_2026_08_22 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5127,10 +5161,10 @@ CREATE TABLE realtime.messages_2026_08_07 (
 
 
 --
--- Name: messages_2026_08_08; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_23; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_08 (
+CREATE TABLE realtime.messages_2026_08_23 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5145,28 +5179,10 @@ CREATE TABLE realtime.messages_2026_08_08 (
 
 
 --
--- Name: messages_2026_08_09; Type: TABLE; Schema: realtime; Owner: -
+-- Name: messages_2026_08_24; Type: TABLE; Schema: realtime; Owner: -
 --
 
-CREATE TABLE realtime.messages_2026_08_09 (
-    topic text NOT NULL,
-    extension text NOT NULL,
-    payload jsonb,
-    event text,
-    private boolean DEFAULT false,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    inserted_at timestamp without time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    binary_payload bytea,
-    CONSTRAINT messages_payload_exclusive CHECK (((payload IS NULL) OR (binary_payload IS NULL)))
-);
-
-
---
--- Name: messages_2026_08_10; Type: TABLE; Schema: realtime; Owner: -
---
-
-CREATE TABLE realtime.messages_2026_08_10 (
+CREATE TABLE realtime.messages_2026_08_24 (
     topic text NOT NULL,
     extension text NOT NULL,
     payload jsonb,
@@ -5382,59 +5398,52 @@ CREATE TABLE supabase_migrations.schema_migrations (
 
 
 --
--- Name: messages_2026_08_03; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_18; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_03 FOR VALUES FROM ('2026-08-03 00:00:00') TO ('2026-08-04 00:00:00');
-
-
---
--- Name: messages_2026_08_04; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_04 FOR VALUES FROM ('2026-08-04 00:00:00') TO ('2026-08-05 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_18 FOR VALUES FROM ('2026-08-18 00:00:00') TO ('2026-08-19 00:00:00');
 
 
 --
--- Name: messages_2026_08_05; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_19; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_05 FOR VALUES FROM ('2026-08-05 00:00:00') TO ('2026-08-06 00:00:00');
-
-
---
--- Name: messages_2026_08_06; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_06 FOR VALUES FROM ('2026-08-06 00:00:00') TO ('2026-08-07 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_19 FOR VALUES FROM ('2026-08-19 00:00:00') TO ('2026-08-20 00:00:00');
 
 
 --
--- Name: messages_2026_08_07; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_20; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_07 FOR VALUES FROM ('2026-08-07 00:00:00') TO ('2026-08-08 00:00:00');
-
-
---
--- Name: messages_2026_08_08; Type: TABLE ATTACH; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_08 FOR VALUES FROM ('2026-08-08 00:00:00') TO ('2026-08-09 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_20 FOR VALUES FROM ('2026-08-20 00:00:00') TO ('2026-08-21 00:00:00');
 
 
 --
--- Name: messages_2026_08_09; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_21; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_09 FOR VALUES FROM ('2026-08-09 00:00:00') TO ('2026-08-10 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_21 FOR VALUES FROM ('2026-08-21 00:00:00') TO ('2026-08-22 00:00:00');
 
 
 --
--- Name: messages_2026_08_10; Type: TABLE ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_22; Type: TABLE ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_10 FOR VALUES FROM ('2026-08-10 00:00:00') TO ('2026-08-11 00:00:00');
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_22 FOR VALUES FROM ('2026-08-22 00:00:00') TO ('2026-08-23 00:00:00');
+
+
+--
+-- Name: messages_2026_08_23; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_23 FOR VALUES FROM ('2026-08-23 00:00:00') TO ('2026-08-24 00:00:00');
+
+
+--
+-- Name: messages_2026_08_24; Type: TABLE ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages ATTACH PARTITION realtime.messages_2026_08_24 FOR VALUES FROM ('2026-08-24 00:00:00') TO ('2026-08-25 00:00:00');
 
 
 --
@@ -5826,22 +5835,22 @@ stock_alerts_enabled	false
 --
 
 COPY public.az_consuntivo (id, progetto_id, ordine, codice, descrizione, um, q_prevista, q_usata, extra, note, compilato_da, compilato_at) FROM stdin;
-b55b196c-f829-49e4-a13f-bb57a5cbd515	ee568153-87da-44e6-b49d-2c4f23b0a7da	0	Comfort02	Centralina — Comfort 02 Dual — 2 linee (150 ug./linea)	pz	1	\N	f	\N	\N	\N
-217d9cb3-58d5-4055-a62e-ff9aa2a6ba86	ee568153-87da-44e6-b49d-2c4f23b0a7da	1	TBPA30BAR1/4	Tubo linea — Tubo PA 1/4" 30 bar 100 m	m	230	\N	f	\N	\N	\N
-6ce98630-9808-47a4-885e-f4083da87428	ee568153-87da-44e6-b49d-2c4f23b0a7da	2	UGEL0015	Ugelli — Ugello 0,015 mm	pz	58	\N	f	\N	\N	\N
-d857438e-83f8-4c64-a66c-00338dcf27a8	ee568153-87da-44e6-b49d-2c4f23b0a7da	3	RACCPUD1/4	Portaugelli dritti — Porta ugello dritto 1/4"	pz	43	\N	f	\N	\N	\N
-9934ca36-60d5-4533-90c6-42e2977a4c8e	ee568153-87da-44e6-b49d-2c4f23b0a7da	4	BASINXUG1/4	Portaugelli angolati — Base innesto 90° ugello 1/4"	pz	10	\N	f	\N	\N	\N
-532b6e68-94e9-4b5f-af21-153f631f52d4	ee568153-87da-44e6-b49d-2c4f23b0a7da	5	RACCPUD1/4	Raccordi in linea — Raccordo dritto portaugello 6-6	pz	5	\N	f	\N	\N	\N
-75faa9d6-6367-4aca-9739-9aa888799b6a	ee568153-87da-44e6-b49d-2c4f23b0a7da	6	RACCT1/4	Raccordi a T — Raccordo T 1/4"	pz	53	\N	f	\N	\N	\N
-894dd6be-e73d-4260-9716-4fce32f1c4e8	ee568153-87da-44e6-b49d-2c4f23b0a7da	7	RACCFL1/4	Tappi fine linea — Fine linea cieco 1/4"	pz	1	\N	f	\N	\N	\N
-b77c60b3-4987-45a2-9a95-c1a8dc1aae90	ee568153-87da-44e6-b49d-2c4f23b0a7da	0	Comfort02	Centralina — Comfort 02 Dual — 2 linee (150 ug./linea)	pz	1	\N	f	\N	\N	\N
-93ae2de4-a9b3-4698-998a-dfb302fa5ada	ee568153-87da-44e6-b49d-2c4f23b0a7da	1	TBPA30BAR1/4	Tubo linea — Tubo PA 1/4" 30 bar 100 m	m	230	\N	f	\N	\N	\N
-3c284951-b798-4599-80d3-e73242ac76fe	ee568153-87da-44e6-b49d-2c4f23b0a7da	2	UGEL0015	Ugelli — Ugello 0,015 mm	pz	58	\N	f	\N	\N	\N
-81e10a27-d57f-4a2c-bdc6-05a18870e82e	ee568153-87da-44e6-b49d-2c4f23b0a7da	3	RACCPUD1/4	Portaugelli dritti — Porta ugello dritto 1/4"	pz	43	\N	f	\N	\N	\N
-727dcb8f-1a6a-4bce-aabd-2a0ad817fdcb	ee568153-87da-44e6-b49d-2c4f23b0a7da	4	BASINXUG1/4	Portaugelli angolati — Base innesto 90° ugello 1/4"	pz	10	\N	f	\N	\N	\N
-38f78a93-19fd-468e-bdbf-0d43af3e0bb0	ee568153-87da-44e6-b49d-2c4f23b0a7da	5	RACCPUD1/4	Raccordi in linea — Raccordo dritto portaugello 6-6	pz	5	\N	f	\N	\N	\N
-0bd369f8-77bf-41b1-9f9b-5cd5146cec2a	ee568153-87da-44e6-b49d-2c4f23b0a7da	6	RACCT1/4	Raccordi a T — Raccordo T 1/4"	pz	53	\N	f	\N	\N	\N
-7b72e68b-9bae-40a6-a1ee-47effb5b8d79	ee568153-87da-44e6-b49d-2c4f23b0a7da	7	RACCFL1/4	Tappi fine linea — Fine linea cieco 1/4"	pz	1	\N	f	\N	\N	\N
+30da0e17-e4b9-4f11-9e8e-8a6433747b0d	759e3165-8750-4c61-b16a-a39df8ead8bb	0	415	Centralina — Geyser Pro (240 m)	pz	1	\N	f	\N	\N	\N
+39cc72f5-dc1b-4ecf-9e92-56c999b9f9c1	759e3165-8750-4c61-b16a-a39df8ead8bb	1	4213	Tubo Ø6 — Ø6 nero 100 m	m	321	\N	f	\N	\N	\N
+bd2c54fa-2245-415b-b62a-3353ffa07edd	759e3165-8750-4c61-b16a-a39df8ead8bb	2	4248	Tubo Ø8 — Ø8 nero 100 m	m	25	\N	f	\N	\N	\N
+1b26a619-cbfa-4c1c-80e4-12ce6482c456	759e3165-8750-4c61-b16a-a39df8ead8bb	3	4219	Ugelli — Anti-gocc. standard	pz	58	\N	f	\N	\N	\N
+ac96f3b3-5527-4763-9787-e49ed765d07e	759e3165-8750-4c61-b16a-a39df8ead8bb	4	4220	Portaugelli angolati — 90° Ø6	pz	58	\N	f	\N	\N	\N
+09b808c1-49ee-4ff1-9282-ba2a6b1cf983	759e3165-8750-4c61-b16a-a39df8ead8bb	5	4222	Raccordi a T — T Ø6	pz	58	\N	f	\N	\N	\N
+2d0b08d4-53f2-4e06-bcc5-cd346d05b37f	759e3165-8750-4c61-b16a-a39df8ead8bb	6	4207	Tappi fine linea — Chiusura fine linea Ø6	pz	1	\N	f	\N	\N	\N
+8fff7288-b51a-469d-acbe-0d06f615540e	759e3165-8750-4c61-b16a-a39df8ead8bb	7	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	pz	58	\N	f	\N	\N	\N
+217df175-196a-4038-aba6-986871d92c18	759e3165-8750-4c61-b16a-a39df8ead8bb	0	415	Centralina — Geyser Pro (240 m)	pz	1	\N	f	\N	\N	\N
+81e36a2d-0031-452b-b8f9-6018f9a3a897	759e3165-8750-4c61-b16a-a39df8ead8bb	1	4213	Tubo Ø6 — Ø6 nero 100 m	m	321	\N	f	\N	\N	\N
+bfc33ab5-b98e-4ae2-ad51-ced055699a0c	759e3165-8750-4c61-b16a-a39df8ead8bb	2	4248	Tubo Ø8 — Ø8 nero 100 m	m	25	\N	f	\N	\N	\N
+a1a9c5f4-3cfc-4b36-9a18-4339bcb9e471	759e3165-8750-4c61-b16a-a39df8ead8bb	3	4219	Ugelli — Anti-gocc. standard	pz	58	\N	f	\N	\N	\N
+5264559b-9f81-418e-92b0-56c371551201	759e3165-8750-4c61-b16a-a39df8ead8bb	4	4220	Portaugelli angolati — 90° Ø6	pz	58	\N	f	\N	\N	\N
+cf8fcef9-7b70-448d-be01-9a4ccba5b77b	759e3165-8750-4c61-b16a-a39df8ead8bb	5	4222	Raccordi a T — T Ø6	pz	58	\N	f	\N	\N	\N
+2d17d10b-7f26-476a-b48c-8950464b3a8a	759e3165-8750-4c61-b16a-a39df8ead8bb	6	4207	Tappi fine linea — Chiusura fine linea Ø6	pz	1	\N	f	\N	\N	\N
+027c6b6b-ca13-4d38-a795-a6f3100693af	759e3165-8750-4c61-b16a-a39df8ead8bb	7	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	pz	58	\N	f	\N	\N	\N
 \.
 
 
@@ -5849,10 +5858,12 @@ b77c60b3-4987-45a2-9a95-c1a8dc1aae90	ee568153-87da-44e6-b49d-2c4f23b0a7da	0	Comf
 -- Data for Name: az_linee; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.az_linee (id, progetto_id, ordine, etichetta, metri, passo, ugelli, polilinea, note, metodi, metri_tronco) FROM stdin;
-0bfadfa9-8b0d-4763-8ea0-fa59ce3c466d	a91bf316-7047-4976-925f-83027e4e16b6	0	repellente	230	4	58	\N	\N	{}	0
-435c2386-d8e1-446c-8b2b-23444cf1f5b1	ee568153-87da-44e6-b49d-2c4f23b0a7da	0	repellente	230	4	58	\N	\N	{"m1a": 10, "m1d": 43, "m2q": 5}	0
-c9432e80-55ad-43a5-bfcb-fded42fd9ccf	6b58c891-16b3-4479-b88d-3437a63e8b18	0	repellente	230	4	58	\N	\N	{"m2q": 15, "m3a": 30, "m3d": 13}	0
+COPY public.az_linee (id, progetto_id, ordine, etichetta, metri, passo, ugelli, polilinea, note, metodi, metri_tronco, anello) FROM stdin;
+8eb29244-7197-4dac-b511-a0a7cad5f85f	2e9dfeff-f1e2-4c2b-8003-54ad98ac926c	0	linea 2 repellente/insett. giardino	160	4	40	\N	\N	{"m1a": 40}	0	f
+0a85d688-e2f2-4efd-b566-470fa68970a0	2e9dfeff-f1e2-4c2b-8003-54ad98ac926c	1	linea 1 repellente casa	140	4	35	\N	\N	{"m1a": 35}	0	t
+9de4424f-7761-49d1-9c26-975ecc349dfe	fe473ebe-b839-436e-a1e0-afa4a5e4a3dc	0	repellente	50	2.5	20	\N	\N	{"m1d": 1, "m2q": 12}	0	t
+06dafba1-3d9a-4987-b2e1-f2f23d741bcd	fe473ebe-b839-436e-a1e0-afa4a5e4a3dc	1	Raffrescamento	50	1.2	42	\N	\N	{"m1a": 2, "m1d": 40}	0	t
+3689e3be-25c1-4fac-9308-729aa7784ea0	759e3165-8750-4c61-b16a-a39df8ead8bb	0	Linea	230	4	58	\N	\N	{"m3a": 58}	25	t
 \.
 
 
@@ -5861,345 +5872,345 @@ c9432e80-55ad-43a5-bfcb-fded42fd9ccf	6b58c891-16b3-4479-b88d-3437a63e8b18	0	repe
 --
 
 COPY public.az_listino (id, riga_id, codice, descrizione, marca, linea, categoria, sistema, um, listino, listino_iva, costo, stato, note, ricerca, importato_il) FROM stdin;
-3b917c00-0f56-40d5-85b7-0d0d4b6d3c11	A0001	8055323801041	Zhalt Portable Connect	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	368.03	449	\N	In dismissione	EAN	8055323801041 zhalt portable connect freezanz	2026-08-07 02:17:03.752028+00
-96fff74d-0d7a-48e6-bff6-2d98774c9e0b	A0002	8055323802024	kit garden extension 3 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	138.52	169	\N	In dismissione	EAN	8055323802024 kit garden extension 3 ugelli freezanz	2026-08-07 02:17:03.752028+00
-0b573d4c-7a53-463a-8220-c1cc4ca13374	A0003	8055323802048	kit garden extension 9 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	236.07	288	\N	In dismissione	EAN	8055323802048 kit garden extension 9 ugelli freezanz	2026-08-07 02:17:03.752028+00
-a53b5e23-7fc4-4f7a-9535-3274c7749843	A0004	8055323801119	Zhalt Evolution Connect	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	1228.69	1499	\N	In dismissione	EAN	8055323801119 zhalt evolution connect freezanz	2026-08-07 02:17:03.752028+00
-1b18388e-c8a5-4360-8f93-c37572854d2e	A0005	8055323802208	kit expanding 10 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	222.13	271	\N	In dismissione	EAN	8055323802208 kit expanding 10 ugelli freezanz	2026-08-07 02:17:03.752028+00
-023b0cda-5895-49c8-9851-43c35a48b48a	A0006	8055323803021	Estensore ugello (conf. 3 pz) 30 cm	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	39.26	47.9	\N	In dismissione	EAN	8055323803021 estensore ugello (conf. 3 pz) 30 cm freezanz	2026-08-07 02:17:03.752028+00
-3396d429-b9be-48e7-ae1b-8e27bf6f545c	A0007	8055323803014	Estensore ugello (conf. 3 pz) 40 cm	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	40.9	49.9	\N	In dismissione	EAN	8055323803014 estensore ugello (conf. 3 pz) 40 cm freezanz	2026-08-07 02:17:03.752028+00
-af7e45c3-205c-4bc8-bf05-3f3458dccdfa	A0008	8055323802031	Roccia copertura Zhalt	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	327.05	399	\N	In dismissione	EAN	8055323802031 roccia copertura zhalt freezanz	2026-08-07 02:17:03.752028+00
-ea6de361-a388-42b6-887a-3b789e01da0a	A0009	8055323809016	Tetrapiù (insetticida per Zhalt portable) tanica 5 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	19.59	23.9	\N	Attivo	\N	8055323809016 tetrapiù (insetticida per zhalt portable) tanica 5 lt freezanz	2026-08-07 02:17:03.752028+00
-c5252a0f-39ad-42a3-9b50-e1a7aacdc92b	A0010	8055323804011	Natural Green (repellente per Zhalt Portable) flacone 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	21.23	25.9	\N	Attivo	\N	8055323804011 natural green (repellente per zhalt portable) flacone 1 lt freezanz	2026-08-07 02:17:03.752028+00
-e5f9be90-c8b2-4dde-b6b6-fec3c1c7167b	A0011	8055323809115	Professional PMC (insetticida per Zhalt Evolution) fl. 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	44.75	54.6	\N	Attivo	\N	8055323809115 professional pmc (insetticida per zhalt evolution) fl. 1 lt freezanz	2026-08-07 02:17:03.752028+00
-d83edf72-3d78-42c3-9d7b-bfe4c66e1785	A0012	8055323804059	Natural Green + (repellente per Zhalt Evolution) tan. 5 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	130.33	159	\N	Attivo	\N	8055323804059 natural green + (repellente per zhalt evolution) tan. 5 lt freezanz	2026-08-07 02:17:03.752028+00
-099c2c9b-a17d-40f6-96eb-5d386f5665c9	A0013	8055323804028	Natural Blu fl. 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	25.33	30.9	\N	Attivo	\N	8055323804028 natural blu fl. 1 lt freezanz	2026-08-07 02:17:03.752028+00
-135e238b-35ab-4bbc-90fc-3164083cf070	A0014	8055323810012	Ugello Zhalt Portable	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	7.38	9	\N	Attivo	\N	8055323810012 ugello zhalt portable freezanz	2026-08-07 02:17:03.752028+00
-64dfe3a4-2eaf-4660-948e-b6ec48c16919	A0015	8055323810166	Raccordo T intermedio	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.41	6.6	\N	Attivo	\N	8055323810166 raccordo t intermedio freezanz	2026-08-07 02:17:03.752028+00
-6e6cb524-867b-408a-ae3b-4fced89489c1	A0016	8055323810173	Raccordo L porta ugello	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.44	4.2	\N	Attivo	\N	8055323810173 raccordo l porta ugello freezanz	2026-08-07 02:17:03.752028+00
-118253fe-cd13-44aa-8174-e3825d7745ca	A0017	8055323810203	Tappo a vite	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.46	3	\N	Attivo	\N	8055323810203 tappo a vite freezanz	2026-08-07 02:17:03.752028+00
-b7cf5f59-22b4-47d4-bbb7-03abf6293ec1	A0018	8055323810364	Raccordo metallo uscita	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	7.38	9	\N	Attivo	\N	8055323810364 raccordo metallo uscita freezanz	2026-08-07 02:17:03.752028+00
-73460cfe-39f0-4ab8-a6fe-11d6cebe6620	A0019	F01TU101N	tubazione 1/4 nero 100 mt	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	86.89	106	\N	Attivo	\N	f01tu101n tubazione 1/4 nero 100 mt freezanz	2026-08-07 02:17:03.752028+00
-614651f6-66a0-4ac3-b0a2-72509ece15b6	A0020	F01RA1001	raccordo di giunzione intermedio diritto 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.85	4.7	\N	Attivo	\N	f01ra1001 raccordo di giunzione intermedio diritto 1/4" freezanz	2026-08-07 02:17:03.752028+00
-b59e3f77-792d-4387-be7a-50ecbeecc35a	A0021	F01RA1011	adattatore per ugello diritto 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	\N	f01ra1011 adattatore per ugello diritto 1/4" freezanz	2026-08-07 02:17:03.752028+00
-b4fe47d2-c06d-4109-ba33-b974beb31ef7	A0022	MQ300126	raccordo inizio 1/4" tubo x 1/4" M	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.18	5.1	\N	Attivo	\N	mq300126 raccordo inizio 1/4" tubo x 1/4" m freezanz	2026-08-07 02:17:03.752028+00
-458b28ff-40fe-4eeb-80c0-8ad9ce0a1483	A0023	MQ300109	tappo di fine linea daa 1/4" ad incastro	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	1.89	2.3	\N	Attivo	\N	mq300109 tappo di fine linea daa 1/4" ad incastro freezanz	2026-08-07 02:17:03.752028+00
-c6c4251f-e79b-4531-841a-489fc57f1c03	A0024	MQ400109	valvola di intercettazione da 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.99	15.85	\N	Attivo	\N	mq400109 valvola di intercettazione da 1/4" freezanz	2026-08-07 02:17:03.752028+00
-4e6d2de5-df1c-4d51-9482-bcf602a5dc70	A0025	MQ300110	adattatore per ugello 45° 1/4" x 10/24"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.18	5.1	\N	Attivo	\N	mq300110 adattatore per ugello 45° 1/4" x 10/24" freezanz	2026-08-07 02:17:03.752028+00
-bf302b82-2153-4093-b94c-d899246e816b	A0026	EC080007	tappo esclusione ugello in ottone nichelato 10/24"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	1.31	1.6	\N	Attivo	\N	ec080007 tappo esclusione ugello in ottone nichelato 10/24" freezanz	2026-08-07 02:17:03.752028+00
-cf78cf78-5d7e-4ba9-bdc1-06d25e2c81a7	A0027	MQ300103	raccordo giunzione tubo da 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5	6.1	\N	Attivo	\N	mq300103 raccordo giunzione tubo da 1/4" freezanz	2026-08-07 02:17:03.752028+00
-2807cef1-0da0-48ab-a15f-195455e32f8d	A0028	MQ300105	raccordo curva L 90° 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.27	7.65	\N	Attivo	\N	mq300105 raccordo curva l 90° 1/4" freezanz	2026-08-07 02:17:03.752028+00
-1f309318-e596-40d7-85f2-e65e4391609e	A0029	MQ300139	raccordo tappo fine lineatubo 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.77	4.6	\N	Attivo	\N	mq300139 raccordo tappo fine lineatubo 1/4" freezanz	2026-08-07 02:17:03.752028+00
-6c8558d2-f70a-44b6-a410-be1ddf1850bd	A0030	MQ400114	tubo Mister Mosquito nero 1/4 - 40 bar 50 mt	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	68.85	84	\N	Attivo	\N	mq400114 tubo mister mosquito nero 1/4 - 40 bar 50 mt freezanz	2026-08-07 02:17:03.752028+00
-36ebc0a9-62af-470d-bee9-974352009408	A0031	ZA10	ZA10 con KIT 10 ugelli	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1022.13	1247	\N	Attivo	\N	za10 za10 con kit 10 ugelli zanzero	2026-08-07 02:17:03.752028+00
-affdefb7-ed1d-4d92-b4c3-cf4011e9efde	A0032	ZA18	ZA18 con KIT 20 ugelli	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1235.25	1507	\N	Attivo	\N	za18 za18 con kit 20 ugelli zanzero	2026-08-07 02:17:03.752028+00
-b857ccb1-0f03-4a0e-bb3c-e9e7457bb97c	A0033	ZA18SD.LT	ZA18 con KIT 20 ugelli - 2 PRODOTTI 1 USCITA	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1533.61	1871	\N	Attivo	\N	za18sd.lt za18 con kit 20 ugelli - 2 prodotti 1 uscita zanzero	2026-08-07 02:17:03.752028+00
-8d6a1464-315c-43d8-a417-c3bfbccc3cf9	A0034	ZA18 SD	ZA18 con KIT 40 ugelli - 2 PRODOTTI 2 USCITE	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1704.1	2079	\N	Attivo	\N	za18 sd za18 con kit 40 ugelli - 2 prodotti 2 uscite zanzero	2026-08-07 02:17:03.752028+00
-03f35c34-266a-45f2-8ebe-3c96dd8f1c6c	A0035	ZA10 SLIM	ZA10 SLIM - centralina Smart monoprodotto compatta	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	690	841.8	\N	Attivo	\N	za10 slim za10 slim - centralina smart monoprodotto compatta zanzero	2026-08-07 02:17:03.752028+00
-03444a4b-0276-4b61-88cb-2fe346255f50	A0036	KTZA1005P	KIT estensione 5 spot  T e Portaugelli POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	81.15	99	\N	Attivo	\N	ktza1005p kit estensione 5 spot  t e portaugelli pom zanzero	2026-08-07 02:17:03.752028+00
-07a8f30f-4b95-44cb-8606-a028df60257a	A0037	KTZA1015P	KIT estensione 15 spot  T e Portaugelli POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	234.43	286	\N	Attivo	\N	ktza1015p kit estensione 15 spot  t e portaugelli pom zanzero	2026-08-07 02:17:03.752028+00
-f8a0c39a-ed83-4610-ba50-75b01584a746	A0038	AI14025N	Tubo mandata nero 25 mt.	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	34.43	42	\N	Attivo	\N	ai14025n tubo mandata nero 25 mt. zanzero	2026-08-07 02:17:03.752028+00
-2838349b-b02d-45f2-9a8b-5d989d493a58	A0039	KT040302.5	KIT 5 ugelli 0,15	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt040302.5 kit 5 ugelli 0,15 zanzero	2026-08-07 02:17:03.752028+00
-380f335b-e82a-4bb4-b7f1-3c9d3ca79c84	A0040	KT519014.5	KIT 5 portaugelli 90°	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt519014.5 kit 5 portaugelli 90° zanzero	2026-08-07 02:17:03.752028+00
-55fc51f0-c91e-4fa2-b956-6256cdc900a0	A0041	KT519014P.5	KIT 5 portaugelli 90° POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	12.79	15.6	\N	Attivo	\N	kt519014p.5 kit 5 portaugelli 90° pom zanzero	2026-08-07 02:17:03.752028+00
-07b095da-e743-4106-b393-6c0a54452576	A0042	KT191414.5	KIT 5 raccordi a "T"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt191414.5 kit 5 raccordi a "t" zanzero	2026-08-07 02:17:03.752028+00
-c31260fa-cb3c-4e7a-8f94-51962288914c	A0043	KT191414P.5	KIT 5 raccordi a "T" POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	14.92	18.2	\N	Attivo	\N	kt191414p.5 kit 5 raccordi a "t" pom zanzero	2026-08-07 02:17:03.752028+00
-ebf163b7-1b84-4101-ab84-2d9bb61df252	A0044	KT529014.5	KIT 5 portaugelli dritto 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt529014.5 kit 5 portaugelli dritto 1/4" zanzero	2026-08-07 02:17:03.752028+00
-27f4a281-1057-4ab6-b8c7-c0edd16dcedf	A0045	KT501414.5	KIT 5 portaugelli linea tubo/tubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt501414.5 kit 5 portaugelli linea tubo/tubo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-285cdd9b-4b67-45a8-a943-d28bce69209a	A0046	KT501414P.5	KIT 5 portaugelli linea tubo/tubo 1/4" POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	14.92	18.2	\N	Attivo	\N	kt501414p.5 kit 5 portaugelli linea tubo/tubo 1/4" pom zanzero	2026-08-07 02:17:03.752028+00
-141b1604-6fa2-4e9b-bbae-071e1c5a6a05	A0047	KT514514.5	KIT 5 portaugello a 45° 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	17.21	21	\N	Attivo	\N	kt514514.5 kit 5 portaugello a 45° 1/4" zanzero	2026-08-07 02:17:03.752028+00
-43b21058-270b-4d8e-8b9d-0dc67a67d860	A0048	KT161414.5	KIT 5 manicotto tubo/tubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt161414.5 kit 5 manicotto tubo/tubo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-2a505313-14cb-4cec-8dc3-4dbd58545e60	A0049	KT181414.5	KIT 5 gomito 90° 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt181414.5 kit 5 gomito 90° 1/4" zanzero	2026-08-07 02:17:03.752028+00
-56f6a47c-b94e-4a55-8a6b-0042686533ec	A0050	KT300014.5	KIT 5 tappo fine linea 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	15.41	18.8	\N	Attivo	\N	kt300014.5 kit 5 tappo fine linea 1/4" zanzero	2026-08-07 02:17:03.752028+00
-2c6e9a9e-b3b4-45ec-b02c-0177e25d420d	A0051	KTC900014.25	KIT 25 collare fissatubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	ktc900014.25 kit 25 collare fissatubo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-a23ff8cc-45ef-4eb9-912a-3c892a8322ba	A0052	KT900014	Kit Filtro Completo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	57.38	70	\N	Attivo	\N	kt900014 kit filtro completo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-d1dc49bf-7dd4-4433-9703-c4dcd9b0ccf9	A0053	AC99TTR2.20	Tagliatubo	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	7.3	8.9	\N	Attivo	\N	ac99ttr2.20 tagliatubo zanzero	2026-08-07 02:17:03.752028+00
-762fe78e-4350-4d4b-904b-bf55ab53057b	A0054	AC300010	Sonda di livello  (serbatoio già incluso nella centralina)	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	34.02	41.5	\N	Attivo	\N	ac300010 sonda di livello  (serbatoio già incluso nella centralina) zanzero	2026-08-07 02:17:03.752028+00
-89a5f88c-0fc6-45ab-a6b4-701c3e79f977	A0055	ZA100	ZA100 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	959.02	1170	\N	Attivo	Tipo BASIC; max 35 ugelli	za100 za100 - centralina basic zanzero	2026-08-07 02:17:03.752028+00
-2acb3845-e33f-4694-90dd-f0c46a36ea02	A0056	ZA150	ZA150 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1000	1220	\N	Attivo	Tipo BASIC; max 50 ugelli	za150 za150 - centralina basic zanzero	2026-08-07 02:17:03.752028+00
-870227a2-870f-4e7e-961f-86ee547f114d	A0057	ZA200	ZA200 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1040.98	1270	\N	Attivo	Tipo BASIC; max 70 ugelli	za200 za200 - centralina basic zanzero	2026-08-07 02:17:03.752028+00
-0f7e15eb-a439-4b97-803a-7100f338d6af	A0058	ZA350	ZA350 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1131.15	1380	\N	Attivo	Tipo BASIC; max 120 ugelli	za350 za350 - centralina basic zanzero	2026-08-07 02:17:03.752028+00
-6726c8cd-5868-4b4f-b356-6c59cfec8992	A0059	ZA100WIFI	ZA100WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1147.54	1400	\N	Attivo	Tipo ADVANCE; max 35 ugelli	za100wifi za100wifi - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-79b3fd56-f4b4-4aee-92ee-0f755f5a1631	A0060	ZA150WIFI	ZA150WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1188.52	1450	\N	Attivo	Tipo ADVANCE; max 50 ugelli	za150wifi za150wifi - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-a78fd8d3-dd8e-47dc-9ba6-5c2bb4c7d21e	A0061	ZA200WIFI	ZA200WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1229.51	1500	\N	Attivo	Tipo ADVANCE; max 70 ugelli	za200wifi za200wifi - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-5902ec50-ca67-435a-a2ee-460623d5bdf3	A0062	ZA350WIFI	ZA350WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1311.48	1600	\N	Attivo	Tipo ADVANCE; max 120 ugelli	za350wifi za350wifi - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-1cf858a0-089a-4f7f-8479-8e6b76647bf1	A0063	ZA100DUAL	ZA100DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1475.41	1800	\N	Attivo	Tipo ADVANCE; max 35 ugelli	za100dual za100dual - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-51d1986b-fcfb-4ce3-9d92-45afcc745039	A0064	ZA150DUAL	ZA150DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1557.38	1900	\N	Attivo	Tipo ADVANCE; max 50 ugelli	za150dual za150dual - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-30b72876-fe07-49c3-b8f2-5e4f9fbb3e64	A0065	ZA200DUAL	ZA200DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1639.34	2000	\N	Attivo	Tipo ADVANCE; max 70 ugelli	za200dual za200dual - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-3a2712c5-4d53-487d-a516-f6454d534bd8	A0144	VPPM1000	VAPO PERM PLUS Insetticida - 1 lt	ZANZERO	Professional	Consumabile	\N	pz	40.98	50	\N	Attivo	\N	vppm1000 vapo perm plus insetticida - 1 lt zanzero	2026-08-07 02:17:03.752028+00
-0a58f23f-edfd-41ec-acfe-fc5fbf76464b	A0066	ZA350DUAL	ZA350DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1721.31	2100	\N	Attivo	Tipo ADVANCE; max 120 ugelli	za350dual za350dual - centralina advance zanzero	2026-08-07 02:17:03.752028+00
-90e0eb9f-8654-41c2-a042-582cd82df482	A0067	ZA150P.DUAL.PLUS	ZA150 Premium 2 Linee (con sonde livello)	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	2250	2745	\N	Attivo	Tipo PREMIUM; max 50 ugelli	za150p.dual.plus za150 premium 2 linee (con sonde livello) zanzero	2026-08-07 02:17:03.752028+00
-722994a8-d7ef-422e-97c1-ddd511e0e4ec	A0068	AC300010	SONDA LIVELLO PRODOTTO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	39.9	48.68	\N	Attivo	OPTIONAL PER CENTRALINE	ac300010 sonda livello prodotto zanzero	2026-08-07 02:17:03.752028+00
-afe53d54-a57b-425a-a45d-05b495a85725	A0069	AC300020	SENSORE PIOGGIA	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	43.6	53.19	\N	Attivo	OPTIONAL PER CENTRALINE	ac300020 sensore pioggia zanzero	2026-08-07 02:17:03.752028+00
-fd7d5edd-e008-4b9a-9478-9d5f1fae95e6	A0070	AC300030	SENSORE VENTO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	120	146.4	\N	Attivo	OPTIONAL PER CENTRALINE	ac300030 sensore vento zanzero	2026-08-07 02:17:03.752028+00
-2121b44f-42bd-4af9-b48c-b96e1dcfb97c	A0071	AC200002	SERBATOIO 2 LT * necessario per sonda livello AC300010	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.5	6.71	\N	Attivo	OPTIONAL PER CENTRALINE	ac200002 serbatoio 2 lt * necessario per sonda livello ac300010 zanzero	2026-08-07 02:17:03.752028+00
-5f108415-b1bf-4399-8b09-dc0a491b215f	A0072	AC200005	SERBATOIO 5 LT	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.2	6.34	\N	Attivo	OPTIONAL PER CENTRALINE	ac200005 serbatoio 5 lt zanzero	2026-08-07 02:17:03.752028+00
-5ba9c5de-03d2-4b06-8752-6ee25d890e31	A0073	AC400012	CAVALLETTO DI SUPPORTO  MONOPRODOTTO per ZA20	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	53.33	65.06	\N	Attivo	OPTIONAL PER CENTRALINE	ac400012 cavalletto di supporto  monoprodotto per za20 zanzero	2026-08-07 02:17:03.752028+00
-dedf36b0-d795-49bb-88bb-c6677523c113	A0074	AC400011	CAVALLETTO DI SUPPORTO  MONOPRODOTTO da ZA100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	66.7	81.37	\N	Attivo	OPTIONAL PER CENTRALINE	ac400011 cavalletto di supporto  monoprodotto da za100 zanzero	2026-08-07 02:17:03.752028+00
-9ae6e9fe-eb6d-411e-9d86-7f5af9928a1b	A0075	AC400022	CAVALLETTO DI SUPPORTO DUAL E MULTIZONA	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	82	100.04	\N	Attivo	OPTIONAL PER CENTRALINE	ac400022 cavalletto di supporto dual e multizona zanzero	2026-08-07 02:17:03.752028+00
-0a3363f8-5a7c-4334-ae7d-7dd1b1921547	A0076	AI040303	UGELLO ANTIGOCCIA 0.4	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.3	6.47	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai040303 ugello antigoccia 0.4 zanzero	2026-08-07 02:17:03.752028+00
-a3889a68-8ea8-444c-a084-92c42c707ea1	A0077	AI040302	UGELLO STANDARD	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.1	6.22	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai040302 ugello standard zanzero	2026-08-07 02:17:03.752028+00
-df853da5-688d-4160-b924-04f497b12cdb	A0078	AI191414	RACCORDO "T"  1/4"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.75	7.01	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai191414 raccordo "t"  1/4" zanzero	2026-08-07 02:17:03.752028+00
-bd369262-392b-4116-860d-fb2abe54b2d8	A0079	AI193838	RACCORDO "T"  3/8"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	10.5	12.81	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai193838 raccordo "t"  3/8" zanzero	2026-08-07 02:17:03.752028+00
-bf37280d-80fb-44ae-8e04-6a9ba04f26e6	A0080	AI519014	PORTAUGELLO 1/4" A 90°	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.3	5.25	\N	Attivo	Raccordi portaugello su tubo:	ai519014 portaugello 1/4" a 90° zanzero	2026-08-07 02:17:03.752028+00
-1b589eb5-8ee3-4909-bcfc-3355de4a90b3	A0081	AI529014	PORTAUGELLO 1/4" DRITTO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	Raccordi portaugello su tubo:	ai529014 portaugello 1/4" dritto zanzero	2026-08-07 02:17:03.752028+00
-b125a35d-6a7a-4ca0-844c-8574268f7cec	A0082	AI501414	PORTAUGELLO LINEA TUBO/TUBO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.6	6.83	\N	Attivo	Raccordi portaugello su tubo:	ai501414 portaugello linea tubo/tubo zanzero	2026-08-07 02:17:03.752028+00
-3cfbf0ae-52d5-4d6d-a217-7f011cb66bf0	A0083	AI510514	PORTAUGELLO PIEGHEVOLE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.78	5.83	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ai510514 portaugello pieghevole 1/4" zanzero	2026-08-07 02:17:03.752028+00
-3bf9c686-ef98-4a62-86b8-1d82da499626	A0084	AI510314	PORTAUGELLO A 3 VIE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.3	7.69	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ai510314 portaugello a 3 vie zanzero	2026-08-07 02:17:03.752028+00
-4ef553a5-b4ab-467f-94cf-1aaf55190f8d	A0085	AC100015	PROLUNGA PIEGHEVOLE PER UGELLO cm. 15	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.3	6.47	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100015 prolunga pieghevole per ugello cm. 15 zanzero	2026-08-07 02:17:03.752028+00
-2f1db297-ae11-457c-8e81-435bde835a8a	A0086	AC100025	PROLUNGA PIEGHEVOLE PER UGELLO cm. 25	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100025 prolunga pieghevole per ugello cm. 25 zanzero	2026-08-07 02:17:03.752028+00
-b62a7eae-6e6c-48b7-8126-7f44c01bd2cd	A0087	AC100040	PROLUNGA PIEGHEVOLE PER UGELLO cm. 40	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	9	10.98	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100040 prolunga pieghevole per ugello cm. 40 zanzero	2026-08-07 02:17:03.752028+00
-0712a54a-92f7-4455-aea4-bcef7b4e94d8	A0088	AI510014	PORTAUGELLO DIRITTO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	Raccordi portaugello a innesto:	ai510014 portaugello diritto 1/4" zanzero	2026-08-07 02:17:03.752028+00
-f66d7a2f-6ab6-4ea8-9e6f-bf9288383414	A0089	AI514514	PORTAUGELLO A 45°	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.91	3.55	\N	Attivo	Raccordi portaugello a innesto:	ai514514 portaugello a 45° zanzero	2026-08-07 02:17:03.752028+00
-89f0b334-f5ef-4e63-a596-5e443de21525	A0090	AI161414	MANICOTTO TUBO/TUBO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	Raccordi portaugello a innesto:	ai161414 manicotto tubo/tubo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-89dbe368-7399-44a0-bf54-de1a3d7b2fad	A0091	AI163838	MANICOTTO TUBO/TUBO 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai163838 manicotto tubo/tubo 3/8" zanzero	2026-08-07 02:17:03.752028+00
-5a2884cd-9e8b-4ed9-9439-2979fd019486	A0092	AI161438	MANICOTTO RIDUZIONE 3/8"-1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai161438 manicotto riduzione 3/8"-1/4" zanzero	2026-08-07 02:17:03.752028+00
-7ddc5054-0f01-4178-a46d-944f498bde70	A0093	AI181414	GOMITO 90° 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.7	5.73	\N	Attivo	Raccordi portaugello a innesto:	ai181414 gomito 90° 1/4" zanzero	2026-08-07 02:17:03.752028+00
-49415f21-a7ee-4312-9e27-a85867ca475f	A0094	AI183838	GOMITO 90° 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	14.2	17.32	\N	Attivo	Raccordi portaugello a innesto:	ai183838 gomito 90° 3/8" zanzero	2026-08-07 02:17:03.752028+00
-ccf29489-33d9-42d3-a60b-5d15573c0d75	A0095	AI360014	CROCE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	11.15	13.6	\N	Attivo	Raccordi portaugello a innesto:	ai360014 croce 1/4" zanzero	2026-08-07 02:17:03.752028+00
-49b20363-0590-4545-8ac7-f48b58f22ad2	A0096	AI360038	CROCE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	14	17.08	\N	Attivo	Raccordi portaugello a innesto:	ai360038 croce 3/8" zanzero	2026-08-07 02:17:03.752028+00
-28122f16-7934-464b-8d7c-cf531962d5f5	A0097	AI251438	RIDUZIONE INNESTO 3/8"-1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	8.2	10	\N	Attivo	Raccordi portaugello a innesto:	ai251438 riduzione innesto 3/8"-1/4" zanzero	2026-08-07 02:17:03.752028+00
-bc3aed24-03eb-4aa6-8c0a-4d4ac80af4ee	A0098	AI300014	TAPPO FINE LINEA 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	Raccordi portaugello a innesto:	ai300014 tappo fine linea 1/4" zanzero	2026-08-07 02:17:03.752028+00
-1acb9b8c-58a5-4c79-8517-31931737eaa1	A0099	AI300038	TAPPO FINE LINEA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai300038 tappo fine linea 3/8" zanzero	2026-08-07 02:17:03.752028+00
-cc1c0627-23de-4e11-9976-31562e7cbdf3	A0100	AI14100N	TUBO MANDATA 1/4" - NERO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100n tubo mandata 1/4" - nero zanzero	2026-08-07 02:17:03.752028+00
-f15c4acd-e6c8-4a06-b185-9b105648c3d4	A0101	AI14100V	TUBO MANDATA 1/4" - VERDE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100v tubo mandata 1/4" - verde zanzero	2026-08-07 02:17:03.752028+00
-778812e0-3b37-4954-8f84-a04681926451	A0102	AI14100G	TUBO MANDATA 1/4" - GRIGIO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100g tubo mandata 1/4" - grigio zanzero	2026-08-07 02:17:03.752028+00
-d4bc1a78-4edd-4ae6-b310-4004b4763220	A0103	AI14100M	TUBO MANDATA 1/4" - MARRONE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100m tubo mandata 1/4" - marrone zanzero	2026-08-07 02:17:03.752028+00
-887d83a2-ec21-4cb8-a4d9-326d147beb6b	A0104	AI14100B	TUBO MANDATA 1/4" - BIANCO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100b tubo mandata 1/4" - bianco zanzero	2026-08-07 02:17:03.752028+00
-f2b2678a-b56e-4a4f-ad30-bfeaa7036076	A0105	AI38100N	TUBO MANDATA 3/8" NERO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	3.95	4.82	\N	Attivo	TUBAZIONI	ai38100n tubo mandata 3/8" nero zanzero	2026-08-07 02:17:03.752028+00
-7ef4c111-83b9-4055-9d38-6d881593018d	A0106	AI38100T	TUBO ASPIRAZIONE ACQUA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	2.9	3.54	\N	Attivo	TUBAZIONI	ai38100t tubo aspirazione acqua 3/8" zanzero	2026-08-07 02:17:03.752028+00
-3c0d8789-0a82-4db1-b42f-3f40ed6215b8	A0107	RC333838	RACCORDO ACQUA FIL./INN. 3/8" CON VALV. NON RITORNO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	27	32.94	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	rc333838 raccordo acqua fil./inn. 3/8" con valv. non ritorno zanzero	2026-08-07 02:17:03.752028+00
-bf3f30f5-795d-40f6-8428-fe2a81731ae6	A0108	AI401438	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 1/4'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai401438 raccordo alimentazione acqua inn./fil. 1/4'- 3/8' zanzero	2026-08-07 02:17:03.752028+00
-b0813589-57dd-4f73-bc2c-1a069ab47f88	A0109	AI403838	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 3/8'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai403838 raccordo alimentazione acqua inn./fil. 3/8'- 3/8' zanzero	2026-08-07 02:17:03.752028+00
-32b0a422-98ab-46b2-8f76-5e5894394a29	A0110	AI403812	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 1/2'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	13.5	16.47	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai403812 raccordo alimentazione acqua inn./fil. 1/2'- 3/8' zanzero	2026-08-07 02:17:03.752028+00
-ec98ede9-318c-436b-a993-afc80b3fe161	A0111	KT800038	KIT ATTACCO RAPIDO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	22	26.84	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	kt800038 kit attacco rapido zanzero	2026-08-07 02:17:03.752028+00
-216fb5ee-611c-4b48-b48e-4f7ad156096a	A0112	AI700014	RIDUTTORE DI PRESSIONE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	36	43.92	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai700014 riduttore di pressione 1/4" zanzero	2026-08-07 02:17:03.752028+00
-e64d4bf7-0d59-47a1-a1b4-96224e4faa22	A0113	AI700038	RIDUTTORE DI PRESSIONE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	36	43.92	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai700038 riduttore di pressione 3/8" zanzero	2026-08-07 02:17:03.752028+00
-9f60daf9-8f1d-4a5b-98f0-f60a780934f5	A0114	AI303838	RUBINETTO A SFERA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	8.3	10.13	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai303838 rubinetto a sfera 3/8" zanzero	2026-08-07 02:17:03.752028+00
-8f4a86a4-cf4b-445b-8914-bed3573f111a	A0115	KT900014	KIT FILTRO COMPLETO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	67	81.74	\N	Attivo	FILTRAZIONE ACQUA	kt900014 kit filtro completo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-f3aa6908-ac8f-4900-872d-06e9727a7cfd	A0116	KT900038	KIT FILTRO COMPLETO 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	53	64.66	\N	Attivo	FILTRAZIONE ACQUA	kt900038 kit filtro completo 3/8" zanzero	2026-08-07 02:17:03.752028+00
-467d72d2-24c1-4469-a05b-3efd11ba49a3	A0117	KT901114	KIT CASSETTA FILTRO ASPIRAZIONE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	185	225.7	\N	Attivo	FILTRAZIONE ACQUA	kt901114 kit cassetta filtro aspirazione 1/4" zanzero	2026-08-07 02:17:03.752028+00
-6c1cd0e3-c81a-46b0-97b5-a3d21436cc16	A0118	KT901138	KIT CASSETTA FILTRO ASPIRAZIONE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	175	213.5	\N	Attivo	FILTRAZIONE ACQUA	kt901138 kit cassetta filtro aspirazione 3/8" zanzero	2026-08-07 02:17:03.752028+00
-436f6fa2-3e48-4417-991e-f6e9402c66b5	A0119	RC900001	CARTUCCIA FILO PER FILTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	FILTRAZIONE ACQUA	rc900001 cartuccia filo per filtro zanzero	2026-08-07 02:17:03.752028+00
-476f452d-c097-43ec-9475-4668367ee698	A0120	RC900002	CONTENITORE FILTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	20.46	24.96	\N	Attivo	FILTRAZIONE ACQUA	rc900002 contenitore filtro zanzero	2026-08-07 02:17:03.752028+00
-82a9b0a5-c1fb-46b3-bfb7-b4ddba837210	A0121	AC99TTR2.20	TAGLIATUBO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	8.8	10.74	\N	Attivo	ACCESSORI	ac99ttr2.20 tagliatubo zanzero	2026-08-07 02:17:03.752028+00
-585d9a5d-bd4b-439a-94aa-ea988b7693c1	A0122	KT905000	CASSETTA MANUTENZIONE (77 PEZZI)	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	400	488	\N	Attivo	ACCESSORI	kt905000 cassetta manutenzione (77 pezzi) zanzero	2026-08-07 02:17:03.752028+00
-69be38ea-8934-4be3-a4e7-f9a4af0206ca	A0123	AC101005	TUBOLARE INOX cm. 50	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	ACCESSORI	ac101005 tubolare inox cm. 50 zanzero	2026-08-07 02:17:03.752028+00
-d3a47a9b-1ad0-4c8b-a7aa-d149bf0c5b1d	A0124	AC101010	TUBOLARE INOX cm. 100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	18.9	23.06	\N	Attivo	ACCESSORI	ac101010 tubolare inox cm. 100 zanzero	2026-08-07 02:17:03.752028+00
-766bda47-a0e1-457e-8506-ed859d49f19a	A0125	AC101015	TUBOLARE INOX cm. 150	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	23.4	28.55	\N	Attivo	ACCESSORI	ac101015 tubolare inox cm. 150 zanzero	2026-08-07 02:17:03.752028+00
-1a7dd4c8-670e-42c4-b22c-ded9691d9a39	A0126	AC101109	TUBOLARE PVC TIPO BAMBU cm. 50	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	4.32	5.27	\N	Attivo	ACCESSORI	ac101109 tubolare pvc tipo bambu cm. 50 zanzero	2026-08-07 02:17:03.752028+00
-796f034f-a4f7-4683-9cc4-3d2c2be48d43	A0127	AC101110	TUBOLARE PVC TIPO BAMBU cm. 100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	3.12	3.81	\N	Attivo	ACCESSORI	ac101110 tubolare pvc tipo bambu cm. 100 zanzero	2026-08-07 02:17:03.752028+00
-ecbec4c3-35d2-4ff9-b60f-df2738c6b2a9	A0128	AC900114	PICCHETTO FISSAGGIO TUBO A TERRA MARRONE	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	0.3	0.37	\N	Attivo	ACCESSORI	ac900114 picchetto fissaggio tubo a terra marrone zanzero	2026-08-07 02:17:03.752028+00
-9905207a-f799-4449-8119-38c857ba1404	A0129	AC900014	COLLARE FISSATUBO 1/4"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	1.4	1.71	\N	Attivo	ACCESSORI	ac900014 collare fissatubo 1/4" zanzero	2026-08-07 02:17:03.752028+00
-80a273b4-b248-4c13-bcbc-c18750e94d8b	A0130	AC900038	COLLARE FISSATUBO 3/8"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	1.4	1.71	\N	Attivo	ACCESSORI	ac900038 collare fissatubo 3/8" zanzero	2026-08-07 02:17:03.752028+00
-61fa3919-9d41-4aa8-8044-89c5ed7aa765	A0131	AI14100N-N	TUBO MANDATA 1/4" NERO NEUTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100n-n tubo mandata 1/4" nero neutro zanzero	2026-08-07 02:17:03.752028+00
-08438aed-142e-4ae7-a6e7-90b197c50b7c	A0132	AC101111	SOVRAPPREZZO FORO TUBOLARE PVC	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	0.93	1.13	\N	Attivo	ACCESSORI	ac101111 sovrapprezzo foro tubolare pvc zanzero	2026-08-07 02:17:03.752028+00
-7fac2a6d-2bf1-4452-af87-80b227069c39	A0133	A0133	VAPO CIPER - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	32.79	40	\N	Attivo	\N	a0133 vapo ciper - confezione da 1 lt zanzero	2026-08-07 02:17:03.752028+00
-8966f956-fad3-4e2f-96f6-0443204c529b	A0134	A0134	VAPO CIPER - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	143.44	175	\N	Attivo	\N	a0134 vapo ciper - confezione da 5 lt zanzero	2026-08-07 02:17:03.752028+00
-492759e3-062a-4aef-9b5a-8c6dc783834a	A0135	A0135	VAPO CIPER - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	271.31	331	\N	Attivo	\N	a0135 vapo ciper - confezione da 10 lt zanzero	2026-08-07 02:17:03.752028+00
-6311f721-2e55-47f8-be12-254c92ec02cd	A0136	A0136	VAPO PERM PLUS TRI ACTIVE - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	59.02	72	\N	Attivo	\N	a0136 vapo perm plus tri active - confezione da 1 lt zanzero	2026-08-07 02:17:03.752028+00
-1bb915c7-7800-4078-8293-79a2e927b3eb	A0137	A0137	VAPO PERM PLUS TRI ACTIVE - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	277.87	339	\N	Attivo	\N	a0137 vapo perm plus tri active - confezione da 5 lt zanzero	2026-08-07 02:17:03.752028+00
-2a8fc84b-2026-429e-a7a2-daac845a7656	A0138	A0138	VAPO PERM PLUS TRI ACTIVE - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	540.16	659	\N	Attivo	\N	a0138 vapo perm plus tri active - confezione da 10 lt zanzero	2026-08-07 02:17:03.752028+00
-11dc7b2e-5202-4268-94c9-f32a7ddcc0f5	A0139	A0139	VAPO SILVE SHIELD - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	46.72	57	\N	Attivo	\N	a0139 vapo silve shield - confezione da 1 lt zanzero	2026-08-07 02:17:03.752028+00
-a6f45c02-4029-4e0c-8ca9-2e3395ae2c8b	A0140	A0140	VAPO SILVE SHIELD - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	227.05	277	\N	Attivo	\N	a0140 vapo silve shield - confezione da 5 lt zanzero	2026-08-07 02:17:03.752028+00
-d9f79a06-a83c-41f9-b534-39303279bedf	A0141	A0141	VAPO NATURE - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	46.72	57	\N	Attivo	\N	a0141 vapo nature - confezione da 1 lt zanzero	2026-08-07 02:17:03.752028+00
-003be833-696a-41d7-a1f6-9de21cfa9487	A0142	A0142	VAPO NATURE - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	227.05	277	\N	Attivo	\N	a0142 vapo nature - confezione da 5 lt zanzero	2026-08-07 02:17:03.752028+00
-4441cb70-8ab2-4a6c-afe4-ff2bbab1b0f6	A0143	A0143	VAPO NATURE - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	442.62	540	\N	Attivo	\N	a0143 vapo nature - confezione da 10 lt zanzero	2026-08-07 02:17:03.752028+00
-cecbdac7-b01a-401c-92dd-4548dc990c01	A0145	VPPM5000	VAPO PERM PLUS Insetticida - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	194.26	237	\N	Attivo	\N	vppm5000 vapo perm plus insetticida - 5 lt zanzero	2026-08-07 02:17:03.752028+00
-afa779b0-bbb6-4cbb-b693-71341c00c0e4	A0146	VPSS10TR	VAPO SILVER SHIELD Tea Tree/Rosmarino Disabituante - 1 lt	ZANZERO	Professional	Consumabile	\N	pz	32.79	40	\N	Attivo	\N	vpss10tr vapo silver shield tea tree/rosmarino disabituante - 1 lt zanzero	2026-08-07 02:17:03.752028+00
-9338e27d-147c-4db0-ac99-94b1d11e4505	A0147	VPSS05LC	VAPO SILVER SHIELD Limone/Cedro Disabituante - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	155.44	189.64	\N	Attivo	\N	vpss05lc vapo silver shield limone/cedro disabituante - 5 lt zanzero	2026-08-07 02:17:03.752028+00
-6588b8b5-27a3-4b0b-a2b7-2ee1f1c83ebb	A0148	VPNA5000	VAPO NATURE Disabituante Naturale Rosmarino - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	159.32	194.37	\N	Attivo	\N	vpna5000 vapo nature disabituante naturale rosmarino - 5 lt zanzero	2026-08-07 02:17:03.752028+00
-ce4121c5-e8c7-4013-9208-82d46aa091aa	A0149	446	Geyser Pro Dual	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	1456.56	1777	1066.2	Attivo	NEBULIZZATORE ELETTRICO	446 geyser pro dual stocker	2026-08-07 02:17:03.752028+00
-38e02c18-e316-452f-9c57-9030cff54352	A0150	415	Geyser Pro	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	1331.97	1625	975	Attivo	NEBULIZZATORE ELETTRICO	415 geyser pro stocker	2026-08-07 02:17:03.752028+00
-5a213256-76a0-447d-b622-2185d3947fe6	A0151	436	Geyser Pro Lite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	963.93	1176	705.6	Attivo	NEBULIZZATORE ELETTRICO	436 geyser pro lite stocker	2026-08-07 02:17:03.752028+00
-8308c993-3e4b-459d-8758-ed69b5550714	A0152	327	Alimentatore Geyser AC 220 V - DC 21 V	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	105.74	129	77.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	327 alimentatore geyser ac 220 v - dc 21 v stocker	2026-08-07 02:17:03.752028+00
-da9a5e55-87c5-4c9c-b83a-c393780ebedc	A0153	4262	Staffa montante a L per Geyser 2 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	36.23	44.2	26.52	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4262 staffa montante a l per geyser 2 pz stocker	2026-08-07 02:17:03.752028+00
-2e5988dc-4daf-4f5b-b3f5-9fcfdd6767c8	A0154	439	Geyser Nebulizzatore verde E-25 MI 21 V 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	242.62	296	177.6	Attivo	NEBULIZZATORE ELETTRICO	439 geyser nebulizzatore verde e-25 mi 21 v 5 bar stocker	2026-08-07 02:17:03.752028+00
-5e1ec71e-5844-4ab3-85f1-f882a667d4e7	A0155	443	Cappuccio protettivo per Geyser 25 L per Art. 414, 432, 439	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	8.69	10.6	6.36	Attivo	NEBULIZZATORE ELETTRICO	443 cappuccio protettivo per geyser 25 l per art. 414, 432, 439 stocker	2026-08-07 02:17:03.752028+00
-24d9c191-574a-4ed4-9903-3019e4fddfaf	A0156	438	Geyser Nebulizzatore verde 12 L Li-Ion 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	222.13	271	162.6	Attivo	NEBULIZZATORE ELETTRICO	438 geyser nebulizzatore verde 12 l li-ion 5 bar stocker	2026-08-07 02:17:03.752028+00
-0c85439b-4cf2-4914-ac66-fb30392d4750	A0157	442	Cappuccio protettivo per Geyser 12 L per Art. 411, 438	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	7.99	9.75	5.85	Attivo	NEBULIZZATORE ELETTRICO	442 cappuccio protettivo per geyser 12 l per art. 411, 438 stocker	2026-08-07 02:17:03.752028+00
-0fec353a-6de8-4d07-a261-fa8b2e6ca83c	A0158	437	Geyser Nebulizzatore verde 4 L Li-Ion 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	161.89	197.5	118.5	Attivo	NEBULIZZATORE ELETTRICO	437 geyser nebulizzatore verde 4 l li-ion 5 bar stocker	2026-08-07 02:17:03.752028+00
-b243730d-f512-4370-bd39-85cfc2c41f92	A0159	441	Cappuccio protettivo per Geyser 4 L per Art. 410, 437	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	7.34	8.95	5.37	Attivo	NEBULIZZATORE ELETTRICO	441 cappuccio protettivo per geyser 4 l per art. 410, 437 stocker	2026-08-07 02:17:03.752028+00
-308816c9-6606-42c6-beb4-3a73c82a64d9	A0160	440	Geyser Nebulizzatore Portatile verde 2 L Li-Ion 2,5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	34.59	42.2	25.32	Attivo	NEBULIZZATORE ELETTRICO	440 geyser nebulizzatore portatile verde 2 l li-ion 2,5 bar stocker	2026-08-07 02:17:03.752028+00
-d3f60750-aea8-40c4-8975-60e7fd4c925e	A0161	4201	Kit Geyser Nebulizzatore Mini 2 L con Florifens 100 ml - PAESI DI VENDITA: IT	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	32.99	40.25	24.15	Attivo	NEBULIZZATORE ELETTRICO	4201 kit geyser nebulizzatore mini 2 l con florifens 100 ml - paesi di vendita: it stocker	2026-08-07 02:17:03.752028+00
-8de0975f-4e25-4b4b-9c74-8d17ca08e25e	A0162	4249	Kit Geyser Nebulizzatore Portatile verde 2 L con Nebuzan DE/AT/FR 200 ml, 10 m di tubo, 3 ugelli, 3 raccordi a T, 1 tappo, 5 fermatubo - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	56.8	69.3	41.58	Attivo	NEBULIZZATORE ELETTRICO	4249 kit geyser nebulizzatore portatile verde 2 l con nebuzan de/at/fr 200 ml, 10 m di tubo, 3 ugelli, 3 raccordi a t, 1 tappo, 5 fermatubo - paesi di vendita: fr - at - de stocker	2026-08-07 02:17:03.752028+00
-2a6e3bdf-772a-48dc-b015-ea290e4cb59c	A0163	4440	Kit Geyser Nebulizzatore Portatile verde 2 L con Florifens IT 100 ml, 10 m di tubo, 3 ugelli, 3 raccordi a T, 2 tappi, 5 fermatubo - PAESI DI VENDITA: IT	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	55.25	67.4	40.44	Attivo	NEBULIZZATORE ELETTRICO	4440 kit geyser nebulizzatore portatile verde 2 l con florifens it 100 ml, 10 m di tubo, 3 ugelli, 3 raccordi a t, 2 tappi, 5 fermatubo - paesi di vendita: it stocker	2026-08-07 02:17:03.752028+00
-d1691244-87e3-4199-b70d-3161435fd900	A0164	409	Geyser Nebulizzatore Mini 2 L per piccioni 2,5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	32.99	40.25	24.15	Attivo	NEBULIZZATORE ELETTRICO	409 geyser nebulizzatore mini 2 l per piccioni 2,5 bar stocker	2026-08-07 02:17:03.752028+00
-bcc134d8-02cc-4603-80ad-8433c35e4788	A0165	4264	Kit Geyser Pro 100 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	140.98	172	103.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4264 kit geyser pro 100 m ø 6-8 mm stocker	2026-08-07 02:17:03.752028+00
-18306c95-502d-4d4a-8c70-5df6aa0acd57	A0166	4265	Kit Geyser Pro 150 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	184.43	225	135	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4265 kit geyser pro 150 m ø 6-8 mm stocker	2026-08-07 02:17:03.752028+00
-25f1ffab-ac0f-47aa-a6d1-6b3a06f4d9a8	A0167	4266	Kit Geyser Pro 240 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	300.82	367	220.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4266 kit geyser pro 240 m ø 6-8 mm stocker	2026-08-07 02:17:03.752028+00
-81a20fc2-3d05-49e7-b22f-d93097cff999	A0168	4212	KIT BALCONE GEYSER 10 m ø 6 mm 10 m tubo, 3 ugelli, 3 raccordi T, 1 tappo, 5 fermatubo, 6 chiodi di fissggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	13.85	16.9	10.14	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4212 kit balcone geyser 10 m ø 6 mm 10 m tubo, 3 ugelli, 3 raccordi t, 1 tappo, 5 fermatubo, 6 chiodi di fissggio stocker	2026-08-07 02:17:03.752028+00
-553d0283-0f8a-404d-9d1c-5742cd27a527	A0169	4211	KIT GEYSER 25 m  ø 6 mm 25 m di tubo, 10 ugelli, 10 raccordi a T, 3 tappi di chiusura, 5 fermatubo, 10 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	33.36	40.7	24.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4211 kit geyser 25 m  ø 6 mm 25 m di tubo, 10 ugelli, 10 raccordi a t, 3 tappi di chiusura, 5 fermatubo, 10 chiodi di fissaggio stocker	2026-08-07 02:17:03.752028+00
-9488c811-32d4-4f20-af7c-1e077018ea4e	A0170	4210	KIT GEYSER 100 m ø 6 mm 100 m di tubo, 40 ugelli, 40 raccordi a T, 5 raccordi a L, 5 raccordi dritti, 5 tappi di chiusura, 85 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	127.05	155	93	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4210 kit geyser 100 m ø 6 mm 100 m di tubo, 40 ugelli, 40 raccordi a t, 5 raccordi a l, 5 raccordi dritti, 5 tappi di chiusura, 85 chiodi di fissaggio stocker	2026-08-07 02:17:03.752028+00
-fb57a807-bdbc-46e3-80cd-093d1782f5ac	A0171	4219	Ugelli  anti-gocciolamento sfusi  Ø 6 mm per Geyser 50 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	2.75	3.35	2.01	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4219 ugelli  anti-gocciolamento sfusi  ø 6 mm per geyser 50 pz. stocker	2026-08-07 02:17:03.752028+00
-48445585-a692-400a-ab8f-c648023c0322	A0172	4253	Ugelli anti-gocciolamento sfusi 135° Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.75	5.8	3.48	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4253 ugelli anti-gocciolamento sfusi 135° ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-797d8299-0ef8-4ed6-8183-e7f95105c1bf	A0173	4203	Set ugelli e tappi di chiusura Ø 6 mm per Geyser 5 pz e 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	12.87	15.7	9.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4203 set ugelli e tappi di chiusura ø 6 mm per geyser 5 pz e 5 pz stocker	2026-08-07 02:17:03.752028+00
-83729fce-f43d-408b-806c-028b1bfdeb7c	A0174	4215	Tappi di chiusura Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	3.65	4.45	2.67	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4215 tappi di chiusura ø 6 mm per geyser 5 pz stocker	2026-08-07 02:17:03.752028+00
-f2eaba06-54b5-439d-8823-fc74df0455ee	A0175	4208	Raccordo a T Ø 6 mm per Geyser 5 pz, con 10 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4208 raccordo a t ø 6 mm per geyser 5 pz, con 10 chiodi di fissaggio stocker	2026-08-07 02:17:03.752028+00
-3eab54b7-1d32-436a-b4e5-a8e61e7af107	A0176	4222	Raccordo a T sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.86	1.05	0.63	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4222 raccordo a t sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-cb892d7d-550b-4207-85eb-fe728d5293c9	A0177	4240	Raccordo a T sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.15	1.4	0.84	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4240 raccordo a t sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-dfac3bfb-131e-403a-a1f3-61b25870b839	A0178	4242	Raccordo a T sfuso Ø 6-8-6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.19	1.45	0.87	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4242 raccordo a t sfuso ø 6-8-6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-20202fc5-0c9b-46d1-8cc8-c54c016a4f4c	A0179	4245	Raccordo a T sfuso Ø 8-6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.15	1.4	0.84	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4245 raccordo a t sfuso ø 8-6-8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-26aa4d9e-ce55-4cdd-852b-ad21dad76c9a	A0180	4206	Raccordo a 90° Ø 6 mm per Geyser 5 pz, con 5 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.39	5.35	3.21	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4206 raccordo a 90° ø 6 mm per geyser 5 pz, con 5 chiodi di fissaggio stocker	2026-08-07 02:17:03.752028+00
-8beb1e21-1d8f-4ed3-bbc5-2b87fca3d18f	A0181	4220	Raccordo a 90° sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.7	0.85	0.51	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4220 raccordo a 90° sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-61fba968-8942-4c8e-b6cf-67035aeb2283	A0182	4239	Raccordo a 90° sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.78	0.95	0.57	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4239 raccordo a 90° sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-c8abedb1-dad0-4347-9457-90a390ffa246	A0183	4243	Raccordo a 90° sfuso Ø 6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.94	1.15	0.69	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4243 raccordo a 90° sfuso ø 6-8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-98a1a158-8444-4c23-8b65-6115a4948e33	A0184	4207	Raccordo dritto Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.8	5.85	3.51	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4207 raccordo dritto ø 6 mm per geyser 5 pz stocker	2026-08-07 02:17:03.752028+00
-0cd8fd2b-1d9e-4561-9e26-9097b7f37124	A0185	4236	Raccordo dritto sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.78	0.95	0.57	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4236 raccordo dritto sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-07fe3e36-93c9-4e79-960a-6aff56d37e8a	A0186	4241	Raccordo dritto sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.74	0.9	0.54	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4241 raccordo dritto sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-cd6f7cba-b7be-4ece-aa3a-fe51ea631de1	A0187	4244	Raccordo dritto sfuso Ø 6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.82	1	0.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4244 raccordo dritto sfuso ø 6-8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-bf7ea4b5-2f50-456c-bda4-3e952ff6ba88	A0188	4218	Raccordo a 135° Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	8.77	10.7	6.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4218 raccordo a 135° ø 6 mm per geyser stocker	2026-08-07 02:17:03.752028+00
-21770b36-604c-4b84-b76e-f2a08e0c8fc1	A0189	4238	Raccordo a 135° sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.56	1.9	1.14	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4238 raccordo a 135° sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-3170b546-c61f-43dc-a318-b6b2d9011698	A0190	4205	Aste di prolungamento 40 cm Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	9.47	11.55	6.93	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4205 aste di prolungamento 40 cm ø 6 mm per geyser 5 pz stocker	2026-08-07 02:17:03.752028+00
-b0d75b50-4fd8-4f3a-acfb-a5594ae4d35d	A0191	4237	Aste di prolungamento sfuso 40 cm Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4237 aste di prolungamento sfuso 40 cm ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-ef0d0f73-54c7-4f86-a0c6-6300e68e632d	A0192	4221	Kit direzionamento ugelli Geyser 2 Tubi flessibili 19 cm e Ø 8 mm, 2 raccordi a T Ø 6-8-6 mm, 2 raccordi dritti Ø 6-8 mm, senza ugelli	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4221 kit direzionamento ugelli geyser 2 tubi flessibili 19 cm e ø 8 mm, 2 raccordi a t ø 6-8-6 mm, 2 raccordi dritti ø 6-8 mm, senza ugelli stocker	2026-08-07 02:17:03.752028+00
-b70534d0-8afc-4527-b1b5-26f0afb8d22c	A0193	4263	Kit direzionamento ugelli Geyser 50 cm 2 Tubi flessibili 50 cm e Ø 8 mm, 2 raccordi a T Ø 6-8-6 mm, 2 raccordi dritti Ø 6-8 mm, 2 picchetti fissatubo 20 cm, senza ugelli	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	12.25	14.95	8.97	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4263 kit direzionamento ugelli geyser 50 cm 2 tubi flessibili 50 cm e ø 8 mm, 2 raccordi a t ø 6-8-6 mm, 2 raccordi dritti ø 6-8 mm, 2 picchetti fissatubo 20 cm, senza ugelli stocker	2026-08-07 02:17:03.752028+00
-16a50f3c-02de-4de7-841e-9c3a35e792f7	A0194	4258	Valvola di non ritorno sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	2.5	3.05	1.83	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4258 valvola di non ritorno sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-aac21b92-b980-497b-ba6d-de54baefa35f	A0195	4259	Valvola di non ritorno sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.45	6.65	3.99	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4259 valvola di non ritorno sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 02:17:03.752028+00
-e29e5907-aee5-4b12-ae4d-5344d2af0f51	A0196	4260	Valvola di non ritorno Ø 6 mm per Geyser 5 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.57	19	11.4	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4260 valvola di non ritorno ø 6 mm per geyser 5 pz. stocker	2026-08-07 02:17:03.752028+00
-79350770-8dd1-45f0-87f3-9de645292f5f	A0197	4261	Valvola di non ritorno Ø 8 mm per Geyser 5 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	29.55	36.05	21.63	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4261 valvola di non ritorno ø 8 mm per geyser 5 pz. stocker	2026-08-07 02:17:03.752028+00
-bba2859b-c336-44c5-b217-5693b04b1cfa	A0198	4267	Raccordo rapido rubinetto Ø 8 mm 3/4" 1/2"	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	11.76	14.35	8.61	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4267 raccordo rapido rubinetto ø 8 mm 3/4" 1/2" stocker	2026-08-07 02:17:03.752028+00
-a85ae79c-af57-499f-8238-5c7eb1f09775	A0199	4268	Raccordo rapido valvola di entrata per Geyser Ø 8 mm 1/2"	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4268 raccordo rapido valvola di entrata per geyser ø 8 mm 1/2" stocker	2026-08-07 02:17:03.752028+00
-eb3e1458-e388-4cdc-88f2-7dfc21e5cc9b	A0200	4269	Filtro entrata acqua per Geyser Ø 8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	18.32	22.35	13.41	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4269 filtro entrata acqua per geyser ø 8 mm stocker	2026-08-07 02:17:03.752028+00
-09a2efa0-9b68-4726-817b-34d7d5de5c4f	A0201	4213	Tubo nero 100 m ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	44.1	53.8	32.28	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4213 tubo nero 100 m ø 6 mm per geyser stocker	2026-08-07 02:17:04.117042+00
-6d346b01-8d4a-47c7-9c9c-d84ca39f7247	A0202	4223	Tubo bianco 100 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	48.11	58.7	35.22	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4223 tubo bianco 100 m ø 6 mm per geyser stocker	2026-08-07 02:17:04.117042+00
-44a3be43-d45e-4ee0-b5df-be42d188dd85	A0203	4224	Tubo marrone 100 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	47.38	57.8	34.68	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4224 tubo marrone 100 m ø 6 mm per geyser stocker	2026-08-07 02:17:04.117042+00
-7b0941d1-d23d-463d-a4d1-ad836f0bc640	A0204	4225	Tubo nero 25 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	13.24	16.15	9.69	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4225 tubo nero 25 m ø 6 mm per geyser stocker	2026-08-07 02:17:04.117042+00
-db242ac6-d0f2-4366-8ac3-5d40e32b86a8	A0205	4248	Tubo nero 100 m Ø 8 mm per Geyser	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	75.66	92.3	55.38	Attivo	NEBULIZZATORE ELETTRICO	4248 tubo nero 100 m ø 8 mm per geyser stocker	2026-08-07 02:17:04.117042+00
-70f22031-ddc1-4eba-bf6f-99ba83ad284f	A0206	4271	Tubo nero 25 m Ø 8 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	19.8	24.15	14.49	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4271 tubo nero 25 m ø 8 mm per geyser stocker	2026-08-07 02:17:04.117042+00
-0522377d-6bb5-4e5a-8f81-83c43320dfdd	A0207	4246	Fissatubo a P sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.45	0.55	0.33	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4246 fissatubo a p sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:04.117042+00
-68145a23-4fd5-49c0-b3a7-ccce0bdc1195	A0208	4250	Fissatubo a P sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4250 fissatubo a p sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 02:17:04.117042+00
-7bb85053-cfcc-4afe-8576-23ad58887bd9	A0209	4247	Fissatubo a U sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4247 fissatubo a u sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 02:17:04.117042+00
-37691243-29b2-4b2a-9be5-2bd40ac306ef	A0210	4251	Fissatubo a U sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4251 fissatubo a u sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 02:17:04.117042+00
-d557a58f-b9cf-43af-99ff-50e2df881f54	A0211	4214	Fermatubo ø 6 mm per Geyser 10 pz, 6mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.35	1.65	0.99	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4214 fermatubo ø 6 mm per geyser 10 pz, 6mm stocker	2026-08-07 02:17:04.117042+00
-d3bb147e-0df7-4bfd-97a3-6cd8d9281e4e	A0212	4216	Picchetti fissatubo 20 cm per Geyser 10 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	3.28	4	2.4	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4216 picchetti fissatubo 20 cm per geyser 10 pz stocker	2026-08-07 02:17:04.117042+00
-27092c9a-3129-4800-882c-db69d72bebc3	A0213	4217	Fascette autobloccanti 30 cm per Geyser 10 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.19	1.45	0.87	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4217 fascette autobloccanti 30 cm per geyser 10 pz stocker	2026-08-07 02:17:04.117042+00
-8fd95df6-a26f-4d72-bcf4-5de26ff0b236	A0214	4270	Fascette autobloccanti 30 cm per Geyser 100 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	9.02	11	6.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4270 fascette autobloccanti 30 cm per geyser 100 pz stocker	2026-08-07 02:17:04.117042+00
-e5c8cf1c-d3dd-4d3a-a7ae-4c121c5efadc	A0215	4255	Palo innalzamento ugello 80 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.7	19.15	11.49	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4255 palo innalzamento ugello 80 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 02:17:04.117042+00
-c6bfccee-f70f-47e3-a554-be67cf9d7ede	A0216	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	17.21	21	12.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4256 palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 02:17:04.117042+00
-92f0ae0c-ffb7-4a4e-93db-3a65efcb3fc8	A0217	4257	Palo innalzamento ugello 150 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	18.85	23	13.8	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4257 palo innalzamento ugello 150 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 02:17:04.117042+00
-c47cabc3-f53e-4e89-b516-a3d1063b84e2	A0218	444	Cappuccio protettivo per Geyser Pro per Art. 415, 436	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.78	19.25	11.55	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	444 cappuccio protettivo per geyser pro per art. 415, 436 stocker	2026-08-07 02:17:04.117042+00
-5c843222-b989-4973-a0b1-3d97d298d2e6	A0219	45135	Etokraft zanzaricida anti-zanzare 250 ml PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	13.89	16.95	10.17	Attivo	INSETTICIDI	45135 etokraft zanzaricida anti-zanzare 250 ml pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-f33be4e1-2f7b-4e9b-b6e6-12d0cbc21261	A0220	45130	Etokraft zanzaricida anti-zanzare 1 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	38.4	46.85	28.11	Attivo	INSETTICIDI	45130 etokraft zanzaricida anti-zanzare 1 l pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-b49d5166-6e5f-4952-838b-72be1fa0963e	A0221	45147	Etokraft zanzaricida anti-zanzare 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	174.59	213	127.8	Attivo	INSETTICIDI	45147 etokraft zanzaricida anti-zanzare 5 l pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-f373b3d3-940a-4e93-b56b-4247d14db053	A0222	45148	Pirekraft insetticida concentrato 500 ml PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	37.46	45.7	27.42	Attivo	INSETTICIDI	45148 pirekraft insetticida concentrato 500 ml pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-6a82e864-e5c8-49a3-8922-64cc701bce9d	A0223	45149	Pirekraft insetticida concentrato 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	287.7	351	210.6	Attivo	INSETTICIDI	45149 pirekraft insetticida concentrato 5 l pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-5f8043d7-235d-436a-b1b3-26b4498653de	A0224	45128	Nebuzan repellente anti-zanzare 1 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	34.34	41.9	25.14	Attivo	DISABITUANTI	45128 nebuzan repellente anti-zanzare 1 l pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-4e440f46-a7b9-40a0-9ba6-8b00850bdb1d	A0225	45138	Nebuzan repellente anti-zanzare 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	131.56	160.5	96.3	Attivo	DISABITUANTI	45138 nebuzan repellente anti-zanzare 5 l pmc - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-22650719-6aee-41da-8d2c-7689bb5c3a85	A0226	45141	Nebuzan FREE AT-DE-FR 1 L con numero registrazione per Francia, Austria, Germania - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Consumabile	\N	pz	34.34	41.9	25.14	Attivo	DISABITUANTI	45141 nebuzan free at-de-fr 1 l con numero registrazione per francia, austria, germania - paesi di vendita: fr - at - de stocker	2026-08-07 02:17:04.117042+00
-6445937b-3de5-413e-9851-8b1a7d2671b9	A0227	45143	Nebuzan FREE AT-DE-FR 5 L con numero registrazione per Francia, Austria, Germania - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Consumabile	\N	pz	131.56	160.5	96.3	Attivo	DISABITUANTI	45143 nebuzan free at-de-fr 5 l con numero registrazione per francia, austria, germania - paesi di vendita: fr - at - de stocker	2026-08-07 02:17:04.117042+00
-1b0af134-cf59-4c13-9a92-60f1bb60eb36	A0228	45129	Florifens disabituante zanzare 250 ml - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	11.11	13.55	8.13	Attivo	DISABITUANTI	45129 florifens disabituante zanzare 250 ml - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-d30be325-118b-4964-97d2-e98261e44c92	A0229	45124	Florifens disabituante zanzare 1 L - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	31.6	38.55	23.13	Attivo	DISABITUANTI	45124 florifens disabituante zanzare 1 l - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-0857c7f3-7bc1-4753-aa99-54e6cb707875	A0230	45136	Florifens disabituante zanzare 5 L - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	125.41	153	91.8	Attivo	DISABITUANTI	45136 florifens disabituante zanzare 5 l - paesi di vendita: it stocker	2026-08-07 02:17:04.117042+00
-0771b509-7d82-4824-bfbd-57246349e064	A0231	45139	Florifens profumazione 1 L - PAESI DI VENDITA: AT - DE - GB - ES - FR - PT	STOCKER	Geyser	Consumabile	\N	pz	31.6	38.55	23.13	Attivo	DISABITUANTI	45139 florifens profumazione 1 l - paesi di vendita: at - de - gb - es - fr - pt stocker	2026-08-07 02:17:04.117042+00
-761d51c2-fc25-4988-b7b6-785d39e73cad	A0232	45140	Florifens profumazione 5 L - PAESI DI VENDITA: AT - DE - GB - ES - FR - PT	STOCKER	Geyser	Consumabile	\N	pz	125.41	153	91.8	Attivo	DISABITUANTI	45140 florifens profumazione 5 l - paesi di vendita: at - de - gb - es - fr - pt stocker	2026-08-07 02:17:04.117042+00
-3ea6402b-b2b8-4578-8dc4-324289b6bbb3	A0233	45137	Florifens Larvicida zanzare 50 ml - PAESI DI VENDITA: IT - AT - DE - ES - GB	STOCKER	Geyser	Consumabile	\N	pz	11.93	14.55	8.73	Attivo	DISABITUANTI	45137 florifens larvicida zanzare 50 ml - paesi di vendita: it - at - de - es - gb stocker	2026-08-07 02:17:04.117042+00
-11606174-ba7a-4e46-ae21-ee285f4d08f5	A0234	45132	Florifens disabituante piccioni 250 ml - PAESI DI VENDITA: IT - ES - PT - GB - PL - FR	STOCKER	Geyser	Consumabile	\N	pz	8.65	10.55	6.33	Attivo	DISABITUANTI	45132 florifens disabituante piccioni 250 ml - paesi di vendita: it - es - pt - gb - pl - fr stocker	2026-08-07 02:17:04.117042+00
-ce82a305-da02-4f9e-892c-e2000abd4bb1	A0235	45131	Florifens disabituante piccioni 1 L - PAESI DI VENDITA: IT - ES - PT - GB - PL - FR	STOCKER	Geyser	Consumabile	\N	pz	28.24	34.45	20.67	Attivo	DISABITUANTI	45131 florifens disabituante piccioni 1 l - paesi di vendita: it - es - pt - gb - pl - fr stocker	2026-08-07 02:17:04.117042+00
-6679d744-0598-47b6-859a-1f6babc56492	A0236	2333	Espositore Geyser per lotta alla zanzara con Florifens completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2146.15	2618.3	1570.98	Attivo	NEBULIZZATORE ELETTRICO	2333 espositore geyser per lotta alla zanzara con florifens completo quantità assortite stocker	2026-08-07 02:17:04.117042+00
-265e28ec-6f5a-47b6-ae07-2e3cefe4fb0a	A0237	2335	Espositore Geyser-1 AT/DE/FR per lotta alla zanzara con Nebuzan FREE completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2058.52	2511.4	1506.84	Attivo	NEBULIZZATORE ELETTRICO	2335 espositore geyser-1 at/de/fr per lotta alla zanzara con nebuzan free completo quantità assortite stocker	2026-08-07 02:17:04.117042+00
-17e14c48-0893-44ce-ae61-f8c50b92ed04	A0238	2331	Espositore Geyser-2 AT/DE/FR per lotta alla zanzara con Nebuzan FREE completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2214.26	2701.4	1620.84	Attivo	NEBULIZZATORE ELETTRICO	2331 espositore geyser-2 at/de/fr per lotta alla zanzara con nebuzan free completo quantità assortite stocker	2026-08-07 02:17:04.117042+00
-71b5471c-f67a-4207-83a0-069ae0396e20	A0239	415/1	Pompa a diaframma principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	149.18	182	109.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/1 pompa a diaframma principale per art. 415, 445, 446 stocker	2026-08-07 02:17:04.117042+00
-c6680009-7b69-4078-80e4-535fa97196b0	A0240	415/2	Scheda di controllo principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	236.89	289	173.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/2 scheda di controllo principale per art. 415, 445, 446 stocker	2026-08-07 02:17:04.117042+00
-9381c5f3-a50c-49db-8caa-0bb291b7f8f1	A0241	415/3	Pannello di controllo con LED e tasto di comando per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/3 pannello di controllo con led e tasto di comando per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-27f3fcb3-3fd5-483d-a69c-8b83b58b7080	A0242	415/4	Elettrovalvola di uscita per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	25.41	31	18.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/4 elettrovalvola di uscita per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-fc6042a1-2fac-41ac-84fb-f5d89ea7a322	A0243	415/5	Elettrovalvola di ingresso per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	25.41	31	18.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/5 elettrovalvola di ingresso per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-7aea74d8-8fa5-4e04-a39a-d7924a7dd68b	A0244	415/6	Elettrovalvola di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	22.54	27.5	16.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/6 elettrovalvola di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-37b4e1e0-e2c5-4e82-a8a1-7151217fbaa1	A0245	415/7	Pompa dosatrice peristaltica per tanica 1 - BLU per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/7 pompa dosatrice peristaltica per tanica 1 - blu per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-d82a571f-f22d-4030-8927-282db348053b	A0246	415/8	Pompa dosatrice peristaltica per tanica 2 per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/8 pompa dosatrice peristaltica per tanica 2 per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-d98ddaf5-b9b7-49fe-8e4c-bf49de2534ef	A0247	415/9	Testa pompa dosatrice peristaltica - BLU per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.11	16	9.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/9 testa pompa dosatrice peristaltica - blu per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-cc3101eb-0a0b-4879-9298-be4c2f955a90	A0295	446/4	Connettore rapido di uscita - NERO per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.76	8.25	4.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/4 connettore rapido di uscita - nero per art. 446 stocker	2026-08-07 02:17:04.117042+00
-3bbf93a8-a061-41b1-bc9c-c0ccc13bc953	A0248	415/10	Sensore di livello per tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	36.07	44	26.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/10 sensore di livello per tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-52148a84-0dd0-4d4a-a5a3-f7ee2156c220	A0249	415/11	Tappo con sensore di livello per taniche con cavo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	43.03	52.5	31.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/11 tappo con sensore di livello per taniche con cavo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-acda4a90-5e9a-4b7b-8bb7-9748f12b1ea1	A0250	415/12	Cavo di segnale per sensori di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.51	5.5	3.3	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/12 cavo di segnale per sensori di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-e50e5ae8-fc62-49ad-a6a5-99bd42311f6e	A0251	415/13	Cavo di segnale per pannello di controllo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.92	6	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/13 cavo di segnale per pannello di controllo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-b1295e6e-b07c-4d09-bcc3-09e038196ee4	A0252	415/14	Cavo di alimentazione per pompa dosatrice peristaltica tanica 1 per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.38	9	5.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/14 cavo di alimentazione per pompa dosatrice peristaltica tanica 1 per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-b7057555-129a-4d3c-a779-684bd1c5cf00	A0253	415/15	Cavo di alimentazione per pompa dosatrice peristaltica tanica 2 per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.38	9	5.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/15 cavo di alimentazione per pompa dosatrice peristaltica tanica 2 per art. 415, 445, 446 stocker	2026-08-07 02:17:04.117042+00
-76877b16-5129-4144-b6e5-ecb4da30afd0	A0254	415/16	Interruttore per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	0.45	0.55	0.33	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/16 interruttore per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-f9f2f833-5464-4138-9d95-dc8f8565bab2	A0255	415/17	Alloggiamento batteria con interruttore e cablaggio per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	28.89	35.25	21.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/17 alloggiamento batteria con interruttore e cablaggio per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-2093777f-52ae-4586-b371-fa33e5e169a2	A0256	415/18	Cavo di alimentazione pompa principale per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	24.8	30.25	18.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/18 cavo di alimentazione pompa principale per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-53427f35-8808-48a7-8632-178314c84b70	A0257	415/19	Coperchio vano scheda di controllo con guarnizione passa-cavi per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.48	14	8.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/19 coperchio vano scheda di controllo con guarnizione passa-cavi per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-fefd487c-8fe9-412c-9407-42cc044e3e99	A0258	415/20	Guarnizione, diffusori LED e copri interruttore in gomma per pannello di comando per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.51	5.5	3.3	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/20 guarnizione, diffusori led e copri interruttore in gomma per pannello di comando per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-00e89544-1b81-4de1-8370-9ae4b9278000	A0259	415/21	Valvola meccanica con galleggiante per tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	17.42	21.25	12.75	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/21 valvola meccanica con galleggiante per tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-e6150e33-6103-4e15-9bea-23da74c10cd7	A0260	415/22	Set guide sensori tubolari per sensori di livello (1x tanica miscelazione 7 L, 2x taniche 5 L) per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.25	12.5	7.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/22 set guide sensori tubolari per sensori di livello (1x tanica miscelazione 7 l, 2x taniche 5 l) per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-6f9b9a37-1a16-4601-b5e7-8fb0f62019f5	A0261	415/23	Tanica di miscelazione 7 litri con coperchio e porta sensore di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	22.54	27.5	16.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/23 tanica di miscelazione 7 litri con coperchio e porta sensore di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-572076bd-625d-4b07-90fd-723bec005e87	A0262	415/24	Ugello di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.62	3.2	1.92	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/24 ugello di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-adb11c3a-a771-470d-a404-c404d2dd891c	A0263	432/9	Raccordo per ugello miscelazione interna con connettore rapido dritto per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.17	2.65	1.59	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/9 raccordo per ugello miscelazione interna con connettore rapido dritto per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-5a7bc09e-7535-478f-8c8f-0e080d41550c	A0264	415/25	Set connettori rapidi e tubazioni interne per Art. 415, 445	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.27	13.75	8.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/25 set connettori rapidi e tubazioni interne per art. 415, 445 stocker	2026-08-07 02:17:04.117042+00
-c8f14e60-8ae0-479a-829d-239457d0ff7f	A0265	415/26	Set connettori rapidi e tubazioni di mandata per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.15	7.5	4.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/26 set connettori rapidi e tubazioni di mandata per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-e89f6a66-5ecc-4432-b831-e91512b1ef08	A0266	415/27	Connettore rapido di uscita - BIANCO per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.92	6	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/27 connettore rapido di uscita - bianco per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-a0000baa-00bb-4edb-9120-f0739c761e3f	A0267	415/28	Set tubazioni e connettori per pompa peristaltica dosatrice (per una pompa) per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.71	5.75	3.45	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/28 set tubazioni e connettori per pompa peristaltica dosatrice (per una pompa) per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-1e122781-227e-41f1-ac78-38ecbc903046	A0268	415/29	Tubo di mandata pompa principale, con fascette per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.71	5.75	3.45	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/29 tubo di mandata pompa principale, con fascette per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-163245b3-be8c-4e6e-a451-53ce50d4a32d	A0269	415/30	Staffa supporto elettrovalvola di ingresso, con 4 viti per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.36	4.1	2.46	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/30 staffa supporto elettrovalvola di ingresso, con 4 viti per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-03582366-54f1-42b5-8e87-b7c16059a6e7	A0270	415/31	Maniglia per coperchio frontale, in plastica per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.93	2.35	1.41	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/31 maniglia per coperchio frontale, in plastica per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-0b5c1c25-0db6-4799-824a-73dd97f5e770	A0271	415/32	Serratura con chiave per coperchio frontale per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.17	8.75	5.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/32 serratura con chiave per coperchio frontale per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-317d1edb-28b0-4683-b42c-48f5a94a5ac4	A0272	415/33	Set accessori per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	34.84	42.5	25.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/33 set accessori per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-da14f57c-1e2b-466b-9079-d6d76b20871f	A0273	415/34	Set viti interne per pompe dosatrici, pompa principale con staffa, staffa tanica di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.48	4.25	2.55	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/34 set viti interne per pompe dosatrici, pompa principale con staffa, staffa tanica di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-55127ef3-5b52-4b74-a992-94f6ca1de9e5	A0274	415/35	Set viti per telaio per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.43	1.75	1.05	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/35 set viti per telaio per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-89b2bc65-ec9f-4afe-9522-b3d195ba06fa	A0275	415/36	Set viti per scheda di controllo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	0.57	0.7	0.42	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/36 set viti per scheda di controllo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-ef8964d2-06ca-4f87-9d15-291a2dea268f	A0276	415/37	Staffa di supporto tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	32.38	39.5	23.7	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/37 staffa di supporto tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-05ebc259-df80-40c8-9988-8543acacd9d8	A0277	415/38	Coperchio frontale in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	77.87	95	57	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/38 coperchio frontale in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-faa77127-ba44-4851-a445-3df3b28dd679	A0278	415/39	Coperchio posteriore in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	77.87	95	57	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/39 coperchio posteriore in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-ca03e37f-d4df-41ef-bc47-30aa6c24f86f	A0279	415/40	Base telaio in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	79.92	97.5	58.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/40 base telaio in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-fa6a02e0-92ed-45c3-ae22-25541163dcb9	A0280	415/41	Telaio centrale in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	62.3	76	45.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/41 telaio centrale in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-938a8255-bac6-4439-9cfc-25a3b2c36c74	A0281	415/42	Set guarnizioni pannelli laterali per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.25	12.5	7.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/42 set guarnizioni pannelli laterali per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-df57492d-fb65-4646-9f24-8b62a6f13e50	A0282	415/43	Pannelli laterali (destro e sinistro), in plastica per Art. 415, 436, 445, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	90.16	110	66	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/43 pannelli laterali (destro e sinistro), in plastica per art. 415, 436, 445, 466 stocker	2026-08-07 02:17:04.117042+00
-59955c8e-79d8-4306-8c1b-88839776dc97	A0283	415/44	Staffa supporto pompa principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/44 staffa supporto pompa principale per art. 415, 445, 446 stocker	2026-08-07 02:17:04.117042+00
-64297618-f53a-4d1c-8bf2-e611e0391cb5	A0284	415/45	Raccordo entrata motore per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.02	1.25	0.75	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/45 raccordo entrata motore per art. 415, 445, 446 stocker	2026-08-07 02:17:04.117042+00
-f8fc769d-25b4-49b4-b55c-bcbbbcc7e8ae	A0285	415/46	Tubo grigio sensore tanica per art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.83	3.45	2.07	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/46 tubo grigio sensore tanica per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-dc81fd37-7bc8-4a63-9746-f7e23f52b114	A0286	415/47	Testa pompa diaframma principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	12.79	15.6	9.36	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/47 testa pompa diaframma principale per art. 415, 445, 446 stocker	2026-08-07 02:17:04.117042+00
-ac81a0a5-4d17-4cd0-a630-036e29ae8a74	A0287	415/48	Sensore di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/48 sensore di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-d0840398-6c2c-41e2-abc6-4c37cc3335f9	A0288	415/49	Testa pompa dosatrice peristaltica - NERO per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.93	17	10.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/49 testa pompa dosatrice peristaltica - nero per art. 415, 436, 445, 466, 446 stocker	2026-08-07 02:17:04.117042+00
-3614adc7-ebcb-4e01-ac07-1efd0f308564	A0289	436/1	Pompa principale per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	40.16	49	29.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/1 pompa principale per art. 436, 466 stocker	2026-08-07 02:17:04.117042+00
-6cc6a19f-a1e1-4037-a767-a93fc3b2b7bc	A0290	436/2	Staffa supporto pompa principale per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/2 staffa supporto pompa principale per art. 436, 466 stocker	2026-08-07 02:17:04.117042+00
-746ef1ff-737f-4b9e-8ff5-560cf3c94ecd	A0291	436/3	Set connettori rapidi e tubazioni interne per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.72	14.3	8.58	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/3 set connettori rapidi e tubazioni interne per art. 436, 466 stocker	2026-08-07 02:17:04.117042+00
-c70c174f-cb1f-4648-9efb-1656e1cdb75a	A0292	446/1	Elettrovalvola di uscita per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	26.23	32	19.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/1 elettrovalvola di uscita per art. 446 stocker	2026-08-07 02:17:04.117042+00
-ea3a3cb0-48fe-462e-ad5e-3cc5cec1a045	A0293	446/2	Raccordo 3 vie per uscita motore per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.86	13.25	7.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/2 raccordo 3 vie per uscita motore per art. 446 stocker	2026-08-07 02:17:04.117042+00
-2d558c54-8e93-4474-a990-fa90bbca6ab9	A0294	446/3	Set connettori rapidi e tubazioni interne per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	21.93	26.75	16.05	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/3 set connettori rapidi e tubazioni interne per art. 446 stocker	2026-08-07 02:17:04.117042+00
-67376d3d-c8fd-4573-bd29-efabbc0bd403	A0296	446/5	Pannelli laterali (destro e sinistro), in plastica con doppia uscita per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	90.16	110	66	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/5 pannelli laterali (destro e sinistro), in plastica con doppia uscita per art. 446 stocker	2026-08-07 02:17:04.117042+00
-a9f74b47-361a-43c3-a082-8898c557e504	A0297	439/1	Serbatoio verde 25 L per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	43.69	53.3	31.98	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	439/1 serbatoio verde 25 l per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-02eb6cd6-c715-4a47-9b81-18ebda25cfbc	A0298	432/1	Motore per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	37.62	45.9	27.54	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/1 motore per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-2739b7a2-b39e-4d78-b656-98b8ad6b5f2c	A0299	432/2	Display di comando per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	46.56	56.8	34.08	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/2 display di comando per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-8b84efd5-72b4-4fe9-bc7e-38341783ae33	A0300	432/3	Alloggiamento per batteria con contatti in plast., per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.55	5.55	3.33	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/3 alloggiamento per batteria con contatti in plast., per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-894133b2-f847-4603-97a6-4f37d2ea4e32	A0301	432/4	Coperchio vano batteria in plast., per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.25	6.4	3.84	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/4 coperchio vano batteria in plast., per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-98c570e0-f251-435a-87ea-34bd00f8b50a	A0302	432/5	Base serbatoio in plastica per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	20.2	24.65	14.79	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/5 base serbatoio in plastica per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-489b3372-6706-44c5-a4c1-761b4eea3834	A0303	432/6	Valvola magnetica per ugelli di nebulizzazione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	15.29	18.65	11.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/6 valvola magnetica per ugelli di nebulizzazione per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-3a74e547-7246-4652-947f-e70039d2cfa3	A0304	432/7	Valvola magnetica per ugelli di miscelazione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	15.29	18.65	11.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/7 valvola magnetica per ugelli di miscelazione per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-d53e8a0b-601e-4898-8c62-f52fd35fbae1	A0305	432/8	Set tubi di distribuzione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	19.14	23.35	14.01	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/8 set tubi di distribuzione per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-bac74180-578e-4de7-9670-5aa24331d3a4	A0306	414/8	Ugello interno di miscelazione per Art. 414, 404, 405, 406, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.4	4.15	2.49	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/8 ugello interno di miscelazione per art. 414, 404, 405, 406, 432, 439 stocker	2026-08-07 02:17:04.117042+00
-eba217a0-20fd-40b7-b5ed-0df54ea0aab1	A0307	414/6	Kit guarnizioni per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.21	2.7	1.62	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/6 kit guarnizioni per art. 414, 432, 439 stocker	2026-08-07 02:17:04.117042+00
-e2acfd4d-15f2-4b89-8cff-96de4f4f6bd1	A0308	414/5	Set tubo mandata serbatoio per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.09	8.65	5.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/5 set tubo mandata serbatoio per art. 414, 432, 439 stocker	2026-08-07 02:17:04.117042+00
-8c775e13-cff5-4182-8508-2f2520b74f24	A0309	410/8	Set ugelli nebulizzazione ultra fine e tappi di chiusura 3 pz, per Art. 410, 411, 414, 420, 409, 432, 4201, 437, 438, 439, 440	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.8	8.3	4.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/8 set ugelli nebulizzazione ultra fine e tappi di chiusura 3 pz, per art. 410, 411, 414, 420, 409, 432, 4201, 437, 438, 439, 440 stocker	2026-08-07 02:17:04.117042+00
-3fa6af60-daa5-424b-ba33-781cd5851cdb	A0310	410/7	Copertura plastica superiore per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.9	7.2	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/7 copertura plastica superiore per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 02:17:04.117042+00
-344f09d3-e092-4a72-b921-c6c5745ca87f	A0311	410/14	Filtro per art. 410, 411, 414, 432, 404, 405, 406, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.89	2.3	1.38	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/14 filtro per art. 410, 411, 414, 432, 404, 405, 406, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-4197ead6-e0ce-40de-9b12-366ef423ad1f	A0312	432/11	Piastra di fissaggio in inox motore per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.56	8	4.8	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/11 piastra di fissaggio in inox motore per art. 432, 439 stocker	2026-08-07 02:17:04.117042+00
-c9d9affc-ba4c-4e4e-85a1-9af51354428e	A0313	413	Treppiede in all., 49 cm, per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	48.36	59	35.4	Attivo	NEBULIZZATORE ELETTRICO	413 treppiede in all., 49 cm, per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 02:17:04.117042+00
-cf75e69c-affa-436f-a7e7-7bec64abc7b6	A0314	437/1	Serbatoio verde 4 L per Art. 410, 437	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	12.3	15	9	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	437/1 serbatoio verde 4 l per art. 410, 437 stocker	2026-08-07 02:17:04.117042+00
-df4e195b-2a0b-4b18-94d9-8ad92e26802f	A0315	438/1	Serbatoio verde 12 L per Art. 411, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	21.19	25.85	15.51	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	438/1 serbatoio verde 12 l per art. 411, 438 stocker	2026-08-07 02:17:04.117042+00
-44df316f-9029-4206-b655-00fcc6984080	A0316	410/2	Motore per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	31.56	38.5	19.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/2 motore per art. 410, 411, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-9eb08488-66cf-4601-a4d9-810fbefdb70a	A0317	410/3	Display di comando per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	34.34	41.9	20.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/3 display di comando per art. 410, 411, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-1c7e8704-9028-4cef-bed1-a29a4e37d278	A0318	410/4	Set tubi di distribuzione per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/4 set tubi di distribuzione per art. 410, 411, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-cbbf9207-8ac1-459b-bf0c-8f61b4cef687	A0319	410/5	Set tubo mandata serbatoio con fascette e filtro per Art. 410, 437	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/5 set tubo mandata serbatoio con fascette e filtro per art. 410, 437 stocker	2026-08-07 02:17:04.117042+00
-7348c85c-b4f0-4944-a88c-ede2df4f92d1	A0320	411/2	Set tubo mandata serbatoio con fascette e filtro per Art. 411, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.33	6.5	3.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	411/2 set tubo mandata serbatoio con fascette e filtro per art. 411, 438 stocker	2026-08-07 02:17:04.117042+00
-51bb3bc4-97a3-4c80-a9cf-365dde592bd6	A0321	410/6	Base serbatoio in plastica per Art. 410, 411, 414, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	16.39	20	10	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/6 base serbatoio in plastica per art. 410, 411, 414, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-bed803f6-2580-4e38-8f21-41e07bafb130	A0322	410/9	Kit guarnizioni per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.21	2.7	1.35	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/9 kit guarnizioni per art. 410, 411, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-2aac9322-453c-4183-82bc-211e48d37359	A0323	410/11	Cinghia per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/11 cinghia per art. 410, 411, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-278707d7-133c-4ccf-99e1-58941b97406f	A0324	410/12	Coperchio vano batteria per art. 410, 411, 414, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.28	4	2.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/12 coperchio vano batteria per art. 410, 411, 414, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-fd65c0f5-7faf-4aea-a722-4526eded6417	A0325	410/13	Alloggiamento per batteria con cavi per art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.66	3.25	1.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/13 alloggiamento per batteria con cavi per art. 410, 411, 437, 438 stocker	2026-08-07 02:17:04.117042+00
-fa027e8b-1bbf-4b92-8181-8c91fe636a07	A0326	420/1	Testa per Art. 420, 4201, 440, 4440, 4249	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	23.52	28.7	17.22	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/1 testa per art. 420, 4201, 440, 4440, 4249 stocker	2026-08-07 02:17:04.117042+00
-a2cda65e-7309-4cfe-9cd7-c42ea1999bc7	A0327	420/2	Set o-ring per Art. 409, 420, 4201, 440, 4440, 4249	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.84	2.25	1.35	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/2 set o-ring per art. 409, 420, 4201, 440, 4440, 4249 stocker	2026-08-07 02:17:04.117042+00
-5d08e573-12d4-42e1-97f6-dde9111a0557	A0328	440/1	Serbatoio verde 2 L per Art. 440, 4440, 44401	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.84	8.35	5.01	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	440/1 serbatoio verde 2 l per art. 440, 4440, 44401 stocker	2026-08-07 02:17:04.117042+00
-ea57d40e-2fb2-477e-a698-0f02db5f4eee	A0329	420/3	Cavi USB Micro e USB Type C per Art. 409, 420, 4201, 2621, 440, 4440	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.34	2.85	1.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/3 cavi usb micro e usb type c per art. 409, 420, 4201, 2621, 440, 4440 stocker	2026-08-07 02:17:04.117042+00
-7aac53bb-b771-433f-bbc1-6e3f7bf5b0dd	A0330	409/1	Testa per art. 409	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	26.31	32.1	19.26	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	409/1 testa per art. 409 stocker	2026-08-07 02:17:04.117042+00
-3bd206ac-37d0-4e04-a394-d20da6a81467	A0331	409/2	Serbatoio 2 L per Art. 409	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.15	7.5	4.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	409/2 serbatoio 2 l per art. 409 stocker	2026-08-07 02:17:04.117042+00
-7683a559-583e-41d0-8484-163463495d0a	A0332	410/10	Protezione per display per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.05	2.5	1.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/10 protezione per display per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 02:17:04.117042+00
-d3e435bf-872e-47da-bb4d-5b7204ddd6c4	A0333	414/1	Serbatoio 25 L arancione per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	39.75	48.5	29.1	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/1 serbatoio 25 l arancione per art. 414, 432, 439 stocker	2026-08-07 02:17:04.117042+00
-781d8c3a-b3ea-487c-b197-de16b60ae736	A0334	414/2	Motore per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	36.89	45	27	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/2 motore per art. 414 stocker	2026-08-07 02:17:04.117042+00
-a2572b26-0054-47ba-ab1c-6b0022c208d8	A0335	414/3	Display di comando per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	44.92	54.8	32.88	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/3 display di comando per art. 414 stocker	2026-08-07 02:17:04.117042+00
-4bdefad8-6f36-467b-9cd8-fe9fb542f036	A0336	414/4	Set tubi di distribuzione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.11	16	9.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/4 set tubi di distribuzione per art. 414 stocker	2026-08-07 02:17:04.117042+00
-15374a32-f2fd-4cd5-acc3-b1747fdf8282	A0337	414/7	Valvola magnetica per ugello di miscelazione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	14.63	17.85	10.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/7 valvola magnetica per ugello di miscelazione per art. 414 stocker	2026-08-07 02:17:04.117042+00
-3a84c5e8-476e-44af-9104-9d46daa7bfff	A0338	414/9	Alloggiamento per batteria con cavi per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.18	5.1	3.06	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/9 alloggiamento per batteria con cavi per art. 414 stocker	2026-08-07 02:17:04.117042+00
-11a1f8bc-8001-4593-9bd0-c0c235b483f3	A0339	414/10	Valvola magnetica per ugelli di nebulizzazione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	14.63	17.85	10.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/10 valvola magnetica per ugelli di nebulizzazione per art. 414 stocker	2026-08-07 02:17:04.117042+00
+768b85d9-72ed-46ed-a4d9-c4a03b1ce410	A0001	8055323801041	Zhalt Portable Connect	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	368.03	449	\N	In dismissione	EAN	8055323801041 zhalt portable connect freezanz	2026-08-07 13:30:09.904214+00
+730aa61d-20ee-4bf9-89cd-939bddda5a96	A0002	8055323802024	kit garden extension 3 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	138.52	169	\N	In dismissione	EAN	8055323802024 kit garden extension 3 ugelli freezanz	2026-08-07 13:30:09.904214+00
+4f5d85b8-ee8f-478a-8271-0eb80a19ef72	A0003	8055323802048	kit garden extension 9 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	236.07	288	\N	In dismissione	EAN	8055323802048 kit garden extension 9 ugelli freezanz	2026-08-07 13:30:09.904214+00
+47162902-9ff2-4ba7-8af9-65555f9b1182	A0004	8055323801119	Zhalt Evolution Connect	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	1228.69	1499	\N	In dismissione	EAN	8055323801119 zhalt evolution connect freezanz	2026-08-07 13:30:09.904214+00
+1aeb1491-eb5b-4548-bdc6-d6f0550c6e0b	A0005	8055323802208	kit expanding 10 ugelli	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	222.13	271	\N	In dismissione	EAN	8055323802208 kit expanding 10 ugelli freezanz	2026-08-07 13:30:09.904214+00
+193b7b25-3ec6-49bd-b914-82414ce165cc	A0006	8055323803021	Estensore ugello (conf. 3 pz) 30 cm	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	39.26	47.9	\N	In dismissione	EAN	8055323803021 estensore ugello (conf. 3 pz) 30 cm freezanz	2026-08-07 13:30:09.904214+00
+a4afd04c-5dd0-46a6-9fdd-b8b07c7d5dca	A0007	8055323803014	Estensore ugello (conf. 3 pz) 40 cm	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	40.9	49.9	\N	In dismissione	EAN	8055323803014 estensore ugello (conf. 3 pz) 40 cm freezanz	2026-08-07 13:30:09.904214+00
+531cb99d-9a5b-4580-a51f-99558f7268aa	A0008	8055323802031	Roccia copertura Zhalt	FREEZANZ	Zhalt	Macchina/Kit	1/4" (Zanzero/Freezanz)	pz	327.05	399	\N	In dismissione	EAN	8055323802031 roccia copertura zhalt freezanz	2026-08-07 13:30:09.904214+00
+d518f06b-ddf6-456a-9e4f-47f798096edc	A0009	8055323809016	Tetrapiù (insetticida per Zhalt portable) tanica 5 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	19.59	23.9	\N	Attivo	\N	8055323809016 tetrapiù (insetticida per zhalt portable) tanica 5 lt freezanz	2026-08-07 13:30:09.904214+00
+a435aeed-9b10-4e41-941f-65ace834532a	A0010	8055323804011	Natural Green (repellente per Zhalt Portable) flacone 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	21.23	25.9	\N	Attivo	\N	8055323804011 natural green (repellente per zhalt portable) flacone 1 lt freezanz	2026-08-07 13:30:09.904214+00
+da63c11f-31f3-46dd-9f64-f302bc7e1a21	A0011	8055323809115	Professional PMC (insetticida per Zhalt Evolution) fl. 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	44.75	54.6	\N	Attivo	\N	8055323809115 professional pmc (insetticida per zhalt evolution) fl. 1 lt freezanz	2026-08-07 13:30:09.904214+00
+d38db79e-065e-44f8-9381-efa9fbe1f5f1	A0012	8055323804059	Natural Green + (repellente per Zhalt Evolution) tan. 5 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	130.33	159	\N	Attivo	\N	8055323804059 natural green + (repellente per zhalt evolution) tan. 5 lt freezanz	2026-08-07 13:30:09.904214+00
+d5df64a0-41ca-4737-945e-4e91f53a55ed	A0013	8055323804028	Natural Blu fl. 1 lt	FREEZANZ	Zhalt	Consumabile	\N	pz	25.33	30.9	\N	Attivo	\N	8055323804028 natural blu fl. 1 lt freezanz	2026-08-07 13:30:09.904214+00
+cecaccf1-31c3-4268-bcba-d612f7f29ccf	A0014	8055323810012	Ugello Zhalt Portable	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	7.38	9	\N	Attivo	\N	8055323810012 ugello zhalt portable freezanz	2026-08-07 13:30:09.904214+00
+1a5b3830-dbd3-49ec-aac6-0683f6d1837b	A0015	8055323810166	Raccordo T intermedio	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.41	6.6	\N	Attivo	\N	8055323810166 raccordo t intermedio freezanz	2026-08-07 13:30:09.904214+00
+915e4c1a-d43b-43cc-8ddf-dc8c6d8e32a3	A0016	8055323810173	Raccordo L porta ugello	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.44	4.2	\N	Attivo	\N	8055323810173 raccordo l porta ugello freezanz	2026-08-07 13:30:09.904214+00
+8452628b-7b88-4e95-8dc8-e89983ae41ef	A0017	8055323810203	Tappo a vite	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.46	3	\N	Attivo	\N	8055323810203 tappo a vite freezanz	2026-08-07 13:30:09.904214+00
+191d9d24-0b92-4d8c-8c5f-9672406ab58b	A0018	8055323810364	Raccordo metallo uscita	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	7.38	9	\N	Attivo	\N	8055323810364 raccordo metallo uscita freezanz	2026-08-07 13:30:09.904214+00
+45045ac6-cc75-435b-915e-14c3df8a591b	A0019	F01TU101N	tubazione 1/4 nero 100 mt	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	86.89	106	\N	Attivo	\N	f01tu101n tubazione 1/4 nero 100 mt freezanz	2026-08-07 13:30:09.904214+00
+e40d052e-b82d-4e72-a9cf-b7e3650b78ce	A0020	F01RA1001	raccordo di giunzione intermedio diritto 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.85	4.7	\N	Attivo	\N	f01ra1001 raccordo di giunzione intermedio diritto 1/4" freezanz	2026-08-07 13:30:09.904214+00
+9dd00e83-b721-4908-826d-5689e2f94165	A0021	F01RA1011	adattatore per ugello diritto 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	\N	f01ra1011 adattatore per ugello diritto 1/4" freezanz	2026-08-07 13:30:09.904214+00
+0dfb23f1-85ad-4c79-a27d-8d2a5b505852	A0022	MQ300126	raccordo inizio 1/4" tubo x 1/4" M	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.18	5.1	\N	Attivo	\N	mq300126 raccordo inizio 1/4" tubo x 1/4" m freezanz	2026-08-07 13:30:09.904214+00
+ccf7594d-b7f6-40b6-8d9d-a58cb442255e	A0023	MQ300109	tappo di fine linea daa 1/4" ad incastro	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	1.89	2.3	\N	Attivo	\N	mq300109 tappo di fine linea daa 1/4" ad incastro freezanz	2026-08-07 13:30:09.904214+00
+77700a41-d18d-4227-a207-7e7e58c923a0	A0024	MQ400109	valvola di intercettazione da 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.99	15.85	\N	Attivo	\N	mq400109 valvola di intercettazione da 1/4" freezanz	2026-08-07 13:30:09.904214+00
+fbb4de93-d34a-4fb6-a506-767828439965	A0025	MQ300110	adattatore per ugello 45° 1/4" x 10/24"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.18	5.1	\N	Attivo	\N	mq300110 adattatore per ugello 45° 1/4" x 10/24" freezanz	2026-08-07 13:30:09.904214+00
+453a48e8-d4d7-4efb-8ab4-a947ad5aa01a	A0026	EC080007	tappo esclusione ugello in ottone nichelato 10/24"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	1.31	1.6	\N	Attivo	\N	ec080007 tappo esclusione ugello in ottone nichelato 10/24" freezanz	2026-08-07 13:30:09.904214+00
+61941e5f-f78c-4570-bfcc-608f62181a64	A0027	MQ300103	raccordo giunzione tubo da 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5	6.1	\N	Attivo	\N	mq300103 raccordo giunzione tubo da 1/4" freezanz	2026-08-07 13:30:09.904214+00
+a926d5af-5705-445f-afc9-945a2d16b9d8	A0028	MQ300105	raccordo curva L 90° 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.27	7.65	\N	Attivo	\N	mq300105 raccordo curva l 90° 1/4" freezanz	2026-08-07 13:30:09.904214+00
+00c77d39-d054-44ec-98ca-7c6fe20ec11f	A0029	MQ300139	raccordo tappo fine lineatubo 1/4"	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	3.77	4.6	\N	Attivo	\N	mq300139 raccordo tappo fine lineatubo 1/4" freezanz	2026-08-07 13:30:09.904214+00
+f78021b1-7fba-4f82-9017-26dfa50ea8ab	A0030	MQ400114	tubo Mister Mosquito nero 1/4 - 40 bar 50 mt	FREEZANZ	Zhalt	Raccorderia	1/4" (Zanzero/Freezanz)	pz	68.85	84	\N	Attivo	\N	mq400114 tubo mister mosquito nero 1/4 - 40 bar 50 mt freezanz	2026-08-07 13:30:09.904214+00
+5c059c46-fbf1-46d0-a4e6-d8a900bff81c	A0031	ZA10	ZA10 con KIT 10 ugelli	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1022.13	1247	\N	Attivo	\N	za10 za10 con kit 10 ugelli zanzero	2026-08-07 13:30:09.904214+00
+728ce33f-59d9-4aae-af04-46fd2062f397	A0032	ZA18	ZA18 con KIT 20 ugelli	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1235.25	1507	\N	Attivo	\N	za18 za18 con kit 20 ugelli zanzero	2026-08-07 13:30:09.904214+00
+e87f1e45-4829-420c-8ec9-50f05679e3b0	A0033	ZA18SD.LT	ZA18 con KIT 20 ugelli - 2 PRODOTTI 1 USCITA	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1533.61	1871	\N	Attivo	\N	za18sd.lt za18 con kit 20 ugelli - 2 prodotti 1 uscita zanzero	2026-08-07 13:30:09.904214+00
+9608cc02-6c98-46d8-a9e8-edc9975868f0	A0034	ZA18 SD	ZA18 con KIT 40 ugelli - 2 PRODOTTI 2 USCITE	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	1704.1	2079	\N	Attivo	\N	za18 sd za18 con kit 40 ugelli - 2 prodotti 2 uscite zanzero	2026-08-07 13:30:09.904214+00
+11addbc8-a7fd-4ca2-8e1f-58a7733794b2	A0035	ZA10 SLIM	ZA10 SLIM - centralina Smart monoprodotto compatta	ZANZERO	SMART	Centralina	1/4" (Zanzero/Freezanz)	pz	690	841.8	\N	Attivo	\N	za10 slim za10 slim - centralina smart monoprodotto compatta zanzero	2026-08-07 13:30:09.904214+00
+3e5624e2-635a-4554-86fb-b8468f9ee62b	A0036	KTZA1005P	KIT estensione 5 spot  T e Portaugelli POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	81.15	99	\N	Attivo	\N	ktza1005p kit estensione 5 spot  t e portaugelli pom zanzero	2026-08-07 13:30:09.904214+00
+3b574634-e2d8-4988-b6f0-b6244da85681	A0037	KTZA1015P	KIT estensione 15 spot  T e Portaugelli POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	234.43	286	\N	Attivo	\N	ktza1015p kit estensione 15 spot  t e portaugelli pom zanzero	2026-08-07 13:30:09.904214+00
+3db7fecd-de36-4850-9dce-006b4b3bb5e7	A0038	AI14025N	Tubo mandata nero 25 mt.	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	34.43	42	\N	Attivo	\N	ai14025n tubo mandata nero 25 mt. zanzero	2026-08-07 13:30:09.904214+00
+bc9c0b31-9128-4bca-b0e0-11b0aba1fc6e	A0039	KT040302.5	KIT 5 ugelli 0,15	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt040302.5 kit 5 ugelli 0,15 zanzero	2026-08-07 13:30:09.904214+00
+e84b00ca-b399-4a9f-96b4-eaf4878ff7de	A0040	KT519014.5	KIT 5 portaugelli 90°	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt519014.5 kit 5 portaugelli 90° zanzero	2026-08-07 13:30:09.904214+00
+01b341ff-8cd3-44b5-9b11-2da72910e3cf	A0041	KT519014P.5	KIT 5 portaugelli 90° POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	12.79	15.6	\N	Attivo	\N	kt519014p.5 kit 5 portaugelli 90° pom zanzero	2026-08-07 13:30:09.904214+00
+fc1208d2-a056-49a3-9872-ef0cfd418f17	A0042	KT191414.5	KIT 5 raccordi a "T"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt191414.5 kit 5 raccordi a "t" zanzero	2026-08-07 13:30:09.904214+00
+843987fa-d263-4ce2-b40e-fa76b93b1748	A0043	KT191414P.5	KIT 5 raccordi a "T" POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	14.92	18.2	\N	Attivo	\N	kt191414p.5 kit 5 raccordi a "t" pom zanzero	2026-08-07 13:30:09.904214+00
+9b611bf8-c945-499f-bab5-9eab8458872b	A0044	KT529014.5	KIT 5 portaugelli dritto 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt529014.5 kit 5 portaugelli dritto 1/4" zanzero	2026-08-07 13:30:09.904214+00
+18764dd8-19a8-4c47-9140-d46ec3b86a4c	A0045	KT501414.5	KIT 5 portaugelli linea tubo/tubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt501414.5 kit 5 portaugelli linea tubo/tubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+feb9e55b-1e7d-4fbd-896e-6416aaeb66fa	A0046	KT501414P.5	KIT 5 portaugelli linea tubo/tubo 1/4" POM	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	14.92	18.2	\N	Attivo	\N	kt501414p.5 kit 5 portaugelli linea tubo/tubo 1/4" pom zanzero	2026-08-07 13:30:09.904214+00
+811b5303-9e23-484c-9ddc-fe58d9958305	A0047	KT514514.5	KIT 5 portaugello a 45° 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	17.21	21	\N	Attivo	\N	kt514514.5 kit 5 portaugello a 45° 1/4" zanzero	2026-08-07 13:30:09.904214+00
+d618a885-5b09-4f5b-947a-7fd50c6dd1af	A0048	KT161414.5	KIT 5 manicotto tubo/tubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	25.82	31.5	\N	Attivo	\N	kt161414.5 kit 5 manicotto tubo/tubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+c624dec5-1d05-42f5-91a9-a3eda867ff5a	A0049	KT181414.5	KIT 5 gomito 90° 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	kt181414.5 kit 5 gomito 90° 1/4" zanzero	2026-08-07 13:30:09.904214+00
+a7c0311d-23b3-4128-85cd-b5dc3d777eee	A0050	KT300014.5	KIT 5 tappo fine linea 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	15.41	18.8	\N	Attivo	\N	kt300014.5 kit 5 tappo fine linea 1/4" zanzero	2026-08-07 13:30:09.904214+00
+c209af02-7a5c-40e9-bdc4-fcffeca43b35	A0051	KTC900014.25	KIT 25 collare fissatubo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	29.92	36.5	\N	Attivo	\N	ktc900014.25 kit 25 collare fissatubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+df27169b-0773-4e34-a69c-22b24aa3f109	A0052	KT900014	Kit Filtro Completo 1/4"	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	57.38	70	\N	Attivo	\N	kt900014 kit filtro completo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+4786e78f-8259-4047-90f8-56caefe647d2	A0053	AC99TTR2.20	Tagliatubo	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	7.3	8.9	\N	Attivo	\N	ac99ttr2.20 tagliatubo zanzero	2026-08-07 13:30:09.904214+00
+f2719b54-99b6-4084-b838-164c958cbdc2	A0054	AC300010	Sonda di livello  (serbatoio già incluso nella centralina)	ZANZERO	SMART	Accessorio	1/4" (Zanzero/Freezanz)	pz o kit	34.02	41.5	\N	Attivo	\N	ac300010 sonda di livello  (serbatoio già incluso nella centralina) zanzero	2026-08-07 13:30:09.904214+00
+db62b011-6b56-4b34-842e-8a5fd37929b0	A0055	ZA100	ZA100 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	959.02	1170	\N	Attivo	Tipo BASIC; max 35 ugelli	za100 za100 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+d42f1d72-c52d-41c7-8487-d8739cfef777	A0056	ZA150	ZA150 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1000	1220	\N	Attivo	Tipo BASIC; max 50 ugelli	za150 za150 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+c0a8ff81-9f31-4cea-89c7-6588a660b30f	A0057	ZA200	ZA200 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1040.98	1270	\N	Attivo	Tipo BASIC; max 70 ugelli	za200 za200 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+2cf8b02d-3e96-49ad-8ee8-042111a13dcb	A0058	ZA350	ZA350 - centralina basic	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1131.15	1380	\N	Attivo	Tipo BASIC; max 120 ugelli	za350 za350 - centralina basic zanzero	2026-08-07 13:30:09.904214+00
+ea31213b-d76e-4632-af06-8ddd869843b5	A0059	ZA100WIFI	ZA100WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1147.54	1400	\N	Attivo	Tipo ADVANCE; max 35 ugelli	za100wifi za100wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+5fe56af5-5307-4777-b95f-63809ef0267e	A0060	ZA150WIFI	ZA150WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1188.52	1450	\N	Attivo	Tipo ADVANCE; max 50 ugelli	za150wifi za150wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+c7823b13-a60b-41e8-971b-0382799047fe	A0061	ZA200WIFI	ZA200WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1229.51	1500	\N	Attivo	Tipo ADVANCE; max 70 ugelli	za200wifi za200wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+47adeb5d-a787-4718-9992-7308195c14ab	A0062	ZA350WIFI	ZA350WIFI - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1311.48	1600	\N	Attivo	Tipo ADVANCE; max 120 ugelli	za350wifi za350wifi - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+d4dfe1cf-9666-4507-85ab-92aa50a76613	A0063	ZA100DUAL	ZA100DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1475.41	1800	\N	Attivo	Tipo ADVANCE; max 35 ugelli	za100dual za100dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+90fb6799-f8f0-41eb-bfe5-e39d527ea3e7	A0064	ZA150DUAL	ZA150DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1557.38	1900	\N	Attivo	Tipo ADVANCE; max 50 ugelli	za150dual za150dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+fb58f331-235a-4c0e-b09b-14dc5cb7fa02	A0065	ZA200DUAL	ZA200DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1639.34	2000	\N	Attivo	Tipo ADVANCE; max 70 ugelli	za200dual za200dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+ab5cc2b9-f487-467b-b526-06f36e1f1313	A0066	ZA350DUAL	ZA350DUAL - centralina advance	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	1721.31	2100	\N	Attivo	Tipo ADVANCE; max 120 ugelli	za350dual za350dual - centralina advance zanzero	2026-08-07 13:30:09.904214+00
+1237cfe9-2b8b-495c-b999-3ad8940a649c	A0067	ZA150P.DUAL.PLUS	ZA150 Premium 2 Linee (con sonde livello)	ZANZERO	Professional	Centralina	1/4" (Zanzero/Freezanz)	pz	2250	2745	\N	Attivo	Tipo PREMIUM; max 50 ugelli	za150p.dual.plus za150 premium 2 linee (con sonde livello) zanzero	2026-08-07 13:30:09.904214+00
+0631a32a-4141-440a-a879-05d76f7b2c16	A0068	AC300010	SONDA LIVELLO PRODOTTO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	39.9	48.68	\N	Attivo	OPTIONAL PER CENTRALINE	ac300010 sonda livello prodotto zanzero	2026-08-07 13:30:09.904214+00
+8c6e776b-351e-41cf-b430-f96d33a34ddc	A0069	AC300020	SENSORE PIOGGIA	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	43.6	53.19	\N	Attivo	OPTIONAL PER CENTRALINE	ac300020 sensore pioggia zanzero	2026-08-07 13:30:09.904214+00
+d6f7fb54-0467-4e3f-827a-4ea3a6dea36f	A0070	AC300030	SENSORE VENTO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	120	146.4	\N	Attivo	OPTIONAL PER CENTRALINE	ac300030 sensore vento zanzero	2026-08-07 13:30:09.904214+00
+df79d1fb-7d0a-4060-b0e9-8977ad057052	A0071	AC200002	SERBATOIO 2 LT * necessario per sonda livello AC300010	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.5	6.71	\N	Attivo	OPTIONAL PER CENTRALINE	ac200002 serbatoio 2 lt * necessario per sonda livello ac300010 zanzero	2026-08-07 13:30:09.904214+00
+7d0599fa-899b-45a9-af96-ae6163f457ee	A0072	AC200005	SERBATOIO 5 LT	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.2	6.34	\N	Attivo	OPTIONAL PER CENTRALINE	ac200005 serbatoio 5 lt zanzero	2026-08-07 13:30:09.904214+00
+9d7fe5f1-493b-488b-aad6-a14e3db995cc	A0073	AC400012	CAVALLETTO DI SUPPORTO  MONOPRODOTTO per ZA20	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	53.33	65.06	\N	Attivo	OPTIONAL PER CENTRALINE	ac400012 cavalletto di supporto  monoprodotto per za20 zanzero	2026-08-07 13:30:09.904214+00
+3c871958-75ae-4436-8397-ca954f5cd5a3	A0074	AC400011	CAVALLETTO DI SUPPORTO  MONOPRODOTTO da ZA100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	66.7	81.37	\N	Attivo	OPTIONAL PER CENTRALINE	ac400011 cavalletto di supporto  monoprodotto da za100 zanzero	2026-08-07 13:30:09.904214+00
+71c5ee69-8576-487f-8f87-46426ea438aa	A0075	AC400022	CAVALLETTO DI SUPPORTO DUAL E MULTIZONA	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	82	100.04	\N	Attivo	OPTIONAL PER CENTRALINE	ac400022 cavalletto di supporto dual e multizona zanzero	2026-08-07 13:30:09.904214+00
+5ddf2fc6-a451-4c8f-b131-c0e83e972c46	A0076	AI040303	UGELLO ANTIGOCCIA 0.4	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.3	6.47	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai040303 ugello antigoccia 0.4 zanzero	2026-08-07 13:30:09.904214+00
+18018216-d737-4d9d-9787-d4899b2682c2	A0077	AI040302	UGELLO STANDARD	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.1	6.22	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai040302 ugello standard zanzero	2026-08-07 13:30:09.904214+00
+0f83b7ed-139a-436d-a6fa-3a54050cc355	A0078	AI191414	RACCORDO "T"  1/4"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	5.75	7.01	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai191414 raccordo "t"  1/4" zanzero	2026-08-07 13:30:09.904214+00
+e025197b-c676-49e2-9b9b-23e07c61ad9c	A0079	AI193838	RACCORDO "T"  3/8"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	10.5	12.81	\N	Attivo	ACCESSORI INSTALLAZIONE IMPIANTO	ai193838 raccordo "t"  3/8" zanzero	2026-08-07 13:30:09.904214+00
+3cef5da9-db41-4787-83ba-05674789e7c7	A0080	AI519014	PORTAUGELLO 1/4" A 90°	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.3	5.25	\N	Attivo	Raccordi portaugello su tubo:	ai519014 portaugello 1/4" a 90° zanzero	2026-08-07 13:30:09.904214+00
+9d0d8cd6-63db-4fa1-8bce-86b6f8ff7725	A0081	AI529014	PORTAUGELLO 1/4" DRITTO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	Raccordi portaugello su tubo:	ai529014 portaugello 1/4" dritto zanzero	2026-08-07 13:30:09.904214+00
+0e6c9ebc-00fc-42d5-9293-2e7949e16c93	A0082	AI501414	PORTAUGELLO LINEA TUBO/TUBO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.6	6.83	\N	Attivo	Raccordi portaugello su tubo:	ai501414 portaugello linea tubo/tubo zanzero	2026-08-07 13:30:09.904214+00
+87085894-7052-4a5e-9c77-589e07e709fc	A0083	AI510514	PORTAUGELLO PIEGHEVOLE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.78	5.83	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ai510514 portaugello pieghevole 1/4" zanzero	2026-08-07 13:30:09.904214+00
+ddeabdd0-cc2e-4e1b-8eff-e477eac6c508	A0084	AI510314	PORTAUGELLO A 3 VIE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.3	7.69	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ai510314 portaugello a 3 vie zanzero	2026-08-07 13:30:09.904214+00
+76faaae2-5f7c-4cc7-8786-133e3340de13	A0085	AC100015	PROLUNGA PIEGHEVOLE PER UGELLO cm. 15	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	5.3	6.47	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100015 prolunga pieghevole per ugello cm. 15 zanzero	2026-08-07 13:30:09.904214+00
+cd97fab3-4448-4d91-a0b6-e1a11079a37e	A0086	AC100025	PROLUNGA PIEGHEVOLE PER UGELLO cm. 25	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100025 prolunga pieghevole per ugello cm. 25 zanzero	2026-08-07 13:30:09.904214+00
+145efdf2-f493-4419-8648-bd1d8ab69ab3	A0087	AC100040	PROLUNGA PIEGHEVOLE PER UGELLO cm. 40	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	9	10.98	\N	Attivo	Raccordi portaugello attacco filetto 10/24:	ac100040 prolunga pieghevole per ugello cm. 40 zanzero	2026-08-07 13:30:09.904214+00
+a4497e6f-0f6d-4e37-850b-b237f2433b21	A0088	AI510014	PORTAUGELLO DIRITTO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	Raccordi portaugello a innesto:	ai510014 portaugello diritto 1/4" zanzero	2026-08-07 13:30:09.904214+00
+8f67e1f2-2da8-4336-a730-12c77e589af1	A0089	AI514514	PORTAUGELLO A 45°	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.91	3.55	\N	Attivo	Raccordi portaugello a innesto:	ai514514 portaugello a 45° zanzero	2026-08-07 13:30:09.904214+00
+edbcb9d6-5fa9-44ed-99f9-90cebd0fac41	A0090	AI161414	MANICOTTO TUBO/TUBO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	Raccordi portaugello a innesto:	ai161414 manicotto tubo/tubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+f32af3d5-3372-40cd-8545-9da7fcf36349	A0091	AI163838	MANICOTTO TUBO/TUBO 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai163838 manicotto tubo/tubo 3/8" zanzero	2026-08-07 13:30:09.904214+00
+097ebdf1-4deb-4e3c-bd86-090656a07de5	A0092	AI161438	MANICOTTO RIDUZIONE 3/8"-1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai161438 manicotto riduzione 3/8"-1/4" zanzero	2026-08-07 13:30:09.904214+00
+973f8071-b034-4d9e-b259-ee47efc5ffdc	A0093	AI181414	GOMITO 90° 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.7	5.73	\N	Attivo	Raccordi portaugello a innesto:	ai181414 gomito 90° 1/4" zanzero	2026-08-07 13:30:09.904214+00
+26b19634-94ff-491e-97ee-53b3da9c68ab	A0094	AI183838	GOMITO 90° 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	14.2	17.32	\N	Attivo	Raccordi portaugello a innesto:	ai183838 gomito 90° 3/8" zanzero	2026-08-07 13:30:09.904214+00
+780d566d-af49-44fd-a494-d8065f9c75a4	A0095	AI360014	CROCE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	11.15	13.6	\N	Attivo	Raccordi portaugello a innesto:	ai360014 croce 1/4" zanzero	2026-08-07 13:30:09.904214+00
+874cff88-1756-414f-9ace-0614e54d7016	A0096	AI360038	CROCE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	14	17.08	\N	Attivo	Raccordi portaugello a innesto:	ai360038 croce 3/8" zanzero	2026-08-07 13:30:09.904214+00
+5f5176a1-1a06-43fa-ae69-3da85184b8fd	A0097	AI251438	RIDUZIONE INNESTO 3/8"-1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	8.2	10	\N	Attivo	Raccordi portaugello a innesto:	ai251438 riduzione innesto 3/8"-1/4" zanzero	2026-08-07 13:30:09.904214+00
+9782f2ac-86e7-4321-8966-1c88d9904578	A0098	AI300014	TAPPO FINE LINEA 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	2.5	3.05	\N	Attivo	Raccordi portaugello a innesto:	ai300014 tappo fine linea 1/4" zanzero	2026-08-07 13:30:09.904214+00
+cd567c93-28e9-4406-ae4e-e7e09ab4bbdd	A0099	AI300038	TAPPO FINE LINEA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	6.8	8.3	\N	Attivo	Raccordi portaugello a innesto:	ai300038 tappo fine linea 3/8" zanzero	2026-08-07 13:30:09.904214+00
+d162a140-fe75-4aa0-b994-54e9b6b6f0de	A0100	AI14100N	TUBO MANDATA 1/4" - NERO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100n tubo mandata 1/4" - nero zanzero	2026-08-07 13:30:09.904214+00
+01e357a6-cc5c-439a-9df0-453a0a81562c	A0101	AI14100V	TUBO MANDATA 1/4" - VERDE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100v tubo mandata 1/4" - verde zanzero	2026-08-07 13:30:09.904214+00
+d5de4a29-9664-4ad2-876c-841987a85cf4	A0102	AI14100G	TUBO MANDATA 1/4" - GRIGIO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100g tubo mandata 1/4" - grigio zanzero	2026-08-07 13:30:09.904214+00
+65aa6d28-a9d9-4bb9-b56f-b2e438165b94	A0103	AI14100M	TUBO MANDATA 1/4" - MARRONE	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1.04	1.27	\N	Attivo	TUBAZIONI	ai14100m tubo mandata 1/4" - marrone zanzero	2026-08-07 13:30:09.904214+00
+ae274765-8780-4e0b-9731-b6a976a43e6f	A0104	AI14100B	TUBO MANDATA 1/4" - BIANCO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100b tubo mandata 1/4" - bianco zanzero	2026-08-07 13:30:09.904214+00
+5105b429-49ad-4b7e-8cde-bdfc687d9d8d	A0105	AI38100N	TUBO MANDATA 3/8" NERO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	3.95	4.82	\N	Attivo	TUBAZIONI	ai38100n tubo mandata 3/8" nero zanzero	2026-08-07 13:30:09.904214+00
+eb8a52d0-7b23-4ff4-9d3a-d84447d498b1	A0106	AI38100T	TUBO ASPIRAZIONE ACQUA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	2.9	3.54	\N	Attivo	TUBAZIONI	ai38100t tubo aspirazione acqua 3/8" zanzero	2026-08-07 13:30:09.904214+00
+e4827231-fae5-4255-bdba-a347d2e08add	A0107	RC333838	RACCORDO ACQUA FIL./INN. 3/8" CON VALV. NON RITORNO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	27	32.94	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	rc333838 raccordo acqua fil./inn. 3/8" con valv. non ritorno zanzero	2026-08-07 13:30:09.904214+00
+695be055-87dd-473d-a0df-1b2718c3c288	A0108	AI401438	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 1/4'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai401438 raccordo alimentazione acqua inn./fil. 1/4'- 3/8' zanzero	2026-08-07 13:30:09.904214+00
+b315b496-05b5-48c7-895c-769ce200f3c4	A0109	AI403838	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 3/8'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai403838 raccordo alimentazione acqua inn./fil. 3/8'- 3/8' zanzero	2026-08-07 13:30:09.904214+00
+65460218-0bc6-43e7-afe3-72f97170e278	A0110	AI403812	RACCORDO ALIMENTAZIONE ACQUA INN./FIL. 1/2'- 3/8'	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	13.5	16.47	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai403812 raccordo alimentazione acqua inn./fil. 1/2'- 3/8' zanzero	2026-08-07 13:30:09.904214+00
+8d427ba1-c0ec-40e5-b272-8aed1ffec953	A0111	KT800038	KIT ATTACCO RAPIDO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	22	26.84	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	kt800038 kit attacco rapido zanzero	2026-08-07 13:30:09.904214+00
+0059819d-9c0a-4471-8261-76193a4a136f	A0112	AI700014	RIDUTTORE DI PRESSIONE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	36	43.92	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai700014 riduttore di pressione 1/4" zanzero	2026-08-07 13:30:09.904214+00
+a1cc5aa5-db19-433d-be8a-f4138e193ee6	A0113	AI700038	RIDUTTORE DI PRESSIONE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	36	43.92	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai700038 riduttore di pressione 3/8" zanzero	2026-08-07 13:30:09.904214+00
+5d7b457d-1c66-442f-b2ec-9453fa5c8e81	A0114	AI303838	RUBINETTO A SFERA 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	8.3	10.13	\N	Attivo	RACCORDERIA ADDUZIONE ACQUA	ai303838 rubinetto a sfera 3/8" zanzero	2026-08-07 13:30:09.904214+00
+62918c9f-c4ca-4c65-8d7f-0b2009131194	A0115	KT900014	KIT FILTRO COMPLETO 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	67	81.74	\N	Attivo	FILTRAZIONE ACQUA	kt900014 kit filtro completo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+d5e6ed5b-f296-42d2-8a12-0aa8a0259247	A0116	KT900038	KIT FILTRO COMPLETO 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	53	64.66	\N	Attivo	FILTRAZIONE ACQUA	kt900038 kit filtro completo 3/8" zanzero	2026-08-07 13:30:09.904214+00
+6e64b699-752c-48bc-835f-e4294b595246	A0117	KT901114	KIT CASSETTA FILTRO ASPIRAZIONE 1/4"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	185	225.7	\N	Attivo	FILTRAZIONE ACQUA	kt901114 kit cassetta filtro aspirazione 1/4" zanzero	2026-08-07 13:30:09.904214+00
+1f50b84e-c2dd-46d1-9484-6da651d2a87d	A0118	KT901138	KIT CASSETTA FILTRO ASPIRAZIONE 3/8"	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	175	213.5	\N	Attivo	FILTRAZIONE ACQUA	kt901138 kit cassetta filtro aspirazione 3/8" zanzero	2026-08-07 13:30:09.904214+00
+8fe76e10-cedd-4bce-b254-612eaa531a31	A0119	RC900001	CARTUCCIA FILO PER FILTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	4.47	5.45	\N	Attivo	FILTRAZIONE ACQUA	rc900001 cartuccia filo per filtro zanzero	2026-08-07 13:30:09.904214+00
+04f73e06-bf1f-4d98-a05c-e9f36b4753d9	A0120	RC900002	CONTENITORE FILTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	pz	20.46	24.96	\N	Attivo	FILTRAZIONE ACQUA	rc900002 contenitore filtro zanzero	2026-08-07 13:30:09.904214+00
+5515d649-19ea-41f3-bc8b-0f162a1ab3bd	A0121	AC99TTR2.20	TAGLIATUBO	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	8.8	10.74	\N	Attivo	ACCESSORI	ac99ttr2.20 tagliatubo zanzero	2026-08-07 13:30:09.904214+00
+dac03498-0596-40cf-b7cc-29c18a6418ba	A0122	KT905000	CASSETTA MANUTENZIONE (77 PEZZI)	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	400	488	\N	Attivo	ACCESSORI	kt905000 cassetta manutenzione (77 pezzi) zanzero	2026-08-07 13:30:09.904214+00
+a415236c-0fbb-4c92-8215-5f310ac9e0a5	A0123	AC101005	TUBOLARE INOX cm. 50	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	12.8	15.62	\N	Attivo	ACCESSORI	ac101005 tubolare inox cm. 50 zanzero	2026-08-07 13:30:09.904214+00
+2e7b6cc4-610b-41f9-98a4-9ca3b6063a1e	A0124	AC101010	TUBOLARE INOX cm. 100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	18.9	23.06	\N	Attivo	ACCESSORI	ac101010 tubolare inox cm. 100 zanzero	2026-08-07 13:30:09.904214+00
+12d1618d-db6a-4f47-a692-fd5c63423cdc	A0125	AC101015	TUBOLARE INOX cm. 150	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	23.4	28.55	\N	Attivo	ACCESSORI	ac101015 tubolare inox cm. 150 zanzero	2026-08-07 13:30:09.904214+00
+b30fe0ee-e682-41f9-8fd2-0828eb1568eb	A0126	AC101109	TUBOLARE PVC TIPO BAMBU cm. 50	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	4.32	5.27	\N	Attivo	ACCESSORI	ac101109 tubolare pvc tipo bambu cm. 50 zanzero	2026-08-07 13:30:09.904214+00
+74b14956-9899-48e0-ab30-5f498c7919cf	A0127	AC101110	TUBOLARE PVC TIPO BAMBU cm. 100	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	3.12	3.81	\N	Attivo	ACCESSORI	ac101110 tubolare pvc tipo bambu cm. 100 zanzero	2026-08-07 13:30:09.904214+00
+ae346dbf-9cf4-446e-b2ef-3379c657e344	A0128	AC900114	PICCHETTO FISSAGGIO TUBO A TERRA MARRONE	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	0.3	0.37	\N	Attivo	ACCESSORI	ac900114 picchetto fissaggio tubo a terra marrone zanzero	2026-08-07 13:30:09.904214+00
+e3e97ccc-3b5c-4ee1-9882-443a9439a455	A0129	AC900014	COLLARE FISSATUBO 1/4"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	1.4	1.71	\N	Attivo	ACCESSORI	ac900014 collare fissatubo 1/4" zanzero	2026-08-07 13:30:09.904214+00
+501ec444-409d-4376-b810-1f37b8af6d7f	A0130	AC900038	COLLARE FISSATUBO 3/8"	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	1.4	1.71	\N	Attivo	ACCESSORI	ac900038 collare fissatubo 3/8" zanzero	2026-08-07 13:30:09.904214+00
+fd7aad17-34cc-426d-bf51-b82f2066df74	A0131	AI14100N-N	TUBO MANDATA 1/4" NERO NEUTRO	ZANZERO	Professional	Raccorderia	1/4" (Zanzero/Freezanz)	m/l	1	1.22	\N	Attivo	TUBAZIONI	ai14100n-n tubo mandata 1/4" nero neutro zanzero	2026-08-07 13:30:09.904214+00
+d845bddd-e4f9-4955-ae5f-58e10b4a4654	A0132	AC101111	SOVRAPPREZZO FORO TUBOLARE PVC	ZANZERO	Professional	Accessorio	1/4" (Zanzero/Freezanz)	pz	0.93	1.13	\N	Attivo	ACCESSORI	ac101111 sovrapprezzo foro tubolare pvc zanzero	2026-08-07 13:30:09.904214+00
+f5e65220-c60e-4a6b-a07f-511f9665069a	A0133	A0133	VAPO CIPER - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	32.79	40	\N	Attivo	\N	a0133 vapo ciper - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+0530edda-143b-46a3-b398-3c24a2248969	A0134	A0134	VAPO CIPER - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	143.44	175	\N	Attivo	\N	a0134 vapo ciper - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+f9c9795a-9b13-45b3-9b98-c2ded3d156d4	A0135	A0135	VAPO CIPER - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	271.31	331	\N	Attivo	\N	a0135 vapo ciper - confezione da 10 lt zanzero	2026-08-07 13:30:09.904214+00
+3812d5bd-b724-49dc-8ea1-fcf8df0169e6	A0136	A0136	VAPO PERM PLUS TRI ACTIVE - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	59.02	72	\N	Attivo	\N	a0136 vapo perm plus tri active - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+2eb24000-d5aa-4b44-b562-ce0af90887c0	A0137	A0137	VAPO PERM PLUS TRI ACTIVE - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	277.87	339	\N	Attivo	\N	a0137 vapo perm plus tri active - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+3463049b-01c4-494b-96fd-11684895ce41	A0138	A0138	VAPO PERM PLUS TRI ACTIVE - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	540.16	659	\N	Attivo	\N	a0138 vapo perm plus tri active - confezione da 10 lt zanzero	2026-08-07 13:30:09.904214+00
+e86f40e1-16f5-4c05-8f66-9dd5a14e2dd9	A0139	A0139	VAPO SILVE SHIELD - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	46.72	57	\N	Attivo	\N	a0139 vapo silve shield - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+3951ee63-5591-4e4d-86cd-22a569fe167d	A0140	A0140	VAPO SILVE SHIELD - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	227.05	277	\N	Attivo	\N	a0140 vapo silve shield - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+866db77c-8e52-4ac8-86e4-1415c2ec1a3c	A0141	A0141	VAPO NATURE - Confezione da 1 lt	ZANZERO	SMART	Consumabile	\N	pz	46.72	57	\N	Attivo	\N	a0141 vapo nature - confezione da 1 lt zanzero	2026-08-07 13:30:09.904214+00
+9fa23686-b53a-40ad-9ba1-25e7f459c09f	A0142	A0142	VAPO NATURE - Confezione da 5 lt	ZANZERO	SMART	Consumabile	\N	pz	227.05	277	\N	Attivo	\N	a0142 vapo nature - confezione da 5 lt zanzero	2026-08-07 13:30:09.904214+00
+1c6edcac-ff84-4883-8f5c-db7788907dc4	A0143	A0143	VAPO NATURE - Confezione da 10 lt	ZANZERO	SMART	Consumabile	\N	pz	442.62	540	\N	Attivo	\N	a0143 vapo nature - confezione da 10 lt zanzero	2026-08-07 13:30:09.904214+00
+410c5c5a-66c1-4dc5-87f9-9fdbad80f060	A0144	VPPM1000	VAPO PERM PLUS Insetticida - 1 lt	ZANZERO	Professional	Consumabile	\N	pz	40.98	50	\N	Attivo	\N	vppm1000 vapo perm plus insetticida - 1 lt zanzero	2026-08-07 13:30:09.904214+00
+e084194d-b6bf-4432-b39d-13f204a4fb6a	A0145	VPPM5000	VAPO PERM PLUS Insetticida - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	194.26	237	\N	Attivo	\N	vppm5000 vapo perm plus insetticida - 5 lt zanzero	2026-08-07 13:30:09.904214+00
+ff7384fa-b08b-4d79-a8bf-0171169adc87	A0146	VPSS10TR	VAPO SILVER SHIELD Tea Tree/Rosmarino Disabituante - 1 lt	ZANZERO	Professional	Consumabile	\N	pz	32.79	40	\N	Attivo	\N	vpss10tr vapo silver shield tea tree/rosmarino disabituante - 1 lt zanzero	2026-08-07 13:30:09.904214+00
+c5b92323-b69d-4ec9-a030-e3d1cd725217	A0147	VPSS05LC	VAPO SILVER SHIELD Limone/Cedro Disabituante - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	155.44	189.64	\N	Attivo	\N	vpss05lc vapo silver shield limone/cedro disabituante - 5 lt zanzero	2026-08-07 13:30:09.904214+00
+37bfc1ec-81cd-4c8a-a823-8ea259debb19	A0148	VPNA5000	VAPO NATURE Disabituante Naturale Rosmarino - 5 lt	ZANZERO	Professional	Consumabile	\N	pz	159.32	194.37	\N	Attivo	\N	vpna5000 vapo nature disabituante naturale rosmarino - 5 lt zanzero	2026-08-07 13:30:09.904214+00
+d439f161-2e71-4a12-a6fd-89c6ee153239	A0149	446	Geyser Pro Dual	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	1456.56	1777	1066.2	Attivo	NEBULIZZATORE ELETTRICO	446 geyser pro dual stocker	2026-08-07 13:30:09.904214+00
+59e2782d-1b67-4b8c-bb41-b1f845ef4b1f	A0150	415	Geyser Pro	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	1331.97	1625	975	Attivo	NEBULIZZATORE ELETTRICO	415 geyser pro stocker	2026-08-07 13:30:09.904214+00
+15f37bd3-9d7d-40f9-889b-b950ac6e985b	A0151	436	Geyser Pro Lite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	963.93	1176	705.6	Attivo	NEBULIZZATORE ELETTRICO	436 geyser pro lite stocker	2026-08-07 13:30:09.904214+00
+2b9a6a12-7612-4c52-a2f7-e36b26d1f00d	A0152	327	Alimentatore Geyser AC 220 V - DC 21 V	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	105.74	129	77.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	327 alimentatore geyser ac 220 v - dc 21 v stocker	2026-08-07 13:30:09.904214+00
+056bf850-b682-4368-b3ec-10c1eaf4ab10	A0153	4262	Staffa montante a L per Geyser 2 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	36.23	44.2	26.52	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4262 staffa montante a l per geyser 2 pz stocker	2026-08-07 13:30:09.904214+00
+ed1a4fc8-29c3-4173-ac08-8fe89b7430a0	A0154	439	Geyser Nebulizzatore verde E-25 MI 21 V 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	242.62	296	177.6	Attivo	NEBULIZZATORE ELETTRICO	439 geyser nebulizzatore verde e-25 mi 21 v 5 bar stocker	2026-08-07 13:30:09.904214+00
+02a3bb18-76fd-47bc-ae24-acb324eeefed	A0155	443	Cappuccio protettivo per Geyser 25 L per Art. 414, 432, 439	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	8.69	10.6	6.36	Attivo	NEBULIZZATORE ELETTRICO	443 cappuccio protettivo per geyser 25 l per art. 414, 432, 439 stocker	2026-08-07 13:30:09.904214+00
+5dc1ceed-31aa-4e48-a242-0c44a05efe9f	A0156	438	Geyser Nebulizzatore verde 12 L Li-Ion 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	222.13	271	162.6	Attivo	NEBULIZZATORE ELETTRICO	438 geyser nebulizzatore verde 12 l li-ion 5 bar stocker	2026-08-07 13:30:09.904214+00
+92935585-eff0-460b-8a26-d321604367a1	A0157	442	Cappuccio protettivo per Geyser 12 L per Art. 411, 438	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	7.99	9.75	5.85	Attivo	NEBULIZZATORE ELETTRICO	442 cappuccio protettivo per geyser 12 l per art. 411, 438 stocker	2026-08-07 13:30:09.904214+00
+93816072-27db-4508-9f9c-b4c150f9d348	A0158	437	Geyser Nebulizzatore verde 4 L Li-Ion 5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	161.89	197.5	118.5	Attivo	NEBULIZZATORE ELETTRICO	437 geyser nebulizzatore verde 4 l li-ion 5 bar stocker	2026-08-07 13:30:09.904214+00
+ee710e0a-6484-40be-bea5-50cdcdd9863b	A0159	441	Cappuccio protettivo per Geyser 4 L per Art. 410, 437	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	7.34	8.95	5.37	Attivo	NEBULIZZATORE ELETTRICO	441 cappuccio protettivo per geyser 4 l per art. 410, 437 stocker	2026-08-07 13:30:09.904214+00
+52b7691d-a67e-443e-b377-41b18c002039	A0160	440	Geyser Nebulizzatore Portatile verde 2 L Li-Ion 2,5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	34.59	42.2	25.32	Attivo	NEBULIZZATORE ELETTRICO	440 geyser nebulizzatore portatile verde 2 l li-ion 2,5 bar stocker	2026-08-07 13:30:09.904214+00
+79852eb9-43ff-4f53-989d-4ed625d518ae	A0161	4201	Kit Geyser Nebulizzatore Mini 2 L con Florifens 100 ml - PAESI DI VENDITA: IT	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	32.99	40.25	24.15	Attivo	NEBULIZZATORE ELETTRICO	4201 kit geyser nebulizzatore mini 2 l con florifens 100 ml - paesi di vendita: it stocker	2026-08-07 13:30:09.904214+00
+73476ec8-eee4-4eaf-a603-54f01990b757	A0162	4249	Kit Geyser Nebulizzatore Portatile verde 2 L con Nebuzan DE/AT/FR 200 ml, 10 m di tubo, 3 ugelli, 3 raccordi a T, 1 tappo, 5 fermatubo - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	56.8	69.3	41.58	Attivo	NEBULIZZATORE ELETTRICO	4249 kit geyser nebulizzatore portatile verde 2 l con nebuzan de/at/fr 200 ml, 10 m di tubo, 3 ugelli, 3 raccordi a t, 1 tappo, 5 fermatubo - paesi di vendita: fr - at - de stocker	2026-08-07 13:30:09.904214+00
+86edbe61-dfec-4f49-bfdb-f48712a48b91	A0163	4440	Kit Geyser Nebulizzatore Portatile verde 2 L con Florifens IT 100 ml, 10 m di tubo, 3 ugelli, 3 raccordi a T, 2 tappi, 5 fermatubo - PAESI DI VENDITA: IT	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	55.25	67.4	40.44	Attivo	NEBULIZZATORE ELETTRICO	4440 kit geyser nebulizzatore portatile verde 2 l con florifens it 100 ml, 10 m di tubo, 3 ugelli, 3 raccordi a t, 2 tappi, 5 fermatubo - paesi di vendita: it stocker	2026-08-07 13:30:09.904214+00
+125d14c0-ad96-47bc-92f7-c775f916041b	A0164	409	Geyser Nebulizzatore Mini 2 L per piccioni 2,5 bar	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	32.99	40.25	24.15	Attivo	NEBULIZZATORE ELETTRICO	409 geyser nebulizzatore mini 2 l per piccioni 2,5 bar stocker	2026-08-07 13:30:09.904214+00
+c3d76aa7-426d-425f-8428-ae3fcf7b4efb	A0165	4264	Kit Geyser Pro 100 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	140.98	172	103.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4264 kit geyser pro 100 m ø 6-8 mm stocker	2026-08-07 13:30:09.904214+00
+29c53d33-d630-48fb-84e1-334149eb0316	A0166	4265	Kit Geyser Pro 150 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	184.43	225	135	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4265 kit geyser pro 150 m ø 6-8 mm stocker	2026-08-07 13:30:09.904214+00
+c7c17b47-ea8a-468f-bcb3-03c272c6bdd1	A0167	4266	Kit Geyser Pro 240 m Ø 6-8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	300.82	367	220.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4266 kit geyser pro 240 m ø 6-8 mm stocker	2026-08-07 13:30:09.904214+00
+0a1b6bbd-84da-426a-b9c6-12df2c53b922	A0168	4212	KIT BALCONE GEYSER 10 m ø 6 mm 10 m tubo, 3 ugelli, 3 raccordi T, 1 tappo, 5 fermatubo, 6 chiodi di fissggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	13.85	16.9	10.14	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4212 kit balcone geyser 10 m ø 6 mm 10 m tubo, 3 ugelli, 3 raccordi t, 1 tappo, 5 fermatubo, 6 chiodi di fissggio stocker	2026-08-07 13:30:09.904214+00
+8110a060-39a2-42df-ba32-c74642c9d1e3	A0169	4211	KIT GEYSER 25 m  ø 6 mm 25 m di tubo, 10 ugelli, 10 raccordi a T, 3 tappi di chiusura, 5 fermatubo, 10 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	33.36	40.7	24.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4211 kit geyser 25 m  ø 6 mm 25 m di tubo, 10 ugelli, 10 raccordi a t, 3 tappi di chiusura, 5 fermatubo, 10 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+490d83d8-0e65-433e-b5fa-d768659e2f90	A0170	4210	KIT GEYSER 100 m ø 6 mm 100 m di tubo, 40 ugelli, 40 raccordi a T, 5 raccordi a L, 5 raccordi dritti, 5 tappi di chiusura, 85 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	127.05	155	93	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4210 kit geyser 100 m ø 6 mm 100 m di tubo, 40 ugelli, 40 raccordi a t, 5 raccordi a l, 5 raccordi dritti, 5 tappi di chiusura, 85 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+b5a6b700-6b9b-4f75-9a20-771a0f8fce6b	A0171	4219	Ugelli  anti-gocciolamento sfusi  Ø 6 mm per Geyser 50 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	2.75	3.35	2.01	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4219 ugelli  anti-gocciolamento sfusi  ø 6 mm per geyser 50 pz. stocker	2026-08-07 13:30:09.904214+00
+c2898c97-f400-4c18-932c-6f8a1c5f3cc5	A0172	4253	Ugelli anti-gocciolamento sfusi 135° Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.75	5.8	3.48	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4253 ugelli anti-gocciolamento sfusi 135° ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+eb1d190a-2dc3-4c4d-8037-8cdfb546d000	A0173	4203	Set ugelli e tappi di chiusura Ø 6 mm per Geyser 5 pz e 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	12.87	15.7	9.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4203 set ugelli e tappi di chiusura ø 6 mm per geyser 5 pz e 5 pz stocker	2026-08-07 13:30:09.904214+00
+a9601293-bc56-4799-b289-46f8b7317163	A0174	4215	Tappi di chiusura Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	3.65	4.45	2.67	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4215 tappi di chiusura ø 6 mm per geyser 5 pz stocker	2026-08-07 13:30:09.904214+00
+f2b9d0ef-2c11-431b-88bd-d9ea34a87068	A0175	4208	Raccordo a T Ø 6 mm per Geyser 5 pz, con 10 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4208 raccordo a t ø 6 mm per geyser 5 pz, con 10 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+de3163ed-6a59-4a27-b49d-c1f8dcddde89	A0176	4222	Raccordo a T sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.86	1.05	0.63	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4222 raccordo a t sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+d37ffd69-d35d-407f-a162-1a3a464de1f8	A0177	4240	Raccordo a T sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.15	1.4	0.84	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4240 raccordo a t sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+288c858c-72c2-4755-90b7-63336b7441e3	A0178	4242	Raccordo a T sfuso Ø 6-8-6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.19	1.45	0.87	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4242 raccordo a t sfuso ø 6-8-6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+afb4e77f-aebe-40e9-a200-7f3ef47efe17	A0179	4245	Raccordo a T sfuso Ø 8-6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.15	1.4	0.84	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4245 raccordo a t sfuso ø 8-6-8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+91b334c0-682d-43e9-8edd-b69a2d6bec72	A0180	4206	Raccordo a 90° Ø 6 mm per Geyser 5 pz, con 5 chiodi di fissaggio	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.39	5.35	3.21	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4206 raccordo a 90° ø 6 mm per geyser 5 pz, con 5 chiodi di fissaggio stocker	2026-08-07 13:30:09.904214+00
+05409a01-0495-4e15-b4ec-82847ca07838	A0181	4220	Raccordo a 90° sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.7	0.85	0.51	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4220 raccordo a 90° sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+5984cee8-12c9-4312-adfb-834b18b47a4d	A0182	4239	Raccordo a 90° sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.78	0.95	0.57	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4239 raccordo a 90° sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+562e6a7e-1054-424e-be39-05e4a854af77	A0183	4243	Raccordo a 90° sfuso Ø 6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.94	1.15	0.69	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4243 raccordo a 90° sfuso ø 6-8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+f59b4da1-b7e3-41ba-afc2-9a408260b265	A0184	4207	Raccordo dritto Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	4.8	5.85	3.51	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4207 raccordo dritto ø 6 mm per geyser 5 pz stocker	2026-08-07 13:30:09.904214+00
+04f30ce4-b2df-428f-b6de-06407cd2dcff	A0185	4236	Raccordo dritto sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.78	0.95	0.57	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4236 raccordo dritto sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+3a62cd3c-8f7e-445d-b86c-5b2e9ac514ba	A0186	4241	Raccordo dritto sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.74	0.9	0.54	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4241 raccordo dritto sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+b140ba12-3db1-4eed-a223-85ba7906d94b	A0187	4244	Raccordo dritto sfuso Ø 6-8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.82	1	0.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4244 raccordo dritto sfuso ø 6-8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+8a7841e3-d266-47c1-b352-95a0b2cc381b	A0188	4218	Raccordo a 135° Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	8.77	10.7	6.42	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4218 raccordo a 135° ø 6 mm per geyser stocker	2026-08-07 13:30:09.904214+00
+42363414-a953-4767-b52a-da7e07fd756d	A0189	4238	Raccordo a 135° sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.56	1.9	1.14	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4238 raccordo a 135° sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+6d8582cf-9bdd-46f7-99be-a7773bcb03ae	A0190	4205	Aste di prolungamento 40 cm Ø 6 mm per Geyser 5 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	9.47	11.55	6.93	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4205 aste di prolungamento 40 cm ø 6 mm per geyser 5 pz stocker	2026-08-07 13:30:09.904214+00
+c243fd71-acb8-46aa-8fc4-894423e198cf	A0191	4237	Aste di prolungamento sfuso 40 cm Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4237 aste di prolungamento sfuso 40 cm ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+35f643ae-0149-4808-8859-26cab3e61d5a	A0192	4221	Kit direzionamento ugelli Geyser 2 Tubi flessibili 19 cm e Ø 8 mm, 2 raccordi a T Ø 6-8-6 mm, 2 raccordi dritti Ø 6-8 mm, senza ugelli	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4221 kit direzionamento ugelli geyser 2 tubi flessibili 19 cm e ø 8 mm, 2 raccordi a t ø 6-8-6 mm, 2 raccordi dritti ø 6-8 mm, senza ugelli stocker	2026-08-07 13:30:09.904214+00
+688d314f-67d5-46dd-92b8-984cc45f9551	A0193	4263	Kit direzionamento ugelli Geyser 50 cm 2 Tubi flessibili 50 cm e Ø 8 mm, 2 raccordi a T Ø 6-8-6 mm, 2 raccordi dritti Ø 6-8 mm, 2 picchetti fissatubo 20 cm, senza ugelli	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	12.25	14.95	8.97	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4263 kit direzionamento ugelli geyser 50 cm 2 tubi flessibili 50 cm e ø 8 mm, 2 raccordi a t ø 6-8-6 mm, 2 raccordi dritti ø 6-8 mm, 2 picchetti fissatubo 20 cm, senza ugelli stocker	2026-08-07 13:30:09.904214+00
+4fb8ec5d-d100-4e90-84f6-cbc67ee580ef	A0194	4258	Valvola di non ritorno sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	2.5	3.05	1.83	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4258 valvola di non ritorno sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+0382a238-b7e4-4bb6-8188-5d8a9f59329b	A0195	4259	Valvola di non ritorno sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.45	6.65	3.99	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4259 valvola di non ritorno sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:09.904214+00
+0282ed43-2262-4f54-b215-344913160f9c	A0196	4260	Valvola di non ritorno Ø 6 mm per Geyser 5 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.57	19	11.4	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4260 valvola di non ritorno ø 6 mm per geyser 5 pz. stocker	2026-08-07 13:30:09.904214+00
+01895022-98fe-486b-803c-467c7d437b3a	A0197	4261	Valvola di non ritorno Ø 8 mm per Geyser 5 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	29.55	36.05	21.63	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4261 valvola di non ritorno ø 8 mm per geyser 5 pz. stocker	2026-08-07 13:30:09.904214+00
+c48b09e8-291a-4bef-8931-40455f7e7cfa	A0198	4267	Raccordo rapido rubinetto Ø 8 mm 3/4" 1/2"	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	11.76	14.35	8.61	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4267 raccordo rapido rubinetto ø 8 mm 3/4" 1/2" stocker	2026-08-07 13:30:09.904214+00
+bb6efa20-f836-4a25-aa96-676e7a06b1bb	A0199	4268	Raccordo rapido valvola di entrata per Geyser Ø 8 mm 1/2"	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	5.74	7	4.2	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4268 raccordo rapido valvola di entrata per geyser ø 8 mm 1/2" stocker	2026-08-07 13:30:09.904214+00
+3be566fa-b9e9-4759-b0df-d745aeda7c91	A0200	4269	Filtro entrata acqua per Geyser Ø 8 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	18.32	22.35	13.41	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4269 filtro entrata acqua per geyser ø 8 mm stocker	2026-08-07 13:30:09.904214+00
+46368293-44b0-4d71-b41d-446fe5c6b2c1	A0201	4213	Tubo nero 100 m ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	44.1	53.8	32.28	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4213 tubo nero 100 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+fc2ff684-c65f-4f47-afb5-73339aa81beb	A0202	4223	Tubo bianco 100 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	48.11	58.7	35.22	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4223 tubo bianco 100 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+2a446e95-5a30-414c-bced-a964bd67cb1a	A0203	4224	Tubo marrone 100 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	47.38	57.8	34.68	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4224 tubo marrone 100 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+79acabef-7252-42e6-9139-bc8c50dc71fb	A0204	4225	Tubo nero 25 m Ø 6 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	13.24	16.15	9.69	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4225 tubo nero 25 m ø 6 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+febe7ed1-9808-4242-b854-ff3a4eff01f0	A0205	4248	Tubo nero 100 m Ø 8 mm per Geyser	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	75.66	92.3	55.38	Attivo	NEBULIZZATORE ELETTRICO	4248 tubo nero 100 m ø 8 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+65ac939d-1275-4e3e-8657-ebafe0cdf6aa	A0206	4271	Tubo nero 25 m Ø 8 mm per Geyser	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	19.8	24.15	14.49	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4271 tubo nero 25 m ø 8 mm per geyser stocker	2026-08-07 13:30:10.43876+00
+b8fd7fc5-b052-43ee-a7d3-977d3963c495	A0207	4246	Fissatubo a P sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.45	0.55	0.33	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4246 fissatubo a p sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+7a0d2837-0b44-406e-95f9-be50e506ecb8	A0208	4250	Fissatubo a P sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4250 fissatubo a p sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+6108c51a-0e13-4aa1-a976-1b19307ffc1f	A0209	4247	Fissatubo a U sfuso Ø 6 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4247 fissatubo a u sfuso ø 6 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+714d932a-8efa-42e1-a04d-23cb93065383	A0210	4251	Fissatubo a U sfuso Ø 8 mm per Geyser 25 pz.	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	0.53	0.65	0.39	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4251 fissatubo a u sfuso ø 8 mm per geyser 25 pz. stocker	2026-08-07 13:30:10.43876+00
+7c1d7613-224d-40a1-8243-dc3e96e0b367	A0211	4214	Fermatubo ø 6 mm per Geyser 10 pz, 6mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.35	1.65	0.99	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4214 fermatubo ø 6 mm per geyser 10 pz, 6mm stocker	2026-08-07 13:30:10.43876+00
+c9e30ba4-dea1-416b-88cb-686242b98e2e	A0212	4216	Picchetti fissatubo 20 cm per Geyser 10 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	3.28	4	2.4	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4216 picchetti fissatubo 20 cm per geyser 10 pz stocker	2026-08-07 13:30:10.43876+00
+9636413c-0aa1-45e1-8de2-e20a852c6e6f	A0213	4217	Fascette autobloccanti 30 cm per Geyser 10 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	1.19	1.45	0.87	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4217 fascette autobloccanti 30 cm per geyser 10 pz stocker	2026-08-07 13:30:10.43876+00
+859c8fef-fd42-4530-8f01-c2825d10fd8a	A0214	4270	Fascette autobloccanti 30 cm per Geyser 100 pz	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	9.02	11	6.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4270 fascette autobloccanti 30 cm per geyser 100 pz stocker	2026-08-07 13:30:10.43876+00
+9ed72b0b-540a-458d-8f83-3f53db0994b4	A0215	4255	Palo innalzamento ugello 80 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.7	19.15	11.49	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4255 palo innalzamento ugello 80 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 13:30:10.43876+00
+1eacdeb0-c1cd-4664-886c-721473dd8689	A0216	4256	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	17.21	21	12.6	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4256 palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 13:30:10.43876+00
+ec4e8002-567c-43d4-a67e-8ee3274f609b	A0217	4257	Palo innalzamento ugello 150 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	18.85	23	13.8	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	4257 palo innalzamento ugello 150 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm stocker	2026-08-07 13:30:10.43876+00
+d6e97419-2fb3-4d61-b0a7-be85b1368bb5	A0218	444	Cappuccio protettivo per Geyser Pro per Art. 415, 436	STOCKER	Geyser	Accessorio	Geyser Ø6/8 (Stocker)	pz	15.78	19.25	11.55	Attivo	ACCESSORIO NEBULIZZATORE ELETTRICO	444 cappuccio protettivo per geyser pro per art. 415, 436 stocker	2026-08-07 13:30:10.43876+00
+4e5a5039-5a4c-435f-8630-b0212528b906	A0219	45135	Etokraft zanzaricida anti-zanzare 250 ml PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	13.89	16.95	10.17	Attivo	INSETTICIDI	45135 etokraft zanzaricida anti-zanzare 250 ml pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+cadb6691-8ac4-4d7e-9870-71790bf0bc08	A0220	45130	Etokraft zanzaricida anti-zanzare 1 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	38.4	46.85	28.11	Attivo	INSETTICIDI	45130 etokraft zanzaricida anti-zanzare 1 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+22502063-6296-4386-8410-1b56f8be009e	A0221	45147	Etokraft zanzaricida anti-zanzare 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	174.59	213	127.8	Attivo	INSETTICIDI	45147 etokraft zanzaricida anti-zanzare 5 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+13f9873e-bb94-4b5f-8bca-6c005a6c4604	A0222	45148	Pirekraft insetticida concentrato 500 ml PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	37.46	45.7	27.42	Attivo	INSETTICIDI	45148 pirekraft insetticida concentrato 500 ml pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+80b4169d-e072-4b3c-b60f-6f648dc87eba	A0223	45149	Pirekraft insetticida concentrato 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	287.7	351	210.6	Attivo	INSETTICIDI	45149 pirekraft insetticida concentrato 5 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+2fe7c0eb-917c-4e13-98c6-3e2102fa3944	A0224	45128	Nebuzan repellente anti-zanzare 1 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	34.34	41.9	25.14	Attivo	DISABITUANTI	45128 nebuzan repellente anti-zanzare 1 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+068d91ec-2ff0-4476-8167-57864aad2dfa	A0225	45138	Nebuzan repellente anti-zanzare 5 L PMC - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	131.56	160.5	96.3	Attivo	DISABITUANTI	45138 nebuzan repellente anti-zanzare 5 l pmc - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+5c4bb52c-a4ed-4445-8b97-155a0fa79a6a	A0226	45141	Nebuzan FREE AT-DE-FR 1 L con numero registrazione per Francia, Austria, Germania - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Consumabile	\N	pz	34.34	41.9	25.14	Attivo	DISABITUANTI	45141 nebuzan free at-de-fr 1 l con numero registrazione per francia, austria, germania - paesi di vendita: fr - at - de stocker	2026-08-07 13:30:10.43876+00
+50da3735-9ab9-4899-ae74-58ee6520f1bb	A0227	45143	Nebuzan FREE AT-DE-FR 5 L con numero registrazione per Francia, Austria, Germania - PAESI DI VENDITA: FR - AT - DE	STOCKER	Geyser	Consumabile	\N	pz	131.56	160.5	96.3	Attivo	DISABITUANTI	45143 nebuzan free at-de-fr 5 l con numero registrazione per francia, austria, germania - paesi di vendita: fr - at - de stocker	2026-08-07 13:30:10.43876+00
+f2129795-f96e-4d9d-a56b-82fcf354189a	A0228	45129	Florifens disabituante zanzare 250 ml - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	11.11	13.55	8.13	Attivo	DISABITUANTI	45129 florifens disabituante zanzare 250 ml - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+90e81834-1410-421b-9e3c-303d7f796dc3	A0229	45124	Florifens disabituante zanzare 1 L - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	31.6	38.55	23.13	Attivo	DISABITUANTI	45124 florifens disabituante zanzare 1 l - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+7ba1470f-fb1c-40b9-b9fd-9d5ae0c1729e	A0230	45136	Florifens disabituante zanzare 5 L - PAESI DI VENDITA: IT	STOCKER	Geyser	Consumabile	\N	pz	125.41	153	91.8	Attivo	DISABITUANTI	45136 florifens disabituante zanzare 5 l - paesi di vendita: it stocker	2026-08-07 13:30:10.43876+00
+cbb21cf2-0d50-44c5-874c-5825a031e370	A0231	45139	Florifens profumazione 1 L - PAESI DI VENDITA: AT - DE - GB - ES - FR - PT	STOCKER	Geyser	Consumabile	\N	pz	31.6	38.55	23.13	Attivo	DISABITUANTI	45139 florifens profumazione 1 l - paesi di vendita: at - de - gb - es - fr - pt stocker	2026-08-07 13:30:10.43876+00
+5490a3d9-604b-4f06-a91c-c230909eda7c	A0232	45140	Florifens profumazione 5 L - PAESI DI VENDITA: AT - DE - GB - ES - FR - PT	STOCKER	Geyser	Consumabile	\N	pz	125.41	153	91.8	Attivo	DISABITUANTI	45140 florifens profumazione 5 l - paesi di vendita: at - de - gb - es - fr - pt stocker	2026-08-07 13:30:10.43876+00
+d5ae6c63-6b2c-4874-9aaf-30c0b7b74c03	A0233	45137	Florifens Larvicida zanzare 50 ml - PAESI DI VENDITA: IT - AT - DE - ES - GB	STOCKER	Geyser	Consumabile	\N	pz	11.93	14.55	8.73	Attivo	DISABITUANTI	45137 florifens larvicida zanzare 50 ml - paesi di vendita: it - at - de - es - gb stocker	2026-08-07 13:30:10.43876+00
+e623d614-d833-4dfa-bf08-1336dc7dca12	A0234	45132	Florifens disabituante piccioni 250 ml - PAESI DI VENDITA: IT - ES - PT - GB - PL - FR	STOCKER	Geyser	Consumabile	\N	pz	8.65	10.55	6.33	Attivo	DISABITUANTI	45132 florifens disabituante piccioni 250 ml - paesi di vendita: it - es - pt - gb - pl - fr stocker	2026-08-07 13:30:10.43876+00
+55ed9261-f512-46f4-a189-0df503ba733c	A0235	45131	Florifens disabituante piccioni 1 L - PAESI DI VENDITA: IT - ES - PT - GB - PL - FR	STOCKER	Geyser	Consumabile	\N	pz	28.24	34.45	20.67	Attivo	DISABITUANTI	45131 florifens disabituante piccioni 1 l - paesi di vendita: it - es - pt - gb - pl - fr stocker	2026-08-07 13:30:10.43876+00
+ae4e9246-9ffc-41f3-9a54-6e5e7093e0fa	A0236	2333	Espositore Geyser per lotta alla zanzara con Florifens completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2146.15	2618.3	1570.98	Attivo	NEBULIZZATORE ELETTRICO	2333 espositore geyser per lotta alla zanzara con florifens completo quantità assortite stocker	2026-08-07 13:30:10.43876+00
+a7117d90-1311-4fef-a7fc-090f634a87a6	A0237	2335	Espositore Geyser-1 AT/DE/FR per lotta alla zanzara con Nebuzan FREE completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2058.52	2511.4	1506.84	Attivo	NEBULIZZATORE ELETTRICO	2335 espositore geyser-1 at/de/fr per lotta alla zanzara con nebuzan free completo quantità assortite stocker	2026-08-07 13:30:10.43876+00
+5686bad6-68f4-407d-b64a-99138870920a	A0238	2331	Espositore Geyser-2 AT/DE/FR per lotta alla zanzara con Nebuzan FREE completo quantità assortite	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	2214.26	2701.4	1620.84	Attivo	NEBULIZZATORE ELETTRICO	2331 espositore geyser-2 at/de/fr per lotta alla zanzara con nebuzan free completo quantità assortite stocker	2026-08-07 13:30:10.43876+00
+a6a971c5-b41e-4347-ad82-37cff2162e8f	A0239	415/1	Pompa a diaframma principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	149.18	182	109.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/1 pompa a diaframma principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+cf15bd2a-05cc-4187-9e44-ff0cf9abb942	A0240	415/2	Scheda di controllo principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	236.89	289	173.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/2 scheda di controllo principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+4c775cec-5a8a-408d-880a-778754390509	A0241	415/3	Pannello di controllo con LED e tasto di comando per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/3 pannello di controllo con led e tasto di comando per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+575cb2b6-2520-482f-8fd4-9d1ff02d8dca	A0242	415/4	Elettrovalvola di uscita per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	25.41	31	18.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/4 elettrovalvola di uscita per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+e4938e4b-469f-4635-93f4-07ce26202acc	A0243	415/5	Elettrovalvola di ingresso per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	25.41	31	18.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/5 elettrovalvola di ingresso per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+475ec4dd-9511-4dc5-bde6-9462d82d8623	A0244	415/6	Elettrovalvola di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	22.54	27.5	16.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/6 elettrovalvola di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+3c47905c-af16-4249-885a-9d11284eb37a	A0245	415/7	Pompa dosatrice peristaltica per tanica 1 - BLU per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/7 pompa dosatrice peristaltica per tanica 1 - blu per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+ecf5c410-7819-418d-90f9-465feb60e759	A0246	415/8	Pompa dosatrice peristaltica per tanica 2 per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/8 pompa dosatrice peristaltica per tanica 2 per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+b5696211-d3b9-4af5-88b2-ed3bab8ca996	A0247	415/9	Testa pompa dosatrice peristaltica - BLU per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.11	16	9.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/9 testa pompa dosatrice peristaltica - blu per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+e51c1ab3-9958-48ac-b962-e2f0e5cf768f	A0248	415/10	Sensore di livello per tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	36.07	44	26.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/10 sensore di livello per tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+26f506c6-5d70-4194-a56d-559fc063f085	A0249	415/11	Tappo con sensore di livello per taniche con cavo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	43.03	52.5	31.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/11 tappo con sensore di livello per taniche con cavo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+f21374b0-9c72-4808-9925-d5ef8ac80d5b	A0250	415/12	Cavo di segnale per sensori di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.51	5.5	3.3	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/12 cavo di segnale per sensori di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+711291bd-b610-4cf9-80aa-7fd2f528ac7c	A0251	415/13	Cavo di segnale per pannello di controllo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.92	6	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/13 cavo di segnale per pannello di controllo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+08f22bd7-dd54-4ea2-950c-4306ac15c97c	A0252	415/14	Cavo di alimentazione per pompa dosatrice peristaltica tanica 1 per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.38	9	5.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/14 cavo di alimentazione per pompa dosatrice peristaltica tanica 1 per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+869737d9-ee85-4f6d-90f4-ee1cd2c20c7e	A0253	415/15	Cavo di alimentazione per pompa dosatrice peristaltica tanica 2 per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.38	9	5.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/15 cavo di alimentazione per pompa dosatrice peristaltica tanica 2 per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+8a5c1863-e00e-4398-8c5a-f0bec78567fd	A0254	415/16	Interruttore per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	0.45	0.55	0.33	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/16 interruttore per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+82434c6d-b107-4ea1-8ede-b326bcaba113	A0255	415/17	Alloggiamento batteria con interruttore e cablaggio per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	28.89	35.25	21.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/17 alloggiamento batteria con interruttore e cablaggio per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+08d57982-2b5e-4a04-9acd-72e876f85bb7	A0256	415/18	Cavo di alimentazione pompa principale per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	24.8	30.25	18.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/18 cavo di alimentazione pompa principale per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+60e58756-8f77-43a6-bd7a-5aa44cdcf9f0	A0257	415/19	Coperchio vano scheda di controllo con guarnizione passa-cavi per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.48	14	8.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/19 coperchio vano scheda di controllo con guarnizione passa-cavi per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+c4bbf070-933c-4850-93b1-9b207c460c78	A0258	415/20	Guarnizione, diffusori LED e copri interruttore in gomma per pannello di comando per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.51	5.5	3.3	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/20 guarnizione, diffusori led e copri interruttore in gomma per pannello di comando per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+7ec32559-b1dd-4ceb-8aed-a6a8fb5d5235	A0259	415/21	Valvola meccanica con galleggiante per tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	17.42	21.25	12.75	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/21 valvola meccanica con galleggiante per tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+5c62a364-78d6-4d5d-b69d-200d628297a9	A0260	415/22	Set guide sensori tubolari per sensori di livello (1x tanica miscelazione 7 L, 2x taniche 5 L) per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.25	12.5	7.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/22 set guide sensori tubolari per sensori di livello (1x tanica miscelazione 7 l, 2x taniche 5 l) per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+c9aa7e3d-fbb1-49ba-b2c2-3e044ebbab5c	A0261	415/23	Tanica di miscelazione 7 litri con coperchio e porta sensore di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	22.54	27.5	16.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/23 tanica di miscelazione 7 litri con coperchio e porta sensore di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+0f9ae506-71e6-49e5-842a-95cf89782d9f	A0262	415/24	Ugello di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.62	3.2	1.92	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/24 ugello di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+d6275bd7-2293-4a7a-8fbc-3b020e7f33c7	A0263	432/9	Raccordo per ugello miscelazione interna con connettore rapido dritto per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.17	2.65	1.59	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/9 raccordo per ugello miscelazione interna con connettore rapido dritto per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+191b91b9-b55c-4b70-ae61-7966a60559c0	A0264	415/25	Set connettori rapidi e tubazioni interne per Art. 415, 445	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.27	13.75	8.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/25 set connettori rapidi e tubazioni interne per art. 415, 445 stocker	2026-08-07 13:30:10.43876+00
+1a8d97b0-0942-48d8-aea4-14374692a02c	A0265	415/26	Set connettori rapidi e tubazioni di mandata per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.15	7.5	4.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/26 set connettori rapidi e tubazioni di mandata per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+dc3d5df8-1c0c-4260-8953-b5a00aa6ea7f	A0266	415/27	Connettore rapido di uscita - BIANCO per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.92	6	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/27 connettore rapido di uscita - bianco per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+d787dd5d-e88d-4c56-8948-ae612740b39f	A0267	415/28	Set tubazioni e connettori per pompa peristaltica dosatrice (per una pompa) per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.71	5.75	3.45	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/28 set tubazioni e connettori per pompa peristaltica dosatrice (per una pompa) per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+893c4a41-6829-4daa-a6b1-409bfb601787	A0268	415/29	Tubo di mandata pompa principale, con fascette per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.71	5.75	3.45	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/29 tubo di mandata pompa principale, con fascette per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+26dafd5b-8862-4b91-8241-a0e234139569	A0269	415/30	Staffa supporto elettrovalvola di ingresso, con 4 viti per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.36	4.1	2.46	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/30 staffa supporto elettrovalvola di ingresso, con 4 viti per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+c7f847ea-52b3-45c6-a15e-ec79eac53bc3	A0270	415/31	Maniglia per coperchio frontale, in plastica per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.93	2.35	1.41	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/31 maniglia per coperchio frontale, in plastica per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+38c39880-5e4a-4bd9-b86a-6d8b6fb1da60	A0271	415/32	Serratura con chiave per coperchio frontale per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.17	8.75	5.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/32 serratura con chiave per coperchio frontale per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+dfafa064-da9a-4117-bcdd-24ff425ee8c5	A0272	415/33	Set accessori per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	34.84	42.5	25.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/33 set accessori per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+67ca8c24-f398-4b56-994a-d01da7076e51	A0273	415/34	Set viti interne per pompe dosatrici, pompa principale con staffa, staffa tanica di miscelazione per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.48	4.25	2.55	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/34 set viti interne per pompe dosatrici, pompa principale con staffa, staffa tanica di miscelazione per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+0d48f08e-fbed-4c87-afe1-06fa8d2287bf	A0274	415/35	Set viti per telaio per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.43	1.75	1.05	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/35 set viti per telaio per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+1ce6cdee-11ad-4afa-a7da-20628247b902	A0275	415/36	Set viti per scheda di controllo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	0.57	0.7	0.42	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/36 set viti per scheda di controllo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+b5f12e87-cc47-4d4b-b016-c461498941f7	A0276	415/37	Staffa di supporto tanica di miscelazione 7 L per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	32.38	39.5	23.7	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/37 staffa di supporto tanica di miscelazione 7 l per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+5de3f2a2-9fa0-4fd7-9691-bce782bf48dc	A0277	415/38	Coperchio frontale in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	77.87	95	57	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/38 coperchio frontale in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+53978075-a798-4747-b0c3-332ca7c6d6f0	A0278	415/39	Coperchio posteriore in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	77.87	95	57	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/39 coperchio posteriore in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+3592dc31-56b5-4c26-8e84-f5be43c0a484	A0279	415/40	Base telaio in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	79.92	97.5	58.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/40 base telaio in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+6714796e-60be-487c-8345-924b1bb00d7c	A0280	415/41	Telaio centrale in metallo per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	62.3	76	45.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/41 telaio centrale in metallo per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+4bbf339a-4d69-45a4-a6a2-10412cfaa220	A0281	415/42	Set guarnizioni pannelli laterali per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.25	12.5	7.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/42 set guarnizioni pannelli laterali per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+27a4dab2-e54c-453f-ac71-6c6d731b4725	A0282	415/43	Pannelli laterali (destro e sinistro), in plastica per Art. 415, 436, 445, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	90.16	110	66	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/43 pannelli laterali (destro e sinistro), in plastica per art. 415, 436, 445, 466 stocker	2026-08-07 13:30:10.43876+00
+3cd143fe-72d4-4f2e-8a49-53338fe70d5b	A0283	415/44	Staffa supporto pompa principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/44 staffa supporto pompa principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+14f02327-5978-4ee8-86d3-7d2d85de8032	A0284	415/45	Raccordo entrata motore per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.02	1.25	0.75	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/45 raccordo entrata motore per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+d72dd1aa-cdfc-4841-94d7-805d62e0fab6	A0285	415/46	Tubo grigio sensore tanica per art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.83	3.45	2.07	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/46 tubo grigio sensore tanica per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+a4703d7b-c1ab-4dc6-ba47-cb4ddb01e7fa	A0286	415/47	Testa pompa diaframma principale per Art. 415, 445, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	12.79	15.6	9.36	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/47 testa pompa diaframma principale per art. 415, 445, 446 stocker	2026-08-07 13:30:10.43876+00
+20b7ef49-5373-457e-b06f-8447aa858cac	A0287	415/48	Sensore di livello per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	18.44	22.5	13.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/48 sensore di livello per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+e3456f75-eb96-47b9-820a-d5868dca1f1c	A0288	415/49	Testa pompa dosatrice peristaltica - NERO per Art. 415, 436, 445, 466, 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.93	17	10.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	415/49 testa pompa dosatrice peristaltica - nero per art. 415, 436, 445, 466, 446 stocker	2026-08-07 13:30:10.43876+00
+124435f9-7baf-4c10-9d28-6b998dd7f593	A0289	436/1	Pompa principale per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	40.16	49	29.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/1 pompa principale per art. 436, 466 stocker	2026-08-07 13:30:10.43876+00
+f2fb8b63-23ca-4515-8782-38d2e0bdf1e5	A0290	436/2	Staffa supporto pompa principale per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	30.74	37.5	22.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/2 staffa supporto pompa principale per art. 436, 466 stocker	2026-08-07 13:30:10.43876+00
+d9ce08a6-7e82-4576-93ea-4390fe9d01e7	A0291	436/3	Set connettori rapidi e tubazioni interne per Art. 436, 466	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	11.72	14.3	8.58	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	436/3 set connettori rapidi e tubazioni interne per art. 436, 466 stocker	2026-08-07 13:30:10.43876+00
+c67f6105-7bad-42cd-851b-271d75c7d271	A0292	446/1	Elettrovalvola di uscita per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	26.23	32	19.2	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/1 elettrovalvola di uscita per art. 446 stocker	2026-08-07 13:30:10.43876+00
+ba9c9acf-661d-4658-bc0d-1ec9549a241a	A0293	446/2	Raccordo 3 vie per uscita motore per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	10.86	13.25	7.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/2 raccordo 3 vie per uscita motore per art. 446 stocker	2026-08-07 13:30:10.43876+00
+59a104db-3e62-4267-a73d-f8d4aede5378	A0294	446/3	Set connettori rapidi e tubazioni interne per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	21.93	26.75	16.05	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/3 set connettori rapidi e tubazioni interne per art. 446 stocker	2026-08-07 13:30:10.43876+00
+f71a4810-9e57-4910-87cf-a2435e0aa8b6	A0295	446/4	Connettore rapido di uscita - NERO per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.76	8.25	4.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/4 connettore rapido di uscita - nero per art. 446 stocker	2026-08-07 13:30:10.43876+00
+19a8ae8c-77c5-44fa-a134-a62a440f9232	A0296	446/5	Pannelli laterali (destro e sinistro), in plastica con doppia uscita per Art. 446	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	90.16	110	66	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	446/5 pannelli laterali (destro e sinistro), in plastica con doppia uscita per art. 446 stocker	2026-08-07 13:30:10.43876+00
+e765e674-539c-4962-aba8-3f83567f7f0d	A0297	439/1	Serbatoio verde 25 L per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	43.69	53.3	31.98	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	439/1 serbatoio verde 25 l per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+890e54d0-6ac8-4f4e-a966-3a1c3234e7c1	A0298	432/1	Motore per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	37.62	45.9	27.54	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/1 motore per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+28dd0507-1ff9-44d9-9c42-0d8752181593	A0299	432/2	Display di comando per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	46.56	56.8	34.08	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/2 display di comando per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+68772869-956d-41f7-82c7-b29b77216d5d	A0300	432/3	Alloggiamento per batteria con contatti in plast., per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.55	5.55	3.33	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/3 alloggiamento per batteria con contatti in plast., per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+def9d012-5073-49d9-b3e7-7064a14b3057	A0301	432/4	Coperchio vano batteria in plast., per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.25	6.4	3.84	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/4 coperchio vano batteria in plast., per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+5db921da-ce84-4d0d-8380-641f44225d89	A0302	432/5	Base serbatoio in plastica per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	20.2	24.65	14.79	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/5 base serbatoio in plastica per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+473740d2-19c8-480f-a80d-6a298a0b9772	A0303	432/6	Valvola magnetica per ugelli di nebulizzazione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	15.29	18.65	11.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/6 valvola magnetica per ugelli di nebulizzazione per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+93c934b2-21d9-4073-bd19-5c389a386ac8	A0304	432/7	Valvola magnetica per ugelli di miscelazione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	15.29	18.65	11.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/7 valvola magnetica per ugelli di miscelazione per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+9240b900-5bdf-404f-99e2-bd34a1a57f72	A0305	432/8	Set tubi di distribuzione per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	19.14	23.35	14.01	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/8 set tubi di distribuzione per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+0a6e40a5-c7c2-40ec-8ade-8ea4752883ef	A0306	414/8	Ugello interno di miscelazione per Art. 414, 404, 405, 406, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.4	4.15	2.49	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/8 ugello interno di miscelazione per art. 414, 404, 405, 406, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+1fa7fc68-327c-4951-abc1-77586dcffc1c	A0307	414/6	Kit guarnizioni per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.21	2.7	1.62	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/6 kit guarnizioni per art. 414, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+c5f8efeb-4b2f-4439-b85a-6135a4518dcf	A0308	414/5	Set tubo mandata serbatoio per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	7.09	8.65	5.19	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/5 set tubo mandata serbatoio per art. 414, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+655d93a3-f5fa-4cb4-ba4a-d3513a742490	A0309	410/8	Set ugelli nebulizzazione ultra fine e tappi di chiusura 3 pz, per Art. 410, 411, 414, 420, 409, 432, 4201, 437, 438, 439, 440	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.8	8.3	4.15	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/8 set ugelli nebulizzazione ultra fine e tappi di chiusura 3 pz, per art. 410, 411, 414, 420, 409, 432, 4201, 437, 438, 439, 440 stocker	2026-08-07 13:30:10.43876+00
+c2104cac-e214-44cb-92bb-2211c24b1eed	A0310	410/7	Copertura plastica superiore per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.9	7.2	3.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/7 copertura plastica superiore per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 13:30:10.43876+00
+24df358e-1bd8-4af2-b609-6d32c907a41b	A0311	410/14	Filtro per art. 410, 411, 414, 432, 404, 405, 406, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.89	2.3	1.38	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/14 filtro per art. 410, 411, 414, 432, 404, 405, 406, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+c47ef0aa-c99a-4e51-be45-e2e27ffe7ef5	A0312	432/11	Piastra di fissaggio in inox motore per Art. 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.56	8	4.8	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	432/11 piastra di fissaggio in inox motore per art. 432, 439 stocker	2026-08-07 13:30:10.43876+00
+e7450d2c-7ffc-483f-ab0c-4b159241499c	A0313	413	Treppiede in all., 49 cm, per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Macchina/Kit	Geyser Ø6/8 (Stocker)	pz	48.36	59	35.4	Attivo	NEBULIZZATORE ELETTRICO	413 treppiede in all., 49 cm, per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 13:30:10.43876+00
+3c5c7c1c-5d71-443a-aa0e-8665a01a8b9d	A0314	437/1	Serbatoio verde 4 L per Art. 410, 437	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	12.3	15	9	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	437/1 serbatoio verde 4 l per art. 410, 437 stocker	2026-08-07 13:30:10.43876+00
+5222e67e-98e9-48dd-bbe1-18178019f31e	A0315	438/1	Serbatoio verde 12 L per Art. 411, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	21.19	25.85	15.51	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	438/1 serbatoio verde 12 l per art. 411, 438 stocker	2026-08-07 13:30:10.43876+00
+73e75632-aa92-423c-a56a-66e9753d1734	A0316	410/2	Motore per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	31.56	38.5	19.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/2 motore per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+255b6b2d-dd86-4220-975f-0cb919dfef5b	A0317	410/3	Display di comando per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	34.34	41.9	20.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/3 display di comando per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+0ed8f4eb-c916-4177-8f5d-3af0ab833927	A0318	410/4	Set tubi di distribuzione per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/4 set tubi di distribuzione per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+a817c394-b495-4aaa-a3f7-1d84040258f6	A0319	410/5	Set tubo mandata serbatoio con fascette e filtro per Art. 410, 437	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/5 set tubo mandata serbatoio con fascette e filtro per art. 410, 437 stocker	2026-08-07 13:30:10.43876+00
+a43b6ba1-e064-414f-be2f-7d9b45480e93	A0320	411/2	Set tubo mandata serbatoio con fascette e filtro per Art. 411, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	5.33	6.5	3.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	411/2 set tubo mandata serbatoio con fascette e filtro per art. 411, 438 stocker	2026-08-07 13:30:10.43876+00
+d19fb985-7da9-46bb-9c24-145c970c9108	A0321	410/6	Base serbatoio in plastica per Art. 410, 411, 414, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	16.39	20	10	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/6 base serbatoio in plastica per art. 410, 411, 414, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+a443fc1f-5cc4-4d58-902f-da298dfffa19	A0322	410/9	Kit guarnizioni per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.21	2.7	1.35	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/9 kit guarnizioni per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+e8a634bb-fab2-4e7e-be8d-7233123cc073	A0323	410/11	Cinghia per Art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.67	5.7	2.85	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/11 cinghia per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+f4d52540-017c-453f-ba16-0c76eadbbab1	A0324	410/12	Coperchio vano batteria per art. 410, 411, 414, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	3.28	4	2.4	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/12 coperchio vano batteria per art. 410, 411, 414, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+198e0b1e-1582-49ee-9226-a880ad762902	A0325	410/13	Alloggiamento per batteria con cavi per art. 410, 411, 437, 438	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.66	3.25	1.95	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/13 alloggiamento per batteria con cavi per art. 410, 411, 437, 438 stocker	2026-08-07 13:30:10.43876+00
+bb50e209-7a9d-408a-b47b-1bcfaae9019f	A0326	420/1	Testa per Art. 420, 4201, 440, 4440, 4249	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	23.52	28.7	17.22	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/1 testa per art. 420, 4201, 440, 4440, 4249 stocker	2026-08-07 13:30:10.43876+00
+8033fc72-6dec-4a83-8d30-6d3011ca096f	A0327	420/2	Set o-ring per Art. 409, 420, 4201, 440, 4440, 4249	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	1.84	2.25	1.35	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/2 set o-ring per art. 409, 420, 4201, 440, 4440, 4249 stocker	2026-08-07 13:30:10.43876+00
+b821be70-6ab6-40a8-bbbf-4dddf5dbcf68	A0328	440/1	Serbatoio verde 2 L per Art. 440, 4440, 44401	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.84	8.35	5.01	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	440/1 serbatoio verde 2 l per art. 440, 4440, 44401 stocker	2026-08-07 13:30:10.43876+00
+440af674-443a-4cb1-a71a-22834e41cb8b	A0329	420/3	Cavi USB Micro e USB Type C per Art. 409, 420, 4201, 2621, 440, 4440	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.34	2.85	1.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	420/3 cavi usb micro e usb type c per art. 409, 420, 4201, 2621, 440, 4440 stocker	2026-08-07 13:30:10.43876+00
+56b7879b-b658-4ac6-8705-799b3326edc0	A0330	409/1	Testa per art. 409	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	26.31	32.1	19.26	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	409/1 testa per art. 409 stocker	2026-08-07 13:30:10.43876+00
+1f4cdcf5-bceb-4e78-bcff-0a21d05421a0	A0331	409/2	Serbatoio 2 L per Art. 409	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	6.15	7.5	4.5	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	409/2 serbatoio 2 l per art. 409 stocker	2026-08-07 13:30:10.43876+00
+9270a6df-c440-444c-9d65-1c38212fed89	A0332	410/10	Protezione per display per Art. 410, 411, 414, 432, 437, 438, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	2.05	2.5	1.25	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	410/10 protezione per display per art. 410, 411, 414, 432, 437, 438, 439 stocker	2026-08-07 13:30:10.43876+00
+57a91922-ef4c-442b-a84c-4b4779542169	A0333	414/1	Serbatoio 25 L arancione per Art. 414, 432, 439	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	39.75	48.5	29.1	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/1 serbatoio 25 l arancione per art. 414, 432, 439 stocker	2026-08-07 13:30:10.43876+00
+95220880-80f2-4fba-ba72-5dcd6e4a8839	A0334	414/2	Motore per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	36.89	45	27	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/2 motore per art. 414 stocker	2026-08-07 13:30:10.43876+00
+22648f28-edad-4459-aa89-fdf50b21daba	A0335	414/3	Display di comando per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	44.92	54.8	32.88	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/3 display di comando per art. 414 stocker	2026-08-07 13:30:10.43876+00
+16bdf3e8-12c4-4932-978b-0dd419c844c1	A0336	414/4	Set tubi di distribuzione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	13.11	16	9.6	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/4 set tubi di distribuzione per art. 414 stocker	2026-08-07 13:30:10.43876+00
+08473d7d-1655-4112-a41e-be8535948836	A0337	414/7	Valvola magnetica per ugello di miscelazione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	14.63	17.85	10.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/7 valvola magnetica per ugello di miscelazione per art. 414 stocker	2026-08-07 13:30:10.43876+00
+1d8cf4cd-0bc7-44bb-8a0d-54a871d767c1	A0338	414/9	Alloggiamento per batteria con cavi per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	4.18	5.1	3.06	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/9 alloggiamento per batteria con cavi per art. 414 stocker	2026-08-07 13:30:10.43876+00
+69bd3bd8-a9f9-441c-b962-7312eac93b9b	A0339	414/10	Valvola magnetica per ugelli di nebulizzazione per Art. 414	STOCKER	Geyser	Ricambio	Geyser Ø6/8 (Stocker)	pz	14.63	17.85	10.71	Attivo	RICAMBIO NEBULIZZATORE ELETTRICO	414/10 valvola magnetica per ugelli di nebulizzazione per art. 414 stocker	2026-08-07 13:30:10.43876+00
 \.
 
 
@@ -6207,11 +6218,10 @@ a2572b26-0054-47ba-ab1c-6b0022c208d8	A0335	414/3	Display di comando per Art. 414
 -- Data for Name: az_progetti; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.az_progetti (id, created_at, updated_at, numero, cliente_nome, cliente_id, indirizzo, telefono, riferimento, stato, operatore, tecnico, data_montaggio, foto_path, foto_scala, brand, macchina_code, config, risultato, prezzo_cliente, descrizione_prev, note) FROM stdin;
-a91bf316-7047-4976-925f-83027e4e16b6	2026-08-05 06:39:34.098728+00	2026-08-05 06:47:45.027385+00	AZ-2026-001	Simone Taffarello	\N	Via Piave 71	335312402		preventivo	Admin		\N	progetti/a91bf316-7047-4976-925f-83027e4e16b6/1785911975251.png	\N	gardheaven	Comfort01	{"brand": "gardheaven", "extra": [], "riserM": 2, "mTronco": 0, "manoFix": "recinzione", "manoMac": 200, "margine": 0, "manoMode": "det", "manoRate": 8, "tselCode": "RACCT1/4", "tuboCode": "TBPA30BAR1/4", "usaTappo": true, "accessori": [], "scontoAcq": 50, "porta9Code": "BASINXUG1/4", "portaDCode": "RACCPUD1/4", "ugelloCode": "UGEL0015", "macchinaCode": "Comfort01", "tuboTroncoCode": "TBPA80BAR3/8"}	{"N": 58, "bom": [{"q": 1, "tC": 1650, "tP": 3300, "uC": 1650, "uP": 3300, "um": "pz", "code": "Comfort01", "desc": "Centralina Comfort 01 — 1 linea"}, {"q": 230, "tC": 143.75, "tP": 287.5, "uC": 0.625, "uP": 1.25, "um": "m", "code": "TBPA30BAR1/4", "desc": "Tubo linea — Tubo PA 1/4\\" 30 bar 100 m"}, {"q": 58, "tC": 159.5, "tP": 319, "uC": 2.75, "uP": 5.5, "um": "pz", "code": "UGEL0015", "desc": "Ugello — Ugello 0,015 mm"}, {"q": 58, "tC": 191.39999999999998, "tP": 382.79999999999995, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Portaugello dritto — Porta ugello dritto 1/4\\""}, {"q": 58, "tC": 162.39999999999998, "tP": 324.79999999999995, "uC": 2.8, "uP": 5.6, "um": "pz", "code": "RACCT1/4", "desc": "Raccordo a T — Raccordo T 1/4\\""}, {"q": 1, "tC": 1.65, "tP": 3.3, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "RACCFL1/4", "desc": "Tappo fine linea — Fine linea cieco 1/4\\""}], "tubo": {"linea": 230, "riser": 0, "tronco": 0, "perimetro": 230}, "brand": "Gardheaven", "costi": {"extra": 0, "totale": 2308.7, "macchina": 1650, "accessori": 0, "materiale": 658.6999999999999}, "linee": [{"metri": 230, "passo": 4, "metodo": "m1d", "ugelli": 58, "etichetta": "repellente"}], "nZone": 1, "pezzi": {"T": 58, "tappi": 1, "dritti": 58, "inLinea": 0, "novanta": 0}, "avvisi": [], "metodi": {"m1a": 0, "m1d": 58, "m2q": 0, "m3a": 0, "m3d": 0}, "prezzi": {"extra": 0, "totale": 5281.4, "macchina": 3300, "accessori": 0, "materiale": 1317.3999999999999, "manodopera": 664, "venditaMateriale": 4617.4}, "brandId": "gardheaven", "margine": 2308.7, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "Comfort01", "label": "Comfort 01 — 1 linea", "lines": 1, "maxTot": 150, "perLine": 150}, "metriTot": 230, "marginePct": 50, "ricaricoPct": 0, "ugelliMontati": 58, "scontoApplicato": 50}	\N	\N	
-ee568153-87da-44e6-b49d-2c4f23b0a7da	2026-08-05 07:12:42.88023+00	2026-08-05 07:19:36.71087+00	AZ-2026-002	Simone Taffarello	\N	Via Piave 71	335312402		bozza	Admin		\N	progetti/ee568153-87da-44e6-b49d-2c4f23b0a7da/1785913963512.png	\N	gardheaven	Comfort02	{"auto": {"macchine": false}, "voci": {"tappi": [{"q": 1, "code": "RACCFL1/4"}], "ugelli": [{"q": 58, "code": "UGEL0015"}], "inLinea": [{"q": 5, "code": "RACCPUD1/4"}], "porta90": [{"q": 10, "code": "BASINXUG1/4"}], "macchine": [{"q": 1, "code": "Comfort02"}], "raccordiT": [{"q": 53, "code": "RACCT1/4"}], "tubiLinea": [{"q": 230, "code": "TBPA30BAR1/4"}], "portaDritti": [{"q": 43, "code": "RACCPUD1/4"}]}, "brand": "gardheaven", "extra": [{"q": "", "desc": "", "costo": "", "prezzo": ""}], "riserM": 2, "mTronco": 0, "manoFix": "recinzione", "manoMac": 200, "margine": 0, "manoMode": "det", "manoRate": 8, "scontoAcq": 50}	{"N": 58, "bom": [{"q": 1, "tC": 1870, "tP": 3740, "uC": 1870, "uP": 3740, "um": "pz", "code": "Comfort02", "desc": "Centralina — Comfort 02 Dual — 2 linee (150 ug./linea)", "categoria": "macchine"}, {"q": 230, "tC": 143.75, "tP": 287.5, "uC": 0.625, "uP": 1.25, "um": "m", "code": "TBPA30BAR1/4", "desc": "Tubo linea — Tubo PA 1/4\\" 30 bar 100 m", "categoria": "tubiLinea"}, {"q": 58, "tC": 159.5, "tP": 319, "uC": 2.75, "uP": 5.5, "um": "pz", "code": "UGEL0015", "desc": "Ugelli — Ugello 0,015 mm", "categoria": "ugelli"}, {"q": 43, "tC": 141.9, "tP": 283.8, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Portaugelli dritti — Porta ugello dritto 1/4\\"", "categoria": "portaDritti"}, {"q": 10, "tC": 16.5, "tP": 33, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "BASINXUG1/4", "desc": "Portaugelli angolati — Base innesto 90° ugello 1/4\\"", "categoria": "porta90"}, {"q": 5, "tC": 16.5, "tP": 33, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Raccordi in linea — Raccordo dritto portaugello 6-6", "categoria": "inLinea"}, {"q": 53, "tC": 148.39999999999998, "tP": 296.79999999999995, "uC": 2.8, "uP": 5.6, "um": "pz", "code": "RACCT1/4", "desc": "Raccordi a T — Raccordo T 1/4\\"", "categoria": "raccordiT"}, {"q": 1, "tC": 1.65, "tP": 3.3, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "RACCFL1/4", "desc": "Tappi fine linea — Fine linea cieco 1/4\\"", "categoria": "tappi"}], "tubo": {"linea": 230, "riser": 0, "tronco": 0, "perimetro": 230}, "brand": "Gardheaven", "costi": {"extra": 0, "totale": 2498.2000000000003, "materiale": 2498.2000000000003}, "linee": [{"_i": 0, "metri": "230", "passo": 4, "metodi": {"m1a": 10, "m1d": 43, "m2q": 5}, "etichetta": "repellente", "ugelliMontati": 58, "ugelliPrevisti": 58}], "avvisi": [], "metodi": {"m1a": 10, "m1d": 43, "m2q": 5, "m3a": 0, "m3d": 0}, "nLinee": 1, "prezzi": {"extra": 0, "totale": 5660.400000000001, "materiale": 4996.400000000001, "manodopera": 664, "venditaMateriale": 4996.400000000001}, "totali": {"tappi": {"q": 1, "costo": 1.65, "prezzo": 3.3, "suggerito": 1}, "ugelli": {"q": 58, "costo": 159.5, "prezzo": 319, "suggerito": 58}, "inLinea": {"q": 5, "costo": 16.5, "prezzo": 33, "suggerito": 5}, "porta90": {"q": 10, "costo": 16.5, "prezzo": 33, "suggerito": 10}, "macchine": {"q": 1, "costo": 1870, "prezzo": 3740, "suggerito": 1}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 53, "costo": 148.39999999999998, "prezzo": 296.79999999999995, "suggerito": 53}, "tubiLinea": {"q": 230, "costo": 143.75, "prezzo": 287.5, "suggerito": 230}, "tubiTronco": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "portaDritti": {"q": 43, "costo": 141.9, "prezzo": 283.8, "suggerito": 43}}, "brandId": "gardheaven", "margine": 2498.2000000000003, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "Comfort02", "label": "Comfort 02 Dual — 2 linee (150 ug./linea)", "lines": 2, "maxTot": 300, "perLine": 150}, "metriTot": 230, "suggeriti": {"tappi": 1, "ugelli": 58, "_metodi": {"m1a": 10, "m1d": 43, "m2q": 5, "m3a": 0, "m3d": 0}, "_nLinee": 1, "inLinea": 5, "porta90": 10, "_mTronco": 0, "macchine": 1, "_metriTot": 230, "accessori": null, "raccordiT": 53, "tubiLinea": 230, "tubiTronco": 0, "_riserMetri": 0, "portaDritti": 43, "_ugelliPrevisti": 58}, "marginePct": 50, "ricaricoPct": 0, "ugelliMontati": 58, "scontoApplicato": 50}	\N	\N	
-41fde0ea-65c2-4215-be3a-2c415a1b35f8	2026-08-05 07:51:07.172946+00	2026-08-05 07:51:38.304874+00	AZ-2026-003	Simone Taffarello	\N	Via Piave 71	335312402		bozza	Admin		\N	\N	\N	gardheaven	\N	{"auto": {}, "voci": {}, "brand": "gardheaven", "extra": [{"q": "", "um": "pz", "desc": "", "costo": "", "codice": "", "prezzo": ""}], "riserM": 2, "mTronco": 0, "manoFix": "recinzione", "manoMac": 200, "margine": 0, "manoMode": "det", "manoRate": 8, "scontoAcq": 50}	{"N": 0, "bom": [], "tubo": {"linea": 0, "riser": 0, "tronco": 0, "perimetro": 0}, "brand": "Gardheaven", "costi": {"extra": 0, "totale": 0, "materiale": 0}, "linee": [], "avvisi": [], "metodi": {"m1a": 0, "m1d": 0, "m2q": 0, "m3a": 0, "m3d": 0}, "nLinee": 0, "prezzi": {"extra": 0, "totale": 200, "materiale": 0, "manodopera": 200, "venditaMateriale": 0}, "totali": {"tappi": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "ugelli": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "inLinea": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "porta90": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "macchine": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiTronco": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "portaDritti": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}}, "brandId": "gardheaven", "margine": 0, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": null, "label": "—", "lines": 0, "maxTot": 0, "perLine": 0}, "metriTot": 0, "suggeriti": {"tappi": 0, "ugelli": 0, "_metodi": {"m1a": 0, "m1d": 0, "m2q": 0, "m3a": 0, "m3d": 0}, "_nLinee": 0, "inLinea": 0, "porta90": 0, "_mTronco": 0, "macchine": 0, "_metriTot": 0, "accessori": null, "raccordiT": 0, "tubiLinea": 0, "tubiTronco": 0, "_riserMetri": 0, "portaDritti": 0, "_ugelliPrevisti": 0}, "manodopera": {"modo": "det", "totale": 200, "fissaggi": [], "macchina": 200, "costoFissaggi": 0, "ugelliFissati": 0}, "marginePct": 0, "ricaricoPct": 0, "ugelliMontati": 0, "scontoApplicato": 50}	\N	\N	
-6b58c891-16b3-4479-b88d-3437a63e8b18	2026-08-07 02:18:14.263819+00	2026-08-07 02:28:28.433417+00	AZ-2026-004	Simone Taffarello	\N	Via Piave 71	335312402		bozza	Admin		\N	progetti/6b58c891-16b3-4479-b88d-3437a63e8b18/1786069093302.png	\N	gardheaven	Comfort01	{"auto": {"riduzioni": false, "tubiTronco": false}, "voci": {"tappi": [{"q": 1, "code": "RACCFL1/4"}], "ugelli": [{"q": 58, "code": "UGEL0015"}], "inLinea": [{"q": 15, "code": "RACCPUD1/4"}], "porta90": [{"q": 30, "code": "BASINXUG1/4"}], "macchine": [{"q": 1, "code": "Comfort01"}], "raccordiT": [{"q": 43, "code": "RACCT1/4"}], "riduzioni": [{"q": 1, "code": "RIDDRI3/8-1/4"}], "tubiLinea": [{"q": 316, "code": "TBPA30BAR1/4"}], "tubiTronco": [{"q": 3.5, "code": "TBPA80BAR3/8"}], "portaDritti": [{"q": 13, "code": "RACCPUD1/4"}]}, "brand": "gardheaven", "extra": [], "derivM": "0.5", "riserM": 2, "mTronco": 0, "manoFix": "recinzione", "manoMac": 200, "margine": 0, "fissaggi": [{"q": 58, "id": "recinzione", "eur": 8, "label": "Su recinzione"}, {"q": 0, "id": "siepe", "eur": 9, "label": "Su siepe"}, {"q": 0, "id": "paletti", "eur": 12, "label": "Su paletti"}], "manoMode": "det", "manoRate": 8, "scontoAcq": 50}	{"N": 58, "bom": [{"q": 1, "tC": 1650, "tP": 3300, "uC": 1650, "uP": 3300, "um": "pz", "code": "Comfort01", "desc": "Centralina — Comfort 01 — 1 linea", "categoria": "macchine"}, {"q": 316, "tC": 197.5, "tP": 395, "uC": 0.625, "uP": 1.25, "um": "m", "code": "TBPA30BAR1/4", "desc": "Tubo linea — Tubo PA 1/4\\" 30 bar 100 m", "categoria": "tubiLinea"}, {"q": 3.5, "tC": 3.1062499999999997, "tP": 6.2124999999999995, "uC": 0.8875, "uP": 1.775, "um": "m", "code": "TBPA80BAR3/8", "desc": "Tubo tronco — Tubo PA 3/8\\" 80 bar 100 m", "categoria": "tubiTronco"}, {"q": 58, "tC": 159.5, "tP": 319, "uC": 2.75, "uP": 5.5, "um": "pz", "code": "UGEL0015", "desc": "Ugelli — Ugello 0,015 mm", "categoria": "ugelli"}, {"q": 13, "tC": 42.9, "tP": 85.8, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Portaugelli dritti — Porta ugello dritto 1/4\\"", "categoria": "portaDritti"}, {"q": 30, "tC": 49.5, "tP": 99, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "BASINXUG1/4", "desc": "Portaugelli angolati — Base innesto 90° ugello 1/4\\"", "categoria": "porta90"}, {"q": 15, "tC": 49.5, "tP": 99, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Raccordi in linea — Raccordo dritto portaugello 6-6", "categoria": "inLinea"}, {"q": 43, "tC": 120.39999999999999, "tP": 240.79999999999998, "uC": 2.8, "uP": 5.6, "um": "pz", "code": "RACCT1/4", "desc": "Raccordi a T — Raccordo T 1/4\\"", "categoria": "raccordiT"}, {"q": 1, "tC": 2.3, "tP": 4.6, "uC": 2.3, "uP": 4.6, "um": "pz", "code": "RIDDRI3/8-1/4", "desc": "Riduzioni 3/8-1/4 — Riduzione dritta 3/8→1/4", "categoria": "riduzioni"}, {"q": 1, "tC": 1.65, "tP": 3.3, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "RACCFL1/4", "desc": "Tappi fine linea — Fine linea cieco 1/4\\"", "categoria": "tappi"}], "tubo": {"linea": 316, "riser": 86, "tronco": 3.5, "perimetro": 230, "derivazioni": 0}, "brand": "Gardheaven", "costi": {"extra": 0, "totale": 2276.3562500000003, "materiale": 2276.3562500000003}, "linee": [{"_i": 0, "metri": "230", "passo": 4, "metodi": {"m2q": 15, "m3a": 30, "m3d": 13}, "etichetta": "repellente", "metriTronco": "0", "ugelliMontati": 58, "ugelliPrevisti": 58}], "avvisi": ["Tubo tronco: inseriti 3.5 m, il calcolo ne suggerisce 0.", "Riduzioni 3/8-1/4: inseriti 1 pz, il calcolo ne suggerisce 0."], "metodi": {"m1a": 0, "m1d": 0, "m2q": 15, "m3a": 30, "m3d": 13, "m4a": 0, "m4d": 0}, "nLinee": 1, "prezzi": {"extra": 0, "totale": 5216.712500000001, "materiale": 4552.712500000001, "manodopera": 664, "venditaMateriale": 4552.712500000001}, "totali": {"tappi": {"q": 1, "costo": 1.65, "prezzo": 3.3, "suggerito": 1}, "ugelli": {"q": 58, "costo": 159.5, "prezzo": 319, "suggerito": 58}, "inLinea": {"q": 15, "costo": 49.5, "prezzo": 99, "suggerito": 15}, "porta90": {"q": 30, "costo": 49.5, "prezzo": 99, "suggerito": 30}, "macchine": {"q": 1, "costo": 1650, "prezzo": 3300, "suggerito": 1}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 43, "costo": 120.39999999999999, "prezzo": 240.79999999999998, "suggerito": 43}, "riduzioni": {"q": 1, "costo": 2.3, "prezzo": 4.6, "suggerito": 0}, "tubiLinea": {"q": 316, "costo": 197.5, "prezzo": 395, "suggerito": 316}, "tubiTronco": {"q": 3.5, "costo": 3.1062499999999997, "prezzo": 6.2124999999999995, "suggerito": 0}, "portaDritti": {"q": 13, "costo": 42.9, "prezzo": 85.8, "suggerito": 13}}, "brandId": "gardheaven", "margine": 2276.3562500000003, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "Comfort01", "label": "Comfort 01 — 1 linea", "lines": 1, "maxTot": 150, "perLine": 150}, "metriTot": 230, "suggeriti": {"tappi": 1, "ugelli": 58, "_metodi": {"m1a": 0, "m1d": 0, "m2q": 15, "m3a": 30, "m3d": 13, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 1, "inLinea": 15, "porta90": 30, "_mTronco": 0, "macchine": 1, "_metriTot": 230, "accessori": null, "raccordiT": 43, "riduzioni": 0, "tubiLinea": 316, "tubiTronco": 0, "_derivMetri": 0, "_riserMetri": 86, "portaDritti": 13, "_ugelliPrevisti": 58}, "manodopera": {"modo": "det", "totale": 664, "fissaggi": [{"q": 58, "id": "recinzione", "eur": 8, "label": "Su recinzione"}], "macchina": 200, "costoFissaggi": 464, "ugelliFissati": 58}, "marginePct": 50, "ricaricoPct": 0, "ugelliMontati": 58, "scontoApplicato": 50}	\N	\N	
+COPY public.az_progetti (id, created_at, updated_at, numero, cliente_nome, cliente_id, indirizzo, telefono, riferimento, stato, operatore, tecnico, data_montaggio, foto_path, foto_scala, brand, macchina_code, config, risultato, prezzo_cliente, descrizione_prev, note, data_preventivo) FROM stdin;
+759e3165-8750-4c61-b16a-a39df8ead8bb	2026-08-07 08:56:27.234065+00	2026-08-07 16:23:39.779739+00	AZ-2026-006	Fabbio Luigino	\N	via Cardinal Callegari 2 Vascon di Carbonera			preventivo	Simone	Roberto	\N	progetti/759e3165-8750-4c61-b16a-a39df8ead8bb/1786093070525.png	\N	geyser	415	{"auto": {}, "voci": {"tappi": [], "ugelli": [{"q": 58, "code": "4219"}], "porta90": [{"q": 58, "code": "4220"}], "macchine": [{"q": 1, "code": "415"}], "raccordiT": [{"q": 58, "code": "4222"}], "tubiLinea": [{"q": 321, "code": "4213"}], "tubiTronco": [{"q": 25, "code": "4248"}]}, "brand": "geyser", "extra": [{"q": "58", "um": "pz", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "costo": 12.61, "codice": "4256", "prezzo": 17.21, "costoDaListino": true}], "consumi": [{"code": "45147", "tipo": "insetticida", "label": "Etokraft zanzaricida 5 L", "giorni": 150, "ugelli": 58, "_ugello": "4219", "litriConf": 5, "_pressione": 12, "prezzoConf": 174.59, "percentuale": "1", "portataLmin": 0.04, "minutiGiorno": "1", "_fontePortata": "dichiarata"}, {"code": "45138", "tipo": "repellente", "label": "Nebuzan repellente 5 L", "giorni": 150, "ugelli": 58, "_ugello": "4219", "litriConf": 5, "_pressione": 12, "prezzoConf": 131.56, "percentuale": "5", "portataLmin": 0.04, "minutiGiorno": "2", "_fontePortata": "dichiarata"}], "manoMac": "300", "margine": "30", "manoMode": "det", "manoRate": "28", "risalitaM": 2, "scontoAcq": 0, "consumabili": [{"q": 1, "code": "45147"}, {"q": 1, "code": "45138"}]}	{"N": 58, "bom": [{"q": 1, "tC": 975, "tP": 1331.97, "uC": 975, "uP": 1331.97, "um": "pz", "code": "415", "desc": "Centralina — Geyser Pro (240 m)", "categoria": "macchine"}, {"q": 321, "tC": 103.61880000000001, "tP": 141.561, "uC": 0.32280000000000003, "uP": 0.441, "um": "m", "code": "4213", "desc": "Tubo Ø6 — Ø6 nero 100 m", "categoria": "tubiLinea"}, {"q": 25, "tC": 13.845000000000002, "tP": 18.915, "uC": 0.5538000000000001, "uP": 0.7565999999999999, "um": "m", "code": "4248", "desc": "Tubo Ø8 — Ø8 nero 100 m", "categoria": "tubiTronco"}, {"q": 58, "tC": 116.57999999999998, "tP": 159.5, "uC": 2.01, "uP": 2.75, "um": "pz", "code": "4219", "desc": "Ugelli — Anti-gocc. standard", "categoria": "ugelli"}, {"q": 58, "tC": 29.580000000000002, "tP": 40.599999999999994, "uC": 0.51, "uP": 0.7, "um": "pz", "code": "4220", "desc": "Portaugelli angolati — 90° Ø6", "categoria": "porta90"}, {"q": 58, "tC": 36.54, "tP": 49.88, "uC": 0.63, "uP": 0.86, "um": "pz", "code": "4222", "desc": "Raccordi a T — T Ø6", "categoria": "raccordiT"}, {"q": 58, "tC": 731.38, "tP": 998.1800000000001, "uC": 12.61, "uP": 17.21, "um": "pz", "code": "4256", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "categoria": "extra"}, {"q": 1, "tC": 127.8, "tP": 174.59, "uC": 127.8, "uP": 174.59, "um": "pz", "code": "45147", "desc": "Kit prodotti — Etokraft zanzaricida 5 L", "categoria": "consumabili"}, {"q": 1, "tC": 96.3, "tP": 131.56, "uC": 96.3, "uP": 131.56, "um": "pz", "code": "45138", "desc": "Kit prodotti — Nebuzan repellente 5 L", "categoria": "consumabili"}], "tubo": {"linea": 321, "tronco": 25, "risalita": 116, "perimetro": 205}, "brand": "Geyser", "costi": {"kit": 224.1, "extra": 731.38, "totale": 2230.6438, "materiale": 1275.1637999999998}, "linee": [{"_i": 0, "metri": 230, "passo": 4, "anello": true, "metodi": {"m3a": 58}, "etichetta": "Linea", "metriTronco": 25, "ugelliMontati": 58, "ugelliPrevisti": 58}], "avvisi": [], "metodi": {"m1a": 0, "m1d": 0, "m2q": 0, "m3a": 58, "m3d": 0, "m4a": 0, "m4d": 0}, "nLinee": 1, "prezzi": {"iva": 1274.446316, "extra": 998.1800000000001, "totale": 5792.9378, "impianto": 5486.7878, "materiale": 1742.426, "totaleIva": 7067.384115999999, "imponibile": 5792.9378, "manodopera": 1924, "aliquotaIva": 22, "kitProdotti": 306.15, "venditaMateriale": 3562.7877999999996}, "totali": {"tappi": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "ugelli": {"q": 58, "costo": 116.57999999999998, "prezzo": 159.5, "suggerito": 58}, "inLinea": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "porta90": {"q": 58, "costo": 29.580000000000002, "prezzo": 40.599999999999994, "suggerito": 58}, "macchine": {"q": 1, "costo": 975, "prezzo": 1331.97, "suggerito": 1}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 58, "costo": 36.54, "prezzo": 49.88, "suggerito": 58}, "riduzioni": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 321, "costo": 103.61880000000001, "prezzo": 141.561, "suggerito": 321}, "tubiTronco": {"q": 25, "costo": 13.845000000000002, "prezzo": 18.915, "suggerito": 25}, "consumabili": {"q": 2, "costo": 224.1, "prezzo": 306.15, "suggerito": null}, "portaDritti": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}}, "brandId": "geyser", "margine": 1638.2939999999999, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "415", "label": "Geyser Pro (240 m)", "lines": 1, "maxTot": 60, "perLine": 60}, "metriTot": 230, "suggeriti": {"tappi": 0, "ugelli": 58, "_metodi": {"m1a": 0, "m1d": 0, "m2q": 0, "m3a": 58, "m3d": 0, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 1, "inLinea": 0, "porta90": 58, "_mTronco": 25, "macchine": 1, "_metriTot": 230, "accessori": null, "raccordiT": 58, "riduzioni": 0, "tubiLinea": 321, "tubiTronco": 25, "portaDritti": 0, "_cambiDiametro": 1, "_risalitaMetri": 116, "_ugelliPrevisti": 58}, "manodopera": {"modo": "det", "totale": 1924, "ugelli": 58, "tariffaUgello": 28, "programmazione": 300}, "marginePct": 42.34480068405338, "ricaricoPct": 30, "ugelliMontati": 58, "scontoApplicato": 0}	\N	\N	Escluso tubo corrugato, scavi e rinterri	2026-08-07
+2e9dfeff-f1e2-4c2b-8003-54ad98ac926c	2026-08-10 09:30:59.00414+00	2026-08-10 14:33:00.3348+00	AZ-2026-007	Di Lenardo Filippo 	\N				preventivo	Simone		\N	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786370372310.png	\N	geyser	446	{"auto": {"tappi": false, "macchine": false, "accessori": false, "tubiLinea": true}, "voci": {"tappi": [{"q": 2, "code": "4215"}], "ugelli": [{"q": 75, "code": "4219"}], "porta90": [{"q": 75, "code": "4220"}], "macchine": [{"q": 1, "code": "446"}], "accessori": [{"q": 1, "code": "4259"}, {"q": 1, "code": "4269"}, {"q": 1, "code": "4267"}, {"q": 20, "code": "4263"}, {"q": 1, "code": "4262"}], "raccordiT": [{"q": 75, "code": "4222"}], "tubiLinea": [{"q": 300, "code": "4213"}], "tubiTronco": []}, "brand": "geyser", "extra": [{"q": "30", "um": "pz", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "costo": 12.61, "codice": "4256", "prezzo": 17.21, "costoDaListino": true}], "consumi": [], "manoMac": "250", "margine": "10", "manoMode": "det", "manoRate": "30", "risalitaM": 2, "scontoAcq": 0, "consumabili": [{"q": 1, "code": "ANTICALC-05L"}, {"q": 1, "code": "CHEF-BarrArom5L"}, {"q": 1, "code": "FIREWALL-Inse1L"}, {"q": 1, "code": "45147"}, {"q": 1, "code": "45138"}]}	{"N": 75, "bom": [{"q": 1, "tC": 1066.2, "tP": 1456.56, "uC": 1066.2, "uP": 1456.56, "um": "pz", "code": "446", "desc": "Centralina — Geyser Pro Dual (2×240 m)", "categoria": "macchine"}, {"q": 300, "tC": 96.84, "tP": 132.3, "uC": 0.32280000000000003, "uP": 0.441, "um": "m", "code": "4213", "desc": "Tubo Ø6 — Ø6 nero 100 m", "categoria": "tubiLinea"}, {"q": 75, "tC": 150.74999999999997, "tP": 206.25, "uC": 2.01, "uP": 2.75, "um": "pz", "code": "4219", "desc": "Ugelli — Anti-gocc. standard", "categoria": "ugelli"}, {"q": 75, "tC": 38.25, "tP": 52.5, "uC": 0.51, "uP": 0.7, "um": "pz", "code": "4220", "desc": "Portaugelli angolati — 90° Ø6", "categoria": "porta90"}, {"q": 75, "tC": 47.25, "tP": 64.5, "uC": 0.63, "uP": 0.86, "um": "pz", "code": "4222", "desc": "Raccordi a T — T Ø6", "categoria": "raccordiT"}, {"q": 2, "tC": 1.068, "tP": 1.46, "uC": 0.534, "uP": 0.73, "um": "pz", "code": "4215", "desc": "Tappi fine linea — Tappo chiusura Ø6 (conf. 5 pz)", "categoria": "tappi"}, {"q": 1, "tC": 3.99, "tP": 5.45, "uC": 3.99, "uP": 5.45, "um": "pz", "code": "4259", "desc": "Accessori — Valvola non ritorno Ø8 (sfuso)", "categoria": "accessori"}, {"q": 1, "tC": 13.41, "tP": 18.32, "uC": 13.41, "uP": 18.32, "um": "pz", "code": "4269", "desc": "Accessori — Filtro entrata acqua Ø8", "categoria": "accessori"}, {"q": 1, "tC": 8.61, "tP": 11.76, "uC": 8.61, "uP": 11.76, "um": "pz", "code": "4267", "desc": "Accessori — Raccordo rapido rubinetto Ø8", "categoria": "accessori"}, {"q": 20, "tC": 179.4, "tP": 245, "uC": 8.97, "uP": 12.25, "um": "pz", "code": "4263", "desc": "Accessori — Kit direzionamento ugelli 50 cm", "categoria": "accessori"}, {"q": 1, "tC": 26.52, "tP": 36.23, "uC": 26.52, "uP": 36.23, "um": "pz", "code": "4262", "desc": "Accessori — Staffa montante a L (2 pz)", "categoria": "accessori"}, {"q": 30, "tC": 378.29999999999995, "tP": 516.3000000000001, "uC": 12.61, "uP": 17.21, "um": "pz", "code": "4256", "desc": "Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm", "categoria": "extra"}, {"q": 1, "tC": 127.8, "tP": 174.59, "uC": 127.8, "uP": 174.59, "um": "pz", "code": "45147", "desc": "Kit prodotti — Etokraft zanzaricida 5 L", "categoria": "consumabili"}, {"q": 1, "tC": 96.3, "tP": 131.56, "uC": 96.3, "uP": 131.56, "um": "pz", "code": "45138", "desc": "Kit prodotti — Nebuzan repellente 5 L", "categoria": "consumabili"}], "tubo": {"linea": 300, "tronco": 0, "risalita": 0, "perimetro": 300}, "brand": "Stocker", "costi": {"kit": 224.1, "extra": 378.29999999999995, "totale": 2234.688, "materiale": 1632.288}, "linee": [{"_i": 0, "metri": 160, "passo": 4, "anello": false, "colore": "cyan", "metodi": {"m1a": 40}, "etichetta": "linea 2 repellente/insett. giardino", "metriTronco": 0, "ugelliMontati": 40, "ugelliPrevisti": 40}, {"_i": 1, "metri": 140, "passo": 4, "colore": "cyan", "metodi": {"m1a": 35}, "etichetta": "linea 1 repellente casa", "metriTronco": 0, "ugelliMontati": 35, "ugelliPrevisti": 35}], "avvisi": [], "metodi": {"m1a": 75, "m1d": 0, "m2q": 0, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "nLinee": 2, "prezzi": {"iva": 1282.0374600000002, "extra": 516.3000000000001, "totale": 5827.443000000001, "impianto": 5521.293000000001, "materiale": 2230.33, "totaleIva": 7109.480460000002, "imponibile": 5827.443000000001, "manodopera": 2500, "aliquotaIva": 22, "kitProdotti": 306.15, "venditaMateriale": 3021.2930000000006}, "totali": {"tappi": {"q": 2, "costo": 1.068, "prezzo": 1.46, "suggerito": 2}, "ugelli": {"q": 75, "costo": 150.74999999999997, "prezzo": 206.25, "suggerito": 75}, "inLinea": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "porta90": {"q": 75, "costo": 38.25, "prezzo": 52.5, "suggerito": 75}, "macchine": {"q": 1, "costo": 1066.2, "prezzo": 1456.56, "suggerito": 1}, "accessori": {"q": 24, "costo": 231.93, "prezzo": 316.76, "suggerito": null}, "raccordiT": {"q": 75, "costo": 47.25, "prezzo": 64.5, "suggerito": 75}, "riduzioni": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 300, "costo": 96.84, "prezzo": 132.3, "suggerito": 300}, "tubiTronco": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "consumabili": {"q": 2, "costo": 224.1, "prezzo": 306.15, "suggerito": null}, "portaDritti": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}}, "brandId": "geyser", "margine": 1092.7550000000006, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "446", "label": "Geyser Pro Dual (2×240 m)", "lines": 2, "maxTot": 120, "perLine": 60}, "metriTot": 300, "suggeriti": {"tappi": 2, "ugelli": 75, "_metodi": {"m1a": 75, "m1d": 0, "m2q": 0, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 2, "inLinea": 0, "porta90": 75, "_mTronco": 0, "macchine": 1, "_metriTot": 300, "accessori": null, "raccordiT": 75, "riduzioni": 0, "tubiLinea": 300, "tubiTronco": 0, "portaDritti": 0, "_cambiDiametro": 0, "_risalitaMetri": 0, "_ugelliPrevisti": 75}, "manodopera": {"modo": "det", "totale": 2500, "ugelli": 75, "tariffaUgello": 30, "programmazione": 250}, "marginePct": 32.840682770523806, "ricaricoPct": 10, "ugelliMontati": 75, "scontoApplicato": 0}	\N	\N		2026-08-10
+fe473ebe-b839-436e-a1e0-afa4a5e4a3dc	2026-08-10 15:45:57.366295+00	2026-08-10 15:51:48.921418+00	AZ-2026-008	De Menego Daniel	\N	via Lorenzo Celsi Treviso			preventivo	Simone		\N	\N	\N	gardheaven	Comfort02	{"auto": {"macchine": false, "tubiLinea": false}, "voci": {"tappi": [], "ugelli": [{"q": 55, "code": "UGEL0015"}], "inLinea": [{"q": 12, "code": "RACCPUD1/4"}], "porta90": [{"q": 2, "code": "BASINXUG1/4"}], "macchine": [{"q": 1, "code": "Comfort02"}], "raccordiT": [{"q": 43, "code": "RACCT1/4"}], "tubiLinea": [{"q": 80, "code": "TBPA30BAR1/4"}], "portaDritti": [{"q": 41, "code": "RACCPUD1/4"}]}, "brand": "gardheaven", "extra": [], "consumi": [], "manoMac": 0, "margine": 0, "manoMode": "det", "manoRate": 22, "risalitaM": 2, "scontoAcq": 50, "consumabili": []}	{"N": 62, "bom": [{"q": 1, "tC": 1870, "tP": 3740, "uC": 1870, "uP": 3740, "um": "pz", "code": "Comfort02", "desc": "Centralina — Comfort 02 Dual — 2 linee (150 ug./linea)", "categoria": "macchine"}, {"q": 80, "tC": 50, "tP": 100, "uC": 0.625, "uP": 1.25, "um": "m", "code": "TBPA30BAR1/4", "desc": "Tubo 1/4\\" — Tubo PA 1/4\\" 30 bar 100 m", "categoria": "tubiLinea"}, {"q": 55, "tC": 151.25, "tP": 302.5, "uC": 2.75, "uP": 5.5, "um": "pz", "code": "UGEL0015", "desc": "Ugelli — Ugello 0,15 mm", "categoria": "ugelli"}, {"q": 41, "tC": 135.29999999999998, "tP": 270.59999999999997, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Portaugelli dritti — Porta ugello dritto 1/4\\"", "categoria": "portaDritti"}, {"q": 2, "tC": 3.3, "tP": 6.6, "uC": 1.65, "uP": 3.3, "um": "pz", "code": "BASINXUG1/4", "desc": "Portaugelli angolati — Base innesto 90° ugello 1/4\\"", "categoria": "porta90"}, {"q": 12, "tC": 39.599999999999994, "tP": 79.19999999999999, "uC": 3.3, "uP": 6.6, "um": "pz", "code": "RACCPUD1/4", "desc": "Raccordi in linea — Raccordo dritto portaugello 6-6", "categoria": "inLinea"}, {"q": 43, "tC": 120.39999999999999, "tP": 240.79999999999998, "uC": 2.8, "uP": 5.6, "um": "pz", "code": "RACCT1/4", "desc": "Raccordi a T — Raccordo T 1/4\\"", "categoria": "raccordiT"}], "tubo": {"linea": 80, "tronco": 0, "risalita": 0, "perimetro": 100}, "brand": "Gardheaven", "costi": {"kit": 0, "extra": 0, "totale": 2369.8500000000004, "materiale": 2369.8500000000004}, "linee": [{"_i": 0, "metri": "50", "passo": "2.5", "anello": true, "metodi": {"m1d": 1, "m2q": 12}, "etichetta": "repellente", "metriTronco": "", "ugelliMontati": 13, "ugelliPrevisti": 20}, {"_i": 1, "metri": "50", "passo": "1.2", "anello": true, "metodi": {"m1a": 2, "m1d": 40}, "etichetta": "Raffrescamento", "metriTronco": "", "ugelliMontati": 42, "ugelliPrevisti": 42}], "avvisi": ["repellente: 13 ugelli ripartiti sui metodi, 20 previsti dai metri.", "Tubo 1/4\\": inseriti 80 m, il calcolo ne suggerisce 100."], "metodi": {"m1a": 2, "m1d": 41, "m2q": 12, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "nLinee": 2, "prezzi": {"iva": 1308.9340000000002, "extra": 0, "totale": 5949.700000000001, "impianto": 5949.700000000001, "materiale": 4739.700000000001, "totaleIva": 7258.634000000001, "imponibile": 5949.700000000001, "manodopera": 1210, "aliquotaIva": 22, "kitProdotti": 0, "venditaMateriale": 4739.700000000001}, "totali": {"tappi": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "ugelli": {"q": 55, "costo": 151.25, "prezzo": 302.5, "suggerito": 55}, "inLinea": {"q": 12, "costo": 39.599999999999994, "prezzo": 79.19999999999999, "suggerito": 12}, "porta90": {"q": 2, "costo": 3.3, "prezzo": 6.6, "suggerito": 2}, "macchine": {"q": 1, "costo": 1870, "prezzo": 3740, "suggerito": 1}, "accessori": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "raccordiT": {"q": 43, "costo": 120.39999999999999, "prezzo": 240.79999999999998, "suggerito": 43}, "riduzioni": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "tubiLinea": {"q": 80, "costo": 50, "prezzo": 100, "suggerito": 100}, "tubiTronco": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": 0}, "consumabili": {"q": 0, "costo": 0, "prezzo": 0, "suggerito": null}, "portaDritti": {"q": 41, "costo": 135.29999999999998, "prezzo": 270.59999999999997, "suggerito": 41}}, "brandId": "gardheaven", "margine": 2369.8500000000004, "capacita": {"overTot": false, "overLinea": false, "overNumLinee": false}, "macchina": {"code": "Comfort02", "label": "Comfort 02 Dual — 2 linee (150 ug./linea)", "lines": 2, "maxTot": 300, "perLine": 150}, "metriTot": 100, "suggeriti": {"tappi": 0, "ugelli": 55, "_metodi": {"m1a": 2, "m1d": 41, "m2q": 12, "m3a": 0, "m3d": 0, "m4a": 0, "m4d": 0}, "_nDeriv": 0, "_nLinee": 2, "inLinea": 12, "porta90": 2, "_mTronco": 0, "macchine": 1, "_metriTot": 100, "accessori": null, "raccordiT": 43, "riduzioni": 0, "tubiLinea": 100, "tubiTronco": 0, "portaDritti": 41, "_cambiDiametro": 0, "_risalitaMetri": 0, "_ugelliPrevisti": 62}, "manodopera": {"modo": "det", "totale": 1210, "ugelli": 55, "tariffaUgello": 22, "programmazione": 0}, "marginePct": 50, "ricaricoPct": 0, "ugelliMontati": 55, "scontoApplicato": 50}	\N	\N		2026-08-10
 \.
 
 
@@ -6221,9 +6231,8 @@ ee568153-87da-44e6-b49d-2c4f23b0a7da	2026-08-05 07:12:42.88023+00	2026-08-05 07:
 
 COPY public.az_voci_extra (id, created_at, updated_at, descrizione, codice, um, costo, prezzo, usi, ultimo_uso, creata_da) FROM stdin;
 7207b113-bb67-43ad-ad3b-f7acea179ac9	2026-08-05 07:51:07.547504+00	2026-08-05 07:51:07.547504+00	paletto	\N	pz	\N	\N	1	2026-08-05 07:51:07.547504+00	Admin
-15274695-7756-406a-9541-5be9faf1590b	2026-08-07 02:25:34.205548+00	2026-08-07 02:25:34.205548+00	palo	\N	pz	\N	\N	1	2026-08-07 02:25:34.205548+00	Admin
-7afa8308-f3e2-4f4d-8135-b0ca5bd1a93a	2026-08-07 02:26:07.986124+00	2026-08-07 02:26:39.337123+00	tub	\N	pz	\N	\N	2	2026-08-07 02:26:39.337123+00	Admin
-12cad2c0-ba4a-4dca-be61-c0de48e9fdab	2026-08-07 02:24:59.762425+00	2026-08-07 02:27:10.198261+00	t	\N	pz	\N	\N	2	2026-08-07 02:27:10.198261+00	Admin
+15274695-7756-406a-9541-5be9faf1590b	2026-08-07 02:25:34.205548+00	2026-08-07 09:25:42.246017+00	palo	\N	pz	\N	\N	2	2026-08-07 09:25:42.246017+00	Admin
+9b6d9187-db9d-4031-babf-8353b587e491	2026-08-07 09:15:04.346713+00	2026-08-10 14:33:00.979303+00	Palo innalzamento ugello 100 cm, in ferro, con 1,70 m di tubo, connettore in gomma e raccordo a 135° ø 6 mm	4256	pz	12.61	17.21	27	2026-08-10 14:33:00.979303+00	Admin
 \.
 
 
@@ -6852,6 +6861,7 @@ recovered-124	2026-01-20 11:00:00+00	CORTESE MIRCO	\N	\N	Simone	[]	[{"nome": "PO
 1783441112813	2026-07-07 16:18:32.052+00	Popoiu Cristian	{"cf": "PPOCST77E11Z129O", "id": "e7d53c5d-3d23-49dd-a9d8-7212a5bf1304", "cap": "31050", "sdi": null, "nome": "Popoiu Cristian", "piva": null, "email": "cristianblackart@gmail.com", "nomeP": "Popoiu Cristian", "localita": "Povegliano", "telefono": "388 904 6698", "indirizzo": "via Postioma, 53", "provincia": "TV", "searchText": "popoiu cristian"}	388 904 6698	Admin	[{"brand": "TORO", "model": "Rasaerba Timemaster 76 cm 21815", "prezzo": 2000, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "418830692"}]	[]	2000	\N	\N	\N	scontrino	completed	2026-07-07 16:18:32.052+00	t	user_1770584612559	vendita	f	f	f	\N	\N
 recovered-129	2026-01-26 11:00:00+00	PAOLO BARBON	\N	\N	Simone	[]	[{"nome": "WEIBANG TRINCIAERBA CARDANO 3 VELOCITA WBBC537SCV", "prezzo": 1350, "quantita": 1, "aliquotaIva": 22}]	1350	100	contanti	cell. 3464744611	scontrino	completed	2026-01-26 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 1784822010184	2026-07-23 15:53:30.184+00	LOMBARDI PIETRO	\N	\N	Admin	[]	[{"id": 1784821999130, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-07-23 15:53:30.184+00	t	user_1771232846694	vendita	t	f	f	\N	\N
+1786375454326	2026-08-10 15:24:13.667+00	Cester Francesco 3282608027	\N	\N	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 120 R", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841754702"}]	[]	349	\N	\N	\N	scontrino	completed	2026-08-10 15:24:13.667+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1773068231847	2026-03-09 11:00:00+00	vivai lovisetto marco	\N	\N	Simone	[]	[{"id": 1773068091299, "nome": "MOLLA A TAZZA 40 X20,4X0,5", "prezzo": 1.56, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091300, "nome": "PERNO LAMA FD", "prezzo": 7.95, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091301, "nome": "LAMA PIATTO CLS9/CLS10/TRINCIA", "prezzo": 16.8, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091302, "nome": "RONDELLA 35 X 12,5 X 6", "prezzo": 2.05, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1773068091303, "nome": "DADO 12X1,75 AUTUBL BASSO", "prezzo": 0.33, "quantita": 2, "matricola": null, "aliquotaIva": 22}]	57.38	\N	\N	\N	fattura	completed	2026-03-09 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773338235441	2026-03-12 17:57:15.441+00	CENEDESE FABRIZIO	\N	\N	Simone	[]	[{"id": 1773338206431, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-12 17:57:15.441+00	t	user_1773313248876	vendita	f	f	f	in_attesa	\N
 1773419112396	2026-03-13 16:25:12.044+00	Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS	{"id": "511430", "cap": "31056", "nome": "Castello Di Roncade SOC.AGR.DI Ciani Bassetti Claudio E C.SS", "email": "amministrazione@castellodironcade.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3336023178 GEROMEL", "indirizzo": "VIA ROMA, 141- INT.8", "provincia": "TV", "searchText": "castello di roncade soc.agr.di ciani bassetti claudio e c.ss roncade ", "telefonoOriginale": "3336023178 GEROMEL"}	3336023178 GEROMEL	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM 3021 TES", "prezzo": 599, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65040105586"}]	[]	599	\N	\N	\N	fattura	completed	2026-03-13 16:25:12.044+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6875,6 +6885,7 @@ recovered-116	2026-01-10 11:00:00+00	ROSSI GIANCARLO VIA CARBONCINE 76 BIANCADE	
 recovered-115	2026-01-09 11:00:00+00	De Zottis sas	\N	\N	Simone	[]	[{"nome": "SOFFIATORE BGA 60 452325465", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "BATTERIA AK30 912721072", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "CARICABATTERIE AL 101 702817745", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	369	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 recovered-105	2026-01-09 11:00:00+00	MICHELE GOLFETTO	\N	\N	Simone	[]	[{"nome": "TRONCARAMI RS 750", "prezzo": 0, "quantita": 2, "aliquotaIva": 22}]	134	\N	\N	\N	scontrino	completed	2026-01-09 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 recovered-104	2026-01-07 11:00:00+00	Battistel Thomas	\N	\N	Simone	[{"brand": "STIHL", "model": "SOFFIATORI BGA 160", "prezzo": 0, "aliquotaIva": 22, "serialNumber": "450906088"}]	[{"nome": "SPRAY SUPERCLEAN", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	360	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
+1786517131257	2026-08-12 06:45:31.256+00	Project Giudecca srl	\N	\N	Simone	[]	[{"id": 1786517117510, "nome": "Fornitura impianto di raffrescamento con modulo centralina Comfort 01 matr. GH_EABE44, completo di tubo, raccordi e ugelli", "brand": null, "prezzo": 3950, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3950	\N	\N	\N	fattura	completed	2026-08-12 06:45:31.256+00	f	user_1770584612559	vendita	t	f	f	\N	\N
 recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "SEGACCIO ARS 470mm", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}, {"nome": "MANICO TELES. EXP 5.5", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	190	\N	\N	\N	scontrino	completed	2026-01-07 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 1772270715735	2026-02-28 09:25:15.284+00	Dal Corso Cristian via Massiego 13/A Casale sul Sile 3498450743 cristian.dalcorso@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "Tosaerba HRG466C1 SKEP", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCCF1301493"}]	[]	669	\N	\N	\N	scontrino	completed	2026-02-28 09:25:15.284+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1783677642287	2026-07-10 10:00:41.264+00	De Longhi Davide	{"id": "503756", "cap": "31100", "nome": "De Longhi Davide", "email": "ildelo67@libero.it", "nomeP": "", "cognome": "", "contatto": "SIG.RA Galletti Carla", "localita": "TREVISO", "telefono": "3384031823", "indirizzo": "VIA SEITZ, 1", "provincia": "TV", "searchText": "de longhi davide treviso sig.ra galletti carla", "telefonoOriginale": "3384031823"}	3384031823	Simone	[{"brand": "Stihl", "model": "Batteria AP 300.0 S (280,80 Wh)", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "540786791"}]	[]	329	\N	\N	\N	scontrino	completed	2026-07-10 10:00:41.264+00	t	user_1775131564325	vendita	f	f	f	\N	\N
@@ -6913,7 +6924,7 @@ recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "
 1772698023760	2026-03-05 08:07:03.759+00	La Gemma Di Bianchin Mauro & C. Snc	{"id": "202369", "cap": "31049", "nome": "La Gemma Di Bianchin Mauro & C. Snc", "email": "info@gemmagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "VALDOBBIADENE", "telefono": "0423981412", "indirizzo": "STRADA ROSA 44 - BIGOLINO", "provincia": "TV", "searchText": "la gemma di bianchin mauro & c. snc valdobbiadene ", "telefonoOriginale": "0423981412"}	0423981412	Simone	[]	[{"id": 1772697630789, "nome": "Universal Top 20 kg", "prezzo": 56.5, "quantita": 4, "matricola": null, "aliquotaIva": 4}, {"id": 1772697650836, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697668935, "nome": "Micosat F MO 5 kg", "prezzo": 140.4, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1772697688240, "nome": "Strong 10 kg", "prezzo": 81.5, "quantita": 1, "matricola": null, "aliquotaIva": 10}, {"id": 1772697704749, "nome": "Hurricane 7 10 kg", "prezzo": 104, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	654.9	\N	\N	\N	fattura	completed	2026-03-05 08:07:03.759+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1771857311156	2026-02-23 14:35:10.084+00	Cenedese Andrea	{"id": "500594", "cap": "31048", "nome": "Cenedese Andrea", "email": "andrea.cenedese@alice.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA SAN MARTINO, 54 - SAN MARTINO", "provincia": "TV", "searchText": "cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[{"brand": "Volpi", "model": "Forbice elettronica KV360", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "PP4624.359NB"}]	[]	299	\N	\N	\N	scontrino	completed	2026-02-23 14:35:10.084+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1784822385096	2026-07-23 15:59:44.599+00	Fontebasso Marcelino	{"id": "511588", "cap": "31030", "nome": "Fontebasso Marcelino", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3488124088", "indirizzo": "VIA MONTEPERALBA N8", "provincia": "TV", "searchText": "fontebasso marcelino breda di piave ", "telefonoOriginale": "3488124088"}	3488124088	Simone	[{"brand": "Stihl", "model": "Motosega MS 162 3/8\\"P", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "840603456"}]	[]	199	\N	\N	\N	scontrino	completed	2026-07-23 15:59:44.599+00	t	user_1775131564325	vendita	f	f	f	\N	\N
-1785915571307	2026-08-05 07:39:31.307+00	Green Love di Rosolen Nicola Strada delle Bruscole 12 Conegliano	\N	\N	Simone	[{"brand": "Toro", "model": "minicaricatore cingolato Dingo TX525 usato, completo dei seguenti accessori", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[{"id": 1785915366820, "nome": "Benna liscia da 90 cm", "brand": null, "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785915388730, "nome": "Pinza da legna con chele 5 denti", "brand": null, "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785915559471, "nome": "Interrasassi Dairon STH36", "brand": null, "prezzo": 39000, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	39000	\N	\N	\N	fattura	pending	\N	f	user_1770584612559	vendita	t	f	f	\N	\N
+1786523557814	2026-08-12 08:32:37.185+00	Trevi SOCIETA' Agricola Semplice Di VIO' NICOLO'	{"id": "510377", "cap": "31100", "nome": "Trevi SOCIETA' Agricola Semplice Di VIO' NICOLO'", "email": "treviagricola@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3401079803", "indirizzo": "VIA A.G. LONGHIN, 1", "provincia": "TV", "searchText": "trevi societa' agricola semplice di vio' nicolo' treviso ", "telefonoOriginale": "3401079803"}	3401079803	Simone	[{"brand": "Echo", "model": "Motosega CS-280TES", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C75138082880"}]	[]	329	\N	\N	\N	fattura	completed	2026-08-12 08:32:37.185+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1773045271126	2026-03-09 11:00:00+00	BARBON IVAN	\N	\N	Simone	[]	[{"id": 1773045119753, "nome": "Universal Top 20 kg", "prezzo": 59.4, "quantita": 11, "matricola": null, "aliquotaIva": 4}]	653.4	\N	\N	\N	scontrino	completed	2026-03-09 11:00:00+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
 1773075750834	2026-03-09 17:02:30.833+00	BROLLO MARCO	{"cf": null, "id": "a0f77d7b-6122-46c8-afb6-ce56c6356b80", "cap": "31048", "sdi": null, "nome": "BROLLO MARCO", "piva": null, "email": null, "nomeP": "BROLLO MARCO", "localita": "SAN BIAGIO DI CALLALTA", "telefono": null, "indirizzo": "VIA FRIULI", "provincia": null, "searchText": "BROLLO MARCO"}	\N	Simone	[]	[{"id": 1773075593716, "nome": "Eden 7 5 kg", "prezzo": 15.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773075700238, "nome": "Micosat F prati & giardini 1 kg", "prezzo": 31.2, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	46.9	\N	\N	\N	scontrino	completed	2026-03-09 17:02:30.833+00	t	user_1773043211070	vendita	f	f	f	in_attesa	\N
 1773244078788	2026-03-11 15:47:58.787+00	Romanello Umberto	{"id": "508068", "cap": "31048", "nome": "Romanello Umberto", "email": "umbe.roma@yahoo.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3463719100", "indirizzo": "VIA FORNASATTA, 5", "provincia": "TV", "searchText": "romanello umberto san biagio di callalta ", "telefonoOriginale": "3463719100"}	3463719100	Simone	[]	[{"id": 1773244071793, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	47.7	\N	\N	\N	scontrino	completed	2026-03-11 15:47:58.787+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6923,9 +6934,12 @@ recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "
 1773762228782	2026-03-17 15:43:48.782+00	Impronta Verde Di Cenedese Andrea	{"id": "510097", "cap": "31048", "nome": "Impronta Verde Di Cenedese Andrea", "email": "a.improntaverde@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN BIAGIO DI CALLALTA", "telefono": "3318200684", "indirizzo": "VIA S. MARTINO, 54", "provincia": "TV", "searchText": "impronta verde di cenedese andrea san biagio di callalta ", "telefonoOriginale": "3318200684"}	3318200684	Simone	[]	[{"id": 1773762180768, "nome": "Humifitos 25 Kg 25 kg", "prezzo": 103, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773762223076, "nome": "Fe Ulk 1 Kg 1 kg", "prezzo": 24.7, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	127.7	\N	\N	\N	fattura	completed	2026-03-17 15:43:48.782+00	t	user_1773757201306	vendita	f	f	f	in_attesa	\N
 1783761555628	2026-07-11 09:19:13.594+00	Forcellini Antonio	{"id": "511108", "cap": "31057", "nome": "Forcellini Antonio", "email": "forcellini.antonio@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "335474999", "indirizzo": "VIA NERBON 33F", "provincia": "TV", "searchText": "forcellini antonio silea ", "telefonoOriginale": "335474999"}	335474999	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HLS 56", "prezzo": 385, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "944266182"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703447614"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948864182"}]	[]	385	\N	\N	\N	scontrino	completed	2026-07-11 09:19:13.594+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1784875085125	2026-07-24 06:38:04.173+00	Mazzega Paolo	{"id": "507910", "cap": "31056", "nome": "Mazzega Paolo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "RONCADE", "telefono": "3286491988", "indirizzo": "VIA MONTIRON, 2", "provincia": "TV", "searchText": "mazzega paolo roncade ", "telefonoOriginale": "3286491988"}	3286491988	Simone	[{"brand": "Stihl", "model": "Decespugliatore FS 120 R", "prezzo": 349, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "841754718"}]	[{"id": 1784875063994, "nome": "Lama Forestal", "brand": null, "prezzo": 7.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	356.5	\N	\N	\N	scontrino	completed	2026-07-24 06:38:04.173+00	t	user_1775131564325	vendita	f	f	f	\N	\N
+1785915571307	2026-08-05 10:00:00+00	Green Love di Rosolen Nicola Strada delle Bruscole 12 Conegliano	\N	\N	Simone	[{"_key": "69b505c0-feb1-4669-9bf8-3d5b0fb90db2", "brand": "Toro", "model": "minicaricatore cingolato Dingo TX525 usato, completo dei seguenti accessori", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "."}]	[{"id": 1785915366820, "_key": "14d7aac9-b6a3-4548-9f54-e081596ed327", "nome": "Benna liscia da 90 cm", "brand": null, "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785915388730, "_key": "ee2cf06c-c4ba-4176-bf38-d4c027287b20", "nome": "Pinza da legna con chele 5 denti", "brand": null, "prezzo": 0, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785915559471, "_key": "be1015b1-3806-40f7-b17c-a07d5c2d7764", "nome": "Interrasassi Dairon STH36", "brand": null, "prezzo": 39000, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	39000	\N	\N	\N	fattura	completed	2026-08-07 10:08:39.962+00	f	user_1770584612559	vendita	t	f	f	\N	\N
+1786526161569	2026-08-12 09:16:01.569+00	Marco	\N	\N	Simone	[]	[{"id": 1786526156701, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-08-12 09:16:01.569+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1773829190451	2026-03-18 10:19:49.852+00	Gheller Giovanni	{"id": "501565", "cap": "31030", "nome": "Gheller Giovanni", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3493203938", "indirizzo": "VIA MASERADE, 23", "provincia": "TV", "searchText": "gheller giovanni breda di piave ", "telefonoOriginale": "3493203938"}	3493203938	Simone	[{"brand": "Stihl", "model": "Potatore GTA 40.0", "prezzo": 399, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449980336"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511941"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511944"}, {"brand": "STIHL", "model": "Caricabatteria AL 5-2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "709055579"}]	[]	399	\N	\N	\N	scontrino	completed	2026-03-18 10:19:49.852+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773841339358	2026-03-18 13:42:18.807+00	Bergamo Pietro	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG416XBPEEA", "prezzo": 700, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCEF1003260"}, {"brand": "Honda", "model": "Batteria 4.0 li-Ion", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY-1002910"}, {"brand": "Honda", "model": "Caricabatteria CV3620XA EM", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027252"}]	[]	700	\N	\N	\N	scontrino	completed	2026-03-18 13:42:18.807+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773843081488	2026-03-18 14:11:21.488+00	Battistel Stefano	{"id": "508028", "cap": "31030", "nome": "Battistel Stefano", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3479082926", "indirizzo": "VIA DEL PASSO, 10 - SALETTO", "provincia": "TV", "searchText": "battistel stefano breda di piave ", "telefonoOriginale": "3479082926"}	3479082926	Simone	[]	[{"id": 1773843061461, "nome": "Micosat F Tab Plus 1 kg", "prezzo": 49.82, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1773843072195, "nome": "Micosat F Len 1 kg", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	103.82	\N	\N	\N	scontrino	completed	2026-03-18 14:11:21.488+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
+1786528562852	2026-08-12 09:56:02.047+00	Marchesin Sergio	{"id": "504828", "cap": "31030", "nome": "Marchesin Sergio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASIER", "telefono": "3382949437", "indirizzo": "VIA PESCHIERETTE, 22", "provincia": "TV", "searchText": "marchesin sergio casier ", "telefonoOriginale": "3382949437"}	3382949437	Simone	[{"brand": "Volpi", "model": "Potatore KVS6000", "prezzo": 380, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SM3525.27NB"}]	[{"id": 1786528512814, "nome": "Catena ", "brand": null, "prezzo": 13.9, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	393.9	\N	\N	\N	scontrino	completed	2026-08-12 09:56:02.047+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1773846534889	2026-03-18 11:00:00+00	Collodo Vladimiro	{"id": "502882", "cap": "31021", "nome": "Collodo Vladimiro", "email": "vladimiro.collodo@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MOGLIANO VENETO", "telefono": "041457189", "indirizzo": "VIA ROETTE, 5 - ZERMAN", "provincia": "TV", "searchText": "collodo vladimiro mogliano veneto ", "telefonoOriginale": "041457189"}	041457189	Simone	[{"brand": "ECHO", "model": "Tagliasiepi DHCA-310", "prezzo": 145, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "E80435001582"}, {"brand": "ECHO", "model": "Caricabatteria LC-3604 EU35", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61535107521"}, {"brand": "ECHO", "model": "Batteria LBP-36-80 EU35", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U61235054310"}]	[]	294	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773830769841	2026-03-18 11:00:00+00	Fontana Antonio	{"id": "512828", "cap": "31100", "nome": "Fontana Antonio", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3383385190", "indirizzo": "", "provincia": "TV", "searchText": "fontana antonio treviso ", "telefonoOriginale": "3383385190"}	3383385190	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC2624.0696N"}]	[]	179	\N	\N	Parrocchia S. Maria Ausiliatrice. Chiamare appena arriva	scontrino	completed	2026-03-27 11:07:22.782+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1773825316633	2026-03-18 11:00:00+00	Cavana 88	{"id": "514034", "cap": "30173", "nome": "Cavana 88", "email": "info@cavana88.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3772390407", "indirizzo": "VIA TRIESTINA, 54/24", "provincia": "VE", "searchText": "cavana 88 favaro veneto ", "telefonoOriginale": "3772390407"}	3394798537 Loris	Simone	[{"brand": "Stihl", "model": "Trattorino rasaerba RT 4112 SZ", "prezzo": 3649, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "980361852"}]	[]	3649	\N	\N	Consegnare prima possibile. Chiamare Loris per consegna (Simone) Al ritorno scaricare il loro trattorino usato da un socio a Quarto d'Altino	fattura	completed	2026-03-27 14:06:13.924+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
@@ -6933,15 +6947,15 @@ recovered-87	2026-01-07 11:00:00+00	MIOTTO BENIAMINO	\N	\N	Simone	[]	[{"nome": "
 1773906930973	2026-03-19 11:00:00+00	Battistel Massimo	{"id": "511731", "cap": "31052", "nome": "Battistel Massimo", "email": "massibat11@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA SUL PIAVE", "telefono": "3478948847", "indirizzo": "VIA PADRE KOLBE, 1", "provincia": "TV", "searchText": "battistel massimo maserada sul piave ", "telefonoOriginale": "3478948847"}	3478948847	Simone	[]	[{"id": 1773906913033, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 52, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	52	\N	\N	\N	scontrino	completed	2026-03-19 11:00:00+00	f	user_1772446347578	vendita	f	f	f	in_attesa	\N
 recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone	[{"brand": "Stihl", "model": "TOSASIEPI HS82 R cm 75", "prezzo": 779, "aliquotaIva": 22, "serialNumber": "197814730"}, {"brand": "Stihl", "model": "TOSASIEPI HSA140R cm 75", "prezzo": 618.54, "aliquotaIva": 22, "serialNumber": "451286601"}]	[{"nome": "PALETTA MANUALE", "prezzo": 9.15, "quantita": 4, "aliquotaIva": 22}, {"nome": "MANICO ZM-V4", "prezzo": 81, "quantita": 3, "aliquotaIva": 22}]	1677.14	\N	\N	\N	scontrino	completed	2026-02-02 11:00:00+00	t	Simone	vendita	f	f	f	in_attesa	\N
 1783937267563	2026-07-13 10:07:47.226+00	Busana Giardini Di Busana Francesco	{"id": "510815", "cap": "31010", "nome": "Busana Giardini Di Busana Francesco", "email": "amministrazione@busanagiardini.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASER", "telefono": "3408334679", "indirizzo": "VIA CHIESA, 37", "provincia": "TV", "searchText": "busana giardini di busana francesco maser ", "telefonoOriginale": "3408334679"}	3408334679	Simone	[{"brand": "Stihl", "model": "AL 301-4", "prezzo": 275, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "711199608"}]	[{"id": 1783936263792, "nome": "Coltello 600 mm 24\\"R 119-42377106053", "brand": null, "prezzo": 109.84, "quantita": 2, "matricola": null, "aliquotaIva": 22}, {"id": 1783936305900, "nome": "Protezione mano 48697909110", "brand": null, "prezzo": 10.41, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1783936607415, "nome": "Cavo di collegamento 48504001605", "brand": null, "prezzo": 119.67, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	624.76	\N	\N	\N	fattura	completed	2026-07-13 10:07:47.226+00	f	user_1770584612559	vendita	f	f	f	\N	\N
-1784911770117	2026-07-24 10:00:00+00	Stefano Porcellato 3285772836	\N	\N	Simone	[{"_key": "183fbd5c-5ca3-4e4e-9728-ebf1b73a53f4", "brand": "Stihl", "model": "Tosaerba RMA 243", "prezzo": 519, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449329860"}, {"_key": "b7b2464a-c97d-4150-bc75-c2a24a0cf6dd", "brand": "Stihl", "model": "Decespugliatore FSA 50", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "453026280"}, {"_key": "245f71b0-6703-41da-9e2a-ba25ab6bbbcf", "brand": "Stihl", "model": "Soffiatore BGA 50", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600047218"}, {"_key": "dc881abe-02ee-4ead-b2ac-2897d1ddaecc", "brand": "Stihl", "model": "Batteria AK30S", "prezzo": 150, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "550572789"}, {"_key": "a1adf52a-4207-49bb-af72-e059b4967323", "brand": "Stihl", "model": "Batteria AK30S", "prezzo": 150, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "550572775"}, {"_key": "81d661d9-bf78-4372-86d6-cf2cfe41153c", "brand": "Stihl ", "model": "Tosasiepi HSA 50.1", "_isNew": true, "prezzo": 169, "aliquotaIva": 22, "serialNumber": "943920194"}, {"_key": "4121ec49-853f-4b1d-b3eb-a877ff516106", "brand": "Stihl", "model": "Caricabatterie AL301", "_isNew": true, "prezzo": 125, "aliquotaIva": 22, "serialNumber": "718677487"}]	[]	1451	\N	\N	\N	scontrino	completed	2026-07-27 13:41:09.09+00	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
+1786098082353	2026-08-07 10:00:00+00	Taffarello Enrico	{"id": "512466", "cap": "31057", "nome": "Taffarello Enrico", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "SILEA", "telefono": "3482941460", "indirizzo": "", "provincia": "TV", "searchText": "taffarello enrico silea ", "telefonoOriginale": "3482941460"}	3482941460	Simone	[{"_key": "f31d221e-2b3a-43c6-8d74-166b89ea315f", "brand": "Echo", "model": "Motosega CS-4010", "prezzo": 489, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "C91540010207"}]	[]	489	\N	\N	\N	scontrino	completed	2026-08-07 10:00:00+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1784033927229	2026-07-14 12:58:46.774+00	AZ. AGR.SEMPREVERDE Di Toffoli Sonia	{"id": "203622", "cap": "31016", "nome": "AZ. AGR.SEMPREVERDE Di Toffoli Sonia", "email": "vivaitoffolisempreverde@outlook.it", "nomeP": "", "cognome": "", "contatto": "CEL1 VITTORIO-CEL2 Sonia", "localita": "CORDIGNANO", "telefono": "3486001968", "indirizzo": "STRADA DELLE RONCADELLE, 10", "provincia": "TV", "searchText": "az. agr.sempreverde di toffoli sonia cordignano cel1 vittorio-cel2 sonia", "telefonoOriginale": "3486001968"}	3486001968	Simone	[{"brand": "Stihl", "model": "Robot tosaerba RMA 453.3 PV", "prezzo": 855, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "450575050"}]	[]	855	\N	\N	\N	fattura	completed	2026-07-14 12:58:46.774+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1785315895409	2026-07-29 09:04:55.408+00	Ruberti Antonio	\N	\N	Simone	[]	[{"id": 1785315864745, "nome": "Zaino Volpi Vita 12", "brand": null, "prezzo": 110, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1785315887547, "nome": "Freezanz Professional PMC (New) - Lt. 1", "brand": "FREEZANZ", "prezzo": 54, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	164	\N	\N	\N	scontrino	completed	2026-07-29 09:04:55.408+00	t	user_1775131564325	vendita	t	f	f	\N	\N
+1786171952245	2026-08-08 06:52:31.779+00	Toninato Fabio	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540109948"}]	[]	239	\N	\N	\N	scontrino	completed	2026-08-08 06:52:31.779+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1773917546685	2026-03-19 11:00:00+00	Marcon Andrea Piazza 2 Giugno 7 Roncade 3474535632	\N	\N	Simone	[{"brand": "Stihl", "model": "Rasaerba RMA 235", "prezzo": 199, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "956698916"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": 189, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948817207"}, {"brand": "Stihl", "model": "Caricabatteria AL101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "702644372"}]	[{"nome": "Decespugliatore FSA 50 MATR. 452391137", "prezzo": 179, "quantita": 1, "aliquotaIva": 22}]	567	\N	\N	\N	scontrino	completed	2026-03-31 09:10:34.306+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773851463035	2026-03-18 11:00:00+00	Pilllon Gianni via F. Mazzon 20 Meolo 3356216534	\N	\N	Simone	[{"brand": "STIHL", "model": "Forbice elettronica ASA 20.0", "prezzo": 179, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955836076"}]	[]	179	\N	\N	\N	scontrino	completed	2026-03-18 11:00:00+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773932783539	2026-03-19 15:06:23.539+00	.	\N	\N	Simone	[]	[{"id": 1773932729267, "nome": "Hurricane (Sole+Ombra) 5 kg", "prezzo": 54.45, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	54.45	\N	\N	\N	scontrino	completed	2026-03-19 15:06:23.539+00	t	user_1773914846608	vendita	f	f	f	in_attesa	\N
 1773936767474	2026-03-19 16:12:47.199+00	Pozzobon Johnny	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-222ES", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U64540013827"}]	[]	219	\N	\N	\N	scontrino	completed	2026-03-19 16:12:47.199+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1773850831948	2026-03-18 11:00:00+00	Uliana Cesare	{"id": "512723", "cap": "", "nome": "Uliana Cesare", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "MASERADA", "telefono": "3474435875", "indirizzo": "", "provincia": "", "searchText": "uliana cesare maserada ", "telefonoOriginale": "3474435875"}	3474435875	Simone	[{"brand": "Stihl", "model": "Motosega MSA 80", "prezzo": 559, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452156493"}, {"brand": "Stihl", "model": "Batteria AK30", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919937882"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "706053487"}]	[]	559	\N	\N	Affilatore 2 in 1 in omaggio	scontrino	completed	2026-03-19 16:26:03.002+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
-1784044436600	2026-07-14 15:53:56.6+00	Darisi Vittorio via Adige 35 Ca" Savio 338 5445402	\N	\N	Simone	[{"brand": "Toro", "model": "Arieggiatore 54610 albero lame mobili e molle", "prezzo": 680, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": null}]	[]	680	\N	\N	\N	scontrino	pending	\N	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
 1774002466996	2026-03-20 10:27:46.995+00	Rigo Stefano	{"id": "509539", "cap": "31030", "nome": "Rigo Stefano", "email": "stefanocarbonera86@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3389253452", "indirizzo": "VIA GRANDE DI CARBONERA, 11", "provincia": "TV", "searchText": "rigo stefano carbonera ", "telefonoOriginale": "3389253452"}	3389253452	Simone	[]	[{"id": 1774002417747, "nome": "Green 7 25 kg", "prezzo": 45.3, "quantita": 1, "matricola": null, "aliquotaIva": 4}, {"id": 1774002446843, "nome": "BOBINA DI FILO COD. R303612", "prezzo": 12, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774002460270, "nome": "CARCASSA TESTINA", "prezzo": 5.2, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	62.5	\N	\N	\N	scontrino	completed	2026-03-20 10:27:46.995+00	t	user_1773995761120	vendita	f	f	f	in_attesa	\N
 1774013807798	2026-03-20 13:36:47.184+00	Mariuzzo Francesco	{"id": "501909", "cap": "30020", "nome": "Mariuzzo Francesco", "email": "francesco.mariuzzo@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "MEOLO", "telefono": "3358473755", "indirizzo": "VIA ROMA, 123", "provincia": "VE", "searchText": "mariuzzo francesco meolo ", "telefonoOriginale": "3358473755"}	3358473755	Simone	[{"brand": "STIHL", "model": "Forbice elettronica HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "942794191"}, {"brand": "STIHL", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "949709835"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707132101"}]	[]	139	\N	\N	\N	scontrino	completed	2026-03-20 13:36:47.184+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774017494489	2026-03-20 14:38:14.3+00	Dossini Annalisa	{"id": "513303", "cap": "31030", "nome": "Dossini Annalisa", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CARBONERA", "telefono": "3404622945", "indirizzo": "VICOLO TIEPOLO, 41", "provincia": "TV", "searchText": "dossini annalisa carbonera ", "telefonoOriginale": "3404622945"}	3404622945	Simone	[{"brand": "STIHL", "model": "Motosega MSA 70.0 C", "prezzo": 239, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452200582"}]	[]	239	\N	\N	\N	scontrino	completed	2026-03-20 14:38:14.3+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6949,6 +6963,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1785403959374	2026-07-30 09:32:39.374+00	Rizzo Giuseppina	\N	\N	Simone	[]	[{"id": 1785403954567, "nome": "Nebuzan repellente tanica da 5 litri 5 Lt.", "brand": "STOCKER", "prezzo": 140, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	140	\N	\N	\N	scontrino	completed	2026-07-30 09:32:39.374+00	t	user_1770584612559	vendita	t	f	f	\N	\N
 1771837124604	2026-03-21 11:00:00+00	COOP. Sociale Idee Verdi	{"id": "501441", "cap": "35030", "nome": "COOP. Sociale Idee Verdi", "email": "areacontabile@ideeverdi.it", "nomeP": "", "cognome": "", "contatto": "CEL. Marco Neve", "localita": "SELVAZZANO DENTRO", "telefono": "3450914123", "indirizzo": "VIA GALVANI, 16", "provincia": "PD", "searchText": "coop. sociale idee verdi selvazzano dentro cel. marco neve", "telefonoOriginale": "3450914123"}	3450914123	Simone	[{"brand": "Altro", "model": "Trattorino Ferris ISX 3300", "prezzo": 20740, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "4002455332"}]	[{"id": 1772079631434, "nome": "Kit lame di ricambio ad alto lancio", "prezzo": 0, "quantita": 1, "aliquotaIva": 22}]	20740	1830	bonifico	Saldo prima della consegna	fattura	completed	2026-03-21 11:00:00+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1774077613580	2026-03-21 07:20:13.58+00	Vivai Tonon Di Tonon Cristian	{"id": "500438", "cap": "31050", "nome": "Vivai Tonon Di Tonon Cristian", "email": "amministrazione@vivaitonon.it", "nomeP": "", "cognome": "", "contatto": "Cel 1 Edoardo", "localita": "POVEGLIANO", "telefono": "3495384687", "indirizzo": "VIA TREVISO 32 - SANTANDRA'", "provincia": "TV", "searchText": "vivai tonon di tonon cristian povegliano cel 1 edoardo", "telefonoOriginale": "3495384687"}	3495384687	Simone	[]	[{"id": 1774077608358, "nome": "Amino K 5 Kg 5 kg", "prezzo": 51, "quantita": 1, "matricola": null, "aliquotaIva": 4}]	51	\N	\N	\N	fattura	completed	2026-03-21 07:20:13.58+00	f	user_1774077521447	vendita	f	f	f	in_attesa	\N
+1786345513344	2026-08-10 07:05:12.229+00	Taffarello Lara	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 26", "prezzo": 99, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943696273"}]	[]	99	\N	\N	\N	scontrino	completed	2026-08-10 07:05:12.229+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1774077856238	2026-03-21 07:24:15.812+00	Dametto Giulio	\N	\N	Simone	[{"brand": "STIHL", "model": "Motosega MS 194 T 3/8\\"P Chainsaw", "prezzo": 339, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "547285150"}]	[]	339	\N	\N	\N	scontrino	completed	2026-03-21 07:24:15.812+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1772794749226	2026-03-06 11:00:00+00	Jesolo Gest Arl	{"id": "504127", "cap": "30016", "nome": "Jesolo Gest Arl", "email": "simone.v@clubdelsole.com,", "nomeP": "", "cognome": "", "contatto": "CEL1 Dorin -049656070", "localita": "JESOLO", "telefono": "3299278952", "indirizzo": "VIALE ORIENTE, 144", "provincia": "VE", "searchText": "jesolo gest arl jesolo cel1 dorin -049656070", "telefonoOriginale": "3299278952"}	3299278952	Simone	[{"brand": "STIHL", "model": "Potatore HTA 86", "prezzo": 530, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "449457136"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989613"}, {"brand": "STIHL", "model": "Batteria AP 500 S", "prezzo": 344.27, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548989674"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S (281 Wh)", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008377"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "920001603"}]	[{"id": 1772794630440, "nome": "Testina Polycut Stihl 28-2", "prezzo": 21, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1772794675699, "nome": "Testina Autocut 27-2", "prezzo": 14.1, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"nome": "Ugello rotore", "prezzo": 21.8, "quantita": 1, "aliquotaIva": 22}]	1814.7800000000002	\N	\N	\N	fattura	completed	2026-03-06 11:00:00+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774084657146	2026-03-21 09:17:36.944+00	Bonotto Franco	\N	\N	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-3611T", "prezzo": 669, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U65140005458"}]	[]	669	\N	\N	\N	scontrino	completed	2026-03-21 09:17:36.944+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
@@ -6960,6 +6975,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1774284270579	2026-03-23 16:44:30.578+00	Gemma Verde Loriano De Biasi	{"id": "509792", "cap": "31038", "nome": "Gemma Verde Loriano De Biasi", "email": "de.biasi.loriano@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "PAESE", "telefono": "3402878608", "indirizzo": "VIA P. MALVESTITI 10 - POSTIOMA", "provincia": "TV", "searchText": "gemma verde loriano de biasi paese ", "telefonoOriginale": "3402878608"}	3402878608	Simone	[]	[{"id": 1774284258060, "nome": "Hurricane 7 10 kg", "prezzo": 98.8, "quantita": 1, "matricola": null, "aliquotaIva": 10}]	98.8	\N	\N	\N	scontrino	completed	2026-03-23 16:44:30.578+00	t	user_1774264782378	vendita	f	f	f	in_attesa	\N
 1774343996171	2026-03-24 09:19:55.237+00	Piovesan Aldo 3289160851 0422708651	\N	\N	Simone	[{"brand": "Honda", "model": "Rasaerba HRG466XB", "prezzo": 630, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCDF1005757"}, {"brand": "Honda", "model": "Caricabatteria", "prezzo": 39, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "CAAEY1027253"}, {"brand": "Honda", "model": "Batteria DP3640XA", "prezzo": 149, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "UADY1002444"}]	[]	818	\N	\N	\N	scontrino	completed	2026-03-24 09:19:55.237+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774880649187	2026-03-30 14:24:07.753+00	Tuon Adriano	{"id": "501316", "cap": "31030", "nome": "Tuon Adriano", "email": "adrianotuon@libero.it", "nomeP": "", "cognome": "", "contatto": "", "localita": "BREDA DI PIAVE", "telefono": "3472767486", "indirizzo": "VIA DON A ANTONIO ASTI 49", "provincia": "TV", "searchText": "tuon adriano breda di piave ", "telefonoOriginale": "3472767486"}	3472767486	Simone	[{"brand": "Echo", "model": "Decespugliatore SRM-267", "prezzo": 269, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "U4843B006692"}]	[]	269	\N	\N	\N	scontrino	completed	2026-03-30 14:24:07.753+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
+1786351268963	2026-08-10 08:41:08.518+00	Ramon Marilena	\N	\N	Simone	[{"brand": "Volpi", "model": "Potatore KVS5100", "prezzo": 200, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "SC3525.134NB"}]	[{"id": 1786351211112, "nome": "Olio catena Bioplus 1 litro ", "brand": null, "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1786351258050, "nome": "Filo decespugliatore ", "brand": null, "prezzo": 3.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	210	\N	\N	\N	scontrino	completed	2026-08-10 08:41:08.518+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 1774364278232	2026-03-24 14:57:57.456+00	Deoni Giardinaggio S.R.L.	{"id": "203570", "cap": "31038", "nome": "Deoni Giardinaggio S.R.L.", "email": "info@deonigiardinaggio.it", "nomeP": "", "cognome": "", "contatto": "CEL:FRANCESCO/GIANLUCA/MANUELE-FIS.LUCIA", "localita": "PAESE", "telefono": "3497600981", "indirizzo": "VIA POSTUMIA, 49", "provincia": "TV", "searchText": "deoni giardinaggio s.r.l. paese cel:francesco/gianluca/manuele-fis.lucia", "telefonoOriginale": "3497600981"}	3497600981	Simone	[{"brand": "Stihl", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "545073124"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997510"}, {"brand": "STIHL", "model": "Decespugliatore FSA 120.0 R", "prezzo": 335.25, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "548997501"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "952262635"}, {"brand": "STIHL", "model": "Batteria AP 300S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "953245641"}, {"brand": "STIHL", "model": "Batteria AP 300.0 S", "prezzo": 269.67, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "921008378"}]	[]	1814.76	\N	\N	\N	fattura	completed	2026-03-24 14:57:57.456+00	f	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774365827810	2026-03-24 15:23:47.16+00	Lava Edo Autotrasporti	{"id": "203026", "cap": "30020", "nome": "Lava Edo Autotrasporti", "email": "lavaedo@gmail.com", "nomeP": "", "cognome": "", "contatto": "1 -SABRINA Moglie 2 -MARITO", "localita": "MEOLO", "telefono": "3480998841", "indirizzo": "VIA DELLE BALDANE 1", "provincia": "VE", "searchText": "lava edo autotrasporti meolo 1 -sabrina moglie 2 -marito", "telefonoOriginale": "3480998841"}	3480998841	Simone	[{"brand": "STIHL", "model": " MS 212 3/8\\" P", "prezzo": 449, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "837888152"}]	[{"id": 1774365578646, "nome": "Bioplus 1 litro", "prezzo": 6.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}, {"id": 1774365621530, "nome": "Filo decespugliatore 2.7 mm", "prezzo": 10, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	465.5	\N	\N	\N	fattura	completed	2026-03-24 15:23:47.16+00	t	user_1769961017929	vendita	f	f	f	in_attesa	\N
 1774373885963	2026-03-24 17:38:05.963+00	MATTIOLI ANDREA	\N	\N	Simone	[]	[{"id": 1774373868505, "nome": "Green 7 25 kg", "prezzo": 47.7, "quantita": 3, "matricola": null, "aliquotaIva": 4}, {"id": 1774373880492, "nome": "Albatros Green 8 Kg 25 25 kg", "prezzo": 60.8, "quantita": 3, "matricola": null, "aliquotaIva": 4}]	325.5	\N	\N	\N	scontrino	completed	2026-03-24 17:38:05.963+00	t	user_1774361283783	vendita	f	f	f	in_attesa	\N
@@ -7038,7 +7054,6 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1776431550867	2026-04-17 13:12:30.33+00	Comunello Marco	{"id": "513541", "cap": "31100", "nome": "Comunello Marco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "TREVISO", "telefono": "3896551680", "indirizzo": "STRADA COMUNALE DI SAN VITALE 29/D", "provincia": "TV", "searchText": "comunello marco treviso ", "telefonoOriginale": "3896551680"}	3896551680	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 159, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600044355"}]	[]	159	\N	\N	\N	scontrino	completed	2026-04-17 13:12:30.33+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776432662014	2026-04-17 13:31:01.144+00	Bergamo Guglielmo	{"id": "506642", "cap": "31047", "nome": "Bergamo Guglielmo", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "PONTE DI PIAVE", "telefono": "3358325625", "indirizzo": "VIA MASARI, 36", "provincia": "TV", "searchText": "bergamo guglielmo ponte di piave ", "telefonoOriginale": "3358325625"}	3358325625	Simone	[{"brand": "Stihl", "model": "Irroratore SG51", "prezzo": 119, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "998234688"}]	[{"id": 1776432655365, "nome": "Olio motore HP Ultra 1L miscela 2T 1L", "prezzo": 13.5, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	132.5	\N	\N	\N	scontrino	completed	2026-04-17 13:31:01.144+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776437011471	2026-04-17 14:43:30.226+00	Possamai Manuel via Pantiera 58 G Roncade 3478940411	\N	\N	Simone	[{"brand": "Stihl", "model": "Tagliasiepi HSA 26", "prezzo": 139, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "943696310"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "936314966"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707687469"}]	[]	139	\N	\N	\N	scontrino	completed	2026-04-17 14:43:30.226+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
-1780662346023	2026-06-05 10:00:00+00	Buosi Mosè 389 6312244	\N	\N	Simone	[{"_key": "71782a5d-5875-458c-9385-63c2fdaf8ec7", "brand": "GRILLO", "model": "MOTOCOLTIVATORE G 85d, MOTORE HONDA GX 270", "_isNew": true, "prezzo": null, "aliquotaIva": 22, "serialNumber": "773056"}]	[{"id": 1780662307358, "_key": "7e199f7a-88cb-459f-85cd-b39045aa6379", "nome": "FRESA DOPPIA ROTAZIONE  CM E RUOTE 942412 4.00-10", "prezzo": 3750, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	3750	1000	carta	Saldo alla consegna	scontrino	completed	2026-07-24 14:57:32.829+00	t	user_1770584612559	vendita	f	f	t	in_attesa	\N
 1776438579416	2026-04-17 10:00:00+00	2S Service di Scala Simone 3495113803 2sservicescala@gmail.com	\N	\N	Simone	[{"brand": "Honda", "model": "HRM 1500", "prezzo": 799, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "MCLF-1004003"}]	[]	799	\N	\N	Aggiungere bobina filo 200 metri da conteggiare a parte	fattura	completed	2026-04-17 15:20:06.094+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
 1776442349178	2026-04-17 16:12:27.294+00	Rosolen Mattia	{"id": "511101", "cap": "31015", "nome": "Rosolen Mattia", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "CONEGLIANO", "telefono": "", "indirizzo": "VIA STRADA DELLE BRUSCOLE, 14", "provincia": "TV", "searchText": "rosolen mattia conegliano ", "telefonoOriginale": ""}	\N	Simone	[{"brand": "Stihl", "model": "Motosega MSA 220.0T", "prezzo": 549, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "445691105"}, {"brand": "Stihl", "model": "Batteria AP 300.0 S", "prezzo": 329, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "917325889"}]	[]	878	\N	\N	\N	fattura	completed	2026-04-17 16:12:27.294+00	t	user_1775131564325	vendita	f	f	f	in_attesa	\N
 1776444271498	2026-04-17 16:44:30.871+00	Pietrobon Davide	{"id": "507888", "cap": "31033", "nome": "Pietrobon Davide", "email": "davidepietrobon28@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "CASTELFRANCO VENETO", "telefono": "3349426642", "indirizzo": "VIA BORGO PADOVA, 129", "provincia": "TV", "searchText": "pietrobon davide castelfranco veneto ", "telefonoOriginale": "3349426642"}	3349426642	Simone	[{"brand": "Segway", "model": "Robot tosaerba Navimow i108", "prezzo": 999, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "S4THA2519K2349"}]	[]	999	\N	\N	\N	scontrino	completed	2026-04-17 16:44:30.871+00	t	user_1770584612559	vendita	f	f	f	in_attesa	\N
@@ -7199,6 +7214,7 @@ recovered-138	2026-02-02 11:00:00+00	MA.DI. GREEN di Diego Mardegan	\N	\N	Simone
 1783156625518	2026-07-04 09:17:05.155+00	DOLFATO PAOLO	{"cf": "DLFPLA73E17L407E", "id": "3afd36bd-c083-403a-8bf8-c3320d96f9a9", "cap": null, "sdi": null, "nome": "DOLFATO PAOLO", "piva": null, "email": "dolfatopaolo@libero.it", "nomeP": "DOLFATO PAOLO", "localita": "Villorba", "telefono": "3387967230", "indirizzo": "Via San Pio X", "provincia": "TV", "searchText": "dolfato paolo"}	3387967230	Simone	[{"brand": "Stihl", "model": "Soffiatore BG 56", "prezzo": 290, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "615222327"}]	[]	290	\N	\N	\N	scontrino	completed	2026-07-04 09:17:05.155+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1784821868305	2026-07-23 15:51:06.787+00	Bortolato Franco	{"id": "512977", "cap": "30173", "nome": "Bortolato Franco", "email": "", "nomeP": "", "cognome": "", "contatto": "", "localita": "FAVARO VENETO", "telefono": "3461355202", "indirizzo": "VIA CA' FORNONI, 84", "provincia": "VE", "searchText": "bortolato franco favaro veneto ", "telefonoOriginale": "3461355202"}	3461355202	Simone	[{"brand": "Stihl", "model": "Forbice elettronica ASA 20.0", "prezzo": 219, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "955937999"}, {"brand": "Stihl", "model": "Batteria AS 2", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "951511320"}, {"brand": "Stihl", "model": "Caricabatteria AL 1", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "707736671"}]	[]	219	\N	\N	\N	scontrino	completed	2026-07-23 15:51:06.787+00	t	user_1775131564325	vendita	f	f	f	\N	\N
 1785914739980	2026-08-05 07:25:39.98+00	F.lli Zanette Real Green S.n.c. Di Zanette Giuseppe & C.	{"id": "511034", "cap": "31020", "nome": "F.lli Zanette Real Green S.n.c. Di Zanette Giuseppe & C.", "email": "vivaizanette@gmail.com", "nomeP": "", "cognome": "", "contatto": "", "localita": "SAN FIOR", "telefono": "0438768444", "indirizzo": "VIA STORTAN, 2/B - CASTELLO ROGANZUOLO", "provincia": "TV", "searchText": "f.lli zanette real green s.n.c. di zanette giuseppe & c. san fior ", "telefonoOriginale": "0438768444"}	0438768444	Simone	[]	[{"id": 1785914722843, "nome": "Fresaceppi usato per Toro Dingo", "brand": null, "prezzo": 4000, "quantita": 1, "matricola": null, "aliquotaIva": 22}]	4000	\N	\N	\N	fattura	completed	2026-08-05 07:25:39.98+00	f	user_1770584612559	vendita	f	f	f	\N	\N
+1786369404339	2026-08-10 13:43:19.207+00	Arbo srl	\N	\N	Simone	[{"brand": "Stihl", "model": "Soffiatore BGA 50.0", "prezzo": 299, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "600046324"}, {"brand": "Stihl", "model": "Tagliasiepi HSA 60.1", "prezzo": 289, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "452958643"}, {"brand": "Stihl", "model": "Batteria AK 10", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "919717858"}, {"brand": "Stihl", "model": "Batteria AK 20", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "948385491"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703447237"}, {"brand": "Stihl", "model": "Caricabatteria AL 101", "prezzo": null, "isOmaggio": false, "aliquotaIva": 22, "serialNumber": "703447239"}]	[]	588	\N	\N	\N	fattura	completed	2026-08-10 13:43:19.207+00	t	user_1775131564325	vendita	t	f	f	\N	\N
 \.
 
 
@@ -7422,6 +7438,32 @@ COPY public.inventory (id, "timestamp", action, brand, model, "serialNumber", cl
 891	2026-08-01 07:42:24.333+00	SCARICO	Stihl	Caricabatteria AL 101	706424826	Feltrin Giacomo	0	0	sold	user_1775131564325	main	f
 892	2026-08-01 07:53:57.423+00	CARICO	Honda	Rasaerba HRN536C2	MCSF1029192	\N	\N	\N	available	user_1775131564325	main	t
 893	2026-08-01 07:54:47.92+00	SCARICO	Honda	Rasaerba HRN536C2	MCSF1029192	Gatti Luciano 331 9163048	0	0	sold	user_1775131564325	main	f
+894	2026-08-07 10:20:44.963+00	CARICO	Echo	Motosega CS-4010	C91540010207	\N	\N	\N	available	user_1775131564325	main	t
+895	2026-08-07 10:21:21.412+00	SCARICO	Echo	Motosega CS-4010	C91540010207	Taffarello Enrico	0	0	sold	user_1775131564325	main	f
+896	2026-08-08 06:52:09.87+00	CARICO	Echo	Decespugliatore SRM-222ES	U64540109948	\N	\N	\N	available	user_1775131564325	main	t
+897	2026-08-08 06:52:31.779+00	SCARICO	Echo	Decespugliatore SRM-222ES	U64540109948	Toninato Fabio	0	0	sold	user_1775131564325	main	f
+898	2026-08-10 07:04:46.864+00	CARICO	Stihl	Tagliasiepi HSA 26	943696273	\N	\N	\N	available	user_1775131564325	main	t
+899	2026-08-10 07:05:12.23+00	SCARICO	Stihl	Tagliasiepi HSA 26	943696273	Taffarello Lara	0	0	sold	user_1775131564325	main	f
+900	2026-08-10 08:38:49.213+00	CARICO	Volpi	Potatore KVS5100	SC3525.134NB	\N	\N	\N	available	user_1775131564325	main	t
+901	2026-08-10 08:41:08.518+00	SCARICO	Volpi	Potatore KVS5100	SC3525.134NB	Ramon Marilena	0	0	sold	user_1775131564325	main	f
+902	2026-08-10 13:38:30.633+00	CARICO	Stihl	Soffiatore BGA 50.0	600046324	\N	\N	\N	available	user_1775131564325	main	t
+903	2026-08-10 13:39:01.282+00	CARICO	Stihl	Tagliasiepi HSA 60.1	452958643	\N	\N	\N	available	user_1775131564325	main	t
+904	2026-08-10 13:41:10.072+00	CARICO	Stihl	Batteria AK 10	919717858	\N	\N	\N	available	user_1775131564325	main	t
+905	2026-08-10 13:42:20.99+00	CARICO	Stihl	Batteria AK 20	948385491	\N	\N	\N	available	user_1775131564325	main	t
+906	2026-08-10 13:42:47.297+00	CARICO	Stihl	Caricabatteria AL 101	703447237	\N	\N	\N	available	user_1775131564325	main	t
+907	2026-08-10 13:43:03.487+00	CARICO	Stihl	Caricabatteria AL 101	703447239	\N	\N	\N	available	user_1775131564325	main	t
+908	2026-08-10 13:43:19.207+00	SCARICO	Stihl	Soffiatore BGA 50.0	600046324	Arbo srl	0	0	sold	user_1775131564325	main	f
+909	2026-08-10 13:43:20.726+00	SCARICO	Stihl	Tagliasiepi HSA 60.1	452958643	Arbo srl	0	0	sold	user_1775131564325	main	f
+910	2026-08-10 13:43:21.807+00	SCARICO	Stihl	Batteria AK 10	919717858	Arbo srl	0	0	sold	user_1775131564325	main	f
+911	2026-08-10 13:43:22.706+00	SCARICO	Stihl	Batteria AK 20	948385491	Arbo srl	0	0	sold	user_1775131564325	main	f
+912	2026-08-10 13:43:23.086+00	SCARICO	Stihl	Caricabatteria AL 101	703447237	Arbo srl	0	0	sold	user_1775131564325	main	f
+913	2026-08-10 13:43:23.787+00	SCARICO	Stihl	Caricabatteria AL 101	703447239	Arbo srl	0	0	sold	user_1775131564325	main	f
+914	2026-08-10 15:23:57.959+00	CARICO	Stihl	Decespugliatore FS 120 R	841754702	\N	\N	\N	available	user_1775131564325	main	t
+915	2026-08-10 15:24:13.667+00	SCARICO	Stihl	Decespugliatore FS 120 R	841754702	Cester Francesco 3282608027	0	0	sold	user_1775131564325	main	f
+916	2026-08-12 08:29:10.029+00	CARICO	Echo	Motosega CS-280TES	C75138082880	\N	\N	\N	available	user_1775131564325	main	t
+917	2026-08-12 08:32:37.186+00	SCARICO	Echo	Motosega CS-280TES	C75138082880	Trevi SOCIETA' Agricola Semplice Di VIO' NICOLO'	0	0	sold	user_1775131564325	main	f
+918	2026-08-12 09:53:45.703+00	CARICO	Volpi	Potatore KVS6000	SM3525.27NB	\N	\N	\N	available	user_1775131564325	main	t
+919	2026-08-12 09:56:02.047+00	SCARICO	Volpi	Potatore KVS6000	SM3525.27NB	Marchesin Sergio	0	0	sold	user_1775131564325	main	f
 \.
 
 
@@ -12197,70 +12239,64 @@ b53b34d0-d1cb-4f16-ba56-6dbec9676bb1	HONDA	Tosaerba UM536K3	1	2026-07-22 13:33:3
 715ac319-f93c-406c-9892-656d8332fec9	Honda	Tosaerba HRG416C1	1	2026-07-22 13:33:38.854662+00	2026-07-22 13:33:38.854662+00
 e0a11f8e-e3a3-44cd-914c-7f7597899585	Stihl	Motosega MS 162 3/8"P	1	2026-07-23 15:58:43.48993+00	2026-07-23 15:58:43.48993+00
 04dc3574-8cad-46b6-abb2-5dc0a020cdd3	Stihl	Motosega MS151	1	2026-07-31 14:31:58.827802+00	2026-07-31 14:31:58.827802+00
+7b28227b-cf6a-4aa5-b512-3e9834f61578	Echo	Motosega CS-4010	1	2026-08-07 10:20:45.710806+00	2026-08-07 10:20:45.710806+00
+3f207c7b-bfd2-452b-92cc-f1bda279abeb	Volpi	Potatore KVS6000	1	2026-08-12 09:53:46.285046+00	2026-08-12 09:53:46.285046+00
 \.
 
 
 --
--- Data for Name: messages_2026_08_03; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_18; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_03 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_18 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_04; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_19; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_04 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_19 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_05; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_20; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_05 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_20 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_06; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_21; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_06 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_21 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_07; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_22; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_07 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_22 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_08; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_23; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_08 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_23 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
 --
--- Data for Name: messages_2026_08_09; Type: TABLE DATA; Schema: realtime; Owner: -
+-- Data for Name: messages_2026_08_24; Type: TABLE DATA; Schema: realtime; Owner: -
 --
 
-COPY realtime.messages_2026_08_09 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
-\.
-
-
---
--- Data for Name: messages_2026_08_10; Type: TABLE DATA; Schema: realtime; Owner: -
---
-
-COPY realtime.messages_2026_08_10 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
+COPY realtime.messages_2026_08_24 (topic, extension, payload, event, private, updated_at, inserted_at, id, binary_payload) FROM stdin;
 \.
 
 
@@ -12358,8 +12394,6 @@ COPY realtime.schema_migrations (version, inserted_at) FROM stdin;
 --
 
 COPY realtime.subscription (id, subscription_id, entity, filters, claims, created_at, action_filter, selected_columns) FROM stdin;
-11449	b0c577d6-9206-11f1-9de7-0a58a9feac02	public.commissioni	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-08-07 02:21:25.840463	*	\N
-11450	b0c56f16-9206-11f1-9b24-0a58a9feac02	public.inventory	{}	{"exp": 2082192777, "iat": 1766616777, "iss": "supabase", "ref": "eoswkplehhmtxtattsha", "role": "anon"}	2026-08-07 02:21:25.840463	*	\N
 \.
 
 
@@ -12462,9 +12496,12 @@ COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
 --
 
 COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_accessed_at, metadata, version, owner_id, user_metadata) FROM stdin;
-1a5112ff-bebe-466b-a89c-a6d7f5eb3d5a	az-foto	progetti/a91bf316-7047-4976-925f-83027e4e16b6/1785911975251.png	\N	2026-08-05 06:39:45.883807+00	2026-08-05 06:39:45.883807+00	2026-08-05 06:39:45.883807+00	{"eTag": "\\"202cefe9eeba452cbfcede237bffa1b3\\"", "size": 5040104, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-05T06:39:46.000Z", "contentLength": 5040104, "httpStatusCode": 200}	4af52bd9-d8e7-43f8-8d2e-67ec9609edbd	\N	{}
-31e7d8ad-58db-4548-a839-00f867edb281	az-foto	progetti/ee568153-87da-44e6-b49d-2c4f23b0a7da/1785913963512.png	\N	2026-08-05 07:12:58.959638+00	2026-08-05 07:12:58.959638+00	2026-08-05 07:12:58.959638+00	{"eTag": "\\"202cefe9eeba452cbfcede237bffa1b3\\"", "size": 5040104, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-05T07:12:59.000Z", "contentLength": 5040104, "httpStatusCode": 200}	59a541e5-4bf4-4dc2-a94d-04b40e7e9d8e	\N	{}
-0a3a2b87-fe91-4901-9a26-3107080ac947	az-foto	progetti/6b58c891-16b3-4479-b88d-3437a63e8b18/1786069093302.png	\N	2026-08-07 02:18:20.950687+00	2026-08-07 02:18:20.950687+00	2026-08-07 02:18:20.950687+00	{"eTag": "\\"202cefe9eeba452cbfcede237bffa1b3\\"", "size": 5040104, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T02:18:21.000Z", "contentLength": 5040104, "httpStatusCode": 200}	43e4bfdc-e62b-4fa5-9172-01a5857f1db0	\N	{}
+73a33dcf-29b3-40d0-96c1-8cacc00ddb0e	az-foto	progetti/759e3165-8750-4c61-b16a-a39df8ead8bb/1786093070525.png	\N	2026-08-07 08:58:01.79899+00	2026-08-07 08:58:01.79899+00	2026-08-07 08:58:01.79899+00	{"eTag": "\\"fd415c9c4d6aa4ee764a4e2dfc68ce35\\"", "size": 4103316, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T08:58:02.000Z", "contentLength": 4103316, "httpStatusCode": 200}	6276593f-d31b-4069-99e6-6215425976da	\N	{}
+fd23d4d1-7517-425a-adf0-293f6d491684	az-foto	progetti/09566d94-0ccc-41c9-824a-bb7ff8a467af/1786106308940.png	\N	2026-08-07 12:38:35.96055+00	2026-08-07 12:38:35.96055+00	2026-08-07 12:38:35.96055+00	{"eTag": "\\"48f93b5d6dc048264796314e53ef56c4\\"", "size": 3262200, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T12:38:36.000Z", "contentLength": 3262200, "httpStatusCode": 200}	4e1c5766-e503-45a5-b90e-9220fca06308	\N	{}
+817825d7-42ae-4bd8-b7d2-daa9c3d1bac6	az-foto	progetti/09566d94-0ccc-41c9-824a-bb7ff8a467af/1786106481341.png	\N	2026-08-07 12:41:33.160117+00	2026-08-07 12:41:33.160117+00	2026-08-07 12:41:33.160117+00	{"eTag": "\\"202cefe9eeba452cbfcede237bffa1b3\\"", "size": 5040104, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-07T12:41:34.000Z", "contentLength": 5040104, "httpStatusCode": 200}	0424bfe6-230b-496c-bf30-c16d8db6e750	\N	{}
+856e35dd-2b46-4d5f-9d5f-0da94af1ff5e	az-foto	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786354276962.png	\N	2026-08-10 09:31:27.920741+00	2026-08-10 09:31:27.920741+00	2026-08-10 09:31:27.920741+00	{"eTag": "\\"a0d7d8468dbf13bc8dd19adb1873ec08\\"", "size": 3378616, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-10T09:31:28.000Z", "contentLength": 3378616, "httpStatusCode": 200}	3efa4c2c-e25d-4cda-b4b8-54dc439dc776	\N	{}
+229537b9-16db-4584-b429-c920dfb8bad6	az-foto	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786355333258.png	\N	2026-08-10 09:49:01.412448+00	2026-08-10 09:49:01.412448+00	2026-08-10 09:49:01.412448+00	{"eTag": "\\"6537efa440855282cba1ba430f54aed7\\"", "size": 2582299, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-10T09:49:02.000Z", "contentLength": 2582299, "httpStatusCode": 200}	967723a8-d33b-484b-a4e6-4afc516627a3	\N	{}
+dd498592-d891-490e-af93-b58c9186dace	az-foto	progetti/2e9dfeff-f1e2-4c2b-8003-54ad98ac926c/1786370372310.png	\N	2026-08-10 13:59:39.04453+00	2026-08-10 13:59:39.04453+00	2026-08-10 13:59:39.04453+00	{"eTag": "\\"ea8e3c1f626fa680a0b46eb1cfb4cdbf\\"", "size": 3832367, "mimetype": "image/png", "cacheControl": "max-age=3600", "lastModified": "2026-08-10T13:59:39.000Z", "contentLength": 3832367, "httpStatusCode": 200}	25e0a4cd-9574-42a3-88fe-b01df8aaba5b	\N	{}
 \.
 
 
@@ -12507,6 +12544,8 @@ COPY supabase_migrations.schema_migrations (version, statements, name, created_b
 20260805190812	{"-- Copia del foglio \\"Anagrafica\\" di Listino_Unificato_Antizanzare.xlsx.\n-- Serve alla ricerca delle voci extra: qualunque articolo a listino\n-- deve poter entrare in un preventivo, non solo quelli gia' usati.\n--\n-- Nessun vincolo di unicita' sul codice: nel listino tre codici\n-- compaiono due volte (canale SMART e Professional, IVA diversa).\n\ncreate table if not exists az_listino (\n  id           uuid primary key default gen_random_uuid(),\n  riga_id      text,                 -- colonna ID del foglio (A0001…)\n  codice       text not null,\n  descrizione  text not null,\n  marca        text,\n  linea        text,\n  categoria    text,\n  sistema      text,\n  um           text default 'pz',\n  listino      numeric,              -- escl. IVA\n  listino_iva  numeric,              -- incl. IVA\n  costo        numeric,              -- escl. IVA, dove noto\n  stato        text,\n  note         text,\n  ricerca      text,                 -- codice + descrizione + marca, minuscolo\n  importato_il timestamptz not null default now()\n);\n\ncreate index if not exists az_listino_codice_idx  on az_listino (codice);\ncreate index if not exists az_listino_ricerca_idx on az_listino (ricerca text_pattern_ops);\ncreate index if not exists az_listino_marca_idx   on az_listino (marca);\n\nalter table az_listino enable row level security;\n\ndrop policy if exists \\"Allow all operations on az_listino\\" on az_listino;\ncreate policy \\"Allow all operations on az_listino\\" on az_listino\n  for all to anon, authenticated using (true) with check (true);"}	az_listino_unificato	simone.ompra@gmail.com	\N	\N
 20260805191229	{"-- Ricerca unica per le voci extra: prima l'archivio delle voci gia' usate\n-- (piu' pertinente), poi tutto il listino unificato.\n-- Il costo, dove non noto, si ricava applicando lo sconto d'acquisto del\n-- fornitore: Zanzero 30%, Gardheaven 50%, Stocker/Geyser ha il costo reale.\n\ncreate or replace function az_cerca_voci(p_testo text, p_limite int default 12)\nreturns table (\n  fonte       text,\n  codice      text,\n  descrizione text,\n  marca       text,\n  categoria   text,\n  um          text,\n  costo       numeric,\n  prezzo      numeric,\n  usi         int\n)\nlanguage sql\nstable\nsecurity invoker\nset search_path = ''\nas $$\n  with q as (select lower(btrim(coalesce(p_testo, ''))) as t)\n  (\n    select 'archivio'::text,\n           v.codice, v.descrizione, null::text, null::text,\n           coalesce(v.um, 'pz'), v.costo, v.prezzo, v.usi\n      from public.az_voci_extra v, q\n     where q.t = '' or lower(v.descrizione) like '%' || q.t || '%'\n     order by v.usi desc, v.ultimo_uso desc\n     limit greatest(p_limite / 3, 3)\n  )\n  union all\n  (\n    select 'listino'::text,\n           l.codice, l.descrizione, l.marca, l.categoria,\n           coalesce(l.um, 'pz'),\n           coalesce(\n             l.costo,\n             case upper(coalesce(l.marca, ''))\n               when 'ZANZERO'  then round(l.listino * 0.70, 2)\n               when 'FREEZANZ' then round(l.listino * 0.70, 2)\n               else null\n             end\n           ),\n           l.listino,\n           0\n      from public.az_listino l, q\n     where q.t <> '' and l.ricerca like '%' || q.t || '%'\n     order by\n       case when lower(l.codice) = q.t then 0\n            when lower(l.codice) like q.t || '%' then 1\n            when lower(l.descrizione) like q.t || '%' then 2\n            else 3 end,\n       l.descrizione\n     limit p_limite\n  );\n$$;"}	az_ricerca_voci_combinata	simone.ompra@gmail.com	\N	\N
 20260805203007	{"-- Il tubo tronco diventa una proprieta' della linea: quanti dei suoi metri\n-- corrono in diametro maggiore (Ø8 / 3-8\\"). Il totale del progetto si somma\n-- dalle linee, cosi' non puo' piu' andare fuori sincrono con i metri.\n--\n-- Come nel calcolatore originale questi metri sono COMPRESI nei metri della\n-- linea, non aggiuntivi: 60 m di cui 60 su tronco = 60 m di tubo Ø8, zero Ø6.\n\nalter table az_linee\n  add column if not exists metri_tronco numeric not null default 0;\n\nalter table az_linee drop constraint if exists az_linee_tronco_chk;\nalter table az_linee add constraint az_linee_tronco_chk\n  check (metri_tronco >= 0 and metri_tronco <= metri);\n\ncomment on column az_linee.metri_tronco is\n  'Quanti dei metri della linea corrono in diametro maggiore. Compresi in metri, non aggiuntivi.';"}	az_linee_metri_tronco	simone.ompra@gmail.com	\N	\N
+20260807024037	{"-- Cancellazione di una voce d'archivio sbagliata.\n-- Riguarda solo az_voci_extra: gli articoli del Listino Unificato non si\n-- toccano da qui, si aggiornano rilanciando l'import dal file.\n\ncreate or replace function az_elimina_voce_extra(p_descrizione text)\nreturns int\nlanguage plpgsql\nsecurity invoker\nset search_path = ''\nas $$\ndeclare\n  n int;\nbegin\n  delete from public.az_voci_extra\n   where lower(btrim(descrizione)) = lower(btrim(coalesce(p_descrizione, '')));\n  get diagnostics n = row_count;\n  return n;\nend;\n$$;"}	az_elimina_voce_extra	simone.ompra@gmail.com	\N	\N
+20260807092853	{"-- Data del preventivo: finche' il progetto e' una bozza o un preventivo,\n-- la data che conta e' quella del documento, non quella di montaggio.\nalter table az_progetti\n  add column if not exists data_preventivo date default current_date;\n\nupdate az_progetti\n   set data_preventivo = created_at::date\n where data_preventivo is null;\n\ncomment on column az_progetti.data_preventivo is\n  'Data del documento. La data_montaggio serve solo da quando si passa a ordine.';\n\n-- Chiusura del circuito: se la linea torna alla centralina formando un\n-- anello non servono tappi; se resta aperta ne servono due, uno per\n-- estremita'. Il caso normale in cantiere e' l'anello chiuso.\nalter table az_linee\n  add column if not exists anello boolean not null default true;\n\ncomment on column az_linee.anello is\n  'true = circuito chiuso ad anello, nessun tappo. false = linea aperta, due tappi.';"}	az_data_preventivo_e_anello	simone.ompra@gmail.com	\N	\N
 \.
 
 
@@ -12529,7 +12568,7 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: inventory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.inventory_id_seq', 893, true);
+SELECT pg_catalog.setval('public.inventory_id_seq', 919, true);
 
 
 --
@@ -12557,7 +12596,7 @@ SELECT pg_catalog.setval('public.noleggio_macchine_id_seq', 327, true);
 -- Name: subscription_id_seq; Type: SEQUENCE SET; Schema: realtime; Owner: -
 --
 
-SELECT pg_catalog.setval('realtime.subscription_id_seq', 11450, true);
+SELECT pg_catalog.setval('realtime.subscription_id_seq', 11788, true);
 
 
 --
@@ -13249,67 +13288,59 @@ ALTER TABLE ONLY realtime.messages
 
 
 --
--- Name: messages_2026_08_03 messages_2026_08_03_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_18 messages_2026_08_18_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_03
-    ADD CONSTRAINT messages_2026_08_03_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_04 messages_2026_08_04_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_04
-    ADD CONSTRAINT messages_2026_08_04_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_18
+    ADD CONSTRAINT messages_2026_08_18_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_05 messages_2026_08_05_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_19 messages_2026_08_19_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_05
-    ADD CONSTRAINT messages_2026_08_05_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_06 messages_2026_08_06_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_06
-    ADD CONSTRAINT messages_2026_08_06_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_19
+    ADD CONSTRAINT messages_2026_08_19_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_07 messages_2026_08_07_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_20 messages_2026_08_20_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_07
-    ADD CONSTRAINT messages_2026_08_07_pkey PRIMARY KEY (id, inserted_at);
-
-
---
--- Name: messages_2026_08_08 messages_2026_08_08_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
---
-
-ALTER TABLE ONLY realtime.messages_2026_08_08
-    ADD CONSTRAINT messages_2026_08_08_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_20
+    ADD CONSTRAINT messages_2026_08_20_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_09 messages_2026_08_09_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_21 messages_2026_08_21_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_09
-    ADD CONSTRAINT messages_2026_08_09_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_21
+    ADD CONSTRAINT messages_2026_08_21_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
--- Name: messages_2026_08_10 messages_2026_08_10_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+-- Name: messages_2026_08_22 messages_2026_08_22_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
 --
 
-ALTER TABLE ONLY realtime.messages_2026_08_10
-    ADD CONSTRAINT messages_2026_08_10_pkey PRIMARY KEY (id, inserted_at);
+ALTER TABLE ONLY realtime.messages_2026_08_22
+    ADD CONSTRAINT messages_2026_08_22_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_23 messages_2026_08_23_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_23
+    ADD CONSTRAINT messages_2026_08_23_pkey PRIMARY KEY (id, inserted_at);
+
+
+--
+-- Name: messages_2026_08_24 messages_2026_08_24_pkey; Type: CONSTRAINT; Schema: realtime; Owner: -
+--
+
+ALTER TABLE ONLY realtime.messages_2026_08_24
+    ADD CONSTRAINT messages_2026_08_24_pkey PRIMARY KEY (id, inserted_at);
 
 
 --
@@ -14118,59 +14149,52 @@ CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING bt
 
 
 --
--- Name: messages_2026_08_03_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_18_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_03_inserted_at_topic_idx ON realtime.messages_2026_08_03 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_04_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_08_04_inserted_at_topic_idx ON realtime.messages_2026_08_04 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_18_inserted_at_topic_idx ON realtime.messages_2026_08_18 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_05_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_19_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_05_inserted_at_topic_idx ON realtime.messages_2026_08_05 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_06_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_08_06_inserted_at_topic_idx ON realtime.messages_2026_08_06 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_19_inserted_at_topic_idx ON realtime.messages_2026_08_19 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_07_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_20_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_07_inserted_at_topic_idx ON realtime.messages_2026_08_07 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
-
-
---
--- Name: messages_2026_08_08_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
---
-
-CREATE INDEX messages_2026_08_08_inserted_at_topic_idx ON realtime.messages_2026_08_08 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_20_inserted_at_topic_idx ON realtime.messages_2026_08_20 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_09_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_21_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_09_inserted_at_topic_idx ON realtime.messages_2026_08_09 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_21_inserted_at_topic_idx ON realtime.messages_2026_08_21 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
--- Name: messages_2026_08_10_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+-- Name: messages_2026_08_22_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
 --
 
-CREATE INDEX messages_2026_08_10_inserted_at_topic_idx ON realtime.messages_2026_08_10 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+CREATE INDEX messages_2026_08_22_inserted_at_topic_idx ON realtime.messages_2026_08_22 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_08_23_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_08_23_inserted_at_topic_idx ON realtime.messages_2026_08_23 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
+
+
+--
+-- Name: messages_2026_08_24_inserted_at_topic_idx; Type: INDEX; Schema: realtime; Owner: -
+--
+
+CREATE INDEX messages_2026_08_24_inserted_at_topic_idx ON realtime.messages_2026_08_24 USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 
 
 --
@@ -14237,115 +14261,101 @@ CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes 
 
 
 --
--- Name: messages_2026_08_03_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_18_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_03_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_03_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_03_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_18_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_04_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_18_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_04_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_04_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_04_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_18_pkey;
 
 
 --
--- Name: messages_2026_08_05_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_19_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_05_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_05_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_05_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_19_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_06_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_19_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_06_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_06_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_06_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_19_pkey;
 
 
 --
--- Name: messages_2026_08_07_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_20_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_07_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_07_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_07_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_20_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_08_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_20_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_08_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_08_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_08_pkey;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_20_pkey;
 
 
 --
--- Name: messages_2026_08_09_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_21_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_09_inserted_at_topic_idx;
-
-
---
--- Name: messages_2026_08_09_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
---
-
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_09_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_21_inserted_at_topic_idx;
 
 
 --
--- Name: messages_2026_08_10_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_21_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_10_inserted_at_topic_idx;
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_21_pkey;
 
 
 --
--- Name: messages_2026_08_10_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+-- Name: messages_2026_08_22_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
 --
 
-ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_10_pkey;
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_22_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_22_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_22_pkey;
+
+
+--
+-- Name: messages_2026_08_23_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_23_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_23_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_23_pkey;
+
+
+--
+-- Name: messages_2026_08_24_inserted_at_topic_idx; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_inserted_at_topic_index ATTACH PARTITION realtime.messages_2026_08_24_inserted_at_topic_idx;
+
+
+--
+-- Name: messages_2026_08_24_pkey; Type: INDEX ATTACH; Schema: realtime; Owner: -
+--
+
+ALTER INDEX realtime.messages_pkey ATTACH PARTITION realtime.messages_2026_08_24_pkey;
 
 
 --
@@ -15643,5 +15653,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2GmhBTBrc0hnyrruSkplPPausVXtD4UYLs54LwFljJeXW3XWqsV8LFWHqxvmGrL
+\unrestrict uf2ed0OPn1IMuKrB6ve4eyizVnRW4Vvqt52tjlZUqJv1XEV1uE6Gt9NLrstBQBA
 
